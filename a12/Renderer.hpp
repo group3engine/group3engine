@@ -55,6 +55,10 @@ class Renderer {
     VkPipeline m_MosiacPipeline;
     VkPipelineLayout m_MosiacPipelineLayout;
 
+    // Not sure what this is being used for 
+    VkPipeline m_PostProcessPipeline;
+    VkPipelineLayout m_PostProcessPipelineLayout;
+
 
     lut::VulkanWindow mWindow;
     lut::Allocator mAllocator;

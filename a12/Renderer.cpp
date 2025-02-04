@@ -183,17 +183,17 @@ Renderer::Renderer() {
 
     // Let's try adding my version
     auto forwardPipeline = vkEngine::PipelineBuilder(mWindow.device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
-            .AddShader(cfg::kPBRVertexShaderPath, ShaderType::VERTEX)
-            .AddShader(cfg::kPBRFragmentShaderPath, ShaderType::FRAGMENT)
-            .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-            .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}})
-            .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE)
-            .SetPipelineLayout({{mSceneLayout.handle, mMaterialLayout.handle, mLightingLayout.handle, mShadowLightManager->allShadowMapDescriptorSetLayout.handle}}, pushConstant)
-            .SetSampling(VK_SAMPLE_COUNT_1_BIT)
-            .AddBlendAttachmentState()
-            .SetDepthState(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL)
-            .SetRenderPass(mForwardRenderPass.handle)
-            .Build();
+        .AddShader(cfg::kPBRVertexShaderPath, ShaderType::VERTEX)
+        .AddShader(cfg::kPBRFragmentShaderPath, ShaderType::FRAGMENT)
+        .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+        .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}})
+        .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE)
+        .SetPipelineLayout({{mSceneLayout.handle, mMaterialLayout.handle, mLightingLayout.handle, mShadowLightManager->allShadowMapDescriptorSetLayout.handle}}, pushConstant)
+        .SetSampling(VK_SAMPLE_COUNT_1_BIT)
+        .AddBlendAttachmentState()
+        .SetDepthState(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL)
+        .SetRenderPass(mForwardRenderPass.handle)
+        .Build();
 
     m_ForwardPipeline = forwardPipeline.first;
     m_ForwardPipelineLayout = forwardPipeline.second;
@@ -209,12 +209,21 @@ Renderer::Renderer() {
         cfg::kPBRFragmentShaderPathAlpha, VK_BLEND_FACTOR_SRC_ALPHA,
         VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA, VK_CULL_MODE_NONE, VK_TRUE);
 
-    // create the post process pipeline
-    mPostProcessPipeline =
-        new Pipeline(mWindow, &(mPostProcessPipeLayout.handle),
-                     mPostProcessRenderPass.handle, create_postprocess_pipeline,
-                     cfg::kPostProcessVertexShaderPath,
-                     cfg::kPostProcessFragmentShaderPath, false);
+    auto postProcessPipeline = vkEngine::PipelineBuilder(mWindow.device, PipelineType::GRAPHICS, VertexBinding::NONE, 0)
+        .AddShader(cfg::kPostProcessVertexShaderPath, ShaderType::VERTEX)
+        .AddShader(cfg::kPostProcessFragmentShaderPath, ShaderType::FRAGMENT)
+        .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+        .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}})
+        .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE,VK_FRONT_FACE_COUNTER_CLOCKWISE)
+        .SetPipelineLayout({mPostProcessLayout.handle})
+        .SetSampling(VK_SAMPLE_COUNT_1_BIT)
+        .AddBlendAttachmentState()
+        .SetDepthState(VK_FALSE, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL)
+        .SetRenderPass(mPostProcessRenderPass.handle)
+        .Build();
+
+    m_PostProcessPipeline = postProcessPipeline.first;
+    m_PostProcessPipelineLayout = postProcessPipeline.second;
 
     auto mosiacPipeline = vkEngine::PipelineBuilder(mWindow.device, PipelineType::GRAPHICS, VertexBinding::NONE, 0)
         .AddShader(cfg::kPostProcessVertexShaderPath, ShaderType::VERTEX)
@@ -370,7 +379,7 @@ bool Renderer::Render() {
     VkPipeline const *postProcessPipeline = nullptr;
     switch (mState.postProcessPipelineState) {
         case lut::PostProcessPipelineState::none:
-            postProcessPipeline = mPostProcessPipeline->get_pipeline();
+            postProcessPipeline = &m_PostProcessPipeline;
             break;
         case lut::PostProcessPipelineState::mosaic:
             postProcessPipeline = &m_MosiacPipeline;
@@ -433,7 +442,7 @@ Renderer::~Renderer() {
     GraphicsThings::Light::destroy_lights();
     //delete mBasicPipeline;
     delete mAlphaPipeline;
-    delete mPostProcessPipeline;
+    //delete mPostProcessPipeline;
     //delete mMosaicPipeline;
     //delete mBloomFirstPassPipeline;
     //delete mBloomSecondPassPipeline;
