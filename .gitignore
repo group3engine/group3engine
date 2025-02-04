@@ -1,0 +1,109 @@
+_build_/*
+assets/*
+bin/*
+lib/*
+# add the cmakelists file
+CMakeLists.txt
+tmp/*
+# Build directories
+/build/
+/out/
+/bin/
+/lib/
+/CMakeFiles/
+/CMakeCache.txt
+/cmake_install.cmake
+/Makefile
+
+# IDE-specific files
+.idea/
+.vscode/
+compile_commands.json
+
+# CMake-generated files
+CTestTestfile.cmake
+CPackConfig.cmake
+CPackSourceConfig.cmake
+CPack*
+cmake-build-*/
+
+# Logs and temporary files
+*.log
+*.swp
+*.swo
+*.bak
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Executables and libraries
+*.exe
+*.out
+*.app
+*.dylib
+*.so
+*.a
+*.o
+*.obj
+*.lib
+*.dll
+*.spv
+
+# Build directories
+/build/
+/bin/
+/lib/
+/obj/
+
+# Premake-generated project files
+*.make
+*.workspace
+*.cbp
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+
+# CMake and Makefile artifacts (if used alongside Premake)
+CMakeLists.txt
+/CMakeCache.txt
+/CMakeFiles/
+/Makefile
+cmake_install.cmake
+
+# Compiled binaries and libraries
+*.exe
+*.out
+*.app
+*.dylib
+*.so
+*.a
+*.o
+*.obj
+*.lib
+*.dll
+
+# IDE-specific files
+.idea/
+.vscode/
+*.code-workspace
+*.sdf
+*.VC.db
+.vs
+
+# Logs and temp files
+*.log
+*.swp
+*.swo
+*.bak
+
+
+# OS-specific junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+
+.vs/
