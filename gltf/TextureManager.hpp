@@ -24,7 +24,7 @@ class TextureManager {
         : mContext(aContext), mAllocator(aAllocator),
           mCommandPool(lut::create_command_pool(aContext, VK_COMMAND_POOL_CREATE_TRANSIENT_BIT)) {}
 
-    void addTexture(std::string aName, Image aCPUImage);
+    void addTexture(Image aCPUImage);
 
   private:
     lut::VulkanContext const &mContext;
