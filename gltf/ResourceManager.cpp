@@ -184,7 +184,7 @@ int LoadGLTF(std::string aFilepath, MeshManager &aMeshManager,
 
     if (aIsDebug) {
         aMeshManager.debugOuptutMeshes();
-        aMaterialManager.DebugOutputMeshes();
+        aMaterialManager.DebugOutputMaterials();
     }
 
     cgltf_free(data);
