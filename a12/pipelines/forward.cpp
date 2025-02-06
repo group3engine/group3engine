@@ -83,10 +83,10 @@ lut::Pipeline create_basic_pipeline(lut::VulkanWindow const &aWindow,
     vertexAttributes[1].location = 1;
     vertexAttributes[1].format = VK_FORMAT_R32G32B32_SFLOAT;
     vertexAttributes[1].offset = 0;
-    // the compressed tbn frame
+    // the normal
     vertexAttributes[2].binding = 2;
     vertexAttributes[2].location = 2;
-    vertexAttributes[2].format = VK_FORMAT_R32_UINT;
+    vertexAttributes[2].format = VK_FORMAT_R32G32B32_SFLOAT;
 
     VkPipelineVertexInputStateCreateInfo inputInfo{};
     inputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -246,10 +246,10 @@ lut::Pipeline create_alpha_pipeline(
     vertexAttributes[1].location = 1;
     vertexAttributes[1].format = VK_FORMAT_R32G32B32_SFLOAT;
     vertexAttributes[1].offset = 0;
-    // the compressed tbn frame
+    // the normal
     vertexAttributes[2].binding = 2;
     vertexAttributes[2].location = 2;
-    vertexAttributes[2].format = VK_FORMAT_R32_UINT;
+    vertexAttributes[2].format = VK_FORMAT_R32G32B32_SFLOAT;
 
     VkPipelineVertexInputStateCreateInfo inputInfo{};
     inputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;

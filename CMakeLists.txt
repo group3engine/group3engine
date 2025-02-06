@@ -70,6 +70,8 @@ add_executable(${PROJECT_NAME} ${SOURCES}
         gltf/MeshManager.cpp
         gltf/MeshManager.hpp
         gltf/GLTFImportStructs.hpp
+        gltf/TextureManager.cpp
+        gltf/TextureManager.hpp
 )
 
 add_executable(a12-bake a12-bake/main.cpp

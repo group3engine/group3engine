@@ -27,12 +27,11 @@ Material LoadMaterialDefault() {
             .pbrMetallicRoughness = pbrMetallicRoughness};
 }
 
-Image LoadCGLTFImage(const cgltf_image *image, std::string filePath) {
+Image LoadCGLTFImage(const cgltf_image *image, std::string texturePath) {
     // flip images vertically by default
     stbi_set_flip_vertically_on_load(1);
 
-    // Construct texture file path
-    std::string texturePath = filePath + std::string(image->uri);
+
 
     // load base image
     int baseWidthi, baseHeighti, baseChannelsi;
@@ -55,7 +54,7 @@ Image LoadCGLTFImage(const cgltf_image *image, std::string filePath) {
 }
 
 int LoadGLTF(std::string aFilepath, MeshManager &aMeshManager,
-             MaterialManager &aMaterialManager, bool aIsDebug) {
+             MaterialManager &aMaterialManager, TextureManager &aTextureManager, bool aIsDebug) {
     cgltf_options options = {};
     cgltf_data *data = nullptr;
     cgltf_result result = cgltf_parse_file(&options, aFilepath.c_str(), &data);
@@ -152,20 +151,16 @@ int LoadGLTF(std::string aFilepath, MeshManager &aMeshManager,
         // PBR Metallic Roughness
         if (data->materials[i].has_pbr_metallic_roughness) {
             material.hasPBRMetallicRoughness = true;
-
+            std::string textureFolders = aFilepath.substr(0, aFilepath.find_last_of("/") + 1);
             // Load base color texture (albedo)
             if (data->materials[i].pbr_metallic_roughness.base_color_texture.texture) {
+                std::string texturePath = textureFolders +
+                                          data->materials[i].pbr_metallic_roughness.base_color_texture.texture->image->uri;
                 Image imAlbedo = LoadCGLTFImage(
                     data->materials[i].pbr_metallic_roughness.base_color_texture.texture->image,
-                    "./gltf/assets/");
+                        texturePath);
 
-                // TODO: Load to GPU
-                // TODO: Init material.pbrMetallicRougness here
-                // if (imAlbedo.data != NULL) {
-                //     model.materials[j].maps[MATERIAL_MAP_ALBEDO].texture =
-                //         LoadTextureFromImage(imAlbedo);
-                //     UnloadImage(imAlbedo);
-                // }
+                aTextureManager.addTexture(texturePath, imAlbedo);
 
                 free(imAlbedo.data);
             }
