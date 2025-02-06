@@ -20,6 +20,8 @@
 #include "pipelines/pipeline.h"
 #include "renderpasses/renderpasses.hpp"
 #include "vulkan/vulkan.h"
+#include "../gltf/MeshManager.hpp"
+#include "../gltf/ResourceManager.hpp"
 
 namespace lut = labutils;
 using namespace labutils::literals;
@@ -113,6 +115,9 @@ class Renderer {
     PipelineBaseClass *mMosaicPipeline;
     PipelineBaseClass *mBloomFirstPassPipeline;
     PipelineBaseClass *mBloomSecondPassPipeline;
+
+
+    MeshManager *mMeshManager;
     bool mRecreateSwapchain = false;
     std::chrono::time_point<Clock_> mPreviousClock;
     const VkClearColorValue cClearColor = {{0.1f, 0.1f, 0.1f, 0.0f}};

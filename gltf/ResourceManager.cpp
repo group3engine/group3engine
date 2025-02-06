@@ -1,62 +1,50 @@
-#include "cgltf.h"
-#include <algorithm>
-#include <iostream>
-#include <memory>
-#include <vector>
+//
+// Created by thomas on 05/02/25.
+//
 
+#include "ResourceManager.hpp"
 #define CGLTF_IMPLEMENTATION
 #define CGLTF_WRITE_IMPLEMENTATION
 #include "cgltf_write.h"
+#include <iostream>
 
-struct MeshPrimitive {
-    std::vector<float> positions;
-    std::vector<float> normals;
-    std::vector<float> texcoords;
-    // TODO: Bone weights
-    std::vector<uint32_t> indices;
-};
-
-struct Mesh {
-    std::string name;
-    std::vector<MeshPrimitive> meshPrimitives;
-};
-
-int main() {
+int LoadGLTF(std::string aFilepath, MeshManager &aMeshManager,
+             bool aIsDebug) {
     cgltf_options options = {};
     cgltf_data *data = nullptr;
-    std::string aFilepath = "../Box.gltf";
     cgltf_result result = cgltf_parse_file(&options, aFilepath.c_str(), &data);
     if (result != cgltf_result_success) {
         std::cout << "Failed to parse file.\n";
-        return 0;
+        return GLTF_LOAD_FAIL;
     }
+    if (aIsDebug) {
+        size_t total_primitives = 0;
 
-    size_t total_primitives = 0;
+        for (size_t mi = 0; mi < data->meshes_count; ++mi)
+            total_primitives += data->meshes[mi].primitives_count;
 
-    for (size_t mi = 0; mi < data->meshes_count; ++mi)
-        total_primitives += data->meshes[mi].primitives_count;
-
-    std::cout << "data->meshes_count=" << data->meshes_count << '\n';
-    std::cout << "data->materials_count=" << data->materials_count << '\n';
-    std::cout << "data->buffers_count=" << data->buffers_count << '\n';
-    std::cout << "data->images_count=" << data->images_count << '\n';
-    std::cout << "data->textures_count=" << data->textures_count << '\n';
-    std::cout << "total_primitives=" << total_primitives << '\n';
-
+        std::cout << "data->meshes_count=" << data->meshes_count << '\n';
+        std::cout << "data->materials_count=" << data->materials_count << '\n';
+        std::cout << "data->buffers_count=" << data->buffers_count << '\n';
+        std::cout << "data->images_count=" << data->images_count << '\n';
+        std::cout << "data->textures_count=" << data->textures_count << '\n';
+        std::cout << "total_primitives=" << total_primitives << '\n';
+    }
     result = cgltf_load_buffers(&options, data, aFilepath.c_str());
     if (result != cgltf_result_success) {
         std::cout << "Failed to load buffers file.\n";
+        return GLTF_LOAD_FAIL;
     }
-
     // NOTE: optional
     result = cgltf_validate(data);
     if (result != cgltf_result_success) {
         std::cout << "Parsed glTF not valid\n";
+        return GLTF_LOAD_FAIL;
     }
-
     // Based on https://github.com/zeux/niagara/blob/master/src/scene.cpp
-    std::vector<Mesh> meshes;
-    meshes.reserve(data->meshes_count);
+    // load the meshes
+
+    aMeshManager.reserveMeshes(data->meshes_count);
     for (size_t mi = 0; mi < data->meshes_count; ++mi) {
         const auto &gltfMesh = data->meshes[mi];
         Mesh mesh{.name = gltfMesh.name, .meshPrimitives = {}};
@@ -100,19 +88,13 @@ int main() {
             mesh.meshPrimitives.push_back(meshPrimitive);
         }
 
-        meshes.push_back(mesh);
+        aMeshManager.addMesh(mesh);
     }
 
-    std::cout << "meshes.size()=" << meshes.size() << '\n';
-    std::cout << "meshPrimitives.size()=" << meshes[0].meshPrimitives.size() << '\n';
-    std::cout << "meshPrimitives.positions.size()=" << meshes[0].meshPrimitives[0].positions.size() << '\n';
-    std::cout << "meshPrimitives.normals.size()=" << meshes[0].meshPrimitives[0].normals.size() << '\n';
-    std::cout << "meshPrimitives.texcoords.size()=" << meshes[0].meshPrimitives[0].texcoords.size() << '\n';
-    std::cout << "meshPrimitives.indices.size()=" << meshes[0].meshPrimitives[0].indices.size() << '\n';
-    std::cout << *std::max_element(meshes[0].meshPrimitives[0].indices.begin(), meshes[0].meshPrimitives[0].indices.end()) << '\n';
+    if (aIsDebug) {
+        aMeshManager.debugOuptutMeshes();
+    }
 
     cgltf_free(data);
-
-    std::cout << "Hello world!" << '\n';
-    return 0;
+        return GLTF_LOAD_SUCCESS;
 }

@@ -96,9 +96,9 @@ struct Vertex {
         vertexInputs[1].binding = 1;
         vertexInputs[1].stride = sizeof(float) * 2;
         vertexInputs[1].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-        // the compressed tbn frame
+        // the normal
         vertexInputs[2].binding = 2;
-        vertexInputs[2].stride = sizeof(uint32_t);
+        vertexInputs[2].stride = sizeof(float) * 3;
         vertexInputs[2].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
         return vertexInputs;
@@ -122,19 +122,20 @@ struct Vertex {
         //attributes[2].format = VK_FORMAT_R32_UINT;
         //attributes[2].offset = offsetof(Vertex, compressedTBN);
 
+        // the position
         attributes[0].binding = 0;
         attributes[0].location = 0;
         attributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
         attributes[0].offset = 0;
-        // the colour
+        // the texcoord
         attributes[1].binding = 1;
         attributes[1].location = 1;
-        attributes[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+        attributes[1].format = VK_FORMAT_R32G32_SFLOAT;
         attributes[1].offset = 0;
-        // the compressed tbn frame
+        // the normal
         attributes[2].binding = 2;
         attributes[2].location = 2;
-        attributes[2].format = VK_FORMAT_R32_UINT;
+        attributes[2].format = VK_FORMAT_R32G32B32_SFLOAT;
 
         return attributes;
     }
