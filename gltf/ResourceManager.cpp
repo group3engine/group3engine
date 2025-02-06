@@ -22,9 +22,11 @@ Material LoadMaterialDefault() {
         .roughnessFactor = 1.0f
     };
 
-    return {.name = "default",
-            .hasPBRMetallicRoughness = true,
-            .pbrMetallicRoughness = pbrMetallicRoughness};
+    return {
+        .name = "default",
+        .hasPBRMetallicRoughness = true,
+        .pbrMetallicRoughness = pbrMetallicRoughness
+    };
 }
 
 Image LoadCGLTFImage(std::string_view uri, std::string_view gltfPath) {
@@ -58,15 +60,21 @@ Image LoadCGLTFImage(std::string_view uri, std::string_view gltfPath) {
     return {std::string(path.data()), data, baseWidth, baseHeight, sizeInBytes};
 }
 
-int LoadGLTF(std::string aFilepath, MeshManager &aMeshManager,
-             MaterialManager &aMaterialManager, TextureManager &aTextureManager, bool aIsDebug) {
+int LoadGLTF(std::string aFilepath,
+             MeshManager &aMeshManager,
+             MaterialManager &aMaterialManager,
+             TextureManager &aTextureManager,
+             bool aIsDebug
+) {
     cgltf_options options = {};
     cgltf_data *data = nullptr;
     cgltf_result result = cgltf_parse_file(&options, aFilepath.c_str(), &data);
+
     if (result != cgltf_result_success) {
         std::cout << "Failed to parse file.\n";
         return GLTF_LOAD_FAIL;
     }
+
     if (aIsDebug) {
         size_t total_primitives = 0;
 
@@ -80,21 +88,24 @@ int LoadGLTF(std::string aFilepath, MeshManager &aMeshManager,
         std::cout << "data->textures_count=" << data->textures_count << '\n';
         std::cout << "total_primitives=" << total_primitives << '\n';
     }
+
     result = cgltf_load_buffers(&options, data, aFilepath.c_str());
     if (result != cgltf_result_success) {
         std::cout << "Failed to load buffers file.\n";
         return GLTF_LOAD_FAIL;
     }
+
     // NOTE: optional
     result = cgltf_validate(data);
     if (result != cgltf_result_success) {
         std::cout << "Parsed glTF not valid\n";
         return GLTF_LOAD_FAIL;
     }
-    // Based on https://github.com/zeux/niagara/blob/master/src/scene.cpp
-    // load the meshes
 
     aMeshManager.reserveMeshes(data->meshes_count);
+
+    // Based on https://github.com/zeux/niagara/blob/master/src/scene.cpp
+    // Load meshes
     for (size_t mi = 0; mi < data->meshes_count; ++mi) {
         const auto &gltfMesh = data->meshes[mi];
         Mesh mesh{.name = gltfMesh.name, .meshPrimitives = {}};
@@ -141,13 +152,14 @@ int LoadGLTF(std::string aFilepath, MeshManager &aMeshManager,
         aMeshManager.addMesh(mesh);
     }
 
-    size_t gltfMaterialsCount = data->materials_count;
     size_t defaultMaterialsCount = 1;
-    size_t materialsCount = gltfMaterialsCount + defaultMaterialsCount;
+    size_t gltfMaterialsCount = data->materials_count;
+    size_t materialsCount = defaultMaterialsCount + gltfMaterialsCount;
     aMaterialManager.ReserveMaterials(materialsCount);
 
     aMaterialManager.AddMaterial(LoadMaterialDefault());
 
+    // Load materials
     for (size_t i = 0; i < gltfMaterialsCount; ++i) {
         const auto &gltfMaterial = data->materials[i];
 
@@ -157,7 +169,8 @@ int LoadGLTF(std::string aFilepath, MeshManager &aMeshManager,
         // PBR Metallic Roughness
         if (gltfMaterial.has_pbr_metallic_roughness) {
             material.hasPBRMetallicRoughness = true;
-            // Load base color texture (albedo)
+
+            // Load base color texture
             if (gltfMaterial.pbr_metallic_roughness.base_color_texture.texture) {
                 Image imageBaseColor = LoadCGLTFImage(
                     gltfMaterial.pbr_metallic_roughness.base_color_texture.texture->image->uri,
@@ -174,12 +187,11 @@ int LoadGLTF(std::string aFilepath, MeshManager &aMeshManager,
                           gltfMaterial.pbr_metallic_roughness.base_color_factor[2],
                           gltfMaterial.pbr_metallic_roughness.base_color_factor[3]);
 
-            // Load metallic/roughness material properties
-            float roughness = gltfMaterial.pbr_metallic_roughness.roughness_factor;
-            material.pbrMetallicRoughness.roughnessFactor = roughness;
+            material.pbrMetallicRoughness.metallicFactor =
+                gltfMaterial.pbr_metallic_roughness.metallic_factor;
 
-            float metallic = gltfMaterial.pbr_metallic_roughness.metallic_factor;
-            material.pbrMetallicRoughness.metallicFactor = metallic;
+            material.pbrMetallicRoughness.roughnessFactor =
+                gltfMaterial.pbr_metallic_roughness.roughness_factor;
         }
 
         aMaterialManager.AddMaterial(material);
@@ -191,5 +203,6 @@ int LoadGLTF(std::string aFilepath, MeshManager &aMeshManager,
     }
 
     cgltf_free(data);
-        return GLTF_LOAD_SUCCESS;
+
+    return GLTF_LOAD_SUCCESS;
 }
