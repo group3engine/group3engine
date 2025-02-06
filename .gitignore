@@ -2,8 +2,6 @@ _build_/*
 assets/*
 bin/*
 lib/*
-# add the cmakelists file
-CMakeLists.txt
 tmp/*
 # Build directories
 /build/
