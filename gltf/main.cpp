@@ -1,8 +1,12 @@
 #include "cgltf.h"
+#include <cstdio>
 #include <algorithm>
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <glm/glm.hpp>
+#include <glm/ext.hpp>
+#include <stb_image.h>
 
 #define CGLTF_IMPLEMENTATION
 #define CGLTF_WRITE_IMPLEMENTATION
@@ -21,10 +25,77 @@ struct Mesh {
     std::vector<MeshPrimitive> meshPrimitives;
 };
 
+struct Texture {
+    
+};
+
+struct Image {
+    stbi_uc *data;
+};
+
+enum class AlphaMode {
+    eOpaque,
+    eMask,
+    eBlend
+};
+
+struct PBRMetallicRoughnessMaterial {
+    Texture *baseColorTexture;
+    Texture *metallicRoughnessTexture;
+
+    glm::vec4 baseColorFactor;
+    float metallicFactor;
+    float roughnessFactor;
+};
+
+struct Material {
+    std::string name;
+    bool hasPBRMetallicRoughness;
+    PBRMetallicRoughnessMaterial pbrMetallicRoughness;
+};
+
+Material LoadMaterialDefault() {
+    PBRMetallicRoughnessMaterial pbrMetallicRoughness{
+        .baseColorFactor = {1, 1, 1, 1},
+        .baseColorTexture = nullptr,
+        .metallicFactor = 0.0f,
+        .roughnessFactor = 1.0f,
+        .metallicRoughnessTexture = nullptr
+    };
+
+    return {.name = "default",
+            .hasPBRMetallicRoughness = true,
+            .pbrMetallicRoughness = pbrMetallicRoughness};
+}
+
+Image LoadCGLTFImage(const cgltf_image* image,  std::string filePath) {
+    // flip images vertically by default
+    stbi_set_flip_vertically_on_load(1);
+
+    // Construct texture file path
+    std::string textureFilePath = filePath + std::string(image->uri);
+
+    // load base image
+    int baseWidthi, baseHeighti, baseChannelsi;
+    stbi_uc *data =
+        stbi_load(textureFilePath.c_str(), &baseWidthi, &baseHeighti, &baseChannelsi, 4 /*RGBA*/);
+    if (!data) {
+        std::printf("Can't load image '%s'\n", textureFilePath.c_str());
+    }
+
+    auto const baseWidth = std::uint32_t(baseWidthi);
+    auto const baseHeight = std::uint32_t(baseHeighti);
+
+    // create staging buffer and copy image data to it
+    auto const sizeInBytes = baseWidth * baseHeight * 4;
+
+    return {data};
+}
+
 int main() {
     cgltf_options options = {};
     cgltf_data *data = nullptr;
-    std::string aFilepath = "../Box.gltf";
+    std::string aFilepath = "../assets/BoxTextured.gltf";
     cgltf_result result = cgltf_parse_file(&options, aFilepath.c_str(), &data);
     if (result != cgltf_result_success) {
         std::cout << "Failed to parse file.\n";
@@ -102,6 +173,65 @@ int main() {
 
         meshes.push_back(mesh);
     }
+
+    std::vector<Material> materials;
+    size_t gltfMaterialsCount = data->materials_count;
+    size_t defaultMaterialsCount = 1;
+    size_t materialsCount = gltfMaterialsCount + defaultMaterialsCount;
+    materials.reserve(materialsCount);
+
+    materials.push_back(LoadMaterialDefault());
+
+    for (size_t i = 0; i < gltfMaterialsCount; ++i) {
+        Material material = LoadMaterialDefault();
+
+        material.name = data->materials[i].name;
+
+        if (data->materials[i].has_pbr_metallic_roughness) {
+            material.hasPBRMetallicRoughness = true;
+
+            // Load base color texture (albedo)
+            if (data->materials[i].pbr_metallic_roughness.base_color_texture.texture) {
+                Image imAlbedo = LoadCGLTFImage(
+                    data->materials[i].pbr_metallic_roughness.base_color_texture.texture->image,
+                    "../assets/");
+
+                // TODO: Load to GPU
+                // TODO: Init material.pbrMetallicRougness here
+                // if (imAlbedo.data != NULL) {
+                //     model.materials[j].maps[MATERIAL_MAP_ALBEDO].texture =
+                //         LoadTextureFromImage(imAlbedo);
+                //     UnloadImage(imAlbedo);
+                // }
+
+                free(imAlbedo.data);
+            }
+
+            material.pbrMetallicRoughness.baseColorFactor =
+                glm::vec4(data->materials[i].pbr_metallic_roughness.base_color_factor[0],
+                          data->materials[i].pbr_metallic_roughness.base_color_factor[1],
+                          data->materials[i].pbr_metallic_roughness.base_color_factor[2],
+                          data->materials[i].pbr_metallic_roughness.base_color_factor[3]);
+
+            // Load metallic/roughness material properties
+            float roughness = data->materials[i].pbr_metallic_roughness.roughness_factor;
+            material.pbrMetallicRoughness.roughnessFactor = roughness;
+
+            float metallic = data->materials[i].pbr_metallic_roughness.metallic_factor;
+            material.pbrMetallicRoughness.metallicFactor = metallic;
+        }
+
+        materials.push_back(material);
+    }
+
+    std::cout << "materials.size()=" << materials.size() << '\n';
+
+    const auto &material = materials[1];
+    std::cout << "material.name=" << material.name << '\n';
+    std::cout << "material.hasPBRMetallicRoughness=" << material.hasPBRMetallicRoughness << '\n';
+    std::cout << "material.pbrMetallicRoughness.baseColorFactor=" << glm::to_string(material.pbrMetallicRoughness.baseColorFactor) << '\n';
+    std::cout << "material.pbrMetallicRoughness.metallicFactor=" << material.pbrMetallicRoughness.metallicFactor << '\n';
+    std::cout << "material.pbrMetallicRoughness.roughnessFactor=" << material.pbrMetallicRoughness.roughnessFactor << '\n';
 
     std::cout << "meshes.size()=" << meshes.size() << '\n';
     std::cout << "meshPrimitives.size()=" << meshes[0].meshPrimitives.size() << '\n';

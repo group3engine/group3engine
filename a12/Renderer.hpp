@@ -20,6 +20,7 @@
 #include "pipelines/pipeline.h"
 #include "renderpasses/renderpasses.hpp"
 #include "vulkan/vulkan.h"
+#include "../gltf/MaterialManager.hpp"
 #include "../gltf/MeshManager.hpp"
 #include "../gltf/ResourceManager.hpp"
 
@@ -117,6 +118,7 @@ class Renderer {
     PipelineBaseClass *mBloomSecondPassPipeline;
 
 
+    MaterialManager *mMaterialManager;
     MeshManager *mMeshManager;
     bool mRecreateSwapchain = false;
     std::chrono::time_point<Clock_> mPreviousClock;

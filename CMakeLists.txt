@@ -65,6 +65,8 @@ add_executable(${PROJECT_NAME} ${SOURCES}
         a12/framebuffers/framebuffers.cpp
         gltf/ResourceManager.hpp
         gltf/ResourceManager.cpp
+        gltf/MaterialManager.cpp
+        gltf/MaterialManager.hpp
         gltf/MeshManager.cpp
         gltf/MeshManager.hpp
         gltf/GLTFImportStructs.hpp

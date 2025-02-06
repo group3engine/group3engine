@@ -3,13 +3,59 @@
 //
 
 #include "ResourceManager.hpp"
+
+#include <iostream>
+#include <string>
+
 #define CGLTF_IMPLEMENTATION
 #define CGLTF_WRITE_IMPLEMENTATION
 #include "cgltf_write.h"
-#include <iostream>
+
+#include <stb_image.h>
+
+Material LoadMaterialDefault() {
+    PBRMetallicRoughnessMaterial pbrMetallicRoughness{
+        .baseColorTexture = nullptr,
+        .metallicRoughnessTexture = nullptr,
+        .baseColorFactor = {1, 1, 1, 1},
+        .metallicFactor = 0.0f,
+        .roughnessFactor = 1.0f
+    };
+
+    return {.name = "default",
+            .hasPBRMetallicRoughness = true,
+            .pbrMetallicRoughness = pbrMetallicRoughness};
+}
+
+Image LoadCGLTFImage(const cgltf_image *image, std::string filePath) {
+    // flip images vertically by default
+    stbi_set_flip_vertically_on_load(1);
+
+    // Construct texture file path
+    std::string texturePath = filePath + std::string(image->uri);
+
+    // load base image
+    int baseWidthi, baseHeighti, baseChannelsi;
+    stbi_uc *data =
+        stbi_load(texturePath.c_str(), &baseWidthi, &baseHeighti, &baseChannelsi, 4 /*RGBA*/);
+
+    assert(data);
+
+    if (!data) {
+        std::printf("Can't load image '%s'\n", texturePath.c_str());
+    }
+
+    auto const baseWidth = std::uint32_t(baseWidthi);
+    auto const baseHeight = std::uint32_t(baseHeighti);
+
+    // create staging buffer and copy image data to it
+    auto const sizeInBytes = baseWidth * baseHeight * 4;
+
+    return {data, baseWidth, baseHeight, sizeInBytes};
+}
 
 int LoadGLTF(std::string aFilepath, MeshManager &aMeshManager,
-             bool aIsDebug) {
+             MaterialManager &aMaterialManager, bool aIsDebug) {
     cgltf_options options = {};
     cgltf_data *data = nullptr;
     cgltf_result result = cgltf_parse_file(&options, aFilepath.c_str(), &data);
@@ -91,8 +137,59 @@ int LoadGLTF(std::string aFilepath, MeshManager &aMeshManager,
         aMeshManager.addMesh(mesh);
     }
 
+    size_t gltfMaterialsCount = data->materials_count;
+    size_t defaultMaterialsCount = 1;
+    size_t materialsCount = gltfMaterialsCount + defaultMaterialsCount;
+    aMaterialManager.ReserveMaterials(materialsCount);
+
+    aMaterialManager.AddMaterial(LoadMaterialDefault());
+
+    for (size_t i = 0; i < gltfMaterialsCount; ++i) {
+        Material material = LoadMaterialDefault();
+
+        material.name = data->materials[i].name;
+
+        // PBR Metallic Roughness
+        if (data->materials[i].has_pbr_metallic_roughness) {
+            material.hasPBRMetallicRoughness = true;
+
+            // Load base color texture (albedo)
+            if (data->materials[i].pbr_metallic_roughness.base_color_texture.texture) {
+                Image imAlbedo = LoadCGLTFImage(
+                    data->materials[i].pbr_metallic_roughness.base_color_texture.texture->image,
+                    "./gltf/assets/");
+
+                // TODO: Load to GPU
+                // TODO: Init material.pbrMetallicRougness here
+                // if (imAlbedo.data != NULL) {
+                //     model.materials[j].maps[MATERIAL_MAP_ALBEDO].texture =
+                //         LoadTextureFromImage(imAlbedo);
+                //     UnloadImage(imAlbedo);
+                // }
+
+                free(imAlbedo.data);
+            }
+
+            material.pbrMetallicRoughness.baseColorFactor =
+                glm::vec4(data->materials[i].pbr_metallic_roughness.base_color_factor[0],
+                          data->materials[i].pbr_metallic_roughness.base_color_factor[1],
+                          data->materials[i].pbr_metallic_roughness.base_color_factor[2],
+                          data->materials[i].pbr_metallic_roughness.base_color_factor[3]);
+
+            // Load metallic/roughness material properties
+            float roughness = data->materials[i].pbr_metallic_roughness.roughness_factor;
+            material.pbrMetallicRoughness.roughnessFactor = roughness;
+
+            float metallic = data->materials[i].pbr_metallic_roughness.metallic_factor;
+            material.pbrMetallicRoughness.metallicFactor = metallic;
+        }
+
+        aMaterialManager.AddMaterial(material);
+    }
+
     if (aIsDebug) {
         aMeshManager.debugOuptutMeshes();
+        aMaterialManager.DebugOutputMeshes();
     }
 
     cgltf_free(data);

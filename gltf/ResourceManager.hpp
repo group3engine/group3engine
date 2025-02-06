@@ -4,13 +4,14 @@
 
 #ifndef GROUP3ENGINE_RESOURCEMANAGER_HPP
 #define GROUP3ENGINE_RESOURCEMANAGER_HPP
+
+#include "MaterialManager.hpp"
 #include "MeshManager.hpp"
 #include "GLTFImportStructs.hpp"
 #include <string>
 #include <vector>
 // predefine meshmanager, texturemanager, materialmanager
 class TextureManager;
-class MaterialManager;
 
 
 
@@ -19,6 +20,7 @@ class MaterialManager;
 
 // returns 0 if failed
 int LoadGLTF(std::string aFilepath, MeshManager &aMeshManager,
+             MaterialManager &aMaterialManager,
              bool aIsDebug = false);
 
 #endif // GROUP3ENGINE_RESOURCEMANAGER_HPP

@@ -358,8 +358,10 @@ Renderer::Renderer() {
   }
   // set up mesh manager
   mMeshManager = new MeshManager(mWindow, mAllocator, m_ForwardPipelineLayout);
+  mMaterialManager = new MaterialManager();
+
   // load in a gltf
-  auto gltf = LoadGLTF("./gltf/Box.gltf", *mMeshManager, true);
+  auto gltf = LoadGLTF("./gltf/assets/BoxTextured.gltf", *mMeshManager, *mMaterialManager, true);
   if (gltf == GLTF_LOAD_FAIL) {
     std::cout << "Failed to load gltf\n";
     exit(1);
