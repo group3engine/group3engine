@@ -75,13 +75,19 @@ project "a12"
 	local sources = { 
 		"a12/**.cpp",
 		"a12/**.hpp",
-		"a12/**.hxx"
+		"a12/**.hxx",
+		"gltf/**.cpp",
+		"gltf/**.hpp",
+		"gltf/**.hxx"
 	}
+
 
 	kind "ConsoleApp"
 	location "a12"
 
 	files( sources )
+
+	removefiles { "gltf/main.cpp" }
 
 	dependson "a12-shaders"
 
