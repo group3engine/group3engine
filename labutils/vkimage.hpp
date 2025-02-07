@@ -25,7 +25,7 @@ namespace labutils
     public:
         Image()
 
-        noexcept,
+        noexcept;
 
         ~Image();
 
