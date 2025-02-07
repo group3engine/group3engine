@@ -8,6 +8,7 @@
 #include "Light.hpp"
 #include "glsl.hpp"
 
+#include "../gltf/Entity.hpp"
 #include "PipelineBuilder.hpp"
 
 namespace GraphicsThings {
@@ -357,12 +358,14 @@ Renderer::Renderer() {
     }
   }
   // set up mesh manager
-  mMeshManager = new MeshManager(mWindow, mAllocator, m_ForwardPipelineLayout);
+  mMeshManager = new MeshManager(mWindow, mAllocator);
   mMaterialManager = new MaterialManager();
-  auto textureManager = new TextureManager(mWindow, mAllocator);
+  mTextureManager = new TextureManager(mWindow, mAllocator);
 
   // load in a gltf
-  auto gltf = LoadGLTF("./gltf/assets/BoxTextured.gltf", *mMeshManager, *mMaterialManager, *textureManager, false);
+  auto gltf = LoadGLTF("./gltf/assets/BoxTextured.gltf", *mMeshManager,
+                       *mMaterialManager, *mTextureManager,
+                       m_ForwardPipelineLayout, mEntities, false);
   if (gltf == GLTF_LOAD_FAIL) {
     std::cout << "Failed to load gltf\n";
     exit(1);
@@ -483,7 +486,8 @@ Renderer::~Renderer() {
   delete mShadowLightManager;
   delete mPerFrameResources;
   delete mMeshManager;
-
+  delete mMaterialManager;
+  delete mTextureManager;
 
   // Destroy forward pass pbr pipeline + pipelinelayout
   vkDestroyPipeline(mWindow.device, m_ForwardPipeline, nullptr);
@@ -503,9 +507,9 @@ Renderer::~Renderer() {
   vkDestroyPipeline(mWindow.device, m_MosiacPipeline, nullptr);
   vkDestroyPipelineLayout(mWindow.device, m_MosiacPipelineLayout, nullptr);
 
-        // Destroy post process pipeline + pipelinelayout
-        vkDestroyPipeline(mWindow.device, m_PostProcessPipeline, nullptr);
-        vkDestroyPipelineLayout(mWindow.device, m_PostProcessPipelineLayout, nullptr);
+  // Destroy post process pipeline + pipelinelayout
+  vkDestroyPipeline(mWindow.device, m_PostProcessPipeline, nullptr);
+  vkDestroyPipelineLayout(mWindow.device, m_PostProcessPipelineLayout, nullptr);
 }
 void Renderer::RecreateSwapchain() {
   // re-create swapchain and associated resources!
@@ -641,9 +645,12 @@ void Renderer::RecordForwardRenderPass(VkCommandBuffer aCmdBuff) {
   //    }
 
   // record drawing the mesh manager
-  vkCmdBindDescriptorSets(aCmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, m_ForwardPipelineLayout, 1, 1,
-                                &mMaterialDescriptorSets[0], 0, nullptr);
-  mMeshManager->record_draw(aCmdBuff);
+  vkCmdBindDescriptorSets(aCmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                          m_ForwardPipelineLayout, 1, 1,
+                          &mMaterialDescriptorSets[0], 0, nullptr);
+  for (auto &entity : mEntities) {
+    entity.RecordDraw(aCmdBuff);
+  }
   // end drawing
   vkCmdEndRenderPass(aCmdBuff);
 }

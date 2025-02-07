@@ -5,6 +5,7 @@
 #ifndef GROUP3ENGINE_RESOURCEMANAGER_HPP
 #define GROUP3ENGINE_RESOURCEMANAGER_HPP
 
+#include "Entity.hpp"
 #include "GLTFImportStructs.hpp"
 #include "MaterialManager.hpp"
 #include "MeshManager.hpp"
@@ -18,6 +19,6 @@
 
 // returns 0 if failed
 int LoadGLTF(std::string aFilepath, MeshManager &aMeshManager, MaterialManager &aMaterialManager,
-             TextureManager &aTextureManager, bool aIsDebug = false);
+             TextureManager &aTextureManager, VkPipelineLayout aPipeLayout, std::vector<Entity>& aEntities, bool aIsDebug);
 
 #endif // GROUP3ENGINE_RESOURCEMANAGER_HPP

@@ -26,6 +26,10 @@ class TextureManager {
 
     void addTexture(std::string aName, Image aCPUImage);
 
+    Texture* GetTexture(std::string aName) {
+        return &mTextureMap[aName];
+    }
+
   private:
     lut::VulkanContext const &mContext;
     lut::Allocator const &mAllocator;

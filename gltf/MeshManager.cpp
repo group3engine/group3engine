@@ -206,40 +206,7 @@ void MeshManager::uploadLastMesh() {
                              lut::to_string(res).c_str());
         }
 
-        meshPrimitive.meshPrimitiveGPUIndex = mMeshesGPU.size() - 1;
+        meshPrimitive.meshGPU = &meshGPU;
     }
 
-}
-void MeshManager::record_draw(VkCommandBuffer aCmdBuff) const
-{
-    // for each mesh primitive, record the draw command
-    for(auto mesh : mMeshes)
-    {
-        for(auto meshPrimitive : mesh.meshPrimitives) {
-            // push the model matrix
-            glm::mat4 mModelMatrix = glm::mat4(1.0f);
-            vkCmdPushConstants(aCmdBuff, mPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(glm::mat4), &mModelMatrix);
-
-
-            // bind the vertex buffers - positions, texcoords, normals
-            VkBuffer buffers[] = {mMeshesGPU[meshPrimitive.meshPrimitiveGPUIndex].mPositions.buffer, mMeshesGPU[meshPrimitive.meshPrimitiveGPUIndex].mTexcoords.buffer, mMeshesGPU[meshPrimitive.meshPrimitiveGPUIndex].mNormals.buffer};
-
-            VkDeviceSize offsets[] = {0, 0, 0};
-
-            vkCmdBindVertexBuffers(aCmdBuff, 0, sizeof(buffers) / sizeof(buffers[0]), buffers, offsets);
-
-            // bind the index buffer
-            vkCmdBindIndexBuffer(aCmdBuff, mMeshesGPU[meshPrimitive.meshPrimitiveGPUIndex].mIndices.buffer, 0, VK_INDEX_TYPE_UINT32);
-
-            // draw the mesh
-            vkCmdDrawIndexed(aCmdBuff, mMeshesGPU[meshPrimitive.meshPrimitiveGPUIndex].mIndexCount, 1, 0, 0, 0);
-        }
-    }
-
-
-}
-
-void MeshManager::record_draw_shadow(VkCommandBuffer aCmdBuff) const
-{
-    return;
 }

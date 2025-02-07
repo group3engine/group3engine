@@ -11,15 +11,25 @@
 
 #include <stb_image.h>
 
+#include "../labutils/vkbuffer.hpp"
+#include "glm/gtc/quaternion.hpp"
 #include <glm/vec4.hpp>
 
+struct MeshPrimitiveGPU {
+    labutils::Buffer mPositions;
+    labutils::Buffer mTexcoords;
+    labutils::Buffer mNormals;
+    labutils::Buffer mIndices;
+    std::uint32_t mIndexCount;
+};
 struct MeshPrimitive {
     std::vector<float> positions;
     std::vector<float> normals;
     std::vector<float> texcoords;
     // TODO: Bone weights
     std::vector<std::uint32_t> indices;
-    uint32_t meshPrimitiveGPUIndex;
+    MeshPrimitiveGPU *meshGPU;
+
 };
 
 struct Mesh {
@@ -59,4 +69,20 @@ struct Material {
     bool hasPBRMetallicRoughness;
     PBRMetallicRoughnessMaterial pbrMetallicRoughness;
 };
+
+struct Transform{
+        glm::vec3 translation;
+        glm::quat rotation;
+        glm::vec3 scale;
+        // function to get the matrix
+        glm::mat4 getMatrix() {
+                glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), translation);
+                glm::mat4 rotationMatrix = glm::mat4_cast(rotation);
+                glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), scale);
+                return translationMatrix * rotationMatrix * scaleMatrix;
+        }
+
+};
+
+
 #endif // VULKANTIME_GLTFIMPORTSTRUCTS_HPP

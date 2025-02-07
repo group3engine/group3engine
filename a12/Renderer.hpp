@@ -6,6 +6,10 @@
 #define VULKANTIME_RENDERER_HPP
 #include <chrono>
 
+#include "../gltf/Entity.hpp"
+#include "../gltf/MaterialManager.hpp"
+#include "../gltf/MeshManager.hpp"
+#include "../gltf/ResourceManager.hpp"
 #include "../labutils/UserState.hpp"
 #include "../labutils/allocator.hpp"
 #include "../labutils/angle.hpp"
@@ -20,9 +24,6 @@
 #include "pipelines/pipeline.h"
 #include "renderpasses/renderpasses.hpp"
 #include "vulkan/vulkan.h"
-#include "../gltf/MaterialManager.hpp"
-#include "../gltf/MeshManager.hpp"
-#include "../gltf/ResourceManager.hpp"
 
 namespace lut = labutils;
 using namespace labutils::literals;
@@ -120,6 +121,8 @@ class Renderer {
 
     MaterialManager *mMaterialManager;
     MeshManager *mMeshManager;
+    TextureManager *mTextureManager;
+    std::vector<Entity> mEntities;
     bool mRecreateSwapchain = false;
     std::chrono::time_point<Clock_> mPreviousClock;
     const VkClearColorValue cClearColor = {{0.1f, 0.1f, 0.1f, 0.0f}};

@@ -11,19 +11,12 @@
 #include <vector>
 namespace lut = labutils;
 
-struct MeshPrimitiveGPU {
-    labutils::Buffer mPositions;
-    labutils::Buffer mTexcoords;
-    labutils::Buffer mNormals;
-    labutils::Buffer mIndices;
-    std::uint32_t mIndexCount;
-};
+
 
 class MeshManager {
   public:
-    MeshManager(lut::VulkanContext const &aContext, lut::Allocator const &aAllocator,
-                VkPipelineLayout pipelineLayout)
-        : mContext(aContext), mAllocator(aAllocator), mPipelineLayout(pipelineLayout) {};
+    MeshManager(lut::VulkanContext const &aContext, lut::Allocator const &aAllocator)
+        : mContext(aContext), mAllocator(aAllocator) {};
     ~MeshManager(){
         for(auto &meshGPU : mMeshesGPU) {
             meshGPU.mPositions = {};
@@ -45,16 +38,15 @@ class MeshManager {
     // upload the last mesh added to the GPU
     void uploadLastMesh();
 
-    // TMP
-    void record_draw(VkCommandBuffer aCmdBuff) const;
-    void record_draw_shadow(VkCommandBuffer aCmdBuff) const;
+    // get a mesh by index
+    Mesh *getMesh(size_t aIndex) { return &mMeshes[aIndex]; }
+
 
   private:
     std::vector<Mesh> mMeshes;
     std::vector<MeshPrimitiveGPU> mMeshesGPU;
     lut::VulkanContext const &mContext;
     lut::Allocator const &mAllocator;
-    VkPipelineLayout mPipelineLayout;
 };
 
 #endif // VULKANTIME_MESHMANAGER_HPP
