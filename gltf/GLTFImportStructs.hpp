@@ -42,6 +42,8 @@ struct Texture {
 };
 
 struct Image {
+    std::string name;
+
     stbi_uc *data;
 
     uint32_t width;

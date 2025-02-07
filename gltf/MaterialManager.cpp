@@ -4,7 +4,7 @@
 
 #include <glm/ext.hpp>
 
-void MaterialManager::DebugOutputMeshes() {
+void MaterialManager::DebugOutputMaterials() {
     std::cout << "materials.size()=" << mMaterials.size() << '\n';
 
     const auto &material = mMaterials[1];

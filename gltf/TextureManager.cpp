@@ -7,9 +7,9 @@
 #include "../labutils/to_string.hpp"
 #include "../labutils/vkimage.hpp"
 #include <cstring>
-void TextureManager::addTexture(std::string aName, Image aCPUImage) {
+void TextureManager::addTexture(Image aCPUImage) {
     // check if the texture already exists, if it does, yay :)
-        if(mTextureMap.find(aName) != mTextureMap.end()) {
+        if(mTextureMap.find(aCPUImage.name) != mTextureMap.end()) {
                 return;
         }
         auto const baseWidth = std::uint32_t(aCPUImage.width);

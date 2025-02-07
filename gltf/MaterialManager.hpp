@@ -13,7 +13,7 @@ class MaterialManager {
       mMaterials.reserve(size);
     }
 
-    void DebugOutputMeshes();
+    void DebugOutputMaterials();
 
   private:
     std::vector<Material> mMaterials;

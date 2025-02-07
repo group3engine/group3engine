@@ -90,6 +90,7 @@ project "a12"
 	removefiles { "gltf/main.cpp" }
 
 	dependson "a12-shaders"
+	dependson "gltf"
 
 	links "labutils"
 	links "x-volk"
@@ -144,6 +145,19 @@ project "labutils"
 
 	kind "StaticLib"
 	location "labutils"
+
+	files( sources )
+
+project "gltf"
+	local sources = {
+		"gltf/**.cpp",
+		"gltf/**.hpp",
+		"gltf/**.hxx",
+		"gltf/**.h",
+	}
+
+	kind "Utility"
+	location "gltf"
 
 	files( sources )
 
