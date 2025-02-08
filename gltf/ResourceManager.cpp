@@ -93,10 +93,19 @@ int LoadGLTF(std::string aFilepath, MeshManager &aMeshManager, MaterialManager &
     // Based on https://github.com/zeux/niagara/blob/master/src/scene.cpp
     // load the meshes
 
-    aMeshManager.reserveMeshes(data->meshes_count);
+    // get the number of mesh primitives
+    size_t meshPrimitivesCount = 0;
+        for (size_t mi = 0; mi < data->meshes_count; ++mi) {
+                meshPrimitivesCount += data->meshes[mi].primitives_count;
+        }
+
+    aMeshManager.reserveMeshes(data->meshes_count, meshPrimitivesCount);
     for (size_t mi = 0; mi < data->meshes_count; ++mi) {
         const auto &gltfMesh = data->meshes[mi];
-        Mesh mesh{.name = gltfMesh.name, .meshPrimitives = {}};
+        Mesh mesh{.name = "", .meshPrimitives = {}};
+        if(gltfMesh.name) {
+            mesh.name = gltfMesh.name;
+        }
 
         for (size_t pi = 0; pi < gltfMesh.primitives_count; ++pi) {
             const auto &gltfPrimitive = gltfMesh.primitives[pi];
@@ -152,7 +161,8 @@ int LoadGLTF(std::string aFilepath, MeshManager &aMeshManager, MaterialManager &
         const auto &gltfMaterial = data->materials[i];
 
         Material material = LoadMaterialDefault();
-        material.name = gltfMaterial.name;
+        if(gltfMaterial.name)
+            material.name = gltfMaterial.name;
 
         // PBR Metallic Roughness
         if (gltfMaterial.has_pbr_metallic_roughness) {
@@ -209,10 +219,10 @@ int LoadGLTF(std::string aFilepath, MeshManager &aMeshManager, MaterialManager &
                 translation = {0, 0, 0};
             }
             if (gltfNode.has_rotation) {
-                rotation = {gltfNode.rotation[0], gltfNode.rotation[1], gltfNode.rotation[2],
-                            gltfNode.rotation[3]};
+                rotation = {gltfNode.rotation[3], gltfNode.rotation[0], gltfNode.rotation[1],
+                            gltfNode.rotation[2]};
             } else {
-                rotation = {0, 0, 0, 1};
+                rotation = {1,0,0,0};
             }
             if (gltfNode.has_scale) {
                 scale = {gltfNode.scale[0], gltfNode.scale[1], gltfNode.scale[2]};

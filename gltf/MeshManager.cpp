@@ -8,6 +8,7 @@
 #include "../labutils/vkobject.hpp"
 #include "../labutils/vkutil.hpp"
 #include "glm/glm.hpp"
+#include "../labutils/dbgname.h"
 
 #include <cstring>
 #include <iostream>
@@ -30,10 +31,17 @@ void MeshManager::debugOuptutMeshes() {
 }
 void MeshManager::uploadLastMesh() {
     auto &mesh = mMeshes.back();
+    // get the mesh primitve offset
+    size_t offset = 0;
+    // count the number of already uploaded mesh primitives
+    for(auto &imesh : mMeshes) {
+        offset += imesh.meshPrimitives.size();
+    }
+    offset -= mesh.meshPrimitives.size();
     // for each mesh primitive, create a MeshPrimitiveGPU
     for(auto &meshPrimitive : mesh.meshPrimitives) {
-        auto &meshGPU = mMeshesGPU.emplace_back();
-        meshGPU.mIndexCount = mesh.meshPrimitives[0].indices.size();
+        auto &meshGPU = mMeshesGPU[offset++];
+        meshGPU.mIndexCount = meshPrimitive.indices.size();
         // create final position, texcoord, normal and index buffers
         meshGPU.mPositions =
             lut::create_buffer(mAllocator, meshPrimitive.positions.size() * sizeof(std::uint32_t),
@@ -55,6 +63,12 @@ void MeshManager::uploadLastMesh() {
             lut::create_buffer(mAllocator, meshPrimitive.indices.size() * sizeof(std::uint32_t),
                                VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                                0, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
+        char const * aDebugName = mesh.name.c_str();
+        std::source_location aDbgSrcLoc = std::source_location::current();
+        C5_DEBUG_SET_NAME(mContext.device, meshGPU.mPositions.buffer, VK_OBJECT_TYPE_BUFFER);
+        C5_DEBUG_SET_NAME(mContext.device, meshGPU.mTexcoords.buffer, VK_OBJECT_TYPE_BUFFER);
+        C5_DEBUG_SET_NAME(mContext.device, meshGPU.mNormals.buffer, VK_OBJECT_TYPE_BUFFER);
+        C5_DEBUG_SET_NAME(mContext.device, meshGPU.mIndices.buffer, VK_OBJECT_TYPE_BUFFER);
         // next, create the staging buffers
         lut::Buffer posStaging = lut::create_buffer(
             mAllocator, meshPrimitive.positions.size() * sizeof(std::uint32_t), VK_BUFFER_USAGE_TRANSFER_SRC_BIT,

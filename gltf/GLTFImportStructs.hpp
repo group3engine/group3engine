@@ -14,6 +14,8 @@
 #include "../labutils/vkbuffer.hpp"
 #include "glm/gtc/quaternion.hpp"
 #include <glm/vec4.hpp>
+#include "glm/gtx/transform.hpp"
+
 
 struct MeshPrimitiveGPU {
     labutils::Buffer mPositions;
@@ -77,9 +79,9 @@ struct Transform{
         glm::quat rotation;
         glm::vec3 scale;
         // function to get the matrix
-        glm::mat4 getMatrix() {
-                glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), translation);
-                glm::mat4 rotationMatrix = glm::mat4_cast(rotation);
+        [[nodiscard]] glm::mat4 getMatrix() const {
+                glm::mat4 translationMatrix = glm::translate(translation);
+                glm::mat4 rotationMatrix = glm::mat4_cast(glm::normalize(rotation));
                 glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), scale);
                 return translationMatrix * rotationMatrix * scaleMatrix;
         }

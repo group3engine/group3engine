@@ -27,7 +27,7 @@ class MeshManager {
     }
 
     // reserve space for meshes
-    void reserveMeshes(size_t aSize) { mMeshes.reserve(aSize); }
+    void reserveMeshes(size_t aSize, size_t aPrimSize) { mMeshes.reserve(aSize); mMeshesGPU.resize(aPrimSize); }
     // add a mesh to the manager
     void addMesh(Mesh aMesh) {
         mMeshes.push_back(aMesh);
