@@ -2,7 +2,7 @@
 #define VKUTIL_HPP_9DE3C6CC_921D_46FD_8452_A7F18E276E2A
 // SOLUTION_TAGS: vulkan-(ex-[^1]|cw-.)
 
-#include <volk/volk.h>
+#include <volk.h>
 
 #include "vkobject.hpp"
 #include "vulkan_context.hpp"

@@ -5,8 +5,7 @@
 #ifndef MYPROJECT_PIPELINEBASECLASS_HPP
 #define MYPROJECT_PIPELINEBASECLASS_HPP
 
-#include <volk/volk.h>
-#include <vulkan/vulkan.h>
+#include <volk.h>
 #include "../labutils/vulkan_window.hpp"
 
 namespace lut = labutils;

@@ -2,8 +2,7 @@
 #define VKBUFFER_HPP_3517C9FB_83A0_42F4_BC81_15F390CB83E0
 // SOLUTION_TAGS: vulkan-(ex-[^123]|cw-.)
 
-#include <volk/volk.h>
-#include <vk_mem_alloc.h>
+#include <volk.h>
 
 #include <utility>
 

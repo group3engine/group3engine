@@ -2,8 +2,8 @@
 #define ALLOCATOR_HPP_9E06592D_0990_41CD_AA6E_73AF54B53994
 // SOLUTION_TAGS: vulkan-(ex-[^123]|cw-.)
 
-#include <volk/volk.h>
-#include <vk_mem_alloc.h>
+#include <volk.h>
+#include "vulkanbase.hpp"
 
 #include <utility>
 

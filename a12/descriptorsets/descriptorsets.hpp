@@ -5,6 +5,8 @@
 #ifndef VULKANTIME_DESCRIPTORSETS_HPP
 #define VULKANTIME_DESCRIPTORSETS_HPP
 
+#include "../baked_model.hpp"
+
 #include "../../labutils/error.hpp"
 #include "../../labutils/to_string.hpp"
 #include "../../labutils/vkbuffer.hpp"
@@ -39,4 +41,12 @@ VkDescriptorSet create_lighting_descriptor_set(
     lut::Buffer const &aLightingUBO, lut::Buffer const &aLightUBO,
     lut::DescriptorSetLayout const &aLayout);
 
+lut::DescriptorSetLayout create_material_descriptor_layout(lut::VulkanWindow const &);
+
+VkDescriptorSet create_material_descriptor_set(lut::VulkanWindow const &aWindow,
+                                               lut::DescriptorPool const &aPool,
+                                               BakedMaterialInfo const &aMaterialInfo,
+                                               std::vector<lut::ImageView> const &aImageViews,
+                                               lut::Sampler const &aSampler,
+                                               lut::DescriptorSetLayout const &aMaterialLayout);
 #endif  // VULKANTIME_DESCRIPTORSETS_HPP

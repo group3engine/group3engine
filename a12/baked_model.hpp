@@ -11,7 +11,7 @@
 #include "glm/ext/matrix_float4x4.hpp"
 #include "glm/vec4.hpp"
 #include <array>
-#include <volk/volk.h>
+#include <volk.h>
 
 /* Baked file format:
  *

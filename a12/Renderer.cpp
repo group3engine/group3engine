@@ -13,6 +13,33 @@
 
 namespace GraphicsThings {
 
+void loadTexturesToImage(
+    lut::Allocator const &aAllocator,
+    lut::VulkanContext const &aContext,              /* vectors of input image paths */
+    std::vector<BakedTextureInfo> aBakedTextureInfo, /* vector of output images */
+    std::vector<lut::Image> &aImages,
+    /*vector of image views*/ std::vector<lut::ImageView> &aImageViews) {
+    lut::CommandPool loadCmdPool =
+        create_command_pool(aContext, VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
+    for (int i = 0; i < int(aBakedTextureInfo.size()); i++) {
+
+        if (aBakedTextureInfo[i].space == ETextureSpace::srgb) {
+            aImages.emplace_back(load_image_texture2d(aBakedTextureInfo[i].path.c_str(), aContext,
+                                                      loadCmdPool.handle, aAllocator,
+                                                      VK_FORMAT_R8G8B8A8_SRGB));
+            aImageViews.emplace_back(
+                create_image_view_texture2d(aContext, aImages[i].image, VK_FORMAT_R8G8B8A8_SRGB));
+        } else /* we are in unorm space */
+        {
+            aImages.emplace_back(load_image_texture2d(aBakedTextureInfo[i].path.c_str(), aContext,
+                                                      loadCmdPool.handle, aAllocator,
+                                                      VK_FORMAT_R8G8B8A8_UNORM));
+            aImageViews.emplace_back(
+                create_image_view_texture2d(aContext, aImages[i].image, VK_FORMAT_R8G8B8A8_UNORM));
+        }
+    }
+}
+
 Renderer::Renderer() {
   // create the window
   mWindow = labutils::make_vulkan_window();

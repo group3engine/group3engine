@@ -2,7 +2,7 @@
 #define VULKAN_WINDOW_HPP_4A091E39_2253_474B_9E31_341B4E96E750
 // SOLUTION_TAGS: vulkan-(ex-[^12]|cw-.)
 
-#include <volk/volk.h>
+#include <volk.h>
 
 #if !defined(GLFW_INCLUDE_NONE)
 #	define GLFW_INCLUDE_NONE 1

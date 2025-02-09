@@ -5,6 +5,8 @@
 #ifndef VULKANTIME_FRAMEBUFFERS_HPP
 #define VULKANTIME_FRAMEBUFFERS_HPP
 
+#include <tuple>
+
 #include "../../labutils/vkimage.hpp"
 #include "../../labutils/vkobject.hpp"
 #include "../../labutils/vulkan_window.hpp"

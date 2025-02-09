@@ -7,7 +7,7 @@
  * functions were previously defined locally in vulkan_context.cpp
  */
 
-#include <volk/volk.h>
+#include <volk.h>
 
 #include <string>
 #include <vector>

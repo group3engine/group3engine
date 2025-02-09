@@ -65,7 +65,6 @@ desktop.ini
 *.vcxproj.user
 
 # CMake and Makefile artifacts (if used alongside Premake)
-CMakeLists.txt
 /CMakeCache.txt
 /CMakeFiles/
 /Makefile
@@ -106,6 +105,9 @@ desktop.ini
 
 .vs/
 
-# Premake
+.cache/
+
+release/
+debug/
+
 Makefile
-*.make

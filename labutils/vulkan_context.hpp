@@ -2,7 +2,7 @@
 #define VULKAN_CONTEXT_HPP_F7F7F8DC_7182_47C0_9456_B748A6DD8070
 // SOLUTION_TAGS: vulkan-(ex-[^1]|cw-.)
 
-#include <volk/volk.h>
+#include <volk.h>
 
 #include <cstdint>
 

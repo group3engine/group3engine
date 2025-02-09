@@ -5,7 +5,7 @@
 #include <cassert>
 #include <cstring>
 
-#include <rapidobj/rapidobj.hpp>
+#include <rapidobj.hpp>
 
 #include "input_model.hpp"
 #include "zstdistream.hpp"
