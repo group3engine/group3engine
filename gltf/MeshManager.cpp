@@ -13,6 +13,7 @@
 #include <cstring>
 #include <iostream>
 #include <limits>
+#include <source_location>
 
 void MeshManager::debugOuptutMeshes() {
     std::cout << "meshes.size()=" << mMeshes.size() << '\n';
