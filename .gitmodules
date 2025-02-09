@@ -7,3 +7,6 @@
 [submodule "extern/volk"]
 	path = extern/volk
 	url = https://github.com/zeux/volk.git
+[submodule "cgltf"]
+	path = extern/cgltf
+	url = git@github.com:jkuhlmann/cgltf.git

@@ -3,10 +3,12 @@ cmake_minimum_required(VERSION 3.19...3.31)
 project(group3engine)
 
 add_subdirectory(labutils)
+add_subdirectory(gltf)
 add_subdirectory(a12-bake)
 add_subdirectory(a12)
 
 set_target_properties(labutils PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED YES CXX_EXTENSIONS NO)
+set_target_properties(gltf PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED YES CXX_EXTENSIONS NO)
 set_target_properties(a12-bake PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED YES CXX_EXTENSIONS NO)
 set_target_properties(a12 PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED YES CXX_EXTENSIONS NO)
 
@@ -40,11 +42,15 @@ elseif(WIN32)
   set(VOLK_STATIC_DEFINES "VK_USE_PLATFORM_WIN32_KHR")
 endif()
 
+add_subdirectory(extern/cgltf)
 add_subdirectory(extern/glfw)
 add_subdirectory(extern/glm)
 add_subdirectory(extern/tgen)
 add_subdirectory(extern/volk)
 add_subdirectory(extern/zstd)
+
+add_library(cgltf INTERFACE)
+target_include_directories(cgltf INTERFACE extern/cgltf)
 
 add_library(vma INTERFACE)
 target_include_directories(vma INTERFACE extern/vma)
@@ -55,11 +61,13 @@ target_include_directories(rapidobj INTERFACE extern/rapidobj)
 add_library(stb_image INTERFACE)
 target_include_directories(stb_image INTERFACE extern/stb_image)
 
-target_compile_definitions(labutils PRIVATE GLFW_INCLUDE_NONE GLM_FORCE_XYZW_ONLY GLM_FORCE_QUAT_DATA_XYZW GLM_FORCE_QUAT_CTOR_XYZW GLM_ENABLE_EXPERIMENTAL)
-target_compile_definitions(a12-bake PRIVATE GLFW_INCLUDE_NONE GLM_FORCE_XYZW_ONLY GLM_FORCE_QUAT_DATA_XYZW GLM_FORCE_QUAT_CTOR_XYZW GLM_ENABLE_EXPERIMENTAL)
-target_compile_definitions(a12 PRIVATE GLFW_INCLUDE_NONE GLM_FORCE_XYZW_ONLY GLM_FORCE_QUAT_DATA_XYZW GLM_FORCE_QUAT_CTOR_XYZW GLM_ENABLE_EXPERIMENTAL)
+target_compile_definitions(labutils PRIVATE GLFW_INCLUDE_NONE GLM_ENABLE_EXPERIMENTAL)
+target_compile_definitions(gltf PRIVATE GLFW_INCLUDE_NONE GLM_ENABLE_EXPERIMENTAL)
+target_compile_definitions(a12-bake PRIVATE GLFW_INCLUDE_NONE GLM_ENABLE_EXPERIMENTAL)
+target_compile_definitions(a12 PRIVATE GLFW_INCLUDE_NONE GLM_ENABLE_EXPERIMENTAL)
 
 target_link_libraries(labutils PRIVATE glfw glm::glm-header-only volk vma stb_image)
+target_link_libraries(gltf PRIVATE glm::glm-header-only cgltf stb_image labutils)
 target_link_libraries(a12-bake PRIVATE glm::glm-header-only zstd rapidobj tgen labutils)
 target_link_libraries(a12 PRIVATE glfw glm::glm-header-only stb_image volk vma labutils)
 
