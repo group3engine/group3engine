@@ -10,7 +10,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "../labutils/error.hpp"
+#include "error.hpp"
 #include "index_mesh.hpp"
 #include "input_model.hpp"
 #include "load_model_obj.hpp"

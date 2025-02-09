@@ -7,8 +7,8 @@
 
 #include <tuple>
 #include <functional>
-#include "../labutils/vkobject.hpp"
-#include "../labutils/vulkan_window.hpp"
+#include "vkobject.hpp"
+#include "vulkan_window.hpp"
 #include "PipelineBaseClass.hpp"
 
 namespace lut = labutils;

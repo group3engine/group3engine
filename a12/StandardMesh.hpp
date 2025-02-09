@@ -5,7 +5,7 @@
 #ifndef MYPROJECT_STANDARDMESH_HPP
 #define MYPROJECT_STANDARDMESH_HPP
 
-#include "../labutils/vkbuffer.hpp"
+#include "vkbuffer.hpp"
 #include "baked_model.hpp"
 
 namespace GraphicsThings

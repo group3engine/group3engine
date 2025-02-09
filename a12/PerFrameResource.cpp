@@ -4,9 +4,9 @@
 
 #include <limits>
 #include "PerFrameResource.hpp"
-#include "../labutils/vkutil.hpp"
-#include "../labutils/to_string.hpp"
-#include "../labutils/error.hpp"
+#include "vkutil.hpp"
+#include "to_string.hpp"
+#include "error.hpp"
 
 namespace GraphicsThings
 {

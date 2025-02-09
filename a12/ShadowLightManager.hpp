@@ -5,11 +5,11 @@
 #ifndef VULKANTIME_SHADOWLIGHTMANAGER_HPP
 #define VULKANTIME_SHADOWLIGHTMANAGER_HPP
 
-#include "../labutils/dbgname.h"
-#include "../labutils/vkimage.hpp"
-#include "../labutils/vkutil.hpp"
-#include "../labutils/vkobject.hpp"
-#include "../labutils/dbgname.h"
+#include "dbgname.h"
+#include "vkimage.hpp"
+#include "vkutil.hpp"
+#include "vkobject.hpp"
+#include "dbgname.h"
 #include "Pipeline.hpp"
 #include "StandardMesh.hpp"
 #include "glsl.hpp"

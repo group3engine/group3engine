@@ -5,14 +5,14 @@
 #ifndef VULKANTIME_DESCRIPTORSETS_HPP
 #define VULKANTIME_DESCRIPTORSETS_HPP
 
-#include "../baked_model.hpp"
+#include "baked_model.hpp"
 
-#include "../../labutils/error.hpp"
-#include "../../labutils/to_string.hpp"
-#include "../../labutils/vkbuffer.hpp"
-#include "../../labutils/vkobject.hpp"
-#include "../../labutils/vkutil.hpp"
-#include "../../labutils/vulkan_window.hpp"
+#include "error.hpp"
+#include "to_string.hpp"
+#include "vkbuffer.hpp"
+#include "vkobject.hpp"
+#include "vkutil.hpp"
+#include "vulkan_window.hpp"
 #include "vulkan/vulkan.h"
 namespace lut = labutils;
 

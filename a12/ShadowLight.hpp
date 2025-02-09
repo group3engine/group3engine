@@ -6,12 +6,12 @@
 #define VULKANTIME_SHADOWLIGHT_HPP
 
 #include "Light.hpp"
-#include "../labutils/allocator.hpp"
-#include "../labutils/vulkan_window.hpp"
-#include "../labutils/error.hpp"
-#include "../labutils/to_string.hpp"
-#include "../labutils/vkutil.hpp"
-#include "../labutils/angle.hpp"
+#include "allocator.hpp"
+#include "vulkan_window.hpp"
+#include "error.hpp"
+#include "to_string.hpp"
+#include "vkutil.hpp"
+#include "angle.hpp"
 #include "StandardMesh.hpp"
 #include "Pipeline.hpp"
 #include "ShadowLightManager.hpp"

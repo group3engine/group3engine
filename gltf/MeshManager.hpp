@@ -4,9 +4,9 @@
 
 #ifndef VULKANTIME_MESHMANAGER_HPP
 #define VULKANTIME_MESHMANAGER_HPP
-#include "../labutils/allocator.hpp"
-#include "../labutils/vkbuffer.hpp"
-#include "../labutils/vulkan_context.hpp"
+#include "allocator.hpp"
+#include "vkbuffer.hpp"
+#include "vulkan_context.hpp"
 #include "GLTFImportStructs.hpp"
 #include <vector>
 namespace lut = labutils;

@@ -4,11 +4,11 @@
 
 #include "Renderer.hpp"
 
-#include "../labutils/vkutil.hpp"
+#include "vkutil.hpp"
 #include "Light.hpp"
 #include "glsl.hpp"
 
-#include "../gltf/Entity.hpp"
+#include "Entity.hpp"
 #include "PipelineBuilder.hpp"
 
 namespace GraphicsThings {
@@ -391,7 +391,7 @@ Renderer::Renderer() {
   // Hello other group members, change this to be the path to this git repository
   // https://github.com/KhronosGroup/glTF-Sample-Models/tree/main
   // probably don't download it on the lab machines its like 3GB
-  std::string base_path = "/home/thomas/Downloads/glTF-Sample-Models/2.0/";
+  std::string base_path = "/home/wet-dog/repos/glTF-Sample-Models/2.0/";
   std::string Suzanne = "Suzanne/glTF/Suzanne.gltf";
   std::string IridescenceMetallicSpheres = "IridescenceMetallicSpheres/glTF/IridescenceMetallicSpheres.gltf";
   std::string SimpleSparseAccessor = "SimpleSparseAccessor/glTF/SimpleSparseAccessor.gltf";

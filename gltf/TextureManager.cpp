@@ -3,9 +3,9 @@
 //
 
 #include "TextureManager.hpp"
-#include "../labutils/error.hpp"
-#include "../labutils/to_string.hpp"
-#include "../labutils/vkimage.hpp"
+#include "error.hpp"
+#include "to_string.hpp"
+#include "vkimage.hpp"
 #include <cstring>
 void TextureManager::addTexture(Image aCPUImage) {
     // check if the texture already exists, if it does, yay :)

@@ -11,7 +11,7 @@
 
 #include <stb_image.h>
 
-#include "../labutils/vkbuffer.hpp"
+#include "vkbuffer.hpp"
 #include "glm/gtc/quaternion.hpp"
 #include <glm/vec4.hpp>
 #include "glm/gtx/transform.hpp"

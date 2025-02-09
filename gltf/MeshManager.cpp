@@ -3,12 +3,12 @@
 //
 
 #include "MeshManager.hpp"
-#include "../labutils/error.hpp"
-#include "../labutils/to_string.hpp"
-#include "../labutils/vkobject.hpp"
-#include "../labutils/vkutil.hpp"
+#include "error.hpp"
+#include "to_string.hpp"
+#include "vkobject.hpp"
+#include "vkutil.hpp"
 #include "glm/glm.hpp"
-#include "../labutils/dbgname.h"
+#include "dbgname.h"
 
 #include <cstring>
 #include <iostream>

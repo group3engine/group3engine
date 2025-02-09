@@ -5,8 +5,8 @@
 #ifndef VULKANTIME_GLSL_HPP
 #define VULKANTIME_GLSL_HPP
 
-#include "../labutils/vkbuffer.hpp"
-#include "../labutils/vkimage.hpp"
+#include "vkbuffer.hpp"
+#include "vkimage.hpp"
 #include "glm/detail/type_mat4x4.hpp"
 
 namespace glsl {

@@ -4,11 +4,11 @@
 
 #include <cstring>
 #include "StandardMesh.hpp"
-#include "../labutils/vkbuffer.hpp"
-#include "../labutils/error.hpp"
-#include "../labutils/to_string.hpp"
-#include "../labutils/vkobject.hpp"
-#include "../labutils/vkutil.hpp"
+#include "vkbuffer.hpp"
+#include "error.hpp"
+#include "to_string.hpp"
+#include "vkobject.hpp"
+#include "vkutil.hpp"
 
 namespace lut = labutils;
 

@@ -5,12 +5,12 @@
 #ifndef VULKANTIME_PIPELINE_H
 #define VULKANTIME_PIPELINE_H
 
-#include "../../labutils/vkobject.hpp"
-#include "../../labutils/vulkan_context.hpp"
-#include "../../labutils/vulkan_window.hpp"
-#include "../../labutils/error.hpp"
-#include "../../labutils/to_string.hpp"
-#include "../../labutils/vkutil.hpp"
+#include "vkobject.hpp"
+#include "vulkan_context.hpp"
+#include "vulkan_window.hpp"
+#include "error.hpp"
+#include "to_string.hpp"
+#include "vkutil.hpp"
 #include <glm/glm.hpp>
 
 namespace lut = labutils;

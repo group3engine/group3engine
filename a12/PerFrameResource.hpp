@@ -7,11 +7,11 @@
 
 #include <cstdlib>
 #include <vector>
-#include "../labutils/vkobject.hpp"
-#include "../labutils/vulkan_context.hpp"
+#include "vkobject.hpp"
+#include "vulkan_context.hpp"
 
-#include "../labutils/dbgname.h"
-#include "../labutils/vulkan_window.hpp"
+#include "dbgname.h"
+#include "vulkan_window.hpp"
 
 namespace lut = labutils;
 

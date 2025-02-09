@@ -3,9 +3,9 @@
 //
 
 #include "ShadowLightManager.hpp"
-#include "../labutils/to_string.hpp"
-#include "../labutils/vkutil.hpp"
-#include "../labutils/error.hpp"
+#include "to_string.hpp"
+#include "vkutil.hpp"
+#include "error.hpp"
 
 namespace GraphicsThings
 {

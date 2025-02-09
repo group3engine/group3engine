@@ -4,11 +4,11 @@
 
 #ifndef VULKANTIME_TEXTUREMANAGER_HPP
 #define VULKANTIME_TEXTUREMANAGER_HPP
-#include "../labutils/allocator.hpp"
-#include "../labutils/vkbuffer.hpp"
-#include "../labutils/vkobject.hpp"
-#include "../labutils/vkutil.hpp"
-#include "../labutils/vulkan_context.hpp"
+#include "allocator.hpp"
+#include "vkbuffer.hpp"
+#include "vkobject.hpp"
+#include "vkutil.hpp"
+#include "vulkan_context.hpp"
 #include "GLTFImportStructs.hpp"
 
 #include <unordered_map>

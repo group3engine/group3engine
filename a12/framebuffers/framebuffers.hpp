@@ -7,13 +7,13 @@
 
 #include <tuple>
 
-#include "../../labutils/vkimage.hpp"
-#include "../../labutils/vkobject.hpp"
-#include "../../labutils/vulkan_window.hpp"
-#include "../../labutils/error.hpp"
-#include "../../labutils/to_string.hpp"
-#include "../../labutils/vkimage.hpp"
-#include "../../labutils/vkutil.hpp"
+#include "vkimage.hpp"
+#include "vkobject.hpp"
+#include "vulkan_window.hpp"
+#include "error.hpp"
+#include "to_string.hpp"
+#include "vkimage.hpp"
+#include "vkutil.hpp"
 namespace lut = labutils;
 
 
