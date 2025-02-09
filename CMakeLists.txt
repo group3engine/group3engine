@@ -66,9 +66,9 @@ target_compile_definitions(a12-bake PRIVATE GLFW_INCLUDE_NONE GLM_ENABLE_EXPERIM
 target_compile_definitions(a12 PRIVATE GLFW_INCLUDE_NONE GLM_ENABLE_EXPERIMENTAL)
 
 target_link_libraries(labutils PRIVATE glfw glm::glm-header-only volk vma stb_image)
-target_link_libraries(gltf PRIVATE glm::glm-header-only cgltf stb_image labutils)
+target_link_libraries(gltf PRIVATE glfw glm::glm-header-only cgltf stb_image labutils)
 target_link_libraries(a12-bake PRIVATE glm::glm-header-only zstd rapidobj tgen labutils)
-target_link_libraries(a12 PRIVATE glfw glm::glm-header-only stb_image volk vma labutils)
+target_link_libraries(a12 PRIVATE glfw glm::glm-header-only stb_image volk vma labutils gltf)
 
 file(GLOB_RECURSE GLSL_SOURCE_FILES "a12/shaders/*.vert" "a12/shaders/*.frag")
 file(GLOB_RECURSE GLSL_HEADER_FILES "a12/shaders/*.glsl")
