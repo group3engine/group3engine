@@ -42,7 +42,6 @@ elseif(WIN32)
   set(VOLK_STATIC_DEFINES "VK_USE_PLATFORM_WIN32_KHR")
 endif()
 
-add_subdirectory(extern/cgltf)
 add_subdirectory(extern/glfw)
 add_subdirectory(extern/glm)
 add_subdirectory(extern/tgen)
