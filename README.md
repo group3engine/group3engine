@@ -1,3 +1,9 @@
+# Update git submodules
+`git submodule update --init --recursive`
+
+NOTE: CMake will give an error if this has not been run and then will run the command for you.
+Rerun CMake after this error.
+
 # Build and Run Instructions
 
 `cmake -S . -B build`
