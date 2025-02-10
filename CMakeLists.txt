@@ -2,11 +2,9 @@ cmake_minimum_required(VERSION 3.19...3.31)
 
 project(group3engine)
 
-add_subdirectory(labutils)
 add_subdirectory(a12-bake)
 add_subdirectory(a12)
 
-set_target_properties(labutils PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED YES CXX_EXTENSIONS NO)
 set_target_properties(a12-bake PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED YES CXX_EXTENSIONS NO)
 set_target_properties(a12 PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED YES CXX_EXTENSIONS NO)
 
@@ -58,13 +56,11 @@ target_include_directories(rapidobj INTERFACE extern/rapidobj)
 add_library(stb_image INTERFACE)
 target_include_directories(stb_image INTERFACE extern/stb_image)
 
-target_compile_definitions(labutils PRIVATE GLFW_INCLUDE_NONE GLM_ENABLE_EXPERIMENTAL)
 target_compile_definitions(a12-bake PRIVATE GLFW_INCLUDE_NONE GLM_ENABLE_EXPERIMENTAL)
 target_compile_definitions(a12 PRIVATE GLFW_INCLUDE_NONE GLM_ENABLE_EXPERIMENTAL)
 
-target_link_libraries(labutils PRIVATE glfw glm::glm-header-only volk vma stb_image)
-target_link_libraries(a12-bake PRIVATE glm::glm-header-only zstd rapidobj tgen labutils)
-target_link_libraries(a12 PRIVATE cgltf glfw glm::glm-header-only stb_image volk vma labutils)
+target_link_libraries(a12-bake PRIVATE glm::glm-header-only zstd rapidobj tgen)
+target_link_libraries(a12 PRIVATE cgltf glfw glm::glm-header-only stb_image volk vma)
 
 file(GLOB_RECURSE GLSL_SOURCE_FILES "a12/shaders/*.vert" "a12/shaders/*.frag")
 file(GLOB_RECURSE GLSL_HEADER_FILES "a12/shaders/*.glsl")

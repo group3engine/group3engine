@@ -4,6 +4,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_executable(a12 ${CPP_SOURCE_FILES})
 
+add_subdirectory(labutils)
 add_subdirectory(gltf)
 
 target_include_directories(a12 PRIVATE

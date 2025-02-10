@@ -1,5 +1,6 @@
 #include "load_model_obj.hpp"
 
+#include <cstdlib>
 #include <unordered_set>
 
 #include <cassert>
@@ -10,8 +11,6 @@
 #include "input_model.hpp"
 #include "zstdistream.hpp"
 
-#include "error.hpp"
-namespace lut = labutils;
 
 InputModel load_compressed_wavefront_obj( char const* aPath )
 {
@@ -22,8 +21,10 @@ InputModel load_compressed_wavefront_obj( char const* aPath )
 
 	ZStdIStream ins( aPath );
 	auto result = rapidobj::ParseStream( ins, mlib );
-	if( result.error )
-		throw lut::Error( "Unable to load OBJ file '%s': %s", aPath, result.error.code.message().c_str() );
+	if( result.error ) {
+		std::fprintf(stderr,  "Unable to load OBJ file '%s': %s", aPath, result.error.code.message().c_str() );
+		std::exit(EXIT_FAILURE);
+	}
 
 	// OBJ files can define faces that are not triangles. However, Vulkan will
 	// only render triangles (or lines and points), so we must triangulate any

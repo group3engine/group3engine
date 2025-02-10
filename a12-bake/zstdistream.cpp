@@ -1,12 +1,11 @@
 #include "zstdistream.hpp"
 
+#include <cstdlib>
 #include <streambuf>
 #include <fstream>
 
 #include <zstd.h>
 
-#include "error.hpp"
-namespace lut = labutils;
 
 namespace
 {
@@ -44,8 +43,10 @@ namespace
 	ZStdStreambuf_::ZStdStreambuf_( char const* aPath )
 		: mStream( aPath, std::ios::binary )
 	{
-		if( !mStream.is_open() )
-			throw lut::Error( "Unable to open '%s'", aPath );
+		if( !mStream.is_open() ) {
+			std::fprintf(stderr,  "Unable to open '%s'", aPath );
+			std::exit(EXIT_FAILURE);
+		}
 
 		// Init ZStd
 		mOutSize = ZSTD_DStreamOutSize();
@@ -55,13 +56,17 @@ namespace
 		mInBuf = reinterpret_cast<char*>(::operator new( mInSize ));
 
 		mCtx = ZSTD_createDCtx();
-		if( !mCtx )
-			throw lut::Error( "ZSTD_createDCtx(): returned error" );
+		if( !mCtx ) {
+			std::fprintf(stderr,  "ZSTD_createDCtx(): returned error" );
+			std::exit(EXIT_FAILURE);
+		}
 
 		// Fill buffer once
 		mStream.read( mInBuf, mInSize );
-		if( mStream.bad() )
-			throw lut::Error( "Reading: badness happened" ); // :-(
+		if( mStream.bad() ) {
+			std::fprintf(stderr,  "Reading: badness happened" ); // :-(
+			std::exit(EXIT_FAILURE);
+		}
 
 		mInState.src = mInBuf;
 		mInState.pos = 0;
@@ -70,8 +75,10 @@ namespace
 		// Decompress once
 		ZSTD_outBuffer ob{ mOutBuf, mOutSize, 0 };
 		auto const ret = ZSTD_decompressStream( mCtx, &ob, &mInState );
-		if( ZSTD_isError(ret) )
-			throw lut::Error( "Decompression: %s", ZSTD_getErrorName(ret) );
+		if( ZSTD_isError(ret) ) {
+			std::fprintf(stderr,  "Decompression: %s", ZSTD_getErrorName(ret) );
+			std::exit(EXIT_FAILURE);
+		}
 
 		// Initialize stream buffer
 		setg( mOutBuf, mOutBuf, mOutBuf + ob.pos );
@@ -94,8 +101,10 @@ namespace
 			if( mInState.pos == mInSize )
 			{
 				mStream.read( mInBuf, mInSize );
-				if( mStream.bad() )
-					throw lut::Error( "Reading: badness happened" ); // :-(
+				if( mStream.bad() ) {
+					std::fprintf(stderr,  "Reading: badness happened" ); // :-(
+					std::exit(EXIT_FAILURE);
+				}
 
 				mInState.pos = 0;
 				mInState.size = mStream.gcount();
@@ -103,8 +112,10 @@ namespace
 
 			ZSTD_outBuffer ob{ mOutBuf, mOutSize, 0 };
 			auto const ret = ZSTD_decompressStream( mCtx, &ob, &mInState );
-			if( ZSTD_isError(ret) )
-				throw lut::Error( "Decompression: %s", ZSTD_getErrorName(ret) );
+			if( ZSTD_isError(ret) ) {
+				std::fprintf(stderr,  "Decompression: %s", ZSTD_getErrorName(ret) );
+				std::exit(EXIT_FAILURE);
+			}
 
 			setg( mOutBuf, mOutBuf, mOutBuf + ob.pos );
 		}

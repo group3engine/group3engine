@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <tgen.h>
 
 #include <cstdio>
@@ -10,12 +11,10 @@
 #include <unordered_map>
 #include <vector>
 
-#include "error.hpp"
 #include "index_mesh.hpp"
 #include "input_model.hpp"
 #include "load_model_obj.hpp"
 
-namespace lut = labutils;
 
 namespace {
 // constants
@@ -81,7 +80,7 @@ std::unordered_map<std::string, TextureInfo_> new_paths_(
 
 }  // namespace
 
-int main() try {
+int main() {
 #if !defined(NDEBUG)
     std::printf(
         "Suggest running this in release mode (it appears to be running in "
@@ -124,10 +123,6 @@ int main() try {
                    "assets-src/a12/suntemple.obj-zstd");
 
     return 0;
-} catch (std::exception const &eErr) {
-    std::fprintf(stderr, "Top-level exception [%s]:\n%s\nBye.\n",
-                 typeid(eErr).name(), eErr.what());
-    return 1;
 }
 
 namespace {
@@ -207,10 +202,12 @@ void add_tangents(IndexedMesh &aMesh) {
                               triIndicesUV.size(), vTangents3D, vBitangents3D);
     tgen::orthogonalizeTSpace(normals3D, vTangents3D, vBitangents3D);
     tgen::computeTangent4D(normals3D, vTangents3D, vBitangents3D, tangents4D);
-    if (tangents4D.size() != aMesh.vert.size() * 4)
-        throw lut::Error(
+    if (tangents4D.size() != aMesh.vert.size() * 4) {
+        std::fprintf(stderr, 
             "Tangent generation failed: expected %zu tangents, got %zu",
             aMesh.vert.size(), tangents4D.size());
+        std::exit(EXIT_FAILURE);
+    }
     aMesh.tangent.resize(aMesh.vert.size());
     aMesh.compressedTBN.resize(aMesh.vert.size());
     for (std::size_t i = 0; i < tangents4D.size(); i += 4) {
@@ -332,16 +329,13 @@ void process_model_(char const *aOutput, char const *aInputOBJ,
     mainpath.replace_extension("comp5892mesh");
 
     FILE *fof = std::fopen(mainpath.string().c_str(), "wb");
-    if (!fof)
-        throw lut::Error("Unable to open '%s' for writing",
+    if (!fof) {
+        std::fprintf(stderr, "Unable to open '%s' for writing",
                          mainpath.string().c_str());
-
-    try {
-        write_model_data_(fof, model, indexed, textures);
-    } catch (...) {
-        std::fclose(fof);
-        throw;
+        std::exit(EXIT_FAILURE);
     }
+
+    write_model_data_(fof, model, indexed, textures);
 
     std::fclose(fof);
 
@@ -397,8 +391,10 @@ namespace {
 void checked_write_(FILE *aOut, std::size_t aBytes, void const *aData) {
     auto const ret = std::fwrite(aData, 1, aBytes, aOut);
 
-    if (ret != aBytes)
-        throw lut::Error("fwrite() failed: %zu instead of %zu", ret, aBytes);
+    if (ret != aBytes) {
+        std::fprintf(stderr, "fwrite() failed: %zu instead of %zu", ret, aBytes);
+        std::exit(EXIT_FAILURE);
+    }
 }
 
 void write_string_(FILE *aOut, char const *aString) {
