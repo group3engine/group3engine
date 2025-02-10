@@ -3,7 +3,7 @@
 //
 
 
-#include "pipeline.h"
+#include "pipeline.hpp"
 
 lut::PipelineLayout create_basic_pipeline_layout(
     lut::VulkanContext const &aContext, VkDescriptorSetLayout *aLayouts,

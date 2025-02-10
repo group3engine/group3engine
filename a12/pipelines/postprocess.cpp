@@ -1,7 +1,7 @@
 //
 // Created by thomas on 30/01/25.
 //
-#include "pipeline.h"
+#include "pipeline.hpp"
 
 
 // create a pipeline layout for the post process pipeline

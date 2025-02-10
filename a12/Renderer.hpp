@@ -21,7 +21,7 @@
 #include "descriptorsets/descriptorsets.hpp"
 #include "framebuffers/framebuffers.hpp"
 #include "glsl.hpp"
-#include "pipelines/pipeline.h"
+#include "pipelines/pipeline.hpp"
 #include "renderpasses/renderpasses.hpp"
 #include "vulkan/vulkan.h"
 
