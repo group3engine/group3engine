@@ -44,6 +44,7 @@ add_subdirectory(extern/tgen)
 add_subdirectory(extern/volk)
 add_subdirectory(extern/zstd)
 
+# Add header-only libraries
 add_library(cgltf INTERFACE)
 target_include_directories(cgltf INTERFACE extern/cgltf)
 
@@ -56,6 +57,8 @@ target_include_directories(rapidobj INTERFACE extern/rapidobj)
 add_library(stb_image INTERFACE)
 target_include_directories(stb_image INTERFACE extern/stb_image)
 
+# The GLFW_INCLUDE_NONE macro will explicitly prevent the GLFW header from including the OpenGL header
+# GLM_ENABLE_EXPERIMENTAL is necessary for #include <glm/gtx/transform.hpp>
 target_compile_definitions(a12-bake PRIVATE GLFW_INCLUDE_NONE GLM_ENABLE_EXPERIMENTAL)
 target_compile_definitions(a12 PRIVATE GLFW_INCLUDE_NONE GLM_ENABLE_EXPERIMENTAL)
 
@@ -73,7 +76,8 @@ elseif(WIN32)
   set(GLSLC "${CMAKE_SOURCE_DIR}/extern/shaderc/win-x86_64/glslc.exe")
 endif()
 
-# Thanks to: https://gist.github.com/evilactually/a0d191701cb48f157b05be7f74d79396
+# Compile shaders
+# https://gist.github.com/evilactually/a0d191701cb48f157b05be7f74d79396
 set(SPIRV_OUTPUT_DIR "../assets/a12/shaders/")
 foreach(GLSL ${GLSL_SOURCE_FILES})
   get_filename_component(STEM ${GLSL} NAME_WLE)
