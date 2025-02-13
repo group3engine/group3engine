@@ -1,4 +1,4 @@
-workspace "vkEngineGroup"
+workspace "Engine"
 	language "C++"
 	cppdialect "C++20"
 
@@ -71,21 +71,20 @@ dofile( "util/glslc.lua" )
 
 
 
-project "vkEngineGroup"
+project "Engine"
 	local sources = { 
-		"vkEngineGroup/**.cpp",
-		"vkEngineGroup/**.hpp",
-		"vkEngineGroup/**.hxx",
+		"src/**.cpp",
+		"src/**.hpp",
+		"src/**.hxx",
 	}
 
 	kind "ConsoleApp"
-	location "vkEngineGroup"
+	location "Engine"
 
 	files( sources )
 
-	dependson "vkEngineGroup-shaders"
+	dependson "Engine-shaders"
 
-	links "labutils"
 	links "x-volk"
 	links "x-stb"
 	links "x-glfw"
@@ -94,36 +93,23 @@ project "vkEngineGroup"
 
 	dependson "x-glm"
 
-project "vkEngineGroup-shaders"
+project "Engine-shaders"
 	local shaders = { 
-		"vkEngineGroup/shaders/*.vert",
-		"vkEngineGroup/shaders/*.frag",
-		"vkEngineGroup/shaders/*.comp",
-		"vkEngineGroup/shaders/*.geom",
-		"vkEngineGroup/shaders/*.tesc",
-		"vkEngineGroup/shaders/*.tese"
+		"src/shaders/*.vert",
+		"src/shaders/*.frag",
+		"src/shaders/*.comp",
+		"src/shaders/*.geom",
+		"src/shaders/*.tesc",
+		"src/shaders/*.tese"
 	}
 
 	kind "Utility"
-	location "vkEngineGroup/shaders"
+	location "Engine/shaders"
 
 	files( shaders )
 
-	handle_glsl_files( glslcOptions, "assets/vkEngineGroup/shaders", {} )
+	handle_glsl_files( glslcOptions, "assets/shaders", {} )
 
-project "labutils"
-	local sources = { 
-		"labutils/**.cpp",
-		"labutils/**.hpp",
-		"labutils/**.hxx",
-		"labutils/imgui/**.cpp",
-		"labutils/imgui/**.hxx"
-	}
-
-	kind "StaticLib"
-	location "labutils"
-
-	files( sources )
 
 project()
 
