@@ -23,7 +23,8 @@ void vk::Scene::AddModel(GLTFModel& GLTF, MaterialManager& materialManager)
 		}
 		materialManager.materials[mesh.materialIndex].textures.resize(mesh.textures.size());
 		for (size_t i = 0; i < mesh.textures.size(); i++) {
-			materialManager.materials[mesh.materialIndex].textures[i] = (std::move(LoadTextureFromDisk(mesh.textures[i], context)));
+			VkFormat FORMAT = i == 0 ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM; // index 0 is albedo, the rest should use UNORM 
+			materialManager.materials[mesh.materialIndex].textures[i] = (std::move(LoadTextureFromDisk(mesh.textures[i], context, FORMAT)));
 		}
 		map[mesh.materialIndex] = 1;
 	}
@@ -40,7 +41,7 @@ void vk::Scene::AddModel(GLTFModel& GLTF, MaterialManager& materialManager)
 	gltfModels.push_back(std::move(GLTF));
 }
 
-// This should really be called RenderMeshes and it renders all 
+// This should really be called RenderMeshes which renders meshes in the scene
 void vk::Scene::DrawGLTF(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout)
 {
 	for (auto& model : gltfModels)

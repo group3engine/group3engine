@@ -147,7 +147,7 @@ void main()
     vec3 wNormal = normalize(WorldNormal).xyz;
 
     // == Metal and Roughness ==
-    float roughness = texture(metallicRoughness, uv).b;
+    float roughness = max(texture(metallicRoughness, uv).b, 0.1);
     float metallic = texture(metallicRoughness, uv).g;
 
     vec3 outLight = vec3(0.0);

@@ -77,7 +77,7 @@ uint32_t vk::ComputeMipLevels(uint32_t width, uint32_t height)
 	return static_cast<uint32_t>(std::floor(std::log2(std::max(width, height)))) + 1;
 }
 
-vk::Image vk::LoadTextureFromDisk(const std::string& path, Context& context)
+vk::Image vk::LoadTextureFromDisk(const std::string& path, Context& context, VkFormat format)
 {
 
 	int width, height, texChannels;
@@ -100,7 +100,7 @@ vk::Image vk::LoadTextureFromDisk(const std::string& path, Context& context)
 
 	uint32_t mipLevels = ComputeMipLevels(width, height);
 
-	vk::Image img = vk::CreateImageTexture2D(path, context, width, height, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
+	vk::Image img = vk::CreateImageTexture2D(path, context, width, height, format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
 
 	ExecuteSingleTimeCommands(context, [&](VkCommandBuffer cmd)
 		{
