@@ -1,5 +1,5 @@
 #pragma once
-#include <volk/volk.h>
+#include <volk.h>
 #include <memory>
 #include <unordered_map>
 #include "Camera.hpp"

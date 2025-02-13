@@ -1,7 +1,7 @@
 #pragma once
 
 // Creates command pool, command buffers
-#include <volk/volk.h>
+#include <volk.h>
 #include <memory>
 #include <vector>
 #include "DepthPrepass.hpp"

@@ -2,7 +2,7 @@
 
 #include "Buffer.hpp"
 #include <vector>
-#include <volk/volk.h>
+#include <volk.h>
 #include <array>
 #include <glm/glm.hpp>
 #include <utility>

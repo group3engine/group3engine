@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include <volk/volk.h>
+#include <volk.h>
 #include <iostream>
 #include <functional>
 #include <glm/glm.hpp>

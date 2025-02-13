@@ -1,7 +1,7 @@
 #pragma once
 #include <GLFW/glfw3.h>
-#include <volk/volk.h>
-#include <vk_mem_alloc.h>
+#include <volk.h>
+#include "VMA.hpp"
 #include <vector>
 #include "Image.hpp"
 
