@@ -53,7 +53,7 @@ target_include_directories(stb_image INTERFACE extern/stb_image)
 
 # The GLFW_INCLUDE_NONE macro will explicitly prevent the GLFW header from including the OpenGL header
 # GLM_ENABLE_EXPERIMENTAL is necessary for #include <glm/gtx/transform.hpp>
-target_compile_definitions(src PRIVATE GLFW_INCLUDE_NONE GLM_ENABLE_EXPERIMENTAL)
+target_compile_definitions(src PRIVATE GLFW_INCLUDE_NONE GLM_ENABLE_EXPERIMENTAL GLM_FORCE_RADIANS GLM_FORCE_SIZE_T_LENGTH)
 
 target_link_libraries(src PRIVATE cgltf glfw glm::glm-header-only spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32> stb_image volk vma)
 

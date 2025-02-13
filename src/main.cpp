@@ -10,14 +10,9 @@
 #include <cstdint>
 #include <cstring>
 
-#define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
 #include <volk.h>
-
-#if !defined(GLM_FORCE_RADIANS)
-#	define GLM_FORCE_RADIANS
-#endif
 
 #include <iostream>
 
