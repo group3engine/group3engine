@@ -366,3 +366,5 @@ FodyWeavers.xsd
 .vs
 assets/Sponza/
 *.sln
+
+Makefile
