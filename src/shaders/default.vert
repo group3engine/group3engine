@@ -15,11 +15,6 @@ layout(set = 0, binding = 0) uniform SceneUniform
 layout(push_constant) uniform Push
 {
 	mat4 ModelMatrix;
-	uint dTextureID; // diffuse 
-	uint mTextureID; // metalness
-	uint rTextureID; // roughness
-	uint eTextureID; // emissive
-	uint nTextureID; // normalMap
 }pc;
 
 layout(location = 0) in vec3 pos;
