@@ -21,16 +21,12 @@ vk::Renderer::Renderer(Context& context) : context{context}
 
 	CreateResources();
 
-	m_materialManager.materials.reserve(25);
-	for (int i = 0; i < 25; ++i) {
+	m_materialManager.materials.reserve(100);
+	for (int i = 0; i < 100; ++i) {
 		m_materialManager.materials.emplace_back(context);
 	}
 
 	m_materialManager.Setup(context);
-
-	// Sponza is huge ( physical size not disc space ) when loaded
-	// so i reduced it significantly when rendering meshes (see DrawGLTF) in Scene.cpp
-	auto gltf = vk::LoadGLTF(context, "assets/Sponza/Sponza.gltf");
 
 	// Samplers
 	repeatSamplerAniso	 	  = CreateSampler(context, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_TRUE,  VK_COMPARE_OP_LESS_OR_EQUAL);
@@ -55,16 +51,46 @@ vk::Renderer::Renderer(Context& context) : context{context}
 	std::vector<glm::vec4> spotLightPositions;
 
 	// Random spot light positions put side by side each other 
-	for (size_t i = 0; i < 25; i++) {
-		spotLightPositions.push_back(glm::vec4(1.0, 10.0f, 1.0f, 1.0f)); // Modify as needed
+	size_t gridSize = 5;
+	float spacing = 3.0f; // The distance between each light
+
+	// Center point around which the grid will be arranged
+	glm::vec3 centerPosition(-1.4429f, 1.0453f, -0.072081f);
+
+	for (size_t x = 0; x < gridSize; x++) {
+		for (size_t z = 0; z < gridSize; z++) {
+			// Adjust the X and Z positions to be relative to the center
+			float posX = centerPosition.x + (x - gridSize / 2) * spacing;
+			float posZ = centerPosition.z + (z - gridSize / 2) * spacing;
+
+			// Keep the Y position constant (you can adjust if needed)
+			spotLightPositions.push_back(glm::vec4(posX, centerPosition.y, posZ, 1.0f));
+		}
 	}
+
+	//for (auto& lightpos : spotLightPositions)
+	//{
+	//	model.position = lightpos;
+	//}
 
 	// Create the scene which will store models and lights
 	// Add GLTF to the scene 
 	// Add a directional light source defined earlier 
+	// Sponza is huge ( physical size not disc space ) when loaded
+	// so i reduced it significantly when rendering meshes (see DrawGLTF) in Scene.cpp
+	auto gltf = vk::LoadGLTF(context, "assets/GLTF/Sponza/Sponza.gltf");
+
 	m_scene = std::make_shared<Scene>(context, m_materialManager);
+
 	m_scene->AddModel(gltf, m_materialManager);
 	m_scene->AddLightSource(directionalLight);
+
+	for (auto& light : spotLightPositions)
+	{
+		auto box = vk::LoadGLTF(context, "assets/GLTF/Box/BoxTextured.gltf");
+		box.position = { light.x, light.y, light.z, 1.0 };
+		m_scene->AddModel(box, m_materialManager);
+	}
 
 	// Loop through the positions and instantiate a light 
 	// and pass to the scene to add the lights to the scene

@@ -45,11 +45,6 @@ namespace vk
 	struct alignas(16) MeshPushConstants
 	{
 		glm::mat4 ModelMatrix;
-		uint32_t dTextureID; // Diffuse
-		uint32_t mTextureID; // Metalness
-		uint32_t rTextureID; // Roughness
-		uint32_t eTextureID; // Emissive;
-		uint32_t nTextureID; // NormalMap
 	};
 
 	struct LightUBO

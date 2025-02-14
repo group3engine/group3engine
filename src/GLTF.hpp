@@ -82,7 +82,9 @@ namespace vk
 
 		Material(Material&& other) noexcept : 
 			context(other.context),
-			textures(std::exchange(other.textures, {})) {}
+			textures(std::exchange(other.textures, {})),
+			isValid(other.isValid)
+		{}
 
 		Material& operator=(Material&& other) noexcept {
 			if (this != &other) {
@@ -96,11 +98,20 @@ namespace vk
 		void Destroy();
 
 		std::vector<Image> textures; // make private in the future?
+		bool isValid;
 	private:
 		Context& context;
 	};
+//
+//	struct MaterialHasher
+//	{
+//		size_t operator()(const Material& mat) const
+//		{
+//			return std::hash<std::string>()(mat.textures[0].name) ^ (std::hash<std::string>()(mat.textures[1].name) << 1);
+//;		}
+//	};
 
-
+	struct MeshData;
 	struct MaterialManager
 	{
 		// Material has the GPU textures 
@@ -115,6 +126,22 @@ namespace vk
 		void Destroy(Context& context); 
 		void CreateDescriptorLayout(Context& context); // descriptor set layout for materials 
 		void BuildMaterials(Context& context); // creates the materials
+
+		uint32_t GetNextAvailableIndex() { 
+
+			for (size_t i = 0; i < materials.size(); i++)
+			{
+				if (!materials[i].isValid)
+				{
+					return i;
+				}
+			}
+		}
+
+		void LoadTexturesForMaterial(uint32_t matIndex, const MeshData& mesh, Context& context);
+
+		std::unordered_map<std::size_t, int> materialLookup; // Maps unique material hashes to material indices
+		uint32_t nextAvailableMaterialIndex;
 	};
 
 	// This is behaving like "Mesh" but I made my own so I did not edit
@@ -148,6 +175,8 @@ namespace vk
 			materialIndex(std::move(other.materialIndex)),
 			textures(std::move(other.textures))
 		{
+			std::cout << "Move Constructing Image\n";
+
 		}
 
 		MeshData& operator=(MeshData&& other) noexcept {
@@ -193,15 +222,22 @@ namespace vk
 
 		GLTFModel(GLTFModel&& other) noexcept :
 			context(other.context),
-			meshes(std::exchange(other.meshes, {})) {}
+			meshes(std::exchange(other.meshes, {})),
+			name(other.name),
+			position(other.position)
+		{}
 
 		GLTFModel& operator=(GLTFModel&& other) noexcept {
 			std::swap(meshes, other.meshes);
+			std::swap(name, other.name);
+			std::swap(position, other.position);
 			return *this;
 		}
 
 		const Context& context;
 		std::vector<MeshData> meshes;
+		glm::vec4 position = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+		std::string name;
 	};
 
 	

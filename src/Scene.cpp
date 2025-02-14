@@ -14,19 +14,65 @@ void vk::Scene::AddModel(GLTFModel& GLTF, MaterialManager& materialManager)
 {
 	// Load textures from disk
 	// Want to load only unique materials 
-	std::unordered_map<int, int> map;
+	// problem is that if another mesh is loaded which also uses index 0,
+	// there is an issue because two meshes cant store their materials at index 0 
+	//std::unordered_map<int, int> map;
+	//for (auto& mesh : GLTF.meshes)
+	//{
+	//	if (map[mesh.materialIndex] > 0)
+	//	{
+	//		continue;
+	//	}
+	//	materialManager.materials[mesh.materialIndex].textures.resize(mesh.textures.size());
+	//	for (size_t i = 0; i < mesh.textures.size(); i++) {
+	//		VkFormat FORMAT = i == 0 ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM; // index 0 is albedo, the rest should use UNORM 
+	//		materialManager.materials[mesh.materialIndex].textures[i] = (std::move(LoadTextureFromDisk(mesh.textures[i], context, FORMAT)));
+	//	}
+	//	map[mesh.materialIndex] = 1;
+	//}
+
+	// Check if the material index this mesh refers to is already in-use 
+
 	for (auto& mesh : GLTF.meshes)
 	{
-		if (map[mesh.materialIndex] > 0)
+		if (materialManager.materialLookup[mesh.materialIndex] > 0)
 		{
-			continue;
+			// This index is already in use 
+			// How can i check if this is a unique material for the mesh or an existing one ?
+			auto& material = materialManager.materials[mesh.materialIndex];
+			bool isSameAlbedo   = material.textures[0].name == mesh.textures[0];
+			bool isSameMetRough = material.textures[1].name == mesh.textures[1];
+			
+			if (isSameAlbedo && isSameMetRough)
+			{
+				materialManager.materialLookup[mesh.materialIndex]++; // just keeping track of how many meshes might be using thi could be useful someday 
+				continue; // material is the same, just re-use it 
+			}
+			else
+			{
+				uint32_t newIndex = materialManager.GetNextAvailableIndex();
+				materialManager.materials[newIndex].textures.resize(mesh.textures.size());
+				for (size_t i = 0; i < mesh.textures.size(); i++) {
+					VkFormat FORMAT = i == 0 ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM; // index 0 is albedo, the rest should use UNORM 
+					materialManager.materials[newIndex].textures[i] = (std::move(LoadTextureFromDisk(mesh.textures[i], context, FORMAT)));
+				}
+
+				materialManager.materials[newIndex].isValid = true;
+				materialManager.materialLookup[newIndex] = 1;
+				mesh.materialIndex = newIndex;
+			}
 		}
-		materialManager.materials[mesh.materialIndex].textures.resize(mesh.textures.size());
-		for (size_t i = 0; i < mesh.textures.size(); i++) {
-			VkFormat FORMAT = i == 0 ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM; // index 0 is albedo, the rest should use UNORM 
-			materialManager.materials[mesh.materialIndex].textures[i] = (std::move(LoadTextureFromDisk(mesh.textures[i], context, FORMAT)));
+		else
+		{
+			materialManager.materials[mesh.materialIndex].textures.resize(mesh.textures.size());
+
+			for (size_t i = 0; i < mesh.textures.size(); i++) {
+				VkFormat FORMAT = i == 0 ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM; // index 0 is albedo, the rest should use UNORM 
+				materialManager.materials[mesh.materialIndex].textures[i] = (std::move(LoadTextureFromDisk(mesh.textures[i], context, FORMAT)));
+			}
+			materialManager.materials[mesh.materialIndex].isValid = true;
+			materialManager.materialLookup[mesh.materialIndex] = 1;
 		}
-		map[mesh.materialIndex] = 1;
 	}
 
 	for (auto& mesh : GLTF.meshes)
@@ -52,7 +98,19 @@ void vk::Scene::DrawGLTF(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout)
 
 			MeshPushConstants pc = {};
 			pc.ModelMatrix = glm::mat4(1.0f);
-			pc.ModelMatrix = glm::scale(pc.ModelMatrix, glm::vec3(0.005, 0.005, 0.005));
+
+			// Doing this for now. Will update in the future 
+			if (model.name.find("Sponza") != std::string::npos)
+			{
+				pc.ModelMatrix = glm::scale(pc.ModelMatrix, glm::vec3(0.005, 0.005, 0.005));
+			}
+			else
+			{
+				pc.ModelMatrix = glm::translate(pc.ModelMatrix, glm::vec3(model.position)); // Apply translation first
+				pc.ModelMatrix = glm::scale(pc.ModelMatrix, glm::vec3(0.3f, 0.3f, 0.3f)); // Then apply scaling
+			}
+
+
 			vkCmdPushConstants(cmd, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(MeshPushConstants), &pc);
 			// Set up push constants
 			VkDeviceSize offset[] = { 0 };

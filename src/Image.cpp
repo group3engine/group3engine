@@ -17,7 +17,7 @@ vk::Image::Image(Image&& other) noexcept :
 	imageView(std::exchange(other.imageView, VK_NULL_HANDLE)),
 	allocator(std::exchange(other.allocator, VK_NULL_HANDLE)) {
 
-	//std::cout << "Move Constructing Image\n";
+	std::cout << "Move Constructing Image\n";
 }
 	
 

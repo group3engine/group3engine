@@ -96,7 +96,6 @@ vec3 CookTorranceBRDF(vec3 normal, vec3 halfVector, vec3 viewDir, vec3 lightDir,
     float D = BeckmannNormalDistribution(normal, halfVector, roughness);
 	float G = GeometryTerm(normal, halfVector, lightDir, viewDir);
 
-    vec3 ambient = vec3(0.02);
     vec3 L_Diffuse = (baseColor.xyz / PI) * (vec3(1,1,1) - F) * (1.0 - metallic);
 
     float NdotV = max(dot(normal, viewDir), 0.0);
@@ -115,9 +114,6 @@ vec3 CookTorranceBRDF(vec3 normal, vec3 halfVector, vec3 viewDir, vec3 lightDir,
 // https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing
 float PCF(vec3 WorldPos)
 {
-    vec3 lightDir = normalize(lightData.lights[0].LightPosition.xyz);
-	lightDir = -lightDir;
-
 	// Use direct lighting only. Point light shadows are handleded differently (cube depth)
 	vec4 fragPositionInLightSpace = lightData.lights[0].LightSpaceMatrix * vec4(WorldPos, 1.0);
 	fragPositionInLightSpace.xyz /= fragPositionInLightSpace.w;
@@ -143,7 +139,7 @@ float PCF(vec3 WorldPos)
 
 void main()
 {
-	vec4 color = texture(albedoTexture, uv);
+	vec4 color = texture(albedoTexture, uv) * 0.5;
 	vec3 emissive = vec3(0.0);
     vec3 wNormal = normalize(WorldNormal).xyz;
 
@@ -170,12 +166,12 @@ void main()
 			LightColour = lightData.lights[i].LightColour.xyz * att;
 		}
 		else {
-			LightColour = lightData.lights[i].LightColour.rgb;
+			LightColour = lightData.lights[i].LightColour.rgb * 10.0;
 		}
 
 		if(isDirectional) {
 			float shadowTerm = 1.0 - PCF(WorldPos.xyz);
-			outLight += shadowTerm * CookTorranceBRDF(wNormal, halfVector, viewDir, -lightData.lights[i].LightPosition.xyz, metallic, roughness, color.xyz, LightColour);
+			outLight += shadowTerm * CookTorranceBRDF(wNormal, halfVector, viewDir, lightDir, metallic, roughness, color.xyz, LightColour);
 			
 		} 
 		else {
@@ -183,11 +179,10 @@ void main()
 		}
 	}
 
-    float shadowTerm = 1.0 - PCF(WorldPos.xyz);
 
-	vec3 ambient = vec3(0.9) * color.xyz * shadowTerm;
-	outLight += ambient;
-	fragColor = vec4(vec3(outLight), 1.0);
+	float shadowTerm = 1.0 - PCF(WorldPos.xyz);
+	vec3 ambient = vec3(0.1) * color.rgb;
+	fragColor = vec4(vec3(ambient + outLight), 1.0);
 
 	float brightness = dot(fragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
 	if(brightness > 1.0)

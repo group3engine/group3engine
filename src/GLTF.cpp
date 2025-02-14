@@ -171,6 +171,7 @@ vk::GLTFModel vk::LoadGLTF(const Context& context, const std::string& filepath)
             meshData.textures.push_back(metallicRoughness);
             
             meshData.materialIndex = matIndex;
+            model.name = filepath; // using filepath for now 
             model.meshes.emplace_back(std::move(meshData));
         }
     }
@@ -182,7 +183,7 @@ vk::GLTFModel vk::LoadGLTF(const Context& context, const std::string& filepath)
 
 
 // ======================== Material ======================== 
-vk::Material::Material(vk::Context& context) : context{ context } {}
+vk::Material::Material(vk::Context& context) : context{ context }, isValid{ false } {}
 
 
 void vk::Material::Destroy()
@@ -239,6 +240,17 @@ void vk::MaterialManager::BuildMaterials(Context& context)
 
             UpdateDescriptorSet(context, img, imageInfo, materialDescriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
         }
+    }
+}
+
+void vk::MaterialManager::LoadTexturesForMaterial(uint32_t matIndex, const MeshData& mesh, vk::Context& context)
+{
+    materials[matIndex].textures.resize(mesh.textures.size());
+
+    for (size_t i = 0; i < mesh.textures.size(); i++)
+    {
+        VkFormat FORMAT = (i == 0) ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
+        materials[matIndex].textures[i] = std::move(LoadTextureFromDisk(mesh.textures[i], context, FORMAT));
     }
 }
 
