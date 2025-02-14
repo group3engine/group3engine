@@ -99,6 +99,9 @@ namespace vk
 
 		std::vector<Image> textures; // make private in the future?
 		bool isValid;
+		float roughness;
+		float metallic;
+		glm::vec3 baseColourFactor;
 	private:
 		Context& context;
 	};

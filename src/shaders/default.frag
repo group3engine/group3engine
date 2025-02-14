@@ -36,6 +36,9 @@ layout(set = 0, binding = 1) uniform LightBuffer {
 layout(push_constant) uniform Push
 {
 	mat4 ModelMatrix;
+	vec4 BaseColourFactor;
+	float Metallic;
+	float Roughness;
 }pc;
 
 layout(set = 0, binding = 2) uniform sampler2DShadow shadowMap;
@@ -162,7 +165,7 @@ void main()
 			LightColour = lightData.lights[i].LightColour.xyz * att;
 		}
 		else {
-			LightColour = lightData.lights[i].LightColour.rgb * 10.0;
+			LightColour = lightData.lights[i].LightColour.rgb * 100.0;
 		}
 
 		if(isDirectional) {

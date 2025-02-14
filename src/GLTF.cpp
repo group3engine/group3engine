@@ -123,19 +123,11 @@ vk::GLTFModel vk::LoadGLTF(const Context& context, const std::string& filepath)
                 meshData.vertices.push_back(vertex);
             }
 
-
-            // Each material has a descriptor set
-            // We can take the material index 
-            // and index into the material descriptor set array to get the material 
-            // for the current mesh we're rendering 
-
-            // I think the above might be wrong
             // Each material has a descriptor set
             // If each material is stored in array and the mesh has a material index
             // We would just need to index into the material array, 
             // bind the descriptor set for that material 
             // perhaps use set = 1 for materials
-
 
             // Material 
             cgltf_material* material = gltfPrimitive.material;
@@ -152,14 +144,14 @@ vk::GLTFModel vk::LoadGLTF(const Context& context, const std::string& filepath)
             }
 
             // Get the texture paths for this meshes material  
- 
+            // neeed to get other textures and multipliers
             const cgltf_pbr_metallic_roughness& pbr = material->pbr_metallic_roughness;
 
             const std::string albedoPath = SetDirectory(filepath, pbr.base_color_texture.texture->image->uri);
             std::string metallicRoughness = "";
             
             if (pbr.metallic_roughness_texture.texture == NULL) {
-                char defaultRoughness[] = "defaultRoughness.jpg";
+                char defaultRoughness[] = "defaultRoughness.jpg"; // this JPG needs to be copied into each mesh dir e.g. Sponza/sponza.gltf, Sponza directory needs a copy
                 metallicRoughness = SetDirectory(filepath, defaultRoughness);
             }
             else

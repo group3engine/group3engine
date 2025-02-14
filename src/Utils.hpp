@@ -45,6 +45,9 @@ namespace vk
 	struct alignas(16) MeshPushConstants
 	{
 		glm::mat4 ModelMatrix;
+		glm::vec4 BaseColourFactor;
+		float Metallic;
+		float Roughness;
 	};
 
 	struct LightUBO
