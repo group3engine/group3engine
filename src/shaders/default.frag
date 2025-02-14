@@ -163,7 +163,7 @@ void main()
 			float dist = length(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
 
 			float att = 1.0 / (dist * dist);
-			LightColour = lightData.lights[i].LightColour.xyz * att;
+			LightColour = lightData.lights[i].LightColour.xyz * 5.0 * att;
 		}
 		else {
 			LightColour = lightData.lights[i].LightColour.rgb * 20.0;

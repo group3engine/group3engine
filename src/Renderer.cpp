@@ -53,7 +53,7 @@ vk::Renderer::Renderer(Context& context) : context{context}
 
 	for (size_t i = 0; i < 25; i++)
 	{
-		spotLightPositions.push_back(glm::vec4(0.0f, 1.0f + i, 0.5f, 1.0f));
+		spotLightPositions.push_back(glm::vec4(-9.0 + i * 0.8, 0.2f, 0.5f, 1.0f));
 	}
 
 	// Create the scene which will store models and lights
