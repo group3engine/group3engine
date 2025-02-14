@@ -161,7 +161,12 @@ void main()
 		if(!isDirectional) 
 		{
 			float dist = length(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
-			float att = 1.0 / (dist * dist); 
+			float constant = 1.0;
+			float linear = 0.09;
+			float quadratic = 0.032;
+
+			float att = 1.0 / (constant + linear * dist + quadratic * (dist * dist));
+
 			LightColour = lightData.lights[i].LightColour.xyz * att;
 		}
 		else {

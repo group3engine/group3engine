@@ -50,22 +50,9 @@ vk::Renderer::Renderer(Context& context) : context{context}
 
 	std::vector<glm::vec4> spotLightPositions;
 
-	// Random spot light positions put side by side each other 
-	size_t gridSize = 5;
-	float spacing = 3.0f; // The distance between each light
-
-	// Center point around which the grid will be arranged
-	glm::vec3 centerPosition(-1.4429f, 1.0453f, -0.072081f);
-
-	for (size_t x = 0; x < gridSize; x++) {
-		for (size_t z = 0; z < gridSize; z++) {
-			// Adjust the X and Z positions to be relative to the center
-			float posX = centerPosition.x + (x - gridSize / 2) * spacing;
-			float posZ = centerPosition.z + (z - gridSize / 2) * spacing;
-
-			// Keep the Y position constant (you can adjust if needed)
-			spotLightPositions.push_back(glm::vec4(posX, centerPosition.y, posZ, 1.0f));
-		}
+	for (size_t i = 0; i < 25; i++)
+	{
+		spotLightPositions.push_back(glm::vec4(0.0f, 1.0f + i, 0.5f, 1.0f));
 	}
 
 	// Create the scene which will store models and lights
