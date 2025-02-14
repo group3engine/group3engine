@@ -37,7 +37,7 @@ vk::GLTFModel vk::LoadGLTF(const Context& context, const std::string& filepath)
         throw std::runtime_error("Failed to load GLTF file: " + filepath);
     }
 
-    std::printf("Material count: %zd\n", data->materials_count);
+    //std::printf("Material count: %zd\n", data->materials_count);
 
     //Each mesh primitive should have a material index
     result = cgltf_load_buffers(&options, data, filepath.c_str());
@@ -238,7 +238,7 @@ void vk::MaterialManager::BuildMaterials(Context& context)
                 .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
             };
 
-            UpdateDescriptorSet(context, img, imageInfo, materialDescriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+            UpdateDescriptorSet(context, static_cast<uint32_t>(img), imageInfo, materialDescriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
         }
     }
 }

@@ -133,15 +133,16 @@ namespace vk
 			{
 				if (!materials[i].isValid)
 				{
-					return i;
+					return static_cast<uint32_t>(i);
 				}
 			}
+
+			return -1;
 		}
 
 		void LoadTexturesForMaterial(uint32_t matIndex, const MeshData& mesh, Context& context);
 
 		std::unordered_map<std::size_t, int> materialLookup; // Maps unique material hashes to material indices
-		uint32_t nextAvailableMaterialIndex;
 	};
 
 	// This is behaving like "Mesh" but I made my own so I did not edit
@@ -175,7 +176,7 @@ namespace vk
 			materialIndex(std::move(other.materialIndex)),
 			textures(std::move(other.textures))
 		{
-			std::cout << "Move Constructing Image\n";
+			//std::cout << "Move Constructing Image\n";
 
 		}
 

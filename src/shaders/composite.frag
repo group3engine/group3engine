@@ -18,7 +18,7 @@ void main()
 
     float l = texture(renderedScene, uv).x;
 
-	vec3 result = ldrColor;
+	vec3 result = ldrColor + bloom.rgb;
 	vec3 gammaCorrectedColor = pow(result, vec3(1.0 / 2.2));
 
 	fragColor = vec4(vec3(gammaCorrectedColor), 1.0);

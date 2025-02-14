@@ -68,11 +68,6 @@ vk::Renderer::Renderer(Context& context) : context{context}
 		}
 	}
 
-	//for (auto& lightpos : spotLightPositions)
-	//{
-	//	model.position = lightpos;
-	//}
-
 	// Create the scene which will store models and lights
 	// Add GLTF to the scene 
 	// Add a directional light source defined earlier 

@@ -36,10 +36,6 @@ layout(set = 0, binding = 1) uniform LightBuffer {
 layout(push_constant) uniform Push
 {
 	mat4 ModelMatrix;
-	uint dTextureID; // diffuse 
-	uint mTextureID; // metalness
-	uint rTextureID; // roughness
-	uint eTextureID; // emissive
 }pc;
 
 layout(set = 0, binding = 2) uniform sampler2DShadow shadowMap;

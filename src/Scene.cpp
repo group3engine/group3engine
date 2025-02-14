@@ -12,27 +12,7 @@ vk::Scene::Scene(Context& context, MaterialManager& materialManager) : context(c
 
 void vk::Scene::AddModel(GLTFModel& GLTF, MaterialManager& materialManager)
 {
-	// Load textures from disk
-	// Want to load only unique materials 
-	// problem is that if another mesh is loaded which also uses index 0,
-	// there is an issue because two meshes cant store their materials at index 0 
-	//std::unordered_map<int, int> map;
-	//for (auto& mesh : GLTF.meshes)
-	//{
-	//	if (map[mesh.materialIndex] > 0)
-	//	{
-	//		continue;
-	//	}
-	//	materialManager.materials[mesh.materialIndex].textures.resize(mesh.textures.size());
-	//	for (size_t i = 0; i < mesh.textures.size(); i++) {
-	//		VkFormat FORMAT = i == 0 ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM; // index 0 is albedo, the rest should use UNORM 
-	//		materialManager.materials[mesh.materialIndex].textures[i] = (std::move(LoadTextureFromDisk(mesh.textures[i], context, FORMAT)));
-	//	}
-	//	map[mesh.materialIndex] = 1;
-	//}
-
 	// Check if the material index this mesh refers to is already in-use 
-
 	for (auto& mesh : GLTF.meshes)
 	{
 		if (materialManager.materialLookup[mesh.materialIndex] > 0)
@@ -51,7 +31,8 @@ void vk::Scene::AddModel(GLTFModel& GLTF, MaterialManager& materialManager)
 			else
 			{
 				uint32_t newIndex = materialManager.GetNextAvailableIndex();
-				materialManager.materials[newIndex].textures.resize(mesh.textures.size());
+				assert(newIndex != -1);
+;				materialManager.materials[newIndex].textures.resize(mesh.textures.size());
 				for (size_t i = 0; i < mesh.textures.size(); i++) {
 					VkFormat FORMAT = i == 0 ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM; // index 0 is albedo, the rest should use UNORM 
 					materialManager.materials[newIndex].textures[i] = (std::move(LoadTextureFromDisk(mesh.textures[i], context, FORMAT)));
