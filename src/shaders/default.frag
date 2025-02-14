@@ -138,7 +138,7 @@ float PCF(vec3 WorldPos)
 
 void main()
 {
-	vec4 color = texture(albedoTexture, uv) * 0.5;
+	vec4 color = texture(albedoTexture, uv);
 	vec3 emissive = vec3(0.0);
     vec3 wNormal = normalize(WorldNormal).xyz;
 
@@ -165,7 +165,7 @@ void main()
 			LightColour = lightData.lights[i].LightColour.xyz * att;
 		}
 		else {
-			LightColour = lightData.lights[i].LightColour.rgb * 100.0;
+			LightColour = lightData.lights[i].LightColour.rgb * 50.0;
 		}
 
 		if(isDirectional) {
