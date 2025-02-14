@@ -13,3 +13,6 @@
 [submodule "extern/spdlog"]
 	path = extern/spdlog
 	url = https://github.com/gabime/spdlog.git
+[submodule "extern/JoltPhysics"]
+	path = extern/JoltPhysics
+	url = https://github.com/jrouwe/JoltPhysics.git
