@@ -3,6 +3,7 @@
 #include "Utils.hpp"
 #include "Light.hpp"
 
+#include <glm/gtc/random.hpp>
 
 namespace
 {
@@ -81,7 +82,12 @@ vk::Renderer::Renderer(Context& context) : context{context}
 		Light spotLight = {};
 		spotLight.Type = LightType::Spot;
 		spotLight.position = position;
-		spotLight.colour = glm::vec4(0.3f, 0.0f, 1.0f, 1.0f);
+		spotLight.colour = glm::vec4(
+			glm::linearRand(0.0f, 1.0f),
+			glm::linearRand(0.0f, 1.f),
+			glm::linearRand(0.0f, 1.0f),
+			1.0f 
+		);		
 		m_scene->AddLightSource(spotLight);
 	}
 

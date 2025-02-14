@@ -170,7 +170,7 @@ void main()
 			LightColour = lightData.lights[i].LightColour.xyz * att;
 		}
 		else {
-			LightColour = lightData.lights[i].LightColour.rgb * 50.0;
+			LightColour = lightData.lights[i].LightColour.rgb * 20.0;
 		}
 
 		if(isDirectional) {
