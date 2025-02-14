@@ -8,6 +8,8 @@
 #include <utility>
 #include "Utils.hpp"
 #include "Image.hpp"
+#include "glm/ext/matrix_transform.hpp"
+#include "glm/fwd.hpp"
 
 // TODO:
 // Scene should release the resources of the GLTF
@@ -168,6 +170,10 @@ namespace vk
 		std::vector<uint32_t> indices;
 	};
 
+	struct Entity {
+		std::vector<MeshData> *meshData = nullptr;
+		glm::mat4 modelMatrix = glm::identity<glm::mat4>();
+	};
 }
 
 
@@ -193,15 +199,19 @@ namespace vk
 
 		GLTFModel(GLTFModel&& other) noexcept :
 			context(other.context),
-			meshes(std::exchange(other.meshes, {})) {}
+			meshes(std::exchange(other.meshes, {})),
+			entities(std::exchange(other.entities, {}))
+			{}
 
 		GLTFModel& operator=(GLTFModel&& other) noexcept {
 			std::swap(meshes, other.meshes);
+			std::swap(entities, other.entities);
 			return *this;
 		}
 
 		const Context& context;
-		std::vector<MeshData> meshes;
+		std::vector<std::vector<MeshData>> meshes;
+		std::vector<Entity> entities;
 	};
 
 	

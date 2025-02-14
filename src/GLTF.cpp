@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Context.hpp"
+#include "glm/gtc/type_ptr.hpp"
 
 #define CGLTF_IMPLEMENTATION
 #include <cgltf.h>
@@ -65,7 +66,7 @@ vk::GLTFModel vk::LoadGLTF(const Context& context, const std::string& filepath)
             mesh.name = gltfMesh.name;
         }
 
-        MeshData meshData(context);
+        std::vector<MeshData> meshDatas;
 
         // Mesh has primities. Primitives is just positions, tex, normals which make up the mesh 
         for (size_t pi = 0; pi < gltfMesh.primitives_count; ++pi) {
@@ -99,6 +100,8 @@ vk::GLTFModel vk::LoadGLTF(const Context& context, const std::string& filepath)
                 assert(cgltf_num_components(tex->type) == 2);
                 cgltf_accessor_unpack_floats(tex, meshPrimitive.texcoords.data(), count);
             }
+
+            MeshData meshData(context);
 
             // Indices
             meshData.indices.resize(gltfPrimitive.indices->count);
@@ -155,7 +158,11 @@ vk::GLTFModel vk::LoadGLTF(const Context& context, const std::string& filepath)
  
             const cgltf_pbr_metallic_roughness& pbr = material->pbr_metallic_roughness;
 
-            const std::string albedoPath = SetDirectory(filepath, pbr.base_color_texture.texture->image->uri);
+            if (pbr.base_color_texture.texture) {
+                const std::string albedoPath = SetDirectory(filepath, pbr.base_color_texture.texture->image->uri);
+                meshData.textures.push_back(albedoPath);
+            }
+
             std::string metallicRoughness = "";
             
             if (pbr.metallic_roughness_texture.texture == NULL) {
@@ -167,12 +174,35 @@ vk::GLTFModel vk::LoadGLTF(const Context& context, const std::string& filepath)
                 metallicRoughness = SetDirectory(filepath, material->pbr_metallic_roughness.metallic_roughness_texture.texture->image->uri);
             }
 
-            meshData.textures.push_back(albedoPath);
             meshData.textures.push_back(metallicRoughness);
             
             meshData.materialIndex = matIndex;
-            model.meshes.emplace_back(std::move(meshData));
+
+            meshDatas.push_back(std::move(meshData));
         }
+
+        model.meshes.push_back(std::move(meshDatas));
+    }
+
+    model.entities.reserve(data->nodes_count);
+    for (cgltf_size ni = 0; ni < data->nodes_count; ++ni) {
+        const auto &gltf_node = data->nodes[ni];
+
+        Entity entity{};
+
+        float m[16];
+        cgltf_node_transform_world(&gltf_node, m);
+
+        entity.modelMatrix = glm::make_mat4x4(m);
+
+        if (gltf_node.mesh) {
+            ptrdiff_t meshIndex = gltf_node.mesh - data->meshes;
+            assert(meshIndex >= 0  && meshIndex < data->nodes_count);
+
+            entity.meshData = &model.meshes[meshIndex];
+        }
+
+        model.entities.push_back(entity);
     }
 
     cgltf_free(data);
