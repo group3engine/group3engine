@@ -1,5 +1,5 @@
 #pragma once
-#include <volk.h>
+#include "Volk.hpp"
 #include <vector>
 #include <cassert>
 #include <stdexcept>

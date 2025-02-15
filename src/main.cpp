@@ -12,7 +12,7 @@
 
 #include <GLFW/glfw3.h>
 
-#include <volk.h>
+#include "Volk.hpp"
 
 #include <iostream>
 

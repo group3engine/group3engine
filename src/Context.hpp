@@ -1,6 +1,6 @@
 #pragma once
 #include <GLFW/glfw3.h>
-#include <volk.h>
+#include "Volk.hpp"
 #include "VMA.hpp"
 #include <vector>
 #include "Image.hpp"
