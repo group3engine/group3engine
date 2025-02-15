@@ -8,7 +8,7 @@
 
 #include "Utils.hpp"
 #include "Volk.hpp"
-#include "scene management/GLTF.hpp"
+#include "GLTF.hpp"
 /*
     Pipeline abstraction which allows simpler and easier construction of pipelines
     Improvements:

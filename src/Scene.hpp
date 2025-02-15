@@ -9,9 +9,9 @@
 #include "Context.hpp"
 #include "Image.hpp"
 #include "Utils.hpp"
-#include "renderer/Light.hpp"
-#include "scene management/GLTF.hpp"
-#include "vulkan utilities/Buffer.hpp"
+#include "Light.hpp"
+#include "GLTF.hpp"
+#include "Buffer.hpp"
 
 namespace vk
 {

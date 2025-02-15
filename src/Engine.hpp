@@ -4,7 +4,7 @@
 
 #include "Camera.hpp"
 #include "Context.hpp"
-#include "renderer/Renderer.hpp"
+#include "Renderer.hpp"
 
 namespace vk
 {

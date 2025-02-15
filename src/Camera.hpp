@@ -9,7 +9,7 @@
 
 #include "Context.hpp"
 #include "Utils.hpp"
-#include "vulkan utilities/Buffer.hpp"
+#include "Buffer.hpp"
 
 constexpr float m_speedIncreaseAmount = 15.0f;
 constexpr float m_speedDecreaseAmount = 8.0f;

@@ -9,10 +9,10 @@
 #include "Scene.hpp"
 #include "ShadowMap.hpp"
 #include "Volk.hpp"
-#include "renderer/Bloom.hpp"
-#include "renderer/Composite.hpp"
-#include "renderer/DepthPrepass.hpp"
-#include "renderer/ForwardPass.hpp"
+#include "Bloom.hpp"
+#include "Composite.hpp"
+#include "DepthPrepass.hpp"
+#include "ForwardPass.hpp"
 
 namespace vk
 {

@@ -5,7 +5,7 @@
 
 #include "Image.hpp"
 #include "Volk.hpp"
-#include "vulkan utilities/VMA.hpp"
+#include "VMA.hpp"
 
 namespace vk
 {

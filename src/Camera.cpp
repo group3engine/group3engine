@@ -9,7 +9,7 @@
 
 #include "Context.hpp"
 #include "Utils.hpp"
-#include "vulkan utilities/Buffer.hpp"
+#include "Buffer.hpp"
 
 vk::Camera::Camera(Context& context, const glm::vec3 position, glm::vec3 direction, glm::vec3 up, float aspect) : context{ context }, m_position{ position }, m_direction{ direction }, m_up{ up }
 {

@@ -3,7 +3,7 @@
 #include "Context.hpp"
 #include "Light.hpp"
 #include "Utils.hpp"
-#include "scene management/SampleGLTFFilePaths.hpp"
+#include "SampleGLTFFilePaths.hpp"
 
 namespace
 {
@@ -31,7 +31,7 @@ vk::Renderer::Renderer(Context& context) : context{context}
 
 	// Sponza is huge ( physical size not disc space ) when loaded
 	// so i reduced it significantly when rendering meshes (see DrawGLTF) in Scene.cpp
-        std::string base_path = "/home/thomas/Downloads/glTF-Sample-Models/2.0/";
+        std::string base_path = "/home/wet-dog/repos/group3engine/assets/";
         std::string gltf_path = base_path + Sample::Sponza;
 	auto gltf = vk::LoadGLTF(context, gltf_path);
 

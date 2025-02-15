@@ -4,7 +4,7 @@
 #include "Pipeline.hpp"
 #include "RenderPass.hpp"
 #include "Utils.hpp"
-#include "vulkan utilities/Buffer.hpp"
+#include "Buffer.hpp"
 
 vk::Composite::Composite(Context& context, Image& LightingPass, Image& BloomPass) :
 	context{ context },

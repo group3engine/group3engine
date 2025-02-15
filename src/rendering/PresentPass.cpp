@@ -5,7 +5,7 @@
 #include "RenderPass.hpp"
 #include "Scene.hpp"
 #include "Utils.hpp"
-#include "vulkan utilities/Buffer.hpp"
+#include "Buffer.hpp"
 
 /*
 	This pass will just take the forward pass shading image and present it 

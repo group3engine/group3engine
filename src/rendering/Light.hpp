@@ -1,9 +1,10 @@
 #pragma once
 
+#include <glm/glm.hpp>
+
 #include "Image.hpp"
 #include "Utils.hpp"
-#include "glm/glm.hpp"
-#include "vulkan utilities/Buffer.hpp"
+#include "Buffer.hpp"
 
 namespace vk
 {

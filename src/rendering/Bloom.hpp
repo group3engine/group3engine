@@ -3,7 +3,7 @@
 
 #include "Image.hpp"
 #include "Volk.hpp"
-#include "vulkan utilities/Buffer.hpp"
+#include "Buffer.hpp"
 
 namespace vk
 {

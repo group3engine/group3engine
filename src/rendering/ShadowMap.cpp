@@ -6,7 +6,7 @@
 #include "RenderPass.hpp"
 #include "Scene.hpp"
 #include "Utils.hpp"
-#include "vulkan utilities/Buffer.hpp"
+#include "Buffer.hpp"
 
 #define RESOLUTION 1024
 vk::ShadowMap::ShadowMap(Context& context, std::shared_ptr<Scene>& scene) : context{ context }, scene{ scene }
