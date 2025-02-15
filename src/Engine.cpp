@@ -5,6 +5,8 @@
 
 #include "HelloWorld.hpp"
 
+#include "GLFW.hpp"
+
 vk::Engine::Engine()
 {
 	m_isRunning = false;
@@ -13,7 +15,13 @@ vk::Engine::Engine()
 
 bool vk::Engine::Initialize()
 {
-	if (m_context.MakeContext(1280, 720))
+	// TODO: Could probably store this somewhere else
+	int windowWidth = 1280;
+	int windowHeight = 720;
+
+	Platform::get().StartUp(windowWidth, windowHeight);
+
+	if (m_context.MakeContext(Platform::get().window, 1280, 720))
 	{
 		m_isRunning = true;
 	}
@@ -30,6 +38,7 @@ void vk::Engine::Shutdown()
 	m_Renderer->Destroy();
 	m_Renderer.reset();
 	m_context.Destroy(); // Free vulkan device, allocator, window 
+	Platform::get().ShutDown();
 }
 
 void vk::Engine::Run()
@@ -37,13 +46,13 @@ void vk::Engine::Run()
 	// Physics hello world!
 	HelloWorld();
 
-	while (m_isRunning && !glfwWindowShouldClose(m_context.window))
+	while (m_isRunning && !glfwWindowShouldClose(m_context.mWindow))
 	{
 		double currentFrameTime = glfwGetTime();
 		deltaTime = currentFrameTime - m_lastFrameTime;
 		m_lastFrameTime = currentFrameTime;
 
-		glfwPollEvents();
+		PollEvents();
 		Update(deltaTime);
 		Render();
 	}

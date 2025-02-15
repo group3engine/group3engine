@@ -4,6 +4,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_executable(src ${CPP_SOURCE_FILES})
 
+add_subdirectory(core)
 add_subdirectory(physics)
 add_subdirectory(rendering)
 add_subdirectory(scene)

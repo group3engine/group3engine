@@ -1,14 +1,14 @@
-#include "Volk.hpp"
 #include "Context.hpp"
-#include "Utils.hpp"
-#include "RenderPass.hpp"
 
-#include <unordered_set>
-#include <string>
-#include <optional>
-#include <cassert>
 #include <algorithm>
+#include <cassert>
 #include <cstring>
+#include <optional>
+#include <string>
+#include <unordered_set>
+
+#include "RenderPass.hpp"
+#include "Utils.hpp"
 
 // Instance + Device
 namespace
@@ -317,7 +317,7 @@ namespace
 
 
 vk::Context::Context() : 
-	window(nullptr), 
+	mWindow(nullptr), 
 	instance(VK_NULL_HANDLE), 
 	pDevice(VK_NULL_HANDLE), 
 	device(VK_NULL_HANDLE),
@@ -402,10 +402,6 @@ void vk::Context::Destroy()
     {
         vkDestroyInstance(instance, nullptr);
     }
-
-
-    glfwDestroyWindow(window);
-    glfwTerminate();
 }
 
 void vk::Context::TeardownSwapchain()
@@ -560,7 +556,7 @@ void vk::Context::CreateSwapchain()
     if (extent.width == std::numeric_limits<uint32_t>::max())
     {
         int width, height;
-        glfwGetFramebufferSize(window, &width, &height);
+        glfwGetFramebufferSize(mWindow, &width, &height);
 
         const auto& min = caps.minImageExtent;
         const auto& max = caps.maxImageExtent;
@@ -609,8 +605,10 @@ void vk::Context::CreateSwapchain()
     swapchainFramebuffers = CreateSwapchainFramebuffers(device, swapchainImageViews, renderPass, extent);
 }
 
-bool vk::Context::MakeContext(uint32_t width, uint32_t height)
+bool vk::Context::MakeContext(GLFWwindow *window, uint32_t width, uint32_t height)
 {
+    mWindow = window;
+
     if (volkInitialize() != VK_SUCCESS) {
         ERROR("Failed to initialize Volk.");
         return false;
@@ -634,15 +632,6 @@ bool vk::Context::MakeContext(uint32_t width, uint32_t height)
         enabledExtensions.emplace_back("VK_EXT_debug_utils");
     }
 #endif 
-
-    glfwInit();
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    window = glfwCreateWindow(width, height, "Vulkan", nullptr, nullptr);
-
-    if (!window)
-    {
-        std::cerr << "Failed to create GLFW window" << std::endl;
-    }
 
     uint32_t reqExtCount = 0;
     const char** requiredExt = glfwGetRequiredInstanceExtensions(&reqExtCount);
@@ -705,7 +694,7 @@ bool vk::Context::MakeContext(uint32_t width, uint32_t height)
 
     // Create logical device (graphics family first)
     // create window surface
-    if (glfwCreateWindowSurface(instance, window, nullptr, &surface))
+    if (glfwCreateWindowSurface(instance, mWindow, nullptr, &surface))
     {
         throw std::runtime_error("Failed to create a GLFW window surface.");
     }

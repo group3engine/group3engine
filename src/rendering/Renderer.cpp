@@ -44,10 +44,10 @@ vk::Renderer::Renderer(Context& context) : context{context}
 	m_camera = std::make_shared<Camera>(context, cameraPos, glm::normalize(cameraPos + cameraDir), up, context.extent.width / (float)context.extent.height);
 	
 	// GLFW callbacks
-	glfwSetWindowUserPointer(context.window, m_camera.get());
-	glfwSetKeyCallback(context.window, &glfwHandleKeyboard);
-	glfwSetMouseButtonCallback(context.window, glfwMouseButtonCallback);
-	glfwSetCursorPosCallback(context.window, glfwCallbackMotion);
+	glfwSetWindowUserPointer(context.mWindow, m_camera.get());
+	glfwSetKeyCallback(context.mWindow, &glfwHandleKeyboard);
+	glfwSetMouseButtonCallback(context.mWindow, glfwMouseButtonCallback);
+	glfwSetCursorPosCallback(context.mWindow, glfwCallbackMotion);
 
 	// Define Light sources
 	Light directionalLight;

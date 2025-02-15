@@ -1,11 +1,12 @@
 #pragma once
-#include <GLFW/glfw3.h>
 
 #include <vector>
 
 #include "Image.hpp"
 #include "Volk.hpp"
 #include "VMA.hpp"
+
+#include <GLFW/glfw3.h>
 
 namespace vk
 {
@@ -14,7 +15,7 @@ namespace vk
 	public:
 		Context();
 		void Destroy();
-		bool MakeContext(uint32_t width, uint32_t height);
+		bool MakeContext(GLFWwindow *window, uint32_t width, uint32_t height);
 		void CreateLogicalDevice();
 		void CreateAllocator();
 		void CreateSwapchain();
@@ -23,7 +24,7 @@ namespace vk
 
 		void SetObjectName(VkDevice device, uint64_t objectHandle, VkObjectType objectType, const char* name);
 
-		GLFWwindow* window;
+		GLFWwindow* mWindow;
 		VkInstance instance;
 
 		VkPhysicalDevice pDevice;
