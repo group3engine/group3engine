@@ -325,8 +325,8 @@ void vk::Renderer::Present(uint32_t imageIndex)
 
 void vk::Renderer::Update(double deltaTime)
 {
-	m_camera->Update(context.window, context.extent.width, context.extent.height, deltaTime);
-	m_scene->Update(context.window);
+	m_camera->Update(context.extent.width, context.extent.height, deltaTime);
+	m_scene->Update();
 
 	// Update passes
 	m_ShadowMap->Update();

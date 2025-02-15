@@ -28,7 +28,7 @@ namespace vk
 
 		void DrawGLTF(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout); // Does it make sense for this to take VkPipeline? 
 		void AddLightSource(Light& LightSource);
-		void Update(GLFWwindow* window);
+		void Update();
 
 		void Destroy();
 

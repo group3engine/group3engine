@@ -86,7 +86,7 @@ void vk::Scene::AddLightSource(Light& LightSource)
 	m_Lights.push_back(std::move(LightSource));
 }
 
-void vk::Scene::Update(GLFWwindow* window)
+void vk::Scene::Update()
 {
 
 	for (auto& light : m_Lights)

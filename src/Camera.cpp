@@ -36,7 +36,7 @@ vk::Camera::~Camera()
 	}
 }
 
-void vk::Camera::Update(GLFWwindow* window, uint32_t width, uint32_t height, double deltaTime)
+void vk::Camera::Update(uint32_t width, uint32_t height, double deltaTime)
 {
 	UpdateTransforms(width, height);
 

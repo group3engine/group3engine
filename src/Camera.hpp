@@ -63,7 +63,7 @@ namespace vk
 		const CameraTransform& GetCameraTransform() const { return m_transform; }
 		std::vector<Buffer>& GetBuffers() { return m_cameraUBO; }
 
-		void Update(GLFWwindow* window, uint32_t width, uint32_t height, double deltaTime);
+		void Update(uint32_t width, uint32_t height, double deltaTime);
 		void UpdateTransforms(uint32_t width, uint32_t height);
 		void UpdateCameraMovement();
 		void UpdateCameraRotation();
