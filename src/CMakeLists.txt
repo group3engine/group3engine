@@ -2,7 +2,8 @@ file(GLOB CPP_SOURCE_FILES "*.cpp" "*.hpp")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_executable(src ${CPP_SOURCE_FILES})
+add_executable(src ${CPP_SOURCE_FILES}
+        SampleGLTFFilePaths.hpp)
 
 add_subdirectory(physics)
 

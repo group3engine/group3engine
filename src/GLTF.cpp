@@ -160,12 +160,18 @@ vk::GLTFModel vk::LoadGLTF(const Context& context, const std::string& filepath)
                 const std::string albedoPath = SetDirectory(filepath, pbr.base_color_texture.texture->image->uri);
                 meshData.textures.push_back(albedoPath);
             }
+            else
+            {
+                char defaultAlbedo[] = "white_pixel.png";
+                const std::string albedoPath = SetDirectory("./assets/", defaultAlbedo);
+                meshData.textures.push_back(albedoPath);
+            }
 
             std::string metallicRoughness = "";
             
             if (pbr.metallic_roughness_texture.texture == NULL) {
-                char defaultRoughness[] = "defaultRoughness.jpg";
-                metallicRoughness = SetDirectory(filepath, defaultRoughness);
+                char defaultRoughness[] = "white_pixel.png";
+                metallicRoughness = SetDirectory("./assets/", defaultRoughness);
             }
             else
             {
