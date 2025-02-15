@@ -1,5 +1,3 @@
-#pragma once
-
 #include "Context.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
