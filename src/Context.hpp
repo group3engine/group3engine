@@ -1,9 +1,11 @@
 #pragma once
 #include <GLFW/glfw3.h>
-#include "Volk.hpp"
-#include "VMA.hpp"
+
 #include <vector>
+
 #include "Image.hpp"
+#include "Volk.hpp"
+#include "vulkan utilities/VMA.hpp"
 
 namespace vk
 {

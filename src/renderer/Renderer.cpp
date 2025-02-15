@@ -1,9 +1,9 @@
-#include "Context.hpp"
 #include "Renderer.hpp"
-#include "Utils.hpp"
-#include "Light.hpp"
-#include "SampleGLTFFilePaths.hpp"
 
+#include "Context.hpp"
+#include "Light.hpp"
+#include "Utils.hpp"
+#include "scene management/SampleGLTFFilePaths.hpp"
 
 namespace
 {

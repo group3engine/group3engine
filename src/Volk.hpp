@@ -1,1 +1,6 @@
+#ifndef GROUP3ENGINE_VULKAN_H
+#define GROUP3ENGINE_VULKAN_H
+
 #include <volk.h>
+
+#endif // GROUP3ENGINE_VULKAN_H

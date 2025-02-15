@@ -1,17 +1,19 @@
-#include "Context.hpp"
-#include "Buffer.hpp"
 #include "Camera.hpp"
+
 #include <GLFW/glfw3.h>
+
+#include <algorithm>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 
+#include "Context.hpp"
 #include "Utils.hpp"
-#include <algorithm>
+#include "vulkan utilities/Buffer.hpp"
 
 vk::Camera::Camera(Context& context, const glm::vec3 position, glm::vec3 direction, glm::vec3 up, float aspect) : context{ context }, m_position{ position }, m_direction{ direction }, m_up{ up }
 {
-	m_mouseSensitivity = 0.01f;
+	m_mouseSensitivity = 0.1f;
 	m_increaseSpeed = 0.0f;
 	m_transform.viewportSize = glm::vec2(context.extent.width, context.extent.height);
 	m_transform.nearPlane = 0.1f;

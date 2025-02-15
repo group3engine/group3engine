@@ -1,15 +1,16 @@
 #pragma once
 
-#include "Buffer.hpp"
-#include <vector>
-#include "Volk.hpp"
 #include <array>
-#include <glm/glm.hpp>
 #include <utility>
-#include "Utils.hpp"
+#include <vector>
+
 #include "Image.hpp"
+#include "Utils.hpp"
+#include "Volk.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/fwd.hpp"
+#include "glm/glm.hpp"
+#include "vulkan utilities/Buffer.hpp"
 
 // TODO:
 // Scene should release the resources of the GLTF

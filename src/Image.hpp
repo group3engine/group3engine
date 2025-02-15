@@ -1,8 +1,8 @@
 #pragma once
-#include "Volk.hpp"
-#include "VMA.hpp"
 #include <string>
 
+#include "Volk.hpp"
+#include "vulkan utilities/VMA.hpp"
 
 namespace vk
 {

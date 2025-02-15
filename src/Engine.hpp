@@ -1,9 +1,10 @@
 #pragma once
 
-#include "Context.hpp"
-#include "Renderer.hpp"
-#include "Camera.hpp"
 #include <memory>
+
+#include "Camera.hpp"
+#include "Context.hpp"
+#include "renderer/Renderer.hpp"
 
 namespace vk
 {

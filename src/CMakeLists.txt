@@ -1,4 +1,4 @@
-file(GLOB CPP_SOURCE_FILES "*.cpp" "*.hpp")
+file(GLOB_RECURSE CPP_SOURCE_FILES "*.cpp" "*.hpp")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 

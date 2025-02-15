@@ -1,14 +1,15 @@
 #pragma once
 
-
 #include <GLFW/glfw3.h>
-#include "Context.hpp"
+
+#include <algorithm>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
-#include "Buffer.hpp"
+
+#include "Context.hpp"
 #include "Utils.hpp"
-#include <algorithm>
+#include "vulkan utilities/Buffer.hpp"
 
 constexpr float m_speedIncreaseAmount = 15.0f;
 constexpr float m_speedDecreaseAmount = 8.0f;

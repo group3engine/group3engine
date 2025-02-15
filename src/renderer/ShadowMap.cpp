@@ -1,11 +1,12 @@
-#include "Context.hpp"
-#include "Scene.hpp"
 #include "ShadowMap.hpp"
-#include "Pipeline.hpp"
-#include "Utils.hpp"
-#include "Buffer.hpp"
-#include "RenderPass.hpp"
+
 #include "Camera.hpp"
+#include "Context.hpp"
+#include "Pipeline.hpp"
+#include "RenderPass.hpp"
+#include "Scene.hpp"
+#include "Utils.hpp"
+#include "vulkan utilities/Buffer.hpp"
 
 #define RESOLUTION 1024
 vk::ShadowMap::ShadowMap(Context& context, std::shared_ptr<Scene>& scene) : context{ context }, scene{ scene }

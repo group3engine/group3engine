@@ -1,17 +1,17 @@
 #pragma once
 
+#include <cstddef>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <memory>
+#include <vector>
+
 #include "Context.hpp"
 #include "Image.hpp"
 #include "Utils.hpp"
-#include "Light.hpp"
-#include "Buffer.hpp"
-
-#include <cstddef>
-#include <memory>
-#include <vector>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include "GLTF.hpp"
+#include "renderer/Light.hpp"
+#include "scene management/GLTF.hpp"
+#include "vulkan utilities/Buffer.hpp"
 
 namespace vk
 {

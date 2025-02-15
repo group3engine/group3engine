@@ -1,17 +1,18 @@
 #pragma once
 
 // Creates command pool, command buffers
-#include "Volk.hpp"
 #include <memory>
 #include <vector>
-#include "DepthPrepass.hpp"
-#include "ForwardPass.hpp"
+
+#include "Camera.hpp"
 #include "PresentPass.hpp"
 #include "Scene.hpp"
-#include "Camera.hpp"
 #include "ShadowMap.hpp"
-#include "Composite.hpp"
-#include "Bloom.hpp"
+#include "Volk.hpp"
+#include "renderer/Bloom.hpp"
+#include "renderer/Composite.hpp"
+#include "renderer/DepthPrepass.hpp"
+#include "renderer/ForwardPass.hpp"
 
 namespace vk
 {

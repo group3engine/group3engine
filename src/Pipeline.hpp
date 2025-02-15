@@ -1,13 +1,14 @@
 #pragma once
-#include "Volk.hpp"
-#include <vector>
 #include <cassert>
-#include <stdexcept>
-#include <optional>
 #include <fstream>
+#include <optional>
+#include <stdexcept>
 #include <utility>
+#include <vector>
+
 #include "Utils.hpp"
-#include "GLTF.hpp"
+#include "Volk.hpp"
+#include "scene management/GLTF.hpp"
 /*
     Pipeline abstraction which allows simpler and easier construction of pipelines
     Improvements:

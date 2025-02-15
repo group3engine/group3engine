@@ -2,14 +2,14 @@
 #include "glm/gtc/type_ptr.hpp"
 
 #define CGLTF_IMPLEMENTATION
-#include <cgltf.h>
-
-#include "GLTF.hpp"
-#include <iostream>
-#include <stdexcept>
 #include <cassert>
 #include <filesystem>
+#include <iostream>
+#include <stdexcept>
+
+#include "GLTF.hpp"
 #include "Utils.hpp"
+#include "cgltf.h"
 
 namespace
 {

@@ -1,11 +1,12 @@
-﻿#include "Context.hpp"
-#include "Scene.hpp"
-#include "ForwardPass.hpp"
-#include "Pipeline.hpp"
-#include "Utils.hpp"
-#include "Buffer.hpp"
-#include "RenderPass.hpp"
+﻿#include "ForwardPass.hpp"
+
 #include "Camera.hpp"
+#include "Context.hpp"
+#include "Pipeline.hpp"
+#include "RenderPass.hpp"
+#include "Scene.hpp"
+#include "Utils.hpp"
+#include "vulkan utilities/Buffer.hpp"
 
 vk::ForwardPass::ForwardPass(Context& context, Image& shadowMap, Image& depthPrepass, std::shared_ptr<Scene>& scene, std::shared_ptr<Camera>& camera) :
 	context{ context }, 
