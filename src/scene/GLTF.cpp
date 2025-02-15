@@ -15,7 +15,7 @@
 
 namespace
 {
-    std::string SetDirectory(const std::string& filepath, char* uri)
+    std::string SetDirectory(const std::string& filepath, std::string_view uri)
     {
         std::filesystem::path path(filepath);
         std::string directory = path.parent_path().string();
@@ -164,7 +164,7 @@ vk::GLTFModel vk::LoadGLTF(const Context& context, const std::string& filepath)
             }
             else
             {
-                char defaultAlbedo[] = "white_pixel.png";
+                std::string defaultAlbedo = "white_pixel.png";
                 const std::string albedoPath = SetDirectory("./assets/", defaultAlbedo);
                 meshData.textures.push_back(albedoPath);
             }
@@ -172,7 +172,7 @@ vk::GLTFModel vk::LoadGLTF(const Context& context, const std::string& filepath)
             std::string metallicRoughness = "";
             
             if (pbr.metallic_roughness_texture.texture == NULL) {
-                char defaultRoughness[] = "white_pixel.png";
+                std::string defaultRoughness = "white_pixel.png";
                 metallicRoughness = SetDirectory("./assets/", defaultRoughness);
             }
             else
