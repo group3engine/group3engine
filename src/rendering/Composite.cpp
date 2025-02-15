@@ -1,9 +1,10 @@
-#include "Context.hpp"
 #include "Composite.hpp"
+
+#include "Context.hpp"
 #include "Pipeline.hpp"
+#include "RenderPass.hpp"
 #include "Utils.hpp"
 #include "Buffer.hpp"
-#include "RenderPass.hpp"
 
 vk::Composite::Composite(Context& context, Image& LightingPass, Image& BloomPass) :
 	context{ context },

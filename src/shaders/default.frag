@@ -2,7 +2,7 @@
 
 layout(location = 0) in vec4 WorldPos;
 layout(location = 1) in vec2 uv;
-layout(location = 2) in vec4 WorldNormal;
+layout(location = 2) in vec3 WorldNormal;
 
 layout(location = 0) out vec4 fragColor;
 layout(location = 1) out vec4 brightColours;
@@ -145,7 +145,6 @@ void main()
 {
 	vec4 color = texture(albedoTexture, uv);
 	vec3 emissive = vec3(0.0);
-    vec3 wNormal = normalize(WorldNormal).xyz;
 
     // == Metal and Roughness ==
     float roughness = max(texture(metallicRoughness, uv).b, 0.1);
@@ -175,11 +174,11 @@ void main()
 
 		if(isDirectional) {
 			float shadowTerm = 1.0 - PCF(WorldPos.xyz);
-			outLight += shadowTerm * CookTorranceBRDF(wNormal, halfVector, viewDir, -lightData.lights[i].LightPosition.xyz, metallic, roughness, color.xyz, LightColour);
+			outLight += shadowTerm * CookTorranceBRDF(WorldNormal, halfVector, viewDir, -lightData.lights[i].LightPosition.xyz, metallic, roughness, color.xyz, LightColour);
 			
 		} 
 		else {
-			outLight += CookTorranceBRDF(wNormal, halfVector, viewDir, lightDir, metallic, roughness, color.xyz, LightColour);
+			outLight += CookTorranceBRDF(WorldNormal, halfVector, viewDir, lightDir, metallic, roughness, color.xyz, LightColour);
 		}
 	}
 

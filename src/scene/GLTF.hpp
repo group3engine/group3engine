@@ -1,15 +1,17 @@
 #pragma once
 
-#include "Buffer.hpp"
-#include <vector>
-#include "Volk.hpp"
 #include <array>
-#include <glm/glm.hpp>
 #include <utility>
-#include "Utils.hpp"
+#include <vector>
+
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/fwd.hpp>
+#include <glm/glm.hpp>
+
 #include "Image.hpp"
-#include "glm/ext/matrix_transform.hpp"
-#include "glm/fwd.hpp"
+#include "Utils.hpp"
+#include "Volk.hpp"
+#include "Buffer.hpp"
 
 // TODO:
 // Scene should release the resources of the GLTF
@@ -23,7 +25,6 @@ namespace vk
 		glm::vec3 pos;
 		glm::vec2 tex;
 		glm::vec3 normal;
-		std::array<uint8_t, 3> quaternion;
 
 		static VkVertexInputBindingDescription GetBindingDescription()
 		{
@@ -35,9 +36,9 @@ namespace vk
 			return bindingDescrip;
 		}
 
-		static std::array<VkVertexInputAttributeDescription, 4> GetAttributeDescriptions()
+		static std::array<VkVertexInputAttributeDescription, 3> GetAttributeDescriptions()
 		{
-			std::array<VkVertexInputAttributeDescription, 4> attributes = {};
+			std::array<VkVertexInputAttributeDescription, 3> attributes = {};
 
 			attributes[0].binding = 0;
 			attributes[0].location = 0;
@@ -53,11 +54,6 @@ namespace vk
 			attributes[2].location = 2;
 			attributes[2].format = VK_FORMAT_R32G32B32_SFLOAT;
 			attributes[2].offset = offsetof(Vertex, normal);
-
-			attributes[3].binding = 0;
-			attributes[3].location = 3;
-			attributes[3].format = VK_FORMAT_R8G8B8_UINT;
-			attributes[3].offset = offsetof(Vertex, quaternion);
 
 			return attributes;
 		}

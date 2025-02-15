@@ -1,14 +1,15 @@
-#include "Context.hpp"
 #include "Renderer.hpp"
-#include "Utils.hpp"
-#include "Light.hpp"
 
+#include "Context.hpp"
+#include "Light.hpp"
+#include "Utils.hpp"
+#include "SampleGLTFFilePaths.hpp"
 
 namespace
 {
-	// This should be placed elsewhere. Put here for simplicity while testing 
+	// This should be placed elsewhere. Put here for simplicity while testing
 	// Don't really need to define these, can pass the pos, dir, up directly to camera constructor
-	// Camera default values 
+	// Camera default values
 	constexpr glm::vec3 cameraPos = glm::vec3(1.0f, 1.0f, 1.0f); //1.0f, 2.0f, -24.0f
 	constexpr glm::vec3 cameraDir = glm::vec3(1.0f, 1.0f, -1.0f);
 	constexpr glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0);
@@ -30,7 +31,9 @@ vk::Renderer::Renderer(Context& context) : context{context}
 
 	// Sponza is huge ( physical size not disc space ) when loaded
 	// so i reduced it significantly when rendering meshes (see DrawGLTF) in Scene.cpp
-	auto gltf = vk::LoadGLTF(context, "assets/Sponza/Sponza.gltf");
+        std::string base_path = "/home/wet-dog/repos/group3engine/assets/";
+        std::string gltf_path = base_path + Sample::Sponza;
+	auto gltf = vk::LoadGLTF(context, gltf_path);
 
 	// Samplers
 	repeatSamplerAniso	 	  = CreateSampler(context, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_TRUE,  VK_COMPARE_OP_LESS_OR_EQUAL);
