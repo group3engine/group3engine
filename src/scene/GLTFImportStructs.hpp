@@ -6,7 +6,6 @@
 #define VULKANTIME_GLTFIMPORTSTRUCTS_HPP
 
 #include <stb_image.h>
-#include <vulkan/vulkan.h>
 
 #include <cstdint>
 #include <glm/vec4.hpp>

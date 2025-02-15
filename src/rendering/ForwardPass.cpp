@@ -189,8 +189,8 @@ void vk::ForwardPass::CreatePipeline()
 	// .first  = VkPipeline
 	// .second = VkPipelineLayout 
 	auto defaultPipelineResult = vk::PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
-		.AddShader("assets/shaders/default.vert.spv", ShaderType::VERTEX)
-		.AddShader("assets/shaders/default.frag.spv", ShaderType::FRAGMENT)
+		.AddShader(OPAQUE_VERTEX_SHADER, ShaderType::VERTEX)
+		.AddShader(OPAQUE_FRAGMENT_SHADER, ShaderType::FRAGMENT)
 		.SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
 		.SetDynamicState({ {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR} })
 		.SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE)
@@ -205,8 +205,8 @@ void vk::ForwardPass::CreatePipeline()
 	m_pipelines.insert({ 1, {defaultPipelineResult.first, defaultPipelineResult.second} });
 
 	auto alphaMaskPipeline = vk::PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
-		.AddShader("assets/shaders/default.vert.spv", ShaderType::VERTEX)
-		.AddShader("assets/shaders/alpha_masking.frag.spv", ShaderType::FRAGMENT)
+		.AddShader(ALPHA_MASK_VERTEX_SHADER, ShaderType::VERTEX)
+		.AddShader(ALPHA_MASK_FRAGMENT_SHADER, ShaderType::FRAGMENT)
 		.SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
 		.SetDynamicState({ {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR} })
 		.SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE)

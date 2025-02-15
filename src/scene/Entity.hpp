@@ -4,12 +4,12 @@
 
 #ifndef VULKANTIME_ENTITY_HPP
 #define VULKANTIME_ENTITY_HPP
+#include "Volk.hpp"
 #include <utility>
 
 #include "GLTFImportStructs.hpp"
 #include "glm/fwd.hpp"
 #include "glm/gtx/matrix_decompose.hpp"
-#include "vulkan/vulkan.h"
 
 namespace vk {
 class Entity {
@@ -49,6 +49,11 @@ class Entity {
     void record_draw_shadow(VkCommandBuffer aCmdBuff) const;
 
     void RecordDrawCutout(VkCommandBuffer aCmdBuff);
+
+   protected:
+    virtual void Update() = 0;
+    virtual void LateUpdate() = 0;
+    virtual void Awake() = 0;
 
    private:
     std::string mName{};

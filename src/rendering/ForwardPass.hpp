@@ -4,6 +4,11 @@
 #include <unordered_map>
 #include "Camera.hpp"
 
+#define OPAQUE_FRAGMENT_SHADER "shaders/pbr.frag.spv"
+#define OPAQUE_VERTEX_SHADER "shaders/pbr.vert.spv"
+#define ALPHA_MASK_FRAGMENT_SHADER "shaders/pbra.frag.spv"
+#define ALPHA_MASK_VERTEX_SHADER "shaders/pbr.vert.spv"
+
 namespace vk
 {
 	class Context;

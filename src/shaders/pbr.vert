@@ -1,6 +1,4 @@
 #version 450
-#include "quaternion2matrix.glsl"
-#include "decompressQuaternion.glsl"
 
 layout(push_constant) uniform PushConstants {
     mat4 modelMatrix;
