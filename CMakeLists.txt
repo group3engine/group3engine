@@ -40,6 +40,9 @@ add_subdirectory(extern/glm)
 add_subdirectory(extern/spdlog)
 add_subdirectory(extern/volk)
 
+set(PHYSICS_REPO_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/extern/JoltPhysics)
+include(${PHYSICS_REPO_ROOT}/Jolt/Jolt.cmake)
+
 # Add header-only libraries
 add_library(cgltf INTERFACE)
 target_include_directories(cgltf INTERFACE extern/cgltf)

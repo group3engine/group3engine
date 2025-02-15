@@ -1,3 +1,6 @@
+#ifndef HELLOWORLD_HPP
+#define HELLOWORLD_HPP
+
 #include "PhysicsManager.hpp"
 #include "RigidBody.hpp"
 // Disable common warnings triggered by Jolt, you can use JPH_SUPPRESS_WARNING_PUSH / JPH_SUPPRESS_WARNING_POP to store and restore the warning state
@@ -14,7 +17,7 @@ using namespace std;
 
 
 // Program entry point
-int main(int argc, char** argv)
+inline void HelloWorld()
 {
     // make the manager
     PhysicsManager manager = PhysicsManager();
@@ -38,5 +41,5 @@ int main(int argc, char** argv)
         ball.GetPosition();
         ball.GetVelocity();
     }
-    return 0;
 }
+#endif // HELLOWORLD_HPP

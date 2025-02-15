@@ -3,6 +3,8 @@
 #include <glm/glm.hpp>
 #include "Utils.hpp"
 
+#include "HelloWorld.hpp"
+
 vk::Engine::Engine()
 {
 	m_isRunning = false;
@@ -32,6 +34,9 @@ void vk::Engine::Shutdown()
 
 void vk::Engine::Run()
 {
+	// Physics hello world!
+	HelloWorld();
+
 	while (m_isRunning && !glfwWindowShouldClose(m_context.window))
 	{
 		double currentFrameTime = glfwGetTime();
