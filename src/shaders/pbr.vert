@@ -8,13 +8,17 @@ layout (location = 0) in vec3 iPosition;
 layout (location = 1) in vec2 iTexCoord;
 layout (location = 2) in vec3 iNormal;
 
-layout (set = 0, binding = 0) uniform UScene
+layout(set = 0, binding = 0) uniform SceneUniform
 {
+    mat4 model;
     mat4 view;
     mat4 projection;
-    mat4 viewProjection;
     vec4 cameraPosition;
-} uScene;
+    vec2 viewportSize;
+    float fov;
+    float nearPlane;
+    float farPlane;
+} ubo;
 
 // source: https://www.shadertoy.com/view/3s33zj
 mat3 adjugate( in mat4 m )
@@ -30,7 +34,8 @@ layout (location = 2) out vec3 v2fNormal;
 void main()
 {
     v2fTexCoord = iTexCoord;
-    gl_Position = uScene.viewProjection * pushConstants.modelMatrix * vec4(iPosition,  1.f);
+    mat4 modelViewProjection = ubo.projection * ubo.view * pushConstants.modelMatrix;
+    gl_Position = modelViewProjection * vec4(iPosition,  1.f);
     vec4 worldSpacePosition = (pushConstants.modelMatrix * vec4(iPosition, 1.f));
     v2fPosition = worldSpacePosition.xyz / worldSpacePosition.w;
     v2fNormal = adjugate(pushConstants.modelMatrix) * iNormal;

@@ -21,7 +21,7 @@ namespace vk
 		void TeardownSwapchain();
 		void RecreateSwapchain();
 
-		void SetObjectName(VkDevice device, uint64_t objectHandle, VkObjectType objectType, const char* name);
+		void SetObjectName(VkDevice device, uint64_t objectHandle, VkObjectType objectType, const char* name) const;
 
 		GLFWwindow* window;
 		VkInstance instance;

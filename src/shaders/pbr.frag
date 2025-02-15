@@ -1,6 +1,6 @@
 #version 450
 
-#include "pbr_forward.glsl"
+#include "pbr_temp.glsl"
 
 void main()
 {

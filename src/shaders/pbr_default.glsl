@@ -3,7 +3,7 @@
 #define MAX_SHADOWS 4
 #define MAX_DIRECTIONAL_LIGHTS 4
 #define MAX_DIRECTIONAL_SHADOWS 4
-layout (location = 0) out vec4 oColour;
+
 
 
 

@@ -41,8 +41,7 @@ std::string DecodeURI(std::string_view uri, std::string_view gltfPath) {
 }
 
 int LoadGLTF(const std::string &aFilepath, MeshManager &aMeshManager,
-             MaterialManager &aMaterialManager, TextureManager &aTextureManager,
-             VkPipelineLayout aPipeLayout, std::vector<Entity> &aEntities,
+             MaterialManager &aMaterialManager, TextureManager &aTextureManager, std::vector<Entity> &aEntities,
              bool aIsDebug) {
     cgltf_options options = {};
     cgltf_data *data = nullptr;
@@ -265,7 +264,7 @@ int LoadGLTF(const std::string &aFilepath, MeshManager &aMeshManager,
         const auto &gltfNode = data->nodes[ni];
 
         // add an entity
-        aEntities.emplace_back(aPipeLayout);
+        aEntities.emplace_back();
         Entity &entity = aEntities.back();
         // set the name
         if (gltfNode.name) {

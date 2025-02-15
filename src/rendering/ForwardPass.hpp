@@ -3,11 +3,11 @@
 #include <memory>
 #include <unordered_map>
 #include "Camera.hpp"
-
-#define OPAQUE_FRAGMENT_SHADER "shaders/pbr.frag.spv"
-#define OPAQUE_VERTEX_SHADER "shaders/pbr.vert.spv"
-#define ALPHA_MASK_FRAGMENT_SHADER "shaders/pbra.frag.spv"
-#define ALPHA_MASK_VERTEX_SHADER "shaders/pbr.vert.spv"
+#define SHADER_DIR "assets/shaders/"
+#define OPAQUE_FRAGMENT_SHADER SHADER_DIR "pbr.frag.spv"
+#define OPAQUE_VERTEX_SHADER SHADER_DIR "pbr.vert.spv"
+#define ALPHA_MASK_FRAGMENT_SHADER SHADER_DIR "pbra.frag.spv"
+#define ALPHA_MASK_VERTEX_SHADER SHADER_DIR "pbr.vert.spv"
 
 namespace vk
 {
@@ -48,6 +48,7 @@ namespace vk
 		std::shared_ptr<Scene> scene;
 		std::shared_ptr<Camera> camera;
 		std::vector<VkDescriptorSet> m_descriptorSets;
-		std::unordered_map<int, std::pair<VkPipeline, VkPipelineLayout>> m_pipelines;
+		std::pair<VkPipeline, VkPipelineLayout> m_opaquePipeline;
+                std::pair<VkPipeline, VkPipelineLayout> m_alphaMaskPipeline;
 	};
 }

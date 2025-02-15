@@ -9,6 +9,8 @@ layout (location = 0) in vec2 v2fTexCoord;
 layout (location = 1) in vec3 v2fPosition;
 layout (location = 2) in vec3 v2fNormal;
 
+layout (location = 0) out vec4 oColour;
+
 layout (set = 0, binding = 0) uniform UScene
 {
     mat4 view;

@@ -19,8 +19,7 @@
 namespace vk {
 // returns 0 if failed
 int LoadGLTF(const std::string &aFilepath, MeshManager &aMeshManager,
-             MaterialManager &aMaterialManager, TextureManager &aTextureManager,
-             VkPipelineLayout aPipeLayout, std::vector<Entity> &aEntities,
+             MaterialManager &aMaterialManager, TextureManager &aTextureManager, std::vector<Entity> &aEntities,
              bool aIsDebug);
 } // namespace vk
 #endif // GROUP3ENGINE_RESOURCEMANAGER_HPP

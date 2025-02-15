@@ -8,12 +8,11 @@
 
 namespace vk {
 Entity::Entity(std::string aName, Entity *aParent, Mesh *aMesh,
-               glm::mat4 aLocalTransform, VkPipelineLayout aPipelineLayout)
+               glm::mat4 aLocalTransform)
     : mName(std::move(aName)),
       mParent(aParent),
       mMesh(aMesh),
-      mHasMesh(true),
-      mPipelineLayout(aPipelineLayout) {
+      mHasMesh(true){
     // convert the transformation matrix to a translation, rotation
     // (quaternion), scale
     glm::vec3 translation, scale;
@@ -46,12 +45,13 @@ void Entity::SetTransform(glm::mat4 aTransform) {
     mLocalTransform = {
         .translation = translation, .rotation = rotation, .scale = scale};
 }
-void Entity::RecordDrawOpaque(VkCommandBuffer aCmdBuff) {
+void Entity::RecordDrawOpaque(VkCommandBuffer aCmdBuff,
+                              VkPipelineLayout aPipelineLayout) {
     if (mHasMesh) {
         // push the model matrix
         glm::mat4 mModelMatrix = getWorldTransform();
         vkCmdPushConstants(
-            aCmdBuff, mPipelineLayout,
+            aCmdBuff, aPipelineLayout,
             VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
             sizeof(glm::mat4), &mModelMatrix);
         // for each mesh primitive
@@ -62,7 +62,7 @@ void Entity::RecordDrawOpaque(VkCommandBuffer aCmdBuff) {
             }
             // bind the mesh primitives material
             vkCmdBindDescriptorSets(
-                aCmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 1,
+                aCmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, aPipelineLayout, 1,
                 1, &meshPrimitive.material->descriptorSet, 0, nullptr);
             // bind the vertex buffers - positions, texcoords, normals
             VkBuffer buffers[] = {meshPrimitive.meshGPU->mPositions.buffer,
@@ -86,19 +86,20 @@ void Entity::RecordDrawOpaque(VkCommandBuffer aCmdBuff) {
         }
     }
 }
-void Entity::record_draw_shadow(VkCommandBuffer aCmdBuff) const {
+void Entity::RecordDrawShadow(VkCommandBuffer aCmdBuff,
+                              VkPipelineLayout aPipelineLayout) const {
     if (mHasMesh) {
         // push the model matrix
         glm::mat4 mModelMatrix = getWorldTransform();
         vkCmdPushConstants(
-            aCmdBuff, mPipelineLayout,
+            aCmdBuff, aPipelineLayout,
             VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
             sizeof(glm::mat4), &mModelMatrix);
         // for each mesh primitive
         for (auto meshPrimitive : mMesh->meshPrimitives) {
             // bind the mesh primitives material
             vkCmdBindDescriptorSets(
-                aCmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 1,
+                aCmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, aPipelineLayout, 1,
                 1, &meshPrimitive.material->descriptorSet, 0, nullptr);
             // bind the vertex buffers - positions, texcoords, normals
             VkBuffer buffers[] = {meshPrimitive.meshGPU->mPositions.buffer};
@@ -120,12 +121,13 @@ void Entity::record_draw_shadow(VkCommandBuffer aCmdBuff) const {
         }
     }
 }
-void Entity::RecordDrawCutout(VkCommandBuffer aCmdBuff) {
+void Entity::RecordDrawCutout(VkCommandBuffer aCmdBuff,
+                              VkPipelineLayout aPipelineLayout) {
     if (mHasMesh) {
         // push the model matrix
         glm::mat4 mModelMatrix = getWorldTransform();
         vkCmdPushConstants(
-            aCmdBuff, mPipelineLayout,
+            aCmdBuff, aPipelineLayout,
             VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
             sizeof(glm::mat4), &mModelMatrix);
         // for each mesh primitive
@@ -136,7 +138,7 @@ void Entity::RecordDrawCutout(VkCommandBuffer aCmdBuff) {
             }
             // bind the mesh primitives material
             vkCmdBindDescriptorSets(
-                aCmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 1,
+                aCmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, aPipelineLayout, 1,
                 1, &meshPrimitive.material->descriptorSet, 0, nullptr);
             // bind the vertex buffers - positions, texcoords, normals
             VkBuffer buffers[] = {meshPrimitive.meshGPU->mPositions.buffer,

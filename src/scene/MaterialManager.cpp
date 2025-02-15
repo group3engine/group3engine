@@ -49,9 +49,9 @@ void MaterialManager::UploadLastMaterial() {
     material.descriptorSet =
         create_material_descriptor_set(imageViews, material.materialBuffer);
 }
-MaterialManager::MaterialManager(Context &aContext, VkSampler const &sampler,
-                                 VkDescriptorSetLayout aMaterialLayout)
-    : mContext(aContext), mSampler(sampler), mMaterialLayout(aMaterialLayout) {
+MaterialManager::MaterialManager(Context &aContext)
+    : mContext(aContext) {
+    vk::materialDescriptorSetLayout = create_material_descriptor_layout();
     // create the descriptor pool
     mDescriptorPool = VK_NULL_HANDLE;
     vk::CreateDescriptorPool(mContext, 2048, 1024, mDescriptorPool);
@@ -62,7 +62,7 @@ VkDescriptorSet MaterialManager::create_material_descriptor_set(
     Buffer const &aMaterialBuffer) {
     // allocate the descriptor set for this material
     VkDescriptorSet set = VK_NULL_HANDLE;
-    vk::AllocateDescriptorSet(mContext, mDescriptorPool, mMaterialLayout, 1,
+    vk::AllocateDescriptorSet(mContext, mDescriptorPool, vk::materialDescriptorSetLayout, 1,
                               set);
     // write the descriptor set
     VkWriteDescriptorSet desc[3]{};
@@ -76,7 +76,7 @@ VkDescriptorSet MaterialManager::create_material_descriptor_set(
         } else {
             textureInfo[i].imageView = aImageViews[0];
         }
-        textureInfo[i].sampler = mSampler;
+        textureInfo[i].sampler = vk::repeatSamplerAniso;
     }
     // write the descriptor sets
     for (int i = 0; i < 2; i++) {
@@ -105,5 +105,36 @@ VkDescriptorSet MaterialManager::create_material_descriptor_set(
     vkUpdateDescriptorSets(mContext.device, numSets, desc, 0, nullptr);
 
     return set;
+}
+VkDescriptorSetLayout MaterialManager::create_material_descriptor_layout() const {
+    // base colour, roughness, metalness, and material numbers
+    VkDescriptorSetLayoutBinding bindings[3]{};
+    // base colour
+    bindings[0].binding = 0;  // this must match the binding in the shader
+    bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    bindings[0].descriptorCount = 1;
+    bindings[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    // metallicroughness
+    bindings[1].binding = 1;  // this must match the binding in the shader
+    bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    bindings[1].descriptorCount = 1;
+    bindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    // material numbers
+    bindings[2].binding = 2;  // this must match the binding in the shader
+    bindings[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    bindings[2].descriptorCount = 1;
+    bindings[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    VkDescriptorSetLayoutCreateInfo layoutInfo{};
+    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    layoutInfo.bindingCount = sizeof(bindings) / sizeof(bindings[0]);
+    layoutInfo.pBindings = bindings;
+
+    VkDescriptorSetLayout layout = VK_NULL_HANDLE;
+    VK_CHECK(vkCreateDescriptorSetLayout(mContext.device, &layoutInfo, nullptr,
+                                         &layout),
+             "Failed to crate descriptor set layout");
+
+    return layout;
 }
 }  // namespace vk

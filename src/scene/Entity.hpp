@@ -15,18 +15,16 @@ namespace vk {
 class Entity {
    public:
     Entity(std::string aName, Entity *aParent, Mesh *aMesh,
-           Transform aLocalTransform, VkPipelineLayout aPipelineLayout)
+           Transform aLocalTransform)
         : mName(std::move(aName)),
           mParent(aParent),
           mMesh(aMesh),
           mLocalTransform(aLocalTransform),
-          mHasMesh(true),
-          mPipelineLayout(aPipelineLayout) {}
+          mHasMesh(true){}
     Entity(std::string aName, Entity *aParent, Mesh *aMesh,
-           glm::mat4 aLocalTransform, VkPipelineLayout aPipelineLayout);
+           glm::mat4 aLocalTransform);
 
-    explicit Entity(VkPipelineLayout aPipelineLayout)
-        : mPipelineLayout(aPipelineLayout) {}
+    Entity() = default;
 
     void SetName(std::string aName) { mName = std::move(aName); }
     void SetParent(Entity *aParent);
@@ -40,20 +38,23 @@ class Entity {
 
     ~Entity() = default;
 
-    glm::mat4 getWorldTransform() const;
+    [[nodiscard]] glm::mat4 getWorldTransform() const;
 
     glm::mat4 getLocalTransform();
 
-    void RecordDrawOpaque(VkCommandBuffer aCmdBuff);
+    void RecordDrawOpaque(VkCommandBuffer aCmdBuff,
+                          VkPipelineLayout aPipelineLayout);
 
-    void record_draw_shadow(VkCommandBuffer aCmdBuff) const;
+    void RecordDrawShadow(VkCommandBuffer aCmdBuff,
+                          VkPipelineLayout aPipelineLayout) const;
 
-    void RecordDrawCutout(VkCommandBuffer aCmdBuff);
+    void RecordDrawCutout(VkCommandBuffer aCmdBuff,
+                          VkPipelineLayout aPipelineLayout);
 
    protected:
-    virtual void Update() = 0;
-    virtual void LateUpdate() = 0;
-    virtual void Awake() = 0;
+    virtual void Update(){}
+    virtual void LateUpdate(){}
+    virtual void Awake(){}
 
    private:
     std::string mName{};
@@ -63,7 +64,6 @@ class Entity {
     Transform mLocalTransform{};
     bool mHasMesh = false;
 
-    VkPipelineLayout mPipelineLayout;
     //    bool mHasPhysics = false;
 };
 }  // namespace vk

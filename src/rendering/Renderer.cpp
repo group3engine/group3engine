@@ -22,19 +22,10 @@ vk::Renderer::Renderer(Context& context) : context{context}
 
 	CreateResources();
 
-	m_materialManager.materials.reserve(25);
-	for (int i = 0; i < 25; ++i) {
-		m_materialManager.materials.emplace_back(context);
-	}
-
-	m_materialManager.Setup(context);
-
 	// Sponza is huge ( physical size not disc space ) when loaded
 	// so i reduced it significantly when rendering meshes (see DrawGLTF) in Scene.cpp
         std::string base_path = "/home/thomas/Downloads/glTF-Sample-Models/2.0/";
         std::string gltf_path = base_path + Sample::Sponza;
-	auto gltf = vk::LoadGLTF(context, gltf_path);
-
 	// Samplers
 	repeatSamplerAniso	 	  = CreateSampler(context, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_TRUE,  VK_COMPARE_OP_LESS_OR_EQUAL);
 	repeatSampler			  = CreateSampler(context, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL);
@@ -65,8 +56,8 @@ vk::Renderer::Renderer(Context& context) : context{context}
 	// Create the scene which will store models and lights
 	// Add GLTF to the scene 
 	// Add a directional light source defined earlier 
-	m_scene = std::make_shared<Scene>(context, m_materialManager);
-	m_scene->AddModel(gltf, m_materialManager);
+	m_scene = std::make_shared<Scene>(context);
+        m_scene->Load(gltf_path);
 	m_scene->AddLightSource(directionalLight);
 
 	// Loop through the positions and instantiate a light 
@@ -80,9 +71,6 @@ vk::Renderer::Renderer(Context& context) : context{context}
 		m_scene->AddLightSource(spotLight);
 	}
 
-	// Models should not all be loaded 
-	// We have the data to build materials 
-	m_materialManager.BuildMaterials(context);
 
 	std::cout << "Number of Lights: " << m_scene->GetLights().size() << std::endl;
 
@@ -112,7 +100,6 @@ void vk::Renderer::Destroy()
 	vkDestroySampler(context.device, repeatSampler, nullptr);
 	vkDestroySampler(context.device, clampToEdgeSamplerAniso, nullptr);
 
-	m_materialManager.Destroy(context);
 
 	for (auto& fence : m_Fences)
 	{

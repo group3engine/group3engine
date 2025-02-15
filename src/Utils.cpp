@@ -6,7 +6,7 @@ namespace vk
 	RenderType renderType = RenderType::FORWARD;
 }
 
-void vk::ExecuteSingleTimeCommands(Context& context, std::function<void(VkCommandBuffer)> recordCommands)
+void vk::ExecuteSingleTimeCommands(Context const& context, std::function<void(VkCommandBuffer)> recordCommands)
 {
 	VkCommandBufferAllocateInfo allocateCmd = {
 		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -90,7 +90,7 @@ VkDescriptorSetLayout vk::CreateDescriptorSetLayout(vk::Context& context, const 
 	return layout;
 }
 
-void vk::CreateDescriptorPool(Context& context, uint32_t maxDescriptors, uint32_t maxSets, VkDescriptorPool descriptorPool)
+void vk::CreateDescriptorPool(Context& context, uint32_t maxDescriptors, uint32_t maxSets, VkDescriptorPool& descriptorPool)
 {
         std::vector<VkDescriptorPoolSize> poolSizes = {
                 { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, maxDescriptors },

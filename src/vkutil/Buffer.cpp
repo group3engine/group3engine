@@ -33,7 +33,7 @@ void vk::Buffer::Destroy(VkDevice device)
     }
 }
 
-vk::Buffer vk::CreateBuffer(const std::string& name, Context& context, VkDeviceSize bSize, VkBufferUsageFlags usage, VmaAllocationCreateFlags memoryFlags, VmaMemoryUsage memUsage)
+vk::Buffer vk::CreateBuffer(const std::string& name, vk::Context const& context, VkDeviceSize bSize, VkBufferUsageFlags usage, VmaAllocationCreateFlags memoryFlags, VmaMemoryUsage memUsage)
 {
 	VkBufferCreateInfo bufferInfo = {
 		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
@@ -57,7 +57,7 @@ vk::Buffer vk::CreateBuffer(const std::string& name, Context& context, VkDeviceS
 	return Buffer(name, context.allocator, buffer, allocation);
 }
 
-void vk::CreateAndUploadBuffer(vk::Context& context, const void* data, VkDeviceSize size, VkBufferUsageFlags usage, vk::Buffer& destinationBuffer)
+void vk::CreateAndUploadBuffer(vk::Context const& context, const void* data, VkDeviceSize size, VkBufferUsageFlags usage, vk::Buffer& destinationBuffer)
 {
     // Create the destination buffer
     destinationBuffer = vk::CreateBuffer("buffer", context, size,

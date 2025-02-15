@@ -9,8 +9,7 @@
 namespace vk {
 class MaterialManager {
    public:
-    MaterialManager(Context &aContext, VkSampler const &sampler,
-                    VkDescriptorSetLayout aMaterialLayout);
+    MaterialManager(Context &aContext);
     // TODO: this is copying a material by value into the vector, not ideal
     void AddMaterial(Material &material) {
         mMaterials.emplace_back(std::move(material));
@@ -26,17 +25,17 @@ class MaterialManager {
         // destroy the descriptor pool
         vkDestroyDescriptorPool(mContext.device, mDescriptorPool, nullptr);
         // destroy the descriptor set layout
-        vkDestroyDescriptorSetLayout(mContext.device, mMaterialLayout, nullptr);
+        vkDestroyDescriptorSetLayout(mContext.device, materialDescriptorSetLayout, nullptr);
     }
 
    private:
     VkDescriptorSet create_material_descriptor_set(std::vector<VkImageView> const &aImageViews,
                                                    Buffer const &aMaterialBuffer);
+
+    VkDescriptorSetLayout create_material_descriptor_layout() const;
     std::vector<Material> mMaterials;
     Context &mContext;
-    VkSampler const &mSampler;
     VkDescriptorPool mDescriptorPool;
-    VkDescriptorSetLayout mMaterialLayout;
 };
 }  // namespace vk
 #endif  // VULKANTIME_MATERIALMANAGER_HPP

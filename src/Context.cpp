@@ -447,8 +447,7 @@ void vk::Context::RecreateSwapchain()
     
 }
 
-void vk::Context::SetObjectName(VkDevice device, uint64_t objectHandle, VkObjectType objectType, const char* name)
-{
+void vk::Context::SetObjectName(VkDevice device, uint64_t objectHandle, VkObjectType objectType, const char* name) const {
     if (vkSetDebugUtilsObjectNameEXT) {
         VkDebugUtilsObjectNameInfoEXT nameInfo = {};
         nameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
