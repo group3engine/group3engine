@@ -32,7 +32,7 @@ inline void HelloWorld()
     manager.body_interface.SetLinearVelocity(ball.ID, Vec3(0.0f, 5.0f, 0.0f));
     
     // add the floor using the default constructor
-    RigidBody floor = RigidBody(RigidBody::Floor, &manager);
+    [[maybe_unused]] RigidBody floor = RigidBody(RigidBody::Floor, &manager);
 
     // loop until the ball goes to sleep (comes to a stop)
     while(manager.body_interface.IsActive(ball.ID))

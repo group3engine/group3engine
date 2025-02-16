@@ -33,7 +33,7 @@ vk::PresentPass::~PresentPass()
 {
 	for (auto& buffer : m_postProcessUbo)
 	{
-		buffer.Destroy(context.device);
+		buffer.Destroy();
 	}
 
 	vkDestroyPipeline(context.device, m_pipeline, nullptr);

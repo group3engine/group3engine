@@ -17,7 +17,11 @@ void PollInputEvents() {
     glfwPollEvents();
 }
 
-static void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+static void KeyCallback([[maybe_unused]] GLFWwindow *window,
+                        int key,
+                        [[maybe_unused]] int scancode,
+                        int action,
+                        [[maybe_unused]] int mods) {
     if (key < 0) {
         return;
     }

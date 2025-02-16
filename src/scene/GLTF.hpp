@@ -79,8 +79,8 @@ namespace vk
 		Material(Context& context);
 
 		Material(Material&& other) noexcept : 
-			context(other.context),
-			textures(std::exchange(other.textures, {})) {}
+			textures(std::exchange(other.textures, {})),
+			context(other.context) {}
 
 		Material& operator=(Material&& other) noexcept {
 			if (this != &other) {

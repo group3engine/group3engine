@@ -283,6 +283,6 @@ vk::MeshData::MeshData(const Context& context) : context{ context } {};
 
 vk::MeshData::~MeshData()
 {
-    vertexBuffer.Destroy(context.device);
-    indexBuffer.Destroy(context.device);
+    vertexBuffer.Destroy();
+    indexBuffer.Destroy();
 }

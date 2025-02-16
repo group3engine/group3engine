@@ -47,7 +47,6 @@ namespace vk
 	{
 	public:
 
-		Camera() = default;
 		Camera(Context& context, const glm::vec3 position, glm::vec3 direction, glm::vec3 up, float aspect);
 		~Camera();
 

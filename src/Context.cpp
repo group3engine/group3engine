@@ -19,9 +19,9 @@ namespace
 	// Debug
 	VKAPI_ATTR VkBool32 VKAPI_CALL DebugUtilsCallback(VkDebugUtilsMessageSeverityFlagBitsEXT aSeverity, VkDebugUtilsMessageTypeFlagsEXT aType, VkDebugUtilsMessengerCallbackDataEXT const* aData, void*);
     
-    float ScoreDevice(VkPhysicalDevice pDevice, VkInstance instance, VkSurfaceKHR surface);
+    float ScoreDevice(VkPhysicalDevice pDevice, VkSurfaceKHR surface);
     VkPhysicalDevice SelectPhysicalDevice(VkInstance instance, VkSurfaceKHR surface);
-    std::pair<std::optional<uint32_t>, std::optional<uint32_t>> GetGraphicsQueueFamily(VkPhysicalDevice pDevice, VkInstance instance, VkSurfaceKHR surface);
+    std::pair<std::optional<uint32_t>, std::optional<uint32_t>> GetGraphicsQueueFamily(VkPhysicalDevice pDevice, VkSurfaceKHR surface);
 }
 
 // Swapchain
@@ -69,14 +69,14 @@ namespace
         return res;
     }
 
-    VKAPI_ATTR VkBool32 VKAPI_CALL DebugUtilsCallback(VkDebugUtilsMessageSeverityFlagBitsEXT aSeverity, VkDebugUtilsMessageTypeFlagsEXT aType, VkDebugUtilsMessengerCallbackDataEXT const* aData, void*)
+    VKAPI_ATTR VkBool32 VKAPI_CALL DebugUtilsCallback([[maybe_unused]] VkDebugUtilsMessageSeverityFlagBitsEXT aSeverity, [[maybe_unused]] VkDebugUtilsMessageTypeFlagsEXT aType, VkDebugUtilsMessengerCallbackDataEXT const* aData, void*)
     {
         std::cerr << "[Validation ERROR]: " << aData->pMessage << std::endl;
 
         return VK_FALSE;
     }
 
-    float ScoreDevice(VkPhysicalDevice pDevice, VkInstance instance, VkSurfaceKHR surface)
+    float ScoreDevice(VkPhysicalDevice pDevice, VkSurfaceKHR surface)
     {
         VkPhysicalDeviceProperties props;
         vkGetPhysicalDeviceProperties(pDevice, &props);
@@ -107,7 +107,7 @@ namespace
             }
         }
 
-        auto result = GetGraphicsQueueFamily(pDevice, instance, surface);
+        auto result = GetGraphicsQueueFamily(pDevice, surface);
         bool hasPresent = result.second.has_value();
         bool hasGraphics = result.first.has_value();
 
@@ -141,7 +141,7 @@ namespace
 
         for (const auto& device : devices)
         {
-            float score = ScoreDevice(device, instance, surface);
+            float score = ScoreDevice(device, surface);
             if (score > topScore)
             {
                 topScore = score;
@@ -156,7 +156,7 @@ namespace
         return pDevice;
     }
 
-    std::pair<std::optional<uint32_t>, std::optional<uint32_t>> GetGraphicsQueueFamily(VkPhysicalDevice pDevice, VkInstance instance, VkSurfaceKHR surface)
+    std::pair<std::optional<uint32_t>, std::optional<uint32_t>> GetGraphicsQueueFamily(VkPhysicalDevice pDevice, VkSurfaceKHR surface)
     {
         std::pair<std::optional<uint32_t>, std::optional<uint32_t>> queueFamilies = {};
 
@@ -605,7 +605,7 @@ void vk::Context::CreateSwapchain()
     swapchainFramebuffers = CreateSwapchainFramebuffers(device, swapchainImageViews, renderPass, extent);
 }
 
-bool vk::Context::MakeContext(GLFWwindow *window, uint32_t width, uint32_t height)
+bool vk::Context::MakeContext(GLFWwindow *window)
 {
     mWindow = window;
 
@@ -707,7 +707,7 @@ bool vk::Context::MakeContext(GLFWwindow *window, uint32_t width, uint32_t heigh
     vkGetPhysicalDeviceProperties(pDevice, &props);
     std::fprintf(stderr, "Device: %s\n", props.deviceName);
 
-    std::pair<std::optional<uint32_t>, std::optional<uint32_t>> qFamilies = GetGraphicsQueueFamily(pDevice, instance, surface);
+    std::pair<std::optional<uint32_t>, std::optional<uint32_t>> qFamilies = GetGraphicsQueueFamily(pDevice, surface);
 
     graphicsFamilyIndex = qFamilies.first.has_value() ? qFamilies.first.value() : 0;
     presentFamilyIndex = qFamilies.second.has_value() ? qFamilies.second.value() : 0;

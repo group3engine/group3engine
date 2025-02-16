@@ -15,7 +15,7 @@ namespace vk
 	public:
 		Context();
 		void Destroy();
-		bool MakeContext(GLFWwindow *window, uint32_t width, uint32_t height);
+		bool MakeContext(GLFWwindow *window);
 		void CreateLogicalDevice();
 		void CreateAllocator();
 		void CreateSwapchain();

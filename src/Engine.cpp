@@ -24,7 +24,7 @@ bool vk::Engine::Initialize()
 
 	Platform::get().StartUp(windowWidth, windowHeight);
 
-	if (m_context.MakeContext(Platform::get().window, 1280, 720))
+	if (m_context.MakeContext(Platform::get().window))
 	{
 		m_isRunning = true;
 	}
@@ -74,7 +74,6 @@ void vk::Engine::UpdateLogic() {
 		static_cast<Camera *>(glfwGetWindowUserPointer(Platform::get().window));
 	assert(camera);
 
-	auto &inputMap = camera->inputMap;
 	camera->SetInput(EInputState::FORWARD, IsKeyDown(KEY::_W));
 	camera->SetInput(EInputState::BACKWARD, IsKeyDown(KEY::_S));
 	camera->SetInput(EInputState::LEFT, IsKeyDown(KEY::_A));

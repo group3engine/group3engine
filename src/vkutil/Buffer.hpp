@@ -29,7 +29,7 @@ namespace vk
 		Buffer(Buffer&&) noexcept;
 		Buffer& operator=(Buffer&&) noexcept;
 
-		void Destroy(VkDevice device);
+		void Destroy();
 
 		template <typename T>
 		void WriteToBuffer(const T& data, VkDeviceSize size_in_bytes) // write data to a buffer

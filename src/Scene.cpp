@@ -72,14 +72,14 @@ void vk::Scene::DrawGLTF(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout)
 
 
 // TODO: Sort and implement these 
-void vk::Scene::RenderFrontMeshes(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout)
-{
+// void vk::Scene::RenderFrontMeshes(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout)
+// {
 
-}
-void vk::Scene::RenderBackMeshes(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout)
-{
+// }
+// void vk::Scene::RenderBackMeshes(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout)
+// {
 
-}
+// }
 
 void vk::Scene::AddLightSource(Light& LightSource)
 {
@@ -122,6 +122,6 @@ void vk::Scene::Destroy()
 
 	for (auto& buffer : m_LightUBO)
 	{
-		buffer.Destroy(context.device);
+		buffer.Destroy();
 	}
 }

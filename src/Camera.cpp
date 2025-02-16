@@ -13,6 +13,10 @@ vk::Camera::Camera(Context& context, const glm::vec3 position, glm::vec3 directi
 {
 	m_mouseSensitivity = 0.1f;
 	m_increaseSpeed = 0.0f;
+	m_transform.view = glm::lookAt(position, position + direction, up);
+	m_transform.projection = glm::perspective(m_transform.fov, aspect, m_transform.nearPlane, m_transform.farPlane);
+	m_transform.projection[1][1] *= -1;
+	m_transform.cameraPosition = glm::vec4(m_position.x, m_position.y, m_position.z, 1.0);
 	m_transform.viewportSize = glm::vec2(context.extent.width, context.extent.height);
 	m_transform.nearPlane = 0.1f;
 	m_transform.farPlane = 100.0f;
@@ -30,11 +34,11 @@ vk::Camera::~Camera()
 {
 	for (auto& buffer : m_cameraUBO)
 	{
-		buffer.Destroy(context.device);
+		buffer.Destroy();
 	}
 }
 
-void vk::Camera::Update(uint32_t width, uint32_t height, double deltaTime)
+void vk::Camera::Update(uint32_t width, uint32_t height, [[maybe_unused]] double deltaTime)
 {
 	UpdateTransforms(width, height);
 

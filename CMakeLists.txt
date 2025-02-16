@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19...3.31)
 
-project(group3engine)
+project(group3engine CXX)
 
 add_subdirectory(src)
 
@@ -58,6 +58,13 @@ target_include_directories(stb_image INTERFACE extern/stb_image)
 target_compile_definitions(src PRIVATE GLFW_INCLUDE_NONE GLM_ENABLE_EXPERIMENTAL GLM_FORCE_RADIANS GLM_FORCE_SIZE_T_LENGTH)
 
 target_link_libraries(src PRIVATE cgltf glfw glm::glm-header-only Jolt spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32> stb_image volk_headers vma)
+
+# Compiler warnings
+if ((CMAKE_CXX_COMPILER_ID STREQUAL "Clang") OR (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
+  target_compile_options(src PRIVATE -Wall -Wextra -Wnon-virtual-dtor -pedantic -Wno-missing-field-initializers)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+  target_compile_options(src PRIVATE /permissive- /W4 /w14640)
+endif()
 
 file(GLOB_RECURSE GLSL_SOURCE_FILES "src/shaders/*.vert" "src/shaders/*.frag")
 file(GLOB_RECURSE GLSL_HEADER_FILES "src/shaders/*.glsl")

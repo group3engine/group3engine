@@ -39,7 +39,7 @@ using namespace JPH::literals;
 using namespace std;
 
 // Callback for traces, connect this to your own trace function if you have one
-static void TraceImpl(const char *inFMT, ...)
+[[maybe_unused]] static void TraceImpl(const char *inFMT, ...)
 {
     // Format the message
     va_list list;

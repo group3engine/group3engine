@@ -23,8 +23,8 @@ namespace vk
 		void AddModel(GLTFModel& GLTF, MaterialManager& materialManager);
 
 		// TODO: Sort and implement these 
-		void RenderFrontMeshes(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
-		void RenderBackMeshes(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
+		// void RenderFrontMeshes(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
+		// void RenderBackMeshes(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
 
 		void DrawGLTF(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout); // Does it make sense for this to take VkPipeline? 
 		void AddLightSource(Light& LightSource);

@@ -94,7 +94,7 @@ namespace vk {
                 m_rasterInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
                 m_rasterInfo.depthClampEnable = VK_FALSE;
                 m_rasterInfo.rasterizerDiscardEnable = VK_FALSE;
-                m_rasterInfo.polygonMode = VK_POLYGON_MODE_FILL;
+                m_rasterInfo.polygonMode = polygonMode;
                 m_rasterInfo.cullMode = cullMode;
                 m_rasterInfo.frontFace = frontFace;
                 m_rasterInfo.depthBiasClamp = 0.0f;

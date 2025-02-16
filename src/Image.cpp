@@ -213,7 +213,7 @@ vk::Image vk::LoadTextureFromDisk(const std::string& path, Context& context, VkF
 
 		});
 
-	stagingBuffer.Destroy(context.device);
+	stagingBuffer.Destroy();
 
 	return img;
 }

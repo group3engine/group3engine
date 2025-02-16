@@ -31,7 +31,7 @@ vk::Renderer::Renderer(Context& context) : context{context}
 
 	// Sponza is huge ( physical size not disc space ) when loaded
 	// so i reduced it significantly when rendering meshes (see DrawGLTF) in Scene.cpp
-        std::string base_path = "/home/wet-dog/repos/group3engine/assets/";
+        std::string base_path = "/home/wet-dog/repos/glTF-Sample-Models/2.0/";
         std::string gltf_path = base_path + Sample::Sponza;
 	auto gltf = vk::LoadGLTF(context, gltf_path);
 
@@ -333,7 +333,7 @@ void vk::Renderer::Update(double deltaTime)
 	m_PresentPass->Update();
 }
 
-void vk::Renderer::glfwMouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
+void vk::Renderer::glfwMouseButtonCallback(GLFWwindow* window, int button, int action, [[maybe_unused]] int mods)
 {
 	auto camera = static_cast<Camera*>(glfwGetWindowUserPointer(window));
 	assert(camera);

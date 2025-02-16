@@ -23,7 +23,7 @@ vk::Buffer& vk::Buffer::operator=(vk::Buffer&& other) noexcept
 	return *this;
 }
 
-void vk::Buffer::Destroy(VkDevice device)
+void vk::Buffer::Destroy()
 {
     if (buffer != VK_NULL_HANDLE)
     {
@@ -96,5 +96,5 @@ void vk::CreateAndUploadBuffer(vk::Context& context, const void* data, VkDeviceS
 
         });
 
-    stagingBuffer.Destroy(context.device);
+    stagingBuffer.Destroy();
 }
