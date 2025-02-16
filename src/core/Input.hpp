@@ -3,7 +3,9 @@
 
 #include "InputData.hpp"
 
+bool IsKeyPressed(KEY key);
+
 bool IsKeyDown(KEY key);
 
-bool IsKeyPressed(KEY key);
+bool IsKeyReleased(KEY key);
 #endif // GROUP3ENGINE_INPUT_HPP
