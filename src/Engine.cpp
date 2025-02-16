@@ -95,6 +95,17 @@ void vk::Engine::UpdateLogic() {
 
 		SPDLOG_INFO("Post process: {}", result);
 	}
+
+	if (IsMouseButtonPressed(MOUSE_BUTTON::_RIGHT)) {
+		auto& flag = camera->inputMap[std::size_t(EInputState::MOUSING)];
+		flag = !flag;
+
+		if (flag) {
+			glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		} else {
+			glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		}
+	}
 }
 
 void vk::Engine::Update(double deltaTime)

@@ -45,7 +45,6 @@ vk::Renderer::Renderer(Context& context) : context{context}
 	
 	// GLFW callbacks
 	glfwSetWindowUserPointer(context.mWindow, m_camera.get());
-	glfwSetMouseButtonCallback(context.mWindow, glfwMouseButtonCallback);
 	glfwSetCursorPosCallback(context.mWindow, glfwCallbackMotion);
 
 	// Define Light sources
@@ -331,28 +330,6 @@ void vk::Renderer::Update(double deltaTime)
 	m_ShadowMap->Update();
 	m_ForwardPass->Update();
 	m_PresentPass->Update();
-}
-
-void vk::Renderer::glfwMouseButtonCallback(GLFWwindow* window, int button, int action, [[maybe_unused]] int mods)
-{
-	auto camera = static_cast<Camera*>(glfwGetWindowUserPointer(window));
-	assert(camera);
-
-	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
-	{
-		auto& flag = camera->inputMap[std::size_t(EInputState::MOUSING)];
-
-		flag = !flag; // we're using mouse now 
-		if (flag)
-		{
-			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-		}
-		else
-		{
-			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-		}
-	}
 }
 
 // Get the current mouse position 

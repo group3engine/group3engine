@@ -29,7 +29,6 @@ namespace vk
 		void Update(double deltaTime);
 
 		// Should be moved out of renderer when we do better input/controls 
-		static void glfwMouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 		static void glfwCallbackMotion(GLFWwindow* window, double x, double y);
 		
 	private:

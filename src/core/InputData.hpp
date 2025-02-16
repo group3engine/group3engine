@@ -132,10 +132,27 @@ enum class KEY {
     _LAST               = 512
 };
 
+enum class MOUSE_BUTTON {
+    _LEFT               = 0,
+    _RIGHT              = 1,
+    _MIDDLE             = 2,
+    _4                  = 3,
+    _5                  = 4,
+    _6                  = 5,
+    _7                  = 6,
+    _8                  = 7,
+    _LAST               = 8
+};
+
 struct InputData {
     struct {
         std::array<uint8_t, static_cast<uint16_t>(KEY::_LAST)> currentKeyState{};
         std::array<uint8_t, static_cast<uint16_t>(KEY::_LAST)> previousKeyState{};
     } keyboard;
+
+    struct {
+        std::array<uint8_t, static_cast<uint8_t>(MOUSE_BUTTON::_LAST)> currentButtonState{};
+        std::array<uint8_t, static_cast<uint8_t>(MOUSE_BUTTON::_LAST)> previousButtonState{};
+    } mouse;
 };
 #endif // GROUP3ENGINE_INPUTDATA_HPP
