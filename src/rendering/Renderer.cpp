@@ -45,7 +45,6 @@ vk::Renderer::Renderer(Context& context) : context{context}
 	
 	// GLFW callbacks
 	glfwSetWindowUserPointer(context.mWindow, m_camera.get());
-	glfwSetKeyCallback(context.mWindow, &glfwHandleKeyboard);
 	glfwSetMouseButtonCallback(context.mWindow, glfwMouseButtonCallback);
 	glfwSetCursorPosCallback(context.mWindow, glfwCallbackMotion);
 
@@ -332,61 +331,6 @@ void vk::Renderer::Update(double deltaTime)
 	m_ShadowMap->Update();
 	m_ForwardPass->Update();
 	m_PresentPass->Update();
-}
-
-void vk::Renderer::glfwHandleKeyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-	auto camera = static_cast<Camera*>(glfwGetWindowUserPointer(window));
-	assert(camera);
-
-	const bool isReleased = (GLFW_RELEASE == action); // check if key is released -> if not, its being held down
-
-	switch (key)
-	{
-		case GLFW_KEY_W:
-			camera->inputMap[std::size_t(EInputState::FORWARD)] = !isReleased;
-			break;
-
-		case GLFW_KEY_S:
-			camera->inputMap[std::size_t(EInputState::BACKWARD)] = !isReleased;
-			break;
-
-		case GLFW_KEY_A:
-			camera->inputMap[std::size_t(EInputState::LEFT)] = !isReleased;
-			break;
-	
-		case GLFW_KEY_D:
-			camera->inputMap[std::size_t(EInputState::RIGHT)] = !isReleased;
-			break;
-
-		case GLFW_KEY_Q:
-			camera->inputMap[std::size_t(EInputState::DOWN)] = !isReleased;
-			break;
-		case GLFW_KEY_E:
-			camera->inputMap[std::size_t(EInputState::UP)] = !isReleased;
-			break;
-
-		case GLFW_KEY_LEFT_SHIFT:
-			camera->inputMap[std::size_t(EInputState::FAST)] = !isReleased;
-			break;
-		case GLFW_KEY_LEFT_CONTROL:
-			camera->inputMap[std::size_t(EInputState::SLOW)] = !isReleased;
-			break;
-		default:
-			;
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-	{
-		glfwSetWindowShouldClose(window, GLFW_TRUE);
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS)
-	{
-		postProcessSettings.Enable = postProcessSettings.Enable == true ? false : true;
-		const std::string result = postProcessSettings.Enable == true ? "Enabled" : "Disabled";
-		std::cout << "Post process: " << result << std::endl;
-	}
 }
 
 void vk::Renderer::glfwMouseButtonCallback(GLFWwindow* window, int button, int action, int mods)

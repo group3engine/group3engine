@@ -22,6 +22,8 @@ namespace vk
 		bool m_isRunning;
 		double m_lastFrameTime;
 
+		void UpdateLogic();
+
 		void Update(double deltaTime);
 		void Render();
 

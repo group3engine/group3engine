@@ -10,8 +10,6 @@
 #include <cstdint>
 #include <cstring>
 
-#include <GLFW/glfw3.h>
-
 #include "Volk.hpp"
 
 #include <iostream>

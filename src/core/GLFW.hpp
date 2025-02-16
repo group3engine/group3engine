@@ -8,7 +8,7 @@
 
 extern InputData gInputData;
 
-void PollEvents();
+void PollInputEvents();
 
 class Platform {
   private:

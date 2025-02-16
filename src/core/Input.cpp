@@ -7,3 +7,8 @@ InputData gInputData;
 bool IsKeyDown(KEY key) {
     return gInputData.keyboard.currentKeyState[static_cast<uint16_t>(key)] == 1;
 }
+
+bool IsKeyPressed(KEY key) {
+    return gInputData.keyboard.previousKeyState[static_cast<uint16_t>(key)] == 0 &&
+           gInputData.keyboard.currentKeyState[static_cast<uint16_t>(key)] == 1;
+}

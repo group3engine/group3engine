@@ -1,11 +1,14 @@
 #include "Engine.hpp"
-#include "Image.hpp"
+
 #include <glm/glm.hpp>
-#include "Utils.hpp"
+#include <spdlog/spdlog.h>
 
-#include "HelloWorld.hpp"
-
+#include "Camera.hpp"
 #include "GLFW.hpp"
+#include "HelloWorld.hpp"
+#include "Image.hpp"
+#include "Input.hpp"
+#include "Utils.hpp"
 
 vk::Engine::Engine()
 {
@@ -52,16 +55,52 @@ void vk::Engine::Run()
 		deltaTime = currentFrameTime - m_lastFrameTime;
 		m_lastFrameTime = currentFrameTime;
 
-		PollEvents();
+		PollInputEvents();
+
 		Update(deltaTime);
+
 		Render();
 	}
 
 	Shutdown();
 }
 
+void vk::Engine::UpdateLogic() {
+	if (IsKeyDown(KEY::_ESCAPE)) {
+		glfwSetWindowShouldClose(Platform::get().window, GLFW_TRUE);
+	}
+
+	auto camera =
+		static_cast<Camera *>(glfwGetWindowUserPointer(Platform::get().window));
+	assert(camera);
+
+	auto &inputMap = camera->inputMap;
+	camera->SetInput(EInputState::FORWARD, IsKeyDown(KEY::_W));
+	camera->SetInput(EInputState::BACKWARD, IsKeyDown(KEY::_S));
+	camera->SetInput(EInputState::LEFT, IsKeyDown(KEY::_A));
+	camera->SetInput(EInputState::RIGHT, IsKeyDown(KEY::_D));
+
+	camera->SetInput(EInputState::DOWN, IsKeyDown(KEY::_Q));
+	camera->SetInput(EInputState::UP, IsKeyDown(KEY::_E));
+
+	camera->SetInput(EInputState::FAST, IsKeyDown(KEY::_LEFT_SHIFT));
+	camera->SetInput(EInputState::SLOW, IsKeyDown(KEY::_LEFT_CONTROL));
+
+	if (IsKeyPressed(KEY::_5)) {
+		postProcessSettings.Enable =
+			postProcessSettings.Enable == true ? false : true;
+
+		const std::string result =
+			postProcessSettings.Enable == true ? "Enabled"
+												: "Disabled";
+
+		SPDLOG_INFO("Post process: {}", result);
+	}
+}
+
 void vk::Engine::Update(double deltaTime)
 {
+	UpdateLogic();
 	m_Renderer->Update(deltaTime);
 }
 

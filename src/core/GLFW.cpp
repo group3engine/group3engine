@@ -5,9 +5,14 @@
 #include <GLFW/glfw3.h>
 #include <spdlog/spdlog.h>
 
-void PollEvents() {
+void PollInputEvents() {
     // TODO: More polling handling
-    // E.g, register previous key states
+
+    // Register previous key states
+    for (uint16_t i = 0; i < static_cast<uint16_t>(KEY::_LAST); ++i) {
+        gInputData.keyboard.previousKeyState[i] =
+            gInputData.keyboard.currentKeyState[i];
+    }
 
     glfwPollEvents();
 }

@@ -135,6 +135,7 @@ enum class KEY {
 struct InputData {
     struct {
         std::array<uint8_t, static_cast<uint16_t>(KEY::_LAST)> currentKeyState{};
+        std::array<uint8_t, static_cast<uint16_t>(KEY::_LAST)> previousKeyState{};
     } keyboard;
 };
 #endif // GROUP3ENGINE_INPUTDATA_HPP

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <GLFW/glfw3.h>
-
 #include <algorithm>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -79,6 +77,9 @@ namespace vk
 		glm::vec3 GetDirection() const { return m_direction; }
 		glm::vec3 GetUp() const { return m_up; }
 
+		void SetInput(EInputState inputState, bool state) {
+			inputMap[static_cast<size_t>(inputState)] = state;
+		}
 
 		bool inputMap[std::size_t(EInputState::MAX)] = {};
 		float mouseX;

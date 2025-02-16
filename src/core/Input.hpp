@@ -5,5 +5,5 @@
 
 bool IsKeyDown(KEY key);
 
-void PollEvents();
+bool IsKeyPressed(KEY key);
 #endif // GROUP3ENGINE_INPUT_HPP
