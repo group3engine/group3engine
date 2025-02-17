@@ -6,12 +6,12 @@
 #include <utility>
 #include <vector>
 
+#include "GLTFImportStructs.hpp"
 #include "Utils.hpp"
 #include "Volk.hpp"
-#include "GLTF.hpp"
 /*
-    Pipeline abstraction which allows simpler and easier construction of pipelines
-    Improvements:
+    Pipeline abstraction which allows simpler and easier construction of
+   pipelines Improvements:
         - Hot reloading shaders
 */
 

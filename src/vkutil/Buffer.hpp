@@ -4,8 +4,8 @@
 #include <string>
 #include <stdexcept>
 #include <cstring>
+#include "Context.hpp"
 
-class Context;
 
 namespace vk
 {
@@ -63,6 +63,6 @@ namespace vk
 		std::string name = "";
 	};
 
-	Buffer CreateBuffer(const std::string& name, Context& context, VkDeviceSize bSize, VkBufferUsageFlags usage, VmaAllocationCreateFlags memoryFlags, VmaMemoryUsage = VMA_MEMORY_USAGE_AUTO);
-	void CreateAndUploadBuffer(Context& context, const void* data, VkDeviceSize size, VkBufferUsageFlags usage, vk::Buffer& destinationBuffer);
+	Buffer CreateBuffer(const std::string& name, vk::Context const& context, VkDeviceSize bSize, VkBufferUsageFlags usage, VmaAllocationCreateFlags memoryFlags, VmaMemoryUsage = VMA_MEMORY_USAGE_AUTO);
+	void CreateAndUploadBuffer(vk::Context const& context, const void* data, VkDeviceSize size, VkBufferUsageFlags usage, vk::Buffer& destinationBuffer);
 }
