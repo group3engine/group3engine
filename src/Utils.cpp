@@ -6,7 +6,7 @@ namespace vk
 	RenderType renderType = RenderType::FORWARD;
 }
 
-void vk::ExecuteSingleTimeCommands(Context& context, std::function<void(VkCommandBuffer)> recordCommands)
+void vk::ExecuteSingleTimeCommands(Context const& context, std::function<void(VkCommandBuffer)> recordCommands)
 {
 	VkCommandBufferAllocateInfo allocateCmd = {
 		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -90,6 +90,21 @@ VkDescriptorSetLayout vk::CreateDescriptorSetLayout(vk::Context& context, const 
 	return layout;
 }
 
+void vk::CreateDescriptorPool(Context& context, uint32_t maxDescriptors, uint32_t maxSets, VkDescriptorPool& descriptorPool)
+{
+        std::vector<VkDescriptorPoolSize> poolSizes = {
+                { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, maxDescriptors },
+                { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, maxDescriptors }
+        };
+
+        VkDescriptorPoolCreateInfo poolInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
+        poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
+        poolInfo.pPoolSizes = poolSizes.data();
+        poolInfo.maxSets = maxSets;
+
+        VK_CHECK(vkCreateDescriptorPool(context.device, &poolInfo, nullptr, &descriptorPool), "Failed to create descriptor pool");
+}
+
 void vk::AllocateDescriptorSets(Context& context, VkDescriptorPool descriptorPool, const VkDescriptorSetLayout descriptorLayout, uint32_t setCount, std::vector<VkDescriptorSet>& descriptorSet)
 {
 	std::vector<VkDescriptorSetLayout> setLayout(vk::MAX_FRAMES_IN_FLIGHT, descriptorLayout);
@@ -103,6 +118,7 @@ void vk::AllocateDescriptorSets(Context& context, VkDescriptorPool descriptorPoo
 
 	VK_CHECK(vkAllocateDescriptorSets(context.device, &allocInfo, descriptorSet.data()), "Failed to allocate descriptor sets");
 }
+
 
 void vk::AllocateDescriptorSet(Context& context, VkDescriptorPool descriptorPool, const VkDescriptorSetLayout descriptorLayout, uint32_t setCount, VkDescriptorSet& descriptorSet)
 {
