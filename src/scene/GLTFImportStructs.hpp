@@ -99,16 +99,12 @@ struct Material {
 };
 
 struct MeshPrimitiveGPU {
-    Buffer mPositions;
-    Buffer mTexcoords;
-    Buffer mNormals;
+    Buffer mVertices;
     Buffer mIndices;
     std::uint32_t mIndexCount;
 };
 struct MeshPrimitive {
-    std::vector<float> positions;
-    std::vector<float> normals;
-    std::vector<float> texcoords;
+    std::vector<Vertex> vertices;
     // TODO: Bone weights
     std::vector<std::uint32_t> indices;
     MeshPrimitiveGPU *meshGPU;

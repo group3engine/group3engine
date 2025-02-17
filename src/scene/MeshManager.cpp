@@ -14,12 +14,8 @@ void MeshManager::debugOuptutMeshes() {
     std::cout << "meshes.size()=" << mMeshes.size() << '\n';
     std::cout << "meshPrimitives.size()=" << mMeshes[0].meshPrimitives.size()
               << '\n';
-    std::cout << "meshPrimitives.positions.size()="
-              << mMeshes[0].meshPrimitives[0].positions.size() << '\n';
-    std::cout << "meshPrimitives.normals.size()="
-              << mMeshes[0].meshPrimitives[0].normals.size() << '\n';
-    std::cout << "meshPrimitives.texcoords.size()="
-              << mMeshes[0].meshPrimitives[0].texcoords.size() << '\n';
+    std::cout << "meshPrimitives.vertices.size()="
+              << mMeshes[0].meshPrimitives[0].vertices.size() << '\n';
     std::cout << "meshPrimitives.indices.size()="
               << mMeshes[0].meshPrimitives[0].indices.size() << '\n';
     std::cout << *std::max_element(mMeshes[0].meshPrimitives[0].indices.begin(),
@@ -39,31 +35,8 @@ void MeshManager::uploadLastMesh() {
     for (auto &meshPrimitive : mesh.meshPrimitives) {
         auto &meshGPU = mMeshesGPU[offset++];
         meshGPU.mIndexCount = meshPrimitive.indices.size();
-
-        VkDeviceSize vertexSize = meshPrimitive.positions.size() * sizeof(float);
-        // upload the positions
-        vk::CreateAndUploadBuffer(
-            mContext, meshPrimitive.positions.data(),
-            vertexSize,
-            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
-                VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-            meshGPU.mPositions);
-        // upload the normals
-        VkDeviceSize normalSize = meshPrimitive.normals.size() * sizeof(float);
-        vk::CreateAndUploadBuffer(
-            mContext, meshPrimitive.normals.data(),
-            normalSize,
-            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
-                VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-            meshGPU.mNormals);
-        // upload the texcoords
-        VkDeviceSize texcoordSize = meshPrimitive.texcoords.size() * sizeof(float);
-        vk::CreateAndUploadBuffer(
-            mContext, meshPrimitive.texcoords.data(),
-            texcoordSize,
-            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
-                VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-            meshGPU.mTexcoords);
+        VkDeviceSize vertexSize = sizeof(meshPrimitive.vertices[0]) * meshPrimitive.vertices.size();
+        CreateAndUploadBuffer(mContext, meshPrimitive.vertices.data(), vertexSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, meshGPU.mVertices);
         // upload the indices
         VkDeviceSize indexSize = meshPrimitive.indices.size() * sizeof(std::uint32_t);
         vk::CreateAndUploadBuffer(

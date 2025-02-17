@@ -9,10 +9,7 @@
 namespace vk {
 Entity::Entity(std::string aName, Entity *aParent, Mesh *aMesh,
                glm::mat4 aLocalTransform)
-    : mName(std::move(aName)),
-      mParent(aParent),
-      mMesh(aMesh),
-      mHasMesh(true){
+    : mName(std::move(aName)), mParent(aParent), mMesh(aMesh), mHasMesh(true) {
     // convert the transformation matrix to a translation, rotation
     // (quaternion), scale
     glm::vec3 translation, scale;
@@ -64,12 +61,10 @@ void Entity::RecordDrawOpaque(VkCommandBuffer aCmdBuff,
             vkCmdBindDescriptorSets(
                 aCmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, aPipelineLayout, 1,
                 1, &meshPrimitive.material->descriptorSet, 0, nullptr);
-            // bind the vertex buffers - positions, texcoords, normals
-            VkBuffer buffers[] = {meshPrimitive.meshGPU->mPositions.buffer,
-                                  meshPrimitive.meshGPU->mTexcoords.buffer,
-                                  meshPrimitive.meshGPU->mNormals.buffer};
+            // bind the vertex buffers
+            VkBuffer buffers[] = {meshPrimitive.meshGPU->mVertices.buffer};
 
-            VkDeviceSize offsets[] = {0, 0, 0};
+            VkDeviceSize offsets[] = {0};
 
             vkCmdBindVertexBuffers(aCmdBuff, 0,
                                    sizeof(buffers) / sizeof(buffers[0]),
@@ -101,8 +96,8 @@ void Entity::RecordDrawShadow(VkCommandBuffer aCmdBuff,
             vkCmdBindDescriptorSets(
                 aCmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, aPipelineLayout, 1,
                 1, &meshPrimitive.material->descriptorSet, 0, nullptr);
-            // bind the vertex buffers - positions, texcoords, normals
-            VkBuffer buffers[] = {meshPrimitive.meshGPU->mPositions.buffer};
+            // bind the vertex buffers
+            VkBuffer buffers[] = {meshPrimitive.meshGPU->mVertices.buffer};
 
             VkDeviceSize offsets[] = {0};
 
@@ -141,11 +136,9 @@ void Entity::RecordDrawCutout(VkCommandBuffer aCmdBuff,
                 aCmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, aPipelineLayout, 1,
                 1, &meshPrimitive.material->descriptorSet, 0, nullptr);
             // bind the vertex buffers - positions, texcoords, normals
-            VkBuffer buffers[] = {meshPrimitive.meshGPU->mPositions.buffer,
-                                  meshPrimitive.meshGPU->mTexcoords.buffer,
-                                  meshPrimitive.meshGPU->mNormals.buffer};
+            VkBuffer buffers[] = {meshPrimitive.meshGPU->mVertices.buffer};
 
-            VkDeviceSize offsets[] = {0, 0, 0};
+            VkDeviceSize offsets[] = {0};
 
             vkCmdBindVertexBuffers(aCmdBuff, 0,
                                    sizeof(buffers) / sizeof(buffers[0]),

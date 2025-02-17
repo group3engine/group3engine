@@ -15,9 +15,7 @@ class MeshManager {
     explicit MeshManager(Context &aContext) : mContext(aContext) {};
     ~MeshManager() {
         for (auto &meshGPU : mMeshesGPU) {
-            meshGPU.mPositions = {};
-            meshGPU.mTexcoords = {};
-            meshGPU.mNormals = {};
+            meshGPU.mVertices = {};
             meshGPU.mIndices = {};
         }
     }

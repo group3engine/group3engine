@@ -88,7 +88,17 @@ vec4 ComputeLighting()
     // for each light, calculate the lighting
     for (int i = 0; i < NUM_LIGHTS; i++)
     {
-        ComputeAllLighting(v2fPosition, viewDirection, baseColour, roughness, metalness, normal, lightData.lights[i].LightPosition, lightData.lights[i].LightColour, light);
+        if(lightData.lights[i].Type == 0)
+        {
+            ComputeAllLighting(v2fPosition, viewDirection, baseColour, roughness, metalness, normal, lightData.lights[i].LightPosition, lightData.lights[i].LightColour, light);
+        }
+    }
+    for (int i = 0; i < NUM_LIGHTS; i++)
+    {
+        if(lightData.lights[i].Type == 1)
+        {
+            ComputeAllLightingDirectional(v2fPosition, viewDirection, baseColour, roughness, metalness, normal, -normalize(lightData.lights[i].LightPosition).xyz, lightData.lights[i].LightColour, light);
+        }
     }
 
 

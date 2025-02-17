@@ -196,24 +196,28 @@ int LoadGLTF(const std::string &aFilepath, MeshManager &aMeshManager,
         for (size_t pi = 0; pi < gltfMesh.primitives_count; ++pi) {
             const auto &gltfPrimitive = gltfMesh.primitives[pi];
             MeshPrimitive meshPrimitive{};
+            // temporary positions, normals, texcoords
+            std::vector<float> positions;
+            std::vector<float> normals;
+            std::vector<float> texcoords;
 
             // Positions
             if (const cgltf_accessor *pos = cgltf_find_accessor(
                     &gltfPrimitive, cgltf_attribute_type_position, 0)) {
                 size_t count = pos->count * 3;
-                meshPrimitive.positions.resize(count);
+                positions.resize(count);
                 assert(cgltf_num_components(pos->type) == 3);
                 cgltf_accessor_unpack_floats(
-                    pos, meshPrimitive.positions.data(), count);
+                    pos, positions.data(), count);
             }
 
             // Normals
             if (const cgltf_accessor *nrm = cgltf_find_accessor(
                     &gltfPrimitive, cgltf_attribute_type_normal, 0)) {
                 size_t count = nrm->count * 3;
-                meshPrimitive.normals.resize(count);
+                normals.resize(count);
                 assert(cgltf_num_components(nrm->type) == 3);
-                cgltf_accessor_unpack_floats(nrm, meshPrimitive.normals.data(),
+                cgltf_accessor_unpack_floats(nrm, normals.data(),
                                              count);
             }
 
@@ -221,17 +225,30 @@ int LoadGLTF(const std::string &aFilepath, MeshManager &aMeshManager,
             if (const cgltf_accessor *tex = cgltf_find_accessor(
                     &gltfPrimitive, cgltf_attribute_type_texcoord, 0)) {
                 size_t count = tex->count * 2;
-                meshPrimitive.texcoords.resize(count);
+                texcoords.resize(count);
                 assert(cgltf_num_components(tex->type) == 2);
                 cgltf_accessor_unpack_floats(
-                    tex, meshPrimitive.texcoords.data(), count);
+                    tex, texcoords.data(), count);
             } else {
-                meshPrimitive.texcoords.resize(meshPrimitive.positions.size() /
+                texcoords.resize(positions.size() /
                                                3 * 2);
-                for (size_t i = 0; i < meshPrimitive.texcoords.size(); i += 2) {
-                    meshPrimitive.texcoords[i] = 0.0f;
-                    meshPrimitive.texcoords[i + 1] = 0.0f;
+                for (size_t i = 0; i < texcoords.size(); i += 2) {
+                    texcoords[i] = 0.0f;
+                    texcoords[i + 1] = 0.0f;
                 }
+            }
+
+            // load up the vertices
+            meshPrimitive.vertices.resize(positions.size() / 3);
+            for (size_t i = 0; i < meshPrimitive.vertices.size(); i++) {
+                meshPrimitive.vertices[i].pos = {positions[i * 3],
+                                                 positions[i * 3 + 1],
+                                                 positions[i * 3 + 2]};
+                meshPrimitive.vertices[i].normal = {normals[i * 3],
+                                                    normals[i * 3 + 1],
+                                                    normals[i * 3 + 2]};
+                meshPrimitive.vertices[i].tex = {texcoords[i * 2],
+                                                texcoords[i * 2 + 1]};
             }
 
             // Indices
