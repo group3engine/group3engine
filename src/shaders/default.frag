@@ -36,10 +36,9 @@ layout(set = 0, binding = 1) uniform LightBuffer {
 layout(push_constant) uniform Push
 {
 	mat4 ModelMatrix;
-	uint dTextureID; // diffuse 
-	uint mTextureID; // metalness
-	uint rTextureID; // roughness
-	uint eTextureID; // emissive
+	vec4 BaseColourFactor;
+	float Metallic;
+	float Roughness;
 }pc;
 
 layout(set = 0, binding = 2) uniform sampler2DShadow shadowMap;
@@ -96,7 +95,6 @@ vec3 CookTorranceBRDF(vec3 normal, vec3 halfVector, vec3 viewDir, vec3 lightDir,
     float D = BeckmannNormalDistribution(normal, halfVector, roughness);
 	float G = GeometryTerm(normal, halfVector, lightDir, viewDir);
 
-    vec3 ambient = vec3(0.02);
     vec3 L_Diffuse = (baseColor.xyz / PI) * (vec3(1,1,1) - F) * (1.0 - metallic);
 
     float NdotV = max(dot(normal, viewDir), 0.0);
@@ -115,9 +113,6 @@ vec3 CookTorranceBRDF(vec3 normal, vec3 halfVector, vec3 viewDir, vec3 lightDir,
 // https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing
 float PCF(vec3 WorldPos)
 {
-    vec3 lightDir = normalize(lightData.lights[0].LightPosition.xyz);
-	lightDir = -lightDir;
-
 	// Use direct lighting only. Point light shadows are handleded differently (cube depth)
 	vec4 fragPositionInLightSpace = lightData.lights[0].LightSpaceMatrix * vec4(WorldPos, 1.0);
 	fragPositionInLightSpace.xyz /= fragPositionInLightSpace.w;
@@ -145,6 +140,7 @@ void main()
 {
 	vec4 color = texture(albedoTexture, uv);
 	vec3 emissive = vec3(0.0);
+	vec3 wNormal = normalize(WorldNormal).xyz;
 
     // == Metal and Roughness ==
     float roughness = max(texture(metallicRoughness, uv).b, 0.1);
@@ -165,32 +161,29 @@ void main()
 		if(!isDirectional) 
 		{
 			float dist = length(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
-			float att = 1.0 / (dist * dist); 
-			LightColour = lightData.lights[i].LightColour.xyz * att;
+			float att = 1.0 / (dist * dist);
+			LightColour = lightData.lights[i].LightColour.xyz * 5.0 * att;
 		}
 		else {
-			LightColour = lightData.lights[i].LightColour.rgb;
+			LightColour = lightData.lights[i].LightColour.rgb * 20.0;
 		}
 
 		if(isDirectional) {
 			float shadowTerm = 1.0 - PCF(WorldPos.xyz);
-			outLight += shadowTerm * CookTorranceBRDF(WorldNormal, halfVector, viewDir, -lightData.lights[i].LightPosition.xyz, metallic, roughness, color.xyz, LightColour);
-			
+			outLight += shadowTerm * CookTorranceBRDF(wNormal, halfVector, viewDir, lightDir, metallic, roughness, color.xyz, LightColour);
 		} 
 		else {
 			outLight += CookTorranceBRDF(WorldNormal, halfVector, viewDir, lightDir, metallic, roughness, color.xyz, LightColour);
 		}
 	}
 
-    float shadowTerm = 1.0 - PCF(WorldPos.xyz);
-
-	vec3 ambient = vec3(0.9) * color.xyz * shadowTerm;
-	outLight += ambient;
-	fragColor = vec4(vec3(outLight), 1.0);
+	float shadowTerm = 1.0 - PCF(WorldPos.xyz);
+	vec3 ambient = vec3(0.1) * color.rgb;
+	fragColor = vec4(vec3(ambient + outLight), 1.0);
 
 	float brightness = dot(fragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
 	if(brightness > 1.0)
-		brightColours = vec4(fragColor.rgb, 1.0);
+		brightColours = vec4(clamp(fragColor.rgb, 0.0, 1.0), 1.0);
 	else
 		brightColours = vec4(0.0, 0.0, 0.0, 1.0);
 }

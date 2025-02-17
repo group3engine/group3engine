@@ -2,6 +2,8 @@
 
 #include <filesystem>
 
+#include <glm/gtc/random.hpp>
+
 #include "Context.hpp"
 #include "Light.hpp"
 #include "Utils.hpp"
@@ -24,8 +26,8 @@ vk::Renderer::Renderer(Context& context) : context{context}
 
 	CreateResources();
 
-	m_materialManager.materials.reserve(25);
-	for (int i = 0; i < 25; ++i) {
+	m_materialManager.materials.reserve(100);
+	for (int i = 0; i < 100; ++i) {
 		m_materialManager.materials.emplace_back(context);
 	}
 
@@ -56,8 +58,9 @@ vk::Renderer::Renderer(Context& context) : context{context}
 	std::vector<glm::vec4> spotLightPositions;
 
 	// Random spot light positions put side by side each other 
-	for (size_t i = 0; i < 25; i++) {
-		spotLightPositions.push_back(glm::vec4(1.0, 10.0f, 1.0f, 1.0f)); // Modify as needed
+	for (size_t i = 0; i < 25; i++)
+	{
+		spotLightPositions.push_back(glm::vec4(-9.0 + i * 0.8, 0.2f, 0.5f, 1.0f));
 	}
 
 	// Create the scene which will store models and lights
@@ -74,7 +77,12 @@ vk::Renderer::Renderer(Context& context) : context{context}
 		Light spotLight = {};
 		spotLight.Type = LightType::Spot;
 		spotLight.position = position;
-		spotLight.colour = glm::vec4(0.3f, 0.0f, 1.0f, 1.0f);
+		spotLight.colour = glm::vec4(
+			glm::linearRand(0.0f, 1.0f),
+			glm::linearRand(0.0f, 1.f),
+			glm::linearRand(0.0f, 1.0f),
+			1.0f
+		);
 		m_scene->AddLightSource(spotLight);
 	}
 

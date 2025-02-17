@@ -12,33 +12,79 @@ vk::Scene::Scene(Context& context, MaterialManager& materialManager) : context(c
 
 void vk::Scene::AddModel(GLTFModel& GLTF, MaterialManager& materialManager)
 {
-	// Load textures from disk
-	// Want to load only unique materials 
-	std::unordered_map<int, int> map;
-	for (auto& meshData : GLTF.meshes)
-	{
+	// Check if the material index this mesh refers to is already in-use
+	for (auto &meshData : GLTF.meshes) {
 		for (auto &mesh : meshData) {
-			if (map[mesh.materialIndex] > 0)
-			{
-				continue;
+			if (materialManager.materialLookup[mesh.materialIndex] > 0) {
+				// This index is already in use
+				// How can i check if this is a unique material for the mesh or
+				// an existing one ?
+				auto &material = materialManager.materials[mesh.materialIndex];
+				bool isSameAlbedo =
+					material.textures[0].name == mesh.textures[0];
+				bool isSameMetRough =
+					material.textures[1].name == mesh.textures[1];
+
+				if (isSameAlbedo && isSameMetRough) {
+					materialManager.materialLookup
+						[mesh.materialIndex]++; // just keeping track of how
+												// many meshes might be using
+												// thi could be useful someday
+					continue; // material is the same, just re-use it
+				} else {
+					uint32_t newIndex = materialManager.GetNextAvailableIndex();
+					assert(newIndex != -1);
+					materialManager.materials[newIndex].textures.resize(
+						mesh.textures.size());
+					for (size_t i = 0; i < mesh.textures.size(); i++) {
+						VkFormat FORMAT =
+							i == 0
+								? VK_FORMAT_R8G8B8A8_SRGB
+								: VK_FORMAT_R8G8B8A8_UNORM; // index 0 is
+															// albedo, the rest
+															// should use UNORM
+						materialManager.materials[newIndex].textures[i] =
+							(std::move(LoadTextureFromDisk(mesh.textures[i],
+														   context, FORMAT)));
+					}
+
+					materialManager.materials[newIndex].isValid = true;
+					materialManager.materialLookup[newIndex] = 1;
+					mesh.materialIndex = newIndex;
+				}
+			} else {
+				materialManager.materials[mesh.materialIndex].textures.resize(
+					mesh.textures.size());
+
+				for (size_t i = 0; i < mesh.textures.size(); i++) {
+					VkFormat FORMAT =
+						i == 0 ? VK_FORMAT_R8G8B8A8_SRGB
+							   : VK_FORMAT_R8G8B8A8_UNORM; // index 0 is albedo,
+														   // the rest should
+														   // use UNORM
+					materialManager.materials[mesh.materialIndex].textures[i] =
+						(std::move(LoadTextureFromDisk(mesh.textures[i],
+													   context, FORMAT)));
+				}
+				materialManager.materials[mesh.materialIndex].isValid = true;
+				materialManager.materialLookup[mesh.materialIndex] = 1;
 			}
-			materialManager.materials[mesh.materialIndex].textures.resize(mesh.textures.size());
-			for (size_t i = 0; i < mesh.textures.size(); i++) {
-				VkFormat FORMAT = i == 0 ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM; // index 0 is albedo, the rest should use UNORM 
-				materialManager.materials[mesh.materialIndex].textures[i] = (std::move(LoadTextureFromDisk(mesh.textures[i], context, FORMAT)));
-			}
-			map[mesh.materialIndex] = 1;
 		}
 	}
 
-	for (auto& meshData : GLTF.meshes)
-	{
+	for (auto &meshData : GLTF.meshes) {
 		for (auto &mesh : meshData) {
-			VkDeviceSize vertexSize = sizeof(mesh.vertices[0]) * mesh.vertices.size();
-			CreateAndUploadBuffer(context, mesh.vertices.data(), vertexSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, mesh.vertexBuffer);
-	
-			VkDeviceSize indexSize = sizeof(mesh.indices[0]) * mesh.indices.size();
-			CreateAndUploadBuffer(context, mesh.indices.data(), indexSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, mesh.indexBuffer);
+			VkDeviceSize vertexSize =
+				sizeof(mesh.vertices[0]) * mesh.vertices.size();
+			CreateAndUploadBuffer(context, mesh.vertices.data(), vertexSize,
+								  VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+								  mesh.vertexBuffer);
+
+			VkDeviceSize indexSize =
+				sizeof(mesh.indices[0]) * mesh.indices.size();
+			CreateAndUploadBuffer(context, mesh.indices.data(), indexSize,
+								  VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+								  mesh.indexBuffer);
 		}
 	}
 

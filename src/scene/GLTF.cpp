@@ -118,19 +118,11 @@ vk::GLTFModel vk::LoadGLTF(const Context& context, std::filesystem::path filepat
                 meshData.vertices.push_back(vertex);
             }
 
-
-            // Each material has a descriptor set
-            // We can take the material index 
-            // and index into the material descriptor set array to get the material 
-            // for the current mesh we're rendering 
-
-            // I think the above might be wrong
             // Each material has a descriptor set
             // If each material is stored in array and the mesh has a material index
             // We would just need to index into the material array, 
             // bind the descriptor set for that material 
             // perhaps use set = 1 for materials
-
 
             // Material 
             cgltf_material* material = gltfPrimitive.material;
@@ -147,7 +139,8 @@ vk::GLTFModel vk::LoadGLTF(const Context& context, std::filesystem::path filepat
             }
 
             // Get the texture paths for this meshes material  
- 
+
+            // need to get other textures and multipliers
             const cgltf_pbr_metallic_roughness& pbr = material->pbr_metallic_roughness;
 
             std::filesystem::path assetsPath = std::filesystem::current_path() / "assets";
@@ -176,7 +169,7 @@ vk::GLTFModel vk::LoadGLTF(const Context& context, std::filesystem::path filepat
             meshData.textures.push_back(metallicRoughness.make_preferred());
 
             meshData.materialIndex = matIndex;
-
+            model.name = filepath.string();
             meshDatas.push_back(std::move(meshData));
         }
 
@@ -211,7 +204,7 @@ vk::GLTFModel vk::LoadGLTF(const Context& context, std::filesystem::path filepat
 
 
 // ======================== Material ======================== 
-vk::Material::Material(vk::Context& context) : context{ context } {}
+vk::Material::Material(vk::Context& context) : context{ context }, isValid{ false } {}
 
 
 void vk::Material::Destroy()
@@ -266,8 +259,19 @@ void vk::MaterialManager::BuildMaterials(Context& context)
                 .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
             };
 
-            UpdateDescriptorSet(context, img, imageInfo, materialDescriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+            UpdateDescriptorSet(context, static_cast<uint32_t>(img), imageInfo, materialDescriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
         }
+    }
+}
+
+void vk::MaterialManager::LoadTexturesForMaterial(uint32_t matIndex, const MeshData& mesh, vk::Context& context)
+{
+    materials[matIndex].textures.resize(mesh.textures.size());
+
+    for (size_t i = 0; i < mesh.textures.size(); i++)
+    {
+        VkFormat FORMAT = (i == 0) ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
+        materials[matIndex].textures[i] = std::move(LoadTextureFromDisk(mesh.textures[i], context, FORMAT));
     }
 }
 

@@ -81,7 +81,9 @@ namespace vk
 
 		Material(Material&& other) noexcept : 
 			textures(std::exchange(other.textures, {})),
-			context(other.context) {}
+			isValid(other.isValid),
+			context(other.context)
+		{}
 
 		Material& operator=(Material&& other) noexcept {
 			if (this != &other) {
@@ -95,10 +97,15 @@ namespace vk
 		void Destroy();
 
 		std::vector<Image> textures; // make private in the future?
+		bool isValid;
+		float roughness;
+		float metallic;
+		glm::vec3 baseColourFactor;
 	private:
 		Context& context;
 	};
 
+	struct MeshData;
 
 	struct MaterialManager
 	{
@@ -114,6 +121,23 @@ namespace vk
 		void Destroy(Context& context); 
 		void CreateDescriptorLayout(Context& context); // descriptor set layout for materials 
 		void BuildMaterials(Context& context); // creates the materials
+
+		uint32_t GetNextAvailableIndex() {
+
+			for (size_t i = 0; i < materials.size(); i++)
+			{
+				if (!materials[i].isValid)
+				{
+					return static_cast<uint32_t>(i);
+				}
+			}
+
+			return -1;
+		}
+
+		void LoadTexturesForMaterial(uint32_t matIndex, const MeshData& mesh, Context& context);
+
+		std::unordered_map<std::size_t, int> materialLookup; // Maps unique material hashes to material indices
 	};
 
 	// This is behaving like "Mesh" but I made my own so I did not edit
@@ -197,18 +221,24 @@ namespace vk
 		GLTFModel(GLTFModel&& other) noexcept :
 			context(other.context),
 			meshes(std::exchange(other.meshes, {})),
-			entities(std::exchange(other.entities, {}))
+			entities(std::exchange(other.entities, {})),
+			position(other.position),
+			name(other.name)
 			{}
 
 		GLTFModel& operator=(GLTFModel&& other) noexcept {
 			std::swap(meshes, other.meshes);
 			std::swap(entities, other.entities);
+			std::swap(name, other.name);
+			std::swap(position, other.position);
 			return *this;
 		}
 
 		const Context& context;
 		std::vector<std::vector<MeshData>> meshes;
 		std::vector<Entity> entities;
+		glm::vec4 position = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+		std::string name;
 	};
 
 	
