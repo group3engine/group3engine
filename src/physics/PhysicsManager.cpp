@@ -60,7 +60,7 @@ void PhysicsManager::UpdatePhysics()
     // Next step
     ++step;
     
-    cout << "Step " << step << endl;
+    // cout << "Step " << step << endl;
     // If you take larger steps than 1 / 60th of a second you need to do multiple collision steps in order to keep the simulation stable. Do 1 collision step per 1 / 60th of a second (round up).
     const int cCollisionSteps = 1;
 

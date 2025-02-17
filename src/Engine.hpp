@@ -4,6 +4,7 @@
 
 #include "Camera.hpp"
 #include "Context.hpp"
+#include "PhysicsManager.hpp"
 #include "Renderer.hpp"
 
 namespace vk
@@ -28,5 +29,6 @@ namespace vk
 		void Render();
 
 		std::unique_ptr<Renderer> m_Renderer;
+        PhysicsManager m_Physics = PhysicsManager();
 	};
 }
