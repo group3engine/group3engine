@@ -5,7 +5,9 @@
 #include "Camera.hpp"
 #include "Context.hpp"
 #include "PhysicsManager.hpp"
+#include "RigidBody.hpp"
 #include "Renderer.hpp"
+
 
 namespace vk
 {

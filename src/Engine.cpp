@@ -7,7 +7,6 @@
 #include "GLFW.hpp"
 #include "Image.hpp"
 #include "Input.hpp"
-#include "PhysicsManager.hpp"
 #include "Utils.hpp"
 
 vk::Engine::Engine()
@@ -32,6 +31,8 @@ bool vk::Engine::Initialize()
 	std::printf("Engine initialized\n");
 
 	m_Renderer = std::make_unique<Renderer>(m_context);
+
+    // ---PHYSICS TEST INITIALISATION---
     // make settings to create the sphere
     BodyCreationSettings sphere_settings(new SphereShape(0.5f), RVec3(0.0_r, 2.0_r, 0.0_r), Quat::sIdentity(), EMotionType::Dynamic, Layers::MOVING);
     
@@ -42,7 +43,9 @@ bool vk::Engine::Initialize()
     m_Physics.body_interface.SetLinearVelocity(ball.ID, Vec3(0.0f, 5.0f, 0.0f));
     
     // add the floor using the default constructor
-    [[maybe_unused]] RigidBody floor = RigidBody(RigidBody::Floor, &m_Physics);
+    [[maybe_unused]]RigidBody floor = RigidBody(RigidBody::Floor, &m_Physics);
+
+    // ---END OF PHYSICS TEST INITIALISATION---
 
 	return m_isRunning;
 }
@@ -64,13 +67,10 @@ void vk::Engine::Run()
 		deltaTime = currentFrameTime - m_lastFrameTime;
 		m_lastFrameTime = currentFrameTime;
 
-        m_Physics.cDeltaTime = deltaTime;
-
 		PollInputEvents();
 
 		Update(deltaTime);
 
-        m_Physics.UpdatePhysics();
 		Render();
 	}
 
@@ -124,6 +124,7 @@ void vk::Engine::Update(double deltaTime)
 {
 	UpdateLogic();
 	m_Renderer->Update(deltaTime);
+    m_Physics.UpdatePhysics(deltaTime);
 }
 
 void vk::Engine::Render()
