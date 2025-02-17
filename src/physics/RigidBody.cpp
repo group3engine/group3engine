@@ -1,4 +1,5 @@
 #include "RigidBody.hpp"
+#include "glm/detail/qualifier.hpp"
 
 // RigidBody()
 // input: enum default shape (Ball, Floor), a physics manager
@@ -63,22 +64,26 @@ RigidBody::RigidBody(BodyCreationSettings settings, PhysicsManager *input_manage
 
 // GetPosition()
 // input: none
-// output: none
-// action: print's the rigid body's current position to the command line
-// TODO: change the function to output the position in glm::vec3 from the Jolt RVec3
-void RigidBody::GetPosition()
+// output: glm vec4 of the position
+glm::vec4 RigidBody::GetPosition()
 {
     RVec3 position = manager->body_interface.GetCenterOfMassPosition(ID);
-    cout << "Position = (" << position.GetX() << ", " << position.GetY() << ", " << position.GetZ() << ")" << endl;
+
+    // we are returning a point so the w componnet is 1.0
+    glm::vec4 return_position = glm::vec4(position.GetX(), position.GetY(), position.GetZ(), 1.f);
+
+    return return_position;
 }
 
 // GetVelocity()
 // input: none
-// output: none
-// action: print's the rigid body's current velocity to the command line
-// TODO: change the function to output the position in glm::vec3 from the Jolt RVec3
-void RigidBody::GetVelocity()
+// output: glm vec4 of the velocity
+glm::vec4 RigidBody::GetVelocity()
 {
     Vec3 velocity = manager->body_interface.GetLinearVelocity(ID);
-    cout << "Velocity = (" << velocity.GetX() << ", " << velocity.GetY() << ", " << velocity.GetZ() << ")" << endl;
+
+    // we are returning a vector so the w componnet is 0.0
+    glm::vec4 return_velocity = glm::vec4(velocity.GetX(), velocity.GetY(), velocity.GetZ(), 0.f);
+
+    return return_velocity;
 }

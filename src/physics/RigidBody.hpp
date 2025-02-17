@@ -1,7 +1,9 @@
 #ifndef PHYSICS_RIGIDBODY_HPP
 #define PHYSICS_RIGIDBODY_HPP
 
+#include <glm/glm.hpp>
 #include "PhysicsManager.hpp"
+#include "glm/fwd.hpp"
 
 // Disable common warnings triggered by Jolt, you can use JPH_SUPPRESS_WARNING_PUSH / JPH_SUPPRESS_WARNING_POP to store and restore the warning state
 JPH_SUPPRESS_WARNINGS
@@ -31,8 +33,8 @@ class RigidBody
         RigidBody(BodyCreationSettings settings, PhysicsManager *input_manager); // custom object constructor
 
         // Functions
-        void GetPosition();
-        void GetVelocity();
+        glm::vec4 GetPosition();
+        glm::vec4 GetVelocity();
 
 
 };
