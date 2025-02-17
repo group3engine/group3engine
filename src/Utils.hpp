@@ -45,11 +45,6 @@ namespace vk
 	struct alignas(16) MeshPushConstants
 	{
 		glm::mat4 ModelMatrix;
-		uint32_t dTextureID; // Diffuse
-		uint32_t mTextureID; // Metalness
-		uint32_t rTextureID; // Roughness
-		uint32_t eTextureID; // Emissive;
-		uint32_t nTextureID; // NormalMap
 	};
 
 	struct LightUBO
@@ -86,7 +81,7 @@ namespace vk
 
 namespace vk
 {
-	void ExecuteSingleTimeCommands(Context& context, std::function<void(VkCommandBuffer)> recordCommands);
+	void ExecuteSingleTimeCommands(Context const& context, std::function<void(VkCommandBuffer)> recordCommands);
 
 	// Sync
 	void ImageBarrier(
@@ -103,7 +98,7 @@ namespace vk
 	void AllocateDescriptorSets(Context& context, VkDescriptorPool descriptorPool, const VkDescriptorSetLayout descriptorLayout, uint32_t setCount, std::vector<VkDescriptorSet>& descriptorSet);
 	void AllocateDescriptorSet(Context& context, VkDescriptorPool descriptorPool, const VkDescriptorSetLayout descriptorLayout, uint32_t setCount, VkDescriptorSet& descriptorSet);
 	VkDescriptorSetLayoutBinding CreateDescriptorBinding(uint32_t binding, uint32_t count, VkDescriptorType type, VkShaderStageFlags shaderStage);
-		
+        void CreateDescriptorPool(Context& context, uint32_t maxDescriptors, uint32_t maxSets, VkDescriptorPool& descriptorPool);
 	// Update buffer descriptor
 	void UpdateDescriptorSet(Context& context, uint32_t binding, VkDescriptorBufferInfo bufferInfo, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType);
 	// Update image descriptor

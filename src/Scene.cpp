@@ -1,85 +1,8 @@
 #include "Scene.hpp"
+
 #include <unordered_map>
 
-vk::Scene::Scene(Context& context, MaterialManager& materialManager) : context(context), materialManager{ materialManager } 
-{
-	m_LightUBO.resize(MAX_FRAMES_IN_FLIGHT);
-	// Light uniform buffers
-	for (auto& buffer : m_LightUBO)
-		buffer = CreateBuffer("LightUBO", context, sizeof(LightBuffer), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
-
-}
-
-void vk::Scene::AddModel(GLTFModel& GLTF, MaterialManager& materialManager)
-{
-	// Load textures from disk
-	// Want to load only unique materials 
-	std::unordered_map<int, int> map;
-	for (auto& meshData : GLTF.meshes)
-	{
-		for (auto &mesh : meshData) {
-			if (map[mesh.materialIndex] > 0)
-			{
-				continue;
-			}
-			materialManager.materials[mesh.materialIndex].textures.resize(mesh.textures.size());
-			for (size_t i = 0; i < mesh.textures.size(); i++) {
-				VkFormat FORMAT = i == 0 ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM; // index 0 is albedo, the rest should use UNORM 
-				materialManager.materials[mesh.materialIndex].textures[i] = (std::move(LoadTextureFromDisk(mesh.textures[i], context, FORMAT)));
-			}
-			map[mesh.materialIndex] = 1;
-		}
-	}
-
-	for (auto& meshData : GLTF.meshes)
-	{
-		for (auto &mesh : meshData) {
-			VkDeviceSize vertexSize = sizeof(mesh.vertices[0]) * mesh.vertices.size();
-			CreateAndUploadBuffer(context, mesh.vertices.data(), vertexSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, mesh.vertexBuffer);
-	
-			VkDeviceSize indexSize = sizeof(mesh.indices[0]) * mesh.indices.size();
-			CreateAndUploadBuffer(context, mesh.indices.data(), indexSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, mesh.indexBuffer);
-		}
-	}
-
-	gltfModels.push_back(std::move(GLTF));
-}
-
-// This should really be called RenderMeshes which renders meshes in the scene
-void vk::Scene::DrawGLTF(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout)
-{
-	for (auto& model : gltfModels)
-	{
-		for (auto &entity: model.entities) {
-			if (entity.meshData) {
-				for (auto &mesh : *entity.meshData) {
-					vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 1, 1, &materialManager.materialDescriptorSets[mesh.materialIndex], 0, nullptr);
-
-					MeshPushConstants pc = {};
-					pc.ModelMatrix = entity.modelMatrix;
-					pc.ModelMatrix = glm::scale(pc.ModelMatrix, glm::vec3(1.0, 1.0, 1.0));
-					vkCmdPushConstants(cmd, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(MeshPushConstants), &pc);
-					// Set up push constants
-					VkDeviceSize offset[] = { 0 };
-					vkCmdBindVertexBuffers(cmd, 0, 1, &mesh.vertexBuffer.buffer, offset);
-					vkCmdBindIndexBuffer(cmd, mesh.indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
-					vkCmdDrawIndexed(cmd, static_cast<uint32_t>(mesh.indices.size()), 1, 0, 0, 0);
-				}
-			}
-		}
-	}
-}
-
-
-// TODO: Sort and implement these 
-// void vk::Scene::RenderFrontMeshes(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout)
-// {
-
-// }
-// void vk::Scene::RenderBackMeshes(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout)
-// {
-
-// }
+#include "ResourceManager.hpp"
 
 void vk::Scene::AddLightSource(Light& LightSource)
 {
@@ -111,17 +34,53 @@ void vk::Scene::Update()
 
 void vk::Scene::Destroy()
 {
-	// Destroy model resources for the GLTF resources loaded in 
-	if (!gltfModels.empty())
-	{
-		for (auto& model : gltfModels)
-		{
-			model.Destroy();
-		}
-	}
-
 	for (auto& buffer : m_LightUBO)
 	{
 		buffer.Destroy();
 	}
+        // delete the mesh manager, material manager and texture manager
+        delete mMeshManager;
+        delete mMaterialManager;
+        delete mTextureManager;
+}
+void vk::Scene::Load(const std::string& aFilepath) {
+    // Load the GLTF file
+    LoadGLTF(aFilepath, *mMeshManager, *mMaterialManager, *mTextureManager, m_Entities, false);
+}
+vk::Scene::Scene(Context& context) : context(context)
+{
+    m_LightUBO.resize(MAX_FRAMES_IN_FLIGHT);
+    // Light uniform buffers
+    for (auto& buffer : m_LightUBO) {
+        buffer = vk::CreateBuffer(
+            "LightUBO", context, sizeof(LightBuffer),
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+    }
+
+    // create the mesh manager, material manager and texture manager
+        mMeshManager = new MeshManager(context);
+        mMaterialManager = new MaterialManager(context);
+        mTextureManager = new TextureManager(context);
+
+
+
+}
+void vk::Scene::DrawOpaque(VkCommandBuffer cmd,
+                           VkPipelineLayout pipelineLayout) {
+        for (auto& entity : m_Entities) {
+            entity.RecordDrawOpaque(cmd, pipelineLayout);
+        }
+}
+void vk::Scene::DrawAlphaMasked(VkCommandBuffer cmd,
+                                VkPipelineLayout pipelineLayout) {
+        for (auto& entity : m_Entities) {
+            entity.RecordDrawCutout(cmd, pipelineLayout);
+        }
+}
+void vk::Scene::DrawShadowMap(VkCommandBuffer cmd,
+                              VkPipelineLayout pipelineLayout) {
+        for (auto& entity : m_Entities) {
+            entity.RecordDrawShadow(cmd, pipelineLayout);
+        }
 }

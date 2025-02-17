@@ -36,16 +36,22 @@ layout(set = 0, binding = 1) uniform LightBuffer {
 layout(push_constant) uniform Push
 {
 	mat4 ModelMatrix;
-	uint dTextureID; // diffuse 
-	uint mTextureID; // metalness
-	uint rTextureID; // roughness
-	uint eTextureID; // emissive
 }pc;
 
 layout(set = 0, binding = 2) uniform sampler2DShadow shadowMap;
+// colour texture
+layout (set = 1, binding = 0) uniform sampler2D uTextureColour;
+// roughness texture
+layout (set = 1, binding = 1) uniform sampler2D uTextureMetallicRoughness;
+// material numbers
+layout (set = 1, binding = 2) uniform UNumbers
+{
+	vec4 baseColour;
+	float metallness;
+	float roughness;
+	float alphaCutoff;
 
-layout(set = 1, binding = 0) uniform sampler2D albedoTexture;
-layout(set = 1, binding = 1) uniform sampler2D metallicRoughness;
+} uNumbers;
 
 #define PI 3.14159265359
 
@@ -112,8 +118,37 @@ vec3 CookTorranceBRDF(vec3 normal, vec3 halfVector, vec3 viewDir, vec3 lightDir,
     return vec3(outLight);
 }
 
+float isInShadow(vec4 shadowMapPosition)
+{
+
+		// sample the shadow map with textureproj
+		return textureProj(shadowMap, shadowMapPosition);
+
+}
+
+
+const vec2 PCFFilter4x4[16] = vec2[](
+vec2(-1.5, 1.5), vec2(-0.5, 1.5), vec2(0.5, 1.5), vec2(1.5, 1.5),
+vec2(-1.5, 0.5), vec2(-0.5, 0.5), vec2(0.5, 0.5), vec2(1.5, 0.5),
+vec2(-1.5, -0.5), vec2(-0.5, -0.5), vec2(0.5, -0.5), vec2(1.5, -0.5),
+vec2(-1.5, -1.5), vec2(-0.5, -1.5), vec2(0.5, -1.5), vec2(1.5, -1.5)
+);
+
+
+float PCF(vec4 shadowMapPosition)
+{
+	vec2 offset = vec2(shadowMapPosition.w / 1024.0f);
+	float shadow = 0.0;
+	for (int i = 0; i < 16; i++)
+	{
+		shadow += isInShadow(shadowMapPosition + vec4(PCFFilter4x4[i] * offset, 0.0, 0.0));
+	}
+
+	return shadow / 16.0;
+}
+
 // https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing
-float PCF(vec3 WorldPos)
+float Shadows(vec3 WorldPos)
 {
     vec3 lightDir = normalize(lightData.lights[0].LightPosition.xyz);
 	lightDir = -lightDir;
@@ -122,33 +157,19 @@ float PCF(vec3 WorldPos)
 	vec4 fragPositionInLightSpace = lightData.lights[0].LightSpaceMatrix * vec4(WorldPos, 1.0);
 	fragPositionInLightSpace.xyz /= fragPositionInLightSpace.w;
 	fragPositionInLightSpace.xy = fragPositionInLightSpace.xy * 0.5 + 0.5;
-
-	vec2 texSize = 1.0 / textureSize(shadowMap, 0);
-	int range = 2; // 4x4
-	int samples = 0;
-	float sum = 0.0;
-	for(int x = -range; x < range; x++)
-	{
-		for(int y = -range; y < range; y++)
-		{
-			vec2 offset = vec2(x,y) * texSize;
-			vec4 sampleCoord = vec4(fragPositionInLightSpace.xy + offset, fragPositionInLightSpace.z - 0.005, fragPositionInLightSpace.w);
-			sum += textureProj(shadowMap, sampleCoord);
-			samples++;
-		}
-	}
-
-	return sum / float(samples);
+	fragPositionInLightSpace.z = fragPositionInLightSpace.z - 0.01;
+	float shadow = PCF(fragPositionInLightSpace);
+	return shadow;
 }
 
 void main()
 {
-	vec4 color = texture(albedoTexture, uv);
+	vec3 color = texture(uTextureColour, uv).rgb * uNumbers.baseColour.rgb;
 	vec3 emissive = vec3(0.0);
 
     // == Metal and Roughness ==
-    float roughness = max(texture(metallicRoughness, uv).b, 0.1);
-    float metallic = texture(metallicRoughness, uv).g;
+	float roughness = texture(uTextureMetallicRoughness, uv).g * uNumbers.roughness;
+	float metallic = texture(uTextureMetallicRoughness, uv).g * uNumbers.metallness;
 
     vec3 outLight = vec3(0.0);
 
@@ -173,18 +194,18 @@ void main()
 		}
 
 		if(isDirectional) {
-			float shadowTerm = 1.0 - PCF(WorldPos.xyz);
-			outLight += shadowTerm * CookTorranceBRDF(WorldNormal, halfVector, viewDir, -lightData.lights[i].LightPosition.xyz, metallic, roughness, color.xyz, LightColour);
+			float shadowTerm = 1.0 - Shadows(WorldPos.xyz);
+			outLight += shadowTerm * CookTorranceBRDF(WorldNormal, halfVector, viewDir, -lightData.lights[i].LightPosition.xyz, metallic, roughness, color, LightColour);
 			
 		} 
 		else {
-			outLight += CookTorranceBRDF(WorldNormal, halfVector, viewDir, lightDir, metallic, roughness, color.xyz, LightColour);
+			outLight += CookTorranceBRDF(WorldNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour);
 		}
 	}
 
-    float shadowTerm = 1.0 - PCF(WorldPos.xyz);
+    float shadowTerm = 1.0 - Shadows(WorldPos.xyz);
 
-	vec3 ambient = vec3(0.9) * color.xyz * shadowTerm;
+	vec3 ambient = vec3(0.9) * color * shadowTerm;
 	outLight += ambient;
 	fragColor = vec4(vec3(outLight), 1.0);
 

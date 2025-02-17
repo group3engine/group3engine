@@ -105,8 +105,8 @@ void vk::DepthPrepass::Execute(VkCommandBuffer cmd)
 	vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_descriptorSets[currentFrame], 0, nullptr);
 
 	// Draw front freshes
-	// 
-	scene->DrawGLTF(cmd, m_PipelineLayout);
+	//
+	scene->DrawOpaque(cmd, m_PipelineLayout);
 
 	//scene->RenderFrontMeshes(cmd, m_PipelineLayout);
 	//

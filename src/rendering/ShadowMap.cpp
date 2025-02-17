@@ -100,7 +100,7 @@ void vk::ShadowMap::Execute(VkCommandBuffer cmd)
 	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
 	vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_descriptorSets[currentFrame], 0, nullptr);
 
-	scene->DrawGLTF(cmd, m_PipelineLayout);
+	scene->DrawShadowMap(cmd, m_PipelineLayout);
 
 	vkCmdEndRenderPass(cmd);
 

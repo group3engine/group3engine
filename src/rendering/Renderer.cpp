@@ -2,6 +2,8 @@
 
 #include <filesystem>
 
+#include <glm/gtc/random.hpp>
+
 #include "Context.hpp"
 #include "Light.hpp"
 #include "Utils.hpp"
@@ -24,17 +26,9 @@ vk::Renderer::Renderer(Context& context) : context{context}
 
 	CreateResources();
 
-	m_materialManager.materials.reserve(25);
-	for (int i = 0; i < 25; ++i) {
-		m_materialManager.materials.emplace_back(context);
-	}
-
-	m_materialManager.Setup(context);
-
 	// Current path is the current working directory, i.e., where the root CMakeLists.txt is
 	std::filesystem::path basePath = std::filesystem::current_path() / "assets";
 	std::filesystem::path gltfPath = basePath / Sample::Sponza;
-	auto gltf = vk::LoadGLTF(context, gltfPath);
 
 	// Samplers
 	repeatSamplerAniso	 	  = CreateSampler(context, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_TRUE,  VK_COMPARE_OP_LESS_OR_EQUAL);
@@ -56,15 +50,16 @@ vk::Renderer::Renderer(Context& context) : context{context}
 	std::vector<glm::vec4> spotLightPositions;
 
 	// Random spot light positions put side by side each other 
-	for (size_t i = 0; i < 25; i++) {
-		spotLightPositions.push_back(glm::vec4(1.0, 10.0f, 1.0f, 1.0f)); // Modify as needed
+	for (size_t i = 0; i < 25; i++)
+	{
+		spotLightPositions.push_back(glm::vec4(-9.0 + i * 0.8, 0.2f, 0.5f, 1.0f));
 	}
 
 	// Create the scene which will store models and lights
 	// Add GLTF to the scene 
 	// Add a directional light source defined earlier 
-	m_scene = std::make_shared<Scene>(context, m_materialManager);
-	m_scene->AddModel(gltf, m_materialManager);
+	m_scene = std::make_shared<Scene>(context);
+	m_scene->Load(gltfPath);
 	m_scene->AddLightSource(directionalLight);
 
 	// Loop through the positions and instantiate a light 
@@ -74,13 +69,14 @@ vk::Renderer::Renderer(Context& context) : context{context}
 		Light spotLight = {};
 		spotLight.Type = LightType::Spot;
 		spotLight.position = position;
-		spotLight.colour = glm::vec4(0.3f, 0.0f, 1.0f, 1.0f);
+		spotLight.colour = glm::vec4(
+			glm::linearRand(0.0f, 1.0f),
+			glm::linearRand(0.0f, 1.f),
+			glm::linearRand(0.0f, 1.0f),
+			1.0f
+		);
 		m_scene->AddLightSource(spotLight);
 	}
-
-	// Models should not all be loaded 
-	// We have the data to build materials 
-	m_materialManager.BuildMaterials(context);
 
 	std::cout << "Number of Lights: " << m_scene->GetLights().size() << std::endl;
 
@@ -110,7 +106,6 @@ void vk::Renderer::Destroy()
 	vkDestroySampler(context.device, repeatSampler, nullptr);
 	vkDestroySampler(context.device, clampToEdgeSamplerAniso, nullptr);
 
-	m_materialManager.Destroy(context);
 
 	for (auto& fence : m_Fences)
 	{
@@ -236,6 +231,7 @@ void vk::Renderer::Render()
 		m_BloomPass->Resize();
 		m_CompositePass->Resize();
 		m_PresentPass->Resize();
+		return;
 	}
 	else if (getImageIndex != VK_SUCCESS && getImageIndex != VK_SUBOPTIMAL_KHR)
 	{
