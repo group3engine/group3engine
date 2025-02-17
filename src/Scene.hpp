@@ -23,7 +23,7 @@ namespace vk
 	public:
 
 		explicit Scene(Context& context);
-		void Load(const std::string& aFilepath);
+		void Load(const std::filesystem::path& aFilepath);
 
 		void DrawOpaque(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
 		void DrawAlphaMasked(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);

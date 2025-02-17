@@ -43,7 +43,7 @@ void vk::Scene::Destroy()
         delete mMaterialManager;
         delete mTextureManager;
 }
-void vk::Scene::Load(const std::string& aFilepath) {
+void vk::Scene::Load(const std::filesystem::path& aFilepath) {
     // Load the GLTF file
     LoadGLTF(aFilepath, *mMeshManager, *mMaterialManager, *mTextureManager, m_Entities, false);
 }

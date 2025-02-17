@@ -8,7 +8,7 @@
 #include "Utils.hpp"
 
 namespace vk {
-void TextureManager::addTexture(const std::string& aTexturePath,
+void TextureManager::addTexture(const std::filesystem::path& aTexturePath,
                                 const std::string& aTextureName) {
     // check if the texture already exists, if it does, yay :)
     if (mTextureMap.find(aTextureName) != mTextureMap.end()) {
