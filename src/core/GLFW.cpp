@@ -47,6 +47,9 @@ void PollInputEvents() {
             gInputData.mouse.currentButtonState[i];
     }
 
+    // Register previous mouse position
+    gInputData.mouse.previousPosition = gInputData.mouse.currentPosition;
+
     glfwPollEvents();
 }
 
@@ -77,6 +80,10 @@ static void MouseButtonCallback([[maybe_unused]] GLFWwindow *window,
     }
 }
 
+static void MouseCursorPosCallback([[maybe_unused]] GLFWwindow *window, double x, double y) {
+    gInputData.mouse.currentPosition = {x, y};
+}
+
 void Platform::StartUp(int windowWidth, int windowHeight) {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -90,6 +97,7 @@ void Platform::StartUp(int windowWidth, int windowHeight) {
 
     glfwSetKeyCallback(Platform::get().window, &KeyCallback);
     glfwSetMouseButtonCallback(Platform::get().window, &MouseButtonCallback);
+    glfwSetCursorPosCallback(Platform::get().window, &MouseCursorPosCallback);
 }
 
 void Platform::ShutDown() {

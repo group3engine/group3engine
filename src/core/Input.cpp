@@ -45,6 +45,8 @@ bool IsKeyReleased(KEY key) {
            gInputData.keyboard.currentKeyState[static_cast<uint16_t>(key)] == 0;
 }
 
+
+
 // Check if a mouse button has been pressed once
 bool IsMouseButtonPressed(MOUSE_BUTTON button) {
     return gInputData.mouse.currentButtonState[static_cast<uint8_t>(button)] == 1 &&
@@ -59,4 +61,22 @@ bool IsMouseButtonDown(MOUSE_BUTTON button) {
 bool IsMouseButtonReleased(MOUSE_BUTTON button) {
     return gInputData.mouse.currentButtonState[static_cast<uint8_t>(button)] == 0 &&
            gInputData.mouse.previousButtonState[static_cast<uint8_t>(button)] == 1;
+}
+
+
+
+float GetMouseX() {
+    return gInputData.mouse.currentPosition.x;
+}
+
+float GetMouseY() {
+    return gInputData.mouse.currentPosition.y;
+}
+
+glm::vec2 GetMousePosition() {
+    return gInputData.mouse.currentPosition;
+}
+
+glm::vec2 GetMouseDelta() {
+    return gInputData.mouse.currentPosition - gInputData.mouse.previousPosition;
 }

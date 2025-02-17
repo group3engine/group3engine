@@ -28,8 +28,6 @@ namespace vk
 		void Render();
 		void Update(double deltaTime);
 
-		// Should be moved out of renderer when we do better input/controls 
-		static void glfwCallbackMotion(GLFWwindow* window, double x, double y);
 		
 	private:
 		void CreateResources();

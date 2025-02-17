@@ -14,4 +14,12 @@ bool IsMouseButtonPressed(MOUSE_BUTTON button);
 bool IsMouseButtonDown(MOUSE_BUTTON button);
 
 bool IsMouseButtonReleased(MOUSE_BUTTON button);
+
+float GetMouseX();
+
+float GetMouseY();
+
+glm::vec2 GetMousePosition();
+
+glm::vec2 GetMouseDelta();
 #endif // GROUP3ENGINE_INPUT_HPP

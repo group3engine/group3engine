@@ -9,6 +9,8 @@
 #include "Utils.hpp"
 #include "Buffer.hpp"
 
+#include "Input.hpp"
+
 vk::Camera::Camera(Context& context, const glm::vec3 position, glm::vec3 direction, glm::vec3 up, float aspect) : context{ context }, m_position{ position }, m_direction{ direction }, m_up{ up }
 {
 	m_mouseSensitivity = 0.1f;
@@ -134,16 +136,12 @@ void vk::Camera::UpdateCameraRotation()
 		// skip next frame so we have the correct lastx and lasty position for cursor
 		if (wasMousing)
 		{
-			const auto sens = m_mouseSensitivity;
-			const auto dx = sens * (mouseX - lastMouseX);
-			const auto dy = sens * (lastMouseY - mouseY); // prevent inverted y
-
-			UpdateCameraAngles(glm::vec2(dx, dy));
+			glm::vec2 delta = m_mouseSensitivity * GetMouseDelta();
+			delta.y = -delta.y; // Prevent inverted y
+			UpdateCameraAngles(delta);
 			UpdateCameraDirection();
 		}
 
-		lastMouseX = mouseX;
-		lastMouseY = mouseY;
 		wasMousing = true;
 	}
 	else

@@ -81,10 +81,6 @@ namespace vk
 		}
 
 		bool inputMap[std::size_t(EInputState::MAX)] = {};
-		float mouseX;
-		float mouseY;
-		float lastMouseX;
-		float lastMouseY;
 		bool wasMousing = false;
 
 	private:

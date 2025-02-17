@@ -45,7 +45,6 @@ vk::Renderer::Renderer(Context& context) : context{context}
 	
 	// GLFW callbacks
 	glfwSetWindowUserPointer(context.mWindow, m_camera.get());
-	glfwSetCursorPosCallback(context.mWindow, glfwCallbackMotion);
 
 	// Define Light sources
 	Light directionalLight;
@@ -330,14 +329,4 @@ void vk::Renderer::Update(double deltaTime)
 	m_ShadowMap->Update();
 	m_ForwardPass->Update();
 	m_PresentPass->Update();
-}
-
-// Get the current mouse position 
-void vk::Renderer::glfwCallbackMotion(GLFWwindow* window, double x, double y)
-{
-	auto camera = static_cast<Camera*>(glfwGetWindowUserPointer(window));
-	assert(camera);
-
-	camera->mouseX = float(x);
-	camera->mouseY = float(y);
 }
