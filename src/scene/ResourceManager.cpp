@@ -40,9 +40,13 @@ std::string DecodeURI(std::string_view uri, std::string_view gltfPath) {
     return {path.data()};
 }
 
-int LoadGLTF(const std::string &aFilepath, MeshManager &aMeshManager,
+int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
              MaterialManager &aMaterialManager, TextureManager &aTextureManager, std::vector<Entity> &aEntities,
              bool aIsDebug) {
+    // Convert directory separators to preferred directory separator
+    // Slight try at cross-platform for Windows
+    aFilepath.make_preferred();
+
     cgltf_options options = {};
     cgltf_data *data = nullptr;
     cgltf_result result = cgltf_parse_file(&options, aFilepath.c_str(), &data);
@@ -109,7 +113,7 @@ int LoadGLTF(const std::string &aFilepath, MeshManager &aMeshManager,
                         .texture->image->uri;
                 std::string imageBaseColorName =
                     DecodeURI(imageBaseColorFileName,
-                              aFilepath);
+                              aFilepath.string());
 
                 aTextureManager.addTexture(imageBaseColorName, imageBaseColorFileName);
                 material.pbrMetallicRoughness.baseColorTexture =
@@ -140,7 +144,7 @@ int LoadGLTF(const std::string &aFilepath, MeshManager &aMeshManager,
                         .metallic_roughness_texture.texture->image->uri;
                 std::string imageMetallicRoughnessName =
                     DecodeURI(imageMetallicRoughnessFileName,
-                              aFilepath);
+                              aFilepath.string());
 
                 aTextureManager.addTexture(imageMetallicRoughnessName,
                                            imageMetallicRoughnessFileName);

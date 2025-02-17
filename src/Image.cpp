@@ -83,8 +83,11 @@ uint32_t vk::ComputeMipLevels(uint32_t width, uint32_t height)
 	return static_cast<uint32_t>(std::floor(std::log2(std::max(width, height)))) + 1;
 }
 
-vk::Image vk::LoadTextureFromDisk(const std::filesystem::path& path, Context& context, VkFormat format)
+vk::Image vk::LoadTextureFromDisk(std::filesystem::path path, Context& context, VkFormat format)
 {
+    // Convert directory separators to preferred directory separator
+    // Slight try at cross-platform for Windows
+    path.make_preferred();
 
 	int width, height, texChannels;
 	//stbi_set_flip_vertically_on_load(1);
