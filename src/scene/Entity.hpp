@@ -26,6 +26,12 @@ class Entity {
 
     Entity() = default;
 
+    Entity(const Entity &) = default;
+    Entity(Entity &&) = default;
+    Entity &operator=(const Entity &) = default;
+    Entity &operator=(Entity &&) = default;
+    virtual ~Entity() = default;
+
     void SetName(std::string aName) { mName = std::move(aName); }
     void SetParent(Entity *aParent);
     void AddChild(Entity *aChild) { children.push_back(aChild); }
@@ -35,8 +41,6 @@ class Entity {
     }
     void SetTransform(Transform aTransform) { mLocalTransform = aTransform; }
     void SetTransform(glm::mat4 aTransform);
-
-    ~Entity() = default;
 
     [[nodiscard]] glm::mat4 getWorldTransform() const;
 
