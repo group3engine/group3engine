@@ -66,7 +66,7 @@ void vk::Engine::Run()
 }
 
 void vk::Engine::UpdateLogic() {
-	if (IsKeyDown(KEY::_ESCAPE)) {
+	if (IsKeyDown(KEY::eESCAPE)) {
 		glfwSetWindowShouldClose(Platform::get().window, GLFW_TRUE);
 	}
 
@@ -74,18 +74,18 @@ void vk::Engine::UpdateLogic() {
 		static_cast<Camera *>(glfwGetWindowUserPointer(Platform::get().window));
 	assert(camera);
 
-	camera->SetInput(EInputState::FORWARD, IsKeyDown(KEY::_W));
-	camera->SetInput(EInputState::BACKWARD, IsKeyDown(KEY::_S));
-	camera->SetInput(EInputState::LEFT, IsKeyDown(KEY::_A));
-	camera->SetInput(EInputState::RIGHT, IsKeyDown(KEY::_D));
+	camera->SetInput(EInputState::FORWARD, IsKeyDown(KEY::eW));
+	camera->SetInput(EInputState::BACKWARD, IsKeyDown(KEY::eS));
+	camera->SetInput(EInputState::LEFT, IsKeyDown(KEY::eA));
+	camera->SetInput(EInputState::RIGHT, IsKeyDown(KEY::eD));
 
-	camera->SetInput(EInputState::DOWN, IsKeyDown(KEY::_Q));
-	camera->SetInput(EInputState::UP, IsKeyDown(KEY::_E));
+	camera->SetInput(EInputState::DOWN, IsKeyDown(KEY::eQ));
+	camera->SetInput(EInputState::UP, IsKeyDown(KEY::eE));
 
-	camera->SetInput(EInputState::FAST, IsKeyDown(KEY::_LEFT_SHIFT));
-	camera->SetInput(EInputState::SLOW, IsKeyDown(KEY::_LEFT_CONTROL));
+	camera->SetInput(EInputState::FAST, IsKeyDown(KEY::eLEFT_SHIFT));
+	camera->SetInput(EInputState::SLOW, IsKeyDown(KEY::eLEFT_CONTROL));
 
-	if (IsKeyPressed(KEY::_5)) {
+	if (IsKeyPressed(KEY::e5)) {
 		postProcessSettings.Enable =
 			postProcessSettings.Enable == true ? false : true;
 
@@ -96,7 +96,7 @@ void vk::Engine::UpdateLogic() {
 		SPDLOG_INFO("Post process: {}", result);
 	}
 
-	if (IsMouseButtonPressed(MOUSE_BUTTON::_RIGHT)) {
+	if (IsMouseButtonPressed(MOUSE_BUTTON::eRIGHT)) {
 		auto& flag = camera->inputMap[std::size_t(EInputState::MOUSING)];
 		flag = !flag;
 

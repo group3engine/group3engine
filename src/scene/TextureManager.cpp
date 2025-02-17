@@ -8,7 +8,7 @@
 #include "Utils.hpp"
 
 namespace vk {
-void TextureManager::addTexture(const std::filesystem::path& aTexturePath,
+void TextureManager::addTexture(std::filesystem::path aTexturePath,
                                 const std::string& aTextureName) {
     // check if the texture already exists, if it does, yay :)
     if (mTextureMap.find(aTextureName) != mTextureMap.end()) {
@@ -36,7 +36,7 @@ TextureManager::~TextureManager() {
 TextureManager::TextureManager(Context &aContext)
     : mContext(aContext) {
     // create a default (white) texture
-    addTexture("./assets/white_pixel.png", "white");
+    addTexture(std::filesystem::current_path() / "assets" / "white_pixel.png", "white");
     // create the command pool
     VkCommandPoolCreateInfo cmdPool{};
     cmdPool.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;

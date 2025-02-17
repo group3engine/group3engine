@@ -36,13 +36,13 @@ void PollInputEvents() {
     // TODO: More polling handling
 
     // Register previous key states
-    for (uint16_t i = 0; i < static_cast<uint16_t>(KEY::_LAST); ++i) {
+    for (uint16_t i = 0; i < static_cast<uint16_t>(KEY::eLAST); ++i) {
         gInputData.keyboard.previousKeyState[i] =
             gInputData.keyboard.currentKeyState[i];
     }
 
     // Register previous mouse states
-    for (uint8_t i = 0; i < static_cast<uint8_t>(MOUSE_BUTTON::_LAST); ++i) {
+    for (uint8_t i = 0; i < static_cast<uint8_t>(MOUSE_BUTTON::eLAST); ++i) {
         gInputData.mouse.previousButtonState[i] =
             gInputData.mouse.currentButtonState[i];
     }
