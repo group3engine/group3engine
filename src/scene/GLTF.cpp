@@ -1,7 +1,6 @@
 #include "Context.hpp"
 
 #include <cassert>
-#include <filesystem>
 #include <iostream>
 #include <stdexcept>
 
@@ -10,48 +9,41 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
+#include <spdlog/spdlog.h>
+
 #include "GLTF.hpp"
 #include "Utils.hpp"
 
-namespace
-{
-    std::string SetDirectory(const std::string& filepath, std::string_view uri)
-    {
-        std::filesystem::path path(filepath);
-        std::string directory = path.parent_path().string();
-        std::filesystem::path texturePath = std::filesystem::path(directory) / uri;
-
-        return texturePath.string();
+inline void CGLTFCheck(cgltf_result result, std::string_view msg) {
+    if (result != cgltf_result_success) {
+        SPDLOG_ERROR(msg);
+        SPDLOG_ERROR("cgltf_result={}", static_cast<int>(result));
+        std::exit(EXIT_FAILURE);
     }
 }
 
-vk::GLTFModel vk::LoadGLTF(const Context& context, const std::string& filepath)
+vk::GLTFModel vk::LoadGLTF(const Context& context, std::filesystem::path filepath)
 {
+    // Convert directory separators to preferred directory separator
+    // Slight try at cross-platform for Windows
+    filepath.make_preferred();
+
     //vk::GLTFModel model = {};
     vk::GLTFModel model(context);
 
     cgltf_options options = {};
     cgltf_data* data = nullptr;
     cgltf_result result = cgltf_parse_file(&options, filepath.c_str(), &data);
-    if (result != cgltf_result_success) {
-        std::cout << "cgltf_result=" << result << '\n';
-        throw std::runtime_error("Failed to load GLTF file: " + filepath);
-    }
+    CGLTFCheck(result, "Failed to parse glTF: " + filepath.string());
 
-    std::printf("Material count: %zd\n", data->materials_count);
+    SPDLOG_DEBUG("Material count: {}", data->materials_count);
 
     //Each mesh primitive should have a material index
     result = cgltf_load_buffers(&options, data, filepath.c_str());
-    if (result != cgltf_result_success) {
-        std::cout << "Failed to load buffers file.\n";
-        throw std::runtime_error("Failed to load buffers: File: " + filepath);
-    }
+    CGLTFCheck(result, "Failed to load buffers of glTF: " + filepath.string());
 
     result = cgltf_validate(data);
-    if (result != cgltf_result_success) {
-        std::cout << "Parsed glTF not valid\n";
-        throw std::runtime_error("Invalid GLTF: " + filepath);
-    }
+    CGLTFCheck(result, "Failed to validate glTF: " + filepath.string());
 
     // get the number of mesh primitives
     size_t meshPrimitivesCount = 0;
@@ -158,30 +150,31 @@ vk::GLTFModel vk::LoadGLTF(const Context& context, const std::string& filepath)
  
             const cgltf_pbr_metallic_roughness& pbr = material->pbr_metallic_roughness;
 
+            std::filesystem::path assetsPath = std::filesystem::current_path() / "assets";
+
             if (pbr.base_color_texture.texture) {
-                const std::string albedoPath = SetDirectory(filepath, pbr.base_color_texture.texture->image->uri);
-                meshData.textures.push_back(albedoPath);
+                std::filesystem::path albedoPath = filepath.parent_path() / pbr.base_color_texture.texture->image->uri;
+                meshData.textures.push_back(albedoPath.make_preferred());
             }
             else
             {
                 std::string defaultAlbedo = "white_pixel.png";
-                const std::string albedoPath = SetDirectory("./assets/", defaultAlbedo);
-                meshData.textures.push_back(albedoPath);
+                std::filesystem::path albedoPath = assetsPath / defaultAlbedo;
+                meshData.textures.push_back(albedoPath.make_preferred());
             }
 
-            std::string metallicRoughness = "";
-            
+            std::filesystem::path metallicRoughness;
             if (pbr.metallic_roughness_texture.texture == NULL) {
                 std::string defaultRoughness = "white_pixel.png";
-                metallicRoughness = SetDirectory("./assets/", defaultRoughness);
+                metallicRoughness = assetsPath / defaultRoughness;
             }
             else
             {
-                metallicRoughness = SetDirectory(filepath, material->pbr_metallic_roughness.metallic_roughness_texture.texture->image->uri);
+                metallicRoughness = filepath.parent_path() / material->pbr_metallic_roughness.metallic_roughness_texture.texture->image->uri;
             }
 
-            meshData.textures.push_back(metallicRoughness);
-            
+            meshData.textures.push_back(metallicRoughness.make_preferred());
+
             meshData.materialIndex = matIndex;
 
             meshDatas.push_back(std::move(meshData));

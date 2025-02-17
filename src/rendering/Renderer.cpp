@@ -1,5 +1,7 @@
 #include "Renderer.hpp"
 
+#include <filesystem>
+
 #include "Context.hpp"
 #include "Light.hpp"
 #include "Utils.hpp"
@@ -29,11 +31,10 @@ vk::Renderer::Renderer(Context& context) : context{context}
 
 	m_materialManager.Setup(context);
 
-	// Sponza is huge ( physical size not disc space ) when loaded
-	// so i reduced it significantly when rendering meshes (see DrawGLTF) in Scene.cpp
-        std::string base_path = "/home/wet-dog/repos/glTF-Sample-Models/2.0/";
-        std::string gltf_path = base_path + Sample::Sponza;
-	auto gltf = vk::LoadGLTF(context, gltf_path);
+	// Current path is the current working directory, i.e., where the root CMakeLists.txt is
+	std::filesystem::path basePath = std::filesystem::current_path() / "assets";
+	std::filesystem::path gltfPath = basePath / Sample::Sponza;
+	auto gltf = vk::LoadGLTF(context, gltfPath);
 
 	// Samplers
 	repeatSamplerAniso	 	  = CreateSampler(context, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_TRUE,  VK_COMPARE_OP_LESS_OR_EQUAL);

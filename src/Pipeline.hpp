@@ -64,8 +64,8 @@ namespace vk {
             {}
 
             // Add a shader to the pipeline
-            PipelineBuilder& AddShader(const std::string& shaderPath, ShaderType type) {
-                shaders.push_back({ ShaderTypeToVkShaderStage(type), CreateShaderModule(shaderPath) });
+            PipelineBuilder& AddShader(std::filesystem::path shaderPath, ShaderType type) {
+                shaders.push_back({ ShaderTypeToVkShaderStage(type), CreateShaderModule(shaderPath.make_preferred()) });
                 return *this;
             }
 
@@ -212,7 +212,7 @@ namespace vk {
 
             VertexBinding binding;
 
-            VkShaderModule CreateShaderModule(const std::string& shaderPath) {
+            VkShaderModule CreateShaderModule(const std::filesystem::path& shaderPath) {
 
                 std::vector<char> shaderCode = ReadShader(shaderPath);
 
@@ -334,12 +334,12 @@ namespace vk {
             }
 
             // Reference: https://vulkan-tutorial.com/Drawing_a_triangle/Graphics_pipeline_basics/Shader_modules
-            std::vector<char> ReadShader(const std::string& filename)
+            std::vector<char> ReadShader(const std::filesystem::path& filename)
             {
                 std::ifstream file(filename, std::ios::ate | std::ios::binary);
                 if (!file.is_open())
                 {
-                    throw std::runtime_error("Failed to open shader file: " + filename);
+                    throw std::runtime_error("Failed to open shader file: " + filename.string());
                 }
 
                 size_t fileSize = (size_t)file.tellg();

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <filesystem>
 #include <utility>
 #include <vector>
 
@@ -127,7 +128,7 @@ namespace vk
 		Buffer vertexBuffer;
 		Buffer indexBuffer;
 		uint32_t materialIndex;
-		std::vector<std::string> textures;
+		std::vector<std::filesystem::path> textures;
 
 		MeshData(const Context& context);
 		~MeshData();
@@ -211,6 +212,6 @@ namespace vk
 	};
 
 	
-	GLTFModel LoadGLTF(const Context& context, const std::string& filepath);
+	GLTFModel LoadGLTF(const Context& context, std::filesystem::path filepath);
 	
 }

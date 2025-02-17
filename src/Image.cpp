@@ -1,11 +1,15 @@
 #include "Image.hpp"
 
+#include <assert.h>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+#include <spdlog/spdlog.h>
+
 #include "Context.hpp"
 #include "Utils.hpp"
 #include "Buffer.hpp"
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-#include <assert.h>
 
 
 vk::Image::Image(const std::string name, VmaAllocator allocator, VkImage image, VkImageView imageView, VmaAllocation allocation) noexcept :
@@ -79,7 +83,7 @@ uint32_t vk::ComputeMipLevels(uint32_t width, uint32_t height)
 	return static_cast<uint32_t>(std::floor(std::log2(std::max(width, height)))) + 1;
 }
 
-vk::Image vk::LoadTextureFromDisk(const std::string& path, Context& context, VkFormat format)
+vk::Image vk::LoadTextureFromDisk(const std::filesystem::path& path, Context& context, VkFormat format)
 {
 
 	int width, height, texChannels;
@@ -90,7 +94,8 @@ vk::Image vk::LoadTextureFromDisk(const std::string& path, Context& context, VkF
 
 	if (!pixels)
 	{
-		ERROR("Failed to load texture: " + path);
+		SPDLOG_ERROR("Failed to load texture: {}", path.string());
+		std::exit(EXIT_FAILURE);
 	}
 
 	// Create a buffer to which we can copy data to from CPU -> staging buffer
