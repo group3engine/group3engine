@@ -26,6 +26,10 @@ class MaterialManager {
         vkDestroyDescriptorPool(mContext.device, mDescriptorPool, nullptr);
         // destroy the descriptor set layout
         vkDestroyDescriptorSetLayout(mContext.device, materialDescriptorSetLayout, nullptr);
+
+        for (auto &material : mMaterials) {
+            material.materialBuffer.Destroy();
+        }
     }
 
    private:
