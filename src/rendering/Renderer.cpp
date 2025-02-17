@@ -231,6 +231,7 @@ void vk::Renderer::Render()
 		m_BloomPass->Resize();
 		m_CompositePass->Resize();
 		m_PresentPass->Resize();
+		return;
 	}
 	else if (getImageIndex != VK_SUCCESS && getImageIndex != VK_SUBOPTIMAL_KHR)
 	{

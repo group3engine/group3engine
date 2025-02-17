@@ -4,10 +4,10 @@
 #include <unordered_map>
 #include "Camera.hpp"
 #define SHADER_DIR "assets/shaders/"
-#define OPAQUE_FRAGMENT_SHADER SHADER_DIR "pbr.frag.spv"
-#define OPAQUE_VERTEX_SHADER SHADER_DIR "pbr.vert.spv"
-#define ALPHA_MASK_FRAGMENT_SHADER SHADER_DIR "pbra.frag.spv"
-#define ALPHA_MASK_VERTEX_SHADER SHADER_DIR "pbr.vert.spv"
+#define OPAQUE_FRAGMENT_SHADER SHADER_DIR "default.frag.spv"
+#define OPAQUE_VERTEX_SHADER SHADER_DIR "default.vert.spv"
+#define ALPHA_MASK_FRAGMENT_SHADER SHADER_DIR "alpha_masking.frag.spv"
+#define ALPHA_MASK_VERTEX_SHADER SHADER_DIR "default.vert.spv"
 
 namespace vk
 {

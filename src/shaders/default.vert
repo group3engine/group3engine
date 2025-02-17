@@ -15,9 +15,6 @@ layout(set = 0, binding = 0) uniform SceneUniform
 layout(push_constant) uniform Push
 {
 	mat4 ModelMatrix;
-	vec4 BaseColourFactor;
-	float Metallic;
-	float Roughness;
 }pc;
 
 layout(location = 0) in vec3 pos;

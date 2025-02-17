@@ -48,7 +48,7 @@ int LoadGLTF(const std::string &aFilepath, MeshManager &aMeshManager,
     cgltf_result result = cgltf_parse_file(&options, aFilepath.c_str(), &data);
     if (result != cgltf_result_success) {
         std::cout << "Failed to parse file.\n";
-        return GLTF_LOAD_FAIL;
+        std::exit(EXIT_FAILURE);
     }
     if (aIsDebug) {
         size_t total_primitives = 0;
