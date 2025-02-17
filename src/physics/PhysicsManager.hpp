@@ -85,7 +85,7 @@ class PhysicsManager
 
 
         // per frame update function
-        void UpdatePhysics();
+        void UpdatePhysics(double delta_time);
 
         // destructor
         ~PhysicsManager();

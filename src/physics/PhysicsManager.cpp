@@ -55,10 +55,12 @@ PhysicsManager::PhysicsManager()
     physics_system.OptimizeBroadPhase();
 }
 
-void PhysicsManager::UpdatePhysics()
+void PhysicsManager::UpdatePhysics(double delta_time = 1/60.f)
 {
     // Next step
     ++step;
+
+    cDeltaTime = delta_time;
     
     // cout << "Step " << step << endl;
     // If you take larger steps than 1 / 60th of a second you need to do multiple collision steps in order to keep the simulation stable. Do 1 collision step per 1 / 60th of a second (round up).
