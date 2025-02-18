@@ -35,7 +35,7 @@ namespace vk
 
 		std::vector<Light>&							   GetLights() { return m_Lights; }
 		std::vector<Buffer>&						   GetLightsUBO() { return m_LightUBO; }
-
+        std::vector<Entity> m_Entities;
 	private:
 		Context& context;
                 MeshManager *mMeshManager;
@@ -47,6 +47,6 @@ namespace vk
 		std::vector<Light>  m_Lights;
 		LightBuffer m_LightBuffer;
 		std::vector<Buffer> m_LightUBO;
-		std::vector<Entity> m_Entities;
+		
 	};
 }

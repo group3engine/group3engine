@@ -1,6 +1,7 @@
 #include "RigidBody.hpp"
 #include "glm/detail/qualifier.hpp"
 #include "glm/fwd.hpp"
+#include "spdlog/spdlog.h"
 
 // RigidBody()
 // input: enum default shape (Ball, Floor), a physics manager
@@ -98,6 +99,7 @@ glm::mat4 RigidBody::GetWorldTransform()
     {
         for(int column = 0; column < 4; column++)
         {
+            spdlog::info("row: {}, column: {}", row, column);
             return_world_transform[row][column] = world_transform(row,column);
         }
     }

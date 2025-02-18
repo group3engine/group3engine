@@ -27,7 +27,7 @@ namespace vk
 
 		void Render();
 		void Update(double deltaTime);
-
+        std::shared_ptr<Scene> m_scene;
 		
 	private:
 		void CreateResources();
@@ -47,7 +47,7 @@ namespace vk
 		std::vector<VkCommandBuffer> m_commandBuffers;
 		std::vector<VkCommandPool> m_commandPool;
 
-		std::shared_ptr<Scene> m_scene;
+		
 
 		std::unique_ptr<DepthPrepass>     m_DepthPrepass;
 		std::unique_ptr<ForwardPass>	  m_ForwardPass;

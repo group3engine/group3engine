@@ -59,7 +59,7 @@ class Entity {
 
     void RecordDrawCutout(VkCommandBuffer aCmdBuff,
                           VkPipelineLayout aPipelineLayout);
-
+    RigidBody *mRigidBody = nullptr;
    protected:
     virtual void Update(){}
     virtual void LateUpdate(){}
@@ -73,7 +73,7 @@ class Entity {
     Transform mLocalTransform{};
     bool mHasMesh = false;
 
-    RigidBody *mRigidBody = nullptr;
+    
     bool mHasRigidBody = false;
 };
 }  // namespace vk

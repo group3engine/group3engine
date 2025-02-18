@@ -45,6 +45,11 @@ bool vk::Engine::Initialize()
     // add the floor using the default constructor
     [[maybe_unused]]RigidBody floor = RigidBody(RigidBody::Floor, &m_Physics);
 
+    m_Renderer->m_scene->m_Entities.at(0).AddRigidBody(&ball);
+
+    m_Physics.UpdatePhysics(1.f/60.f);
+    m_Renderer->m_scene->m_Entities.at(0).mRigidBody->GetWorldTransform();
+
     // ---END OF PHYSICS TEST INITIALISATION---
 
 	return m_isRunning;
@@ -70,9 +75,9 @@ void vk::Engine::Run()
 		PollInputEvents();
 
 		Update(deltaTime);
-        
-        m_Physics.UpdatePhysics(deltaTime);
 
+        m_Physics.UpdatePhysics(deltaTime);
+        
 		Render();
 	}
 

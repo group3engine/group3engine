@@ -1,4 +1,5 @@
 #include "PhysicsManager.hpp"
+#include "spdlog/spdlog.h"
 
 PhysicsManager::PhysicsManager()
 {
@@ -59,6 +60,7 @@ void PhysicsManager::UpdatePhysics(double delta_time = 1/60.f)
 {
     // Next step
     ++step;
+    spdlog::info("step {} ", step);
 
     cDeltaTime = delta_time;
     
