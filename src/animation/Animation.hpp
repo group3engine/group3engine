@@ -66,6 +66,10 @@ class Animation {
     std::vector<std::pair<vk::Entity *, vk::Transform>>
     GetAnimation(float aTime);
 
+    void SetName(char *aName);
+
+    Sampler* GetSampler(int i);
+
   private:
     // list of channels
     std::vector<Channel> mChannels;
@@ -83,6 +87,7 @@ class Animation {
     // function to spherical linear interpolate between two quaternions
     // (keyframes)
     glm::vec4 Slerp(Keyframe &a, Keyframe &b, float time);
+    char *mName;
 };
 
 #endif // GROUP3ENGINE_ANIMATION_HPP

@@ -11,6 +11,7 @@
 #define CGLTF_WRITE_IMPLEMENTATION
 
 #include "Entity.hpp"
+#include "animation/Animation.hpp"
 #include "cgltf_write.h"
 #include "glm/gtc/type_ptr.hpp"
 
@@ -389,6 +390,74 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             aEntities[ni].SetParent(&aEntities[parentIndex]);
         }
     }
+    // add animations
+    std::vector<Animation> animations;
+    for (size_t i = 0; i < data->animations_count; i++) {
+        const auto &gltfAnimation = data->animations[i];
+        Animation animation;
+        animation.SetName(gltfAnimation.name);
+        // add the samplers
+        animation.ResizeSamplers(gltfAnimation.samplers_count);
+        for (size_t j = 0; j < gltfAnimation.samplers_count; j++) {
+            const auto &gltfSampler = gltfAnimation.samplers[j];
+            Sampler sampler;
+            sampler.interpolation =
+                static_cast<Interpolation>(gltfSampler.interpolation);
+            sampler.keyframes.resize(gltfSampler.input->count);
+            std::vector<float> times;
+            times.resize(gltfSampler.input->count);
+            cgltf_accessor_unpack_floats(gltfSampler.input, times.data(),
+                                         sampler.keyframes.size());
+            for (size_t k = 0; k < sampler.keyframes.size(); k++) {
+                sampler.keyframes[k].time = times[k];
+            }
+            std::vector<float> values;
+            values.resize(gltfSampler.output->count);
+            cgltf_accessor_unpack_floats(gltfSampler.output, values.data(),
+                                         sampler.keyframes.size());
+            // if output size is 4 * input size, then it is a vec4, otherwise it
+            // is a vec3
+            if (values.size() == 4 * times.size()) {
+                for (size_t k = 0; k < sampler.keyframes.size(); k++) {
+                    sampler.keyframes[k].value = {
+                        values[k * 4], values[k * 4 + 1], values[k * 4 + 2],
+                        values[k * 4 + 3]};
+                }
+            } else {
+                for (size_t k = 0; k < sampler.keyframes.size(); k++) {
+                    sampler.keyframes[k].value = {values[k * 3],
+                                                  values[k * 3 + 1],
+                                                  values[k * 3 + 2], 1.0f};
+                }
+            }
+            animation.AddSampler(sampler);
+        }
+        // add the channels
+        animation.ResizeChannels(gltfAnimation.channels_count);
+        for (size_t j = 0; j < gltfAnimation.channels_count; j++) {
+            const auto &gltfChannel = gltfAnimation.channels[j];
+            Channel channel = {};
+            channel.target = &aEntities[gltfChannel.target_node - data->nodes];
+            channel.sampler = animation.GetSampler(static_cast<int>(gltfChannel.sampler - data->animations->samplers));
+            switch(gltfChannel.target_path) {
+                case cgltf_animation_path_type_translation:
+                    channel.transformChannel = TransformChannel::TRANSLATION;
+                    break;
+                case cgltf_animation_path_type_rotation:
+                    channel.transformChannel = TransformChannel::ROTATION;
+                    break;
+                case cgltf_animation_path_type_scale:
+                    channel.transformChannel = TransformChannel::SCALE;
+                    break;
+                default:
+                    // we don't support other channels, so skip
+                    continue;
+            }
+            animation.AddChannel(channel);
+        }
+        animations.push_back(animation);
+    }
+
     //    if (aIsDebug) {
     aMeshManager.debugOuptutMeshes();
     aMaterialManager.DebugOutputMaterials();

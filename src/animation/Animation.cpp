@@ -95,3 +95,5 @@ glm::vec4 Animation::Slerp(Keyframe &a, Keyframe &b, float time) {
         glm::normalize(glm::slerp(glm::quat(a.value), glm::quat(b.value), t));
     return {q.x, q.y, q.z, q.w};
 }
+void Animation::SetName(char *aName) { mName = aName; }
+Sampler* Animation::GetSampler(int i) { return &mSamplers[i]; }
