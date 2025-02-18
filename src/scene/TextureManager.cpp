@@ -36,7 +36,7 @@ TextureManager::~TextureManager() {
 TextureManager::TextureManager(Context &aContext)
     : mContext(aContext) {
     // create a default (white) texture
-    addTexture(std::filesystem::current_path() / "assets" / "white_pixel.png", "white");
+    addTexture(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets" / "white_pixel.png", "white");
     // create the command pool
     VkCommandPoolCreateInfo cmdPool{};
     cmdPool.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;

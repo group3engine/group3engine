@@ -90,6 +90,8 @@ target_include_directories(stb_image INTERFACE extern/stb_image)
 # GLM_ENABLE_EXPERIMENTAL is necessary for #include <glm/gtx/transform.hpp>
 target_compile_definitions(src PRIVATE GLFW_INCLUDE_NONE GLM_ENABLE_EXPERIMENTAL GLM_FORCE_RADIANS GLM_FORCE_SIZE_T_LENGTH)
 
+target_compile_definitions(src PRIVATE CMAKE_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+
 target_link_libraries(src PRIVATE cgltf glfw glm::glm-header-only Jolt spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32> stb_image volk_headers vma)
 
 # Compiler warnings
