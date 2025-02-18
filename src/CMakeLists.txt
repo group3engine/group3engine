@@ -2,7 +2,9 @@ file(GLOB CPP_SOURCE_FILES "*.cpp" "*.hpp")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_executable(src ${CPP_SOURCE_FILES})
+add_executable(src ${CPP_SOURCE_FILES}
+        animation/Animation.cpp
+        animation/Animation.hpp)
 
 add_subdirectory(core)
 add_subdirectory(physics)
