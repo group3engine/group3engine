@@ -38,6 +38,19 @@ const int ten_megabytes = 10 * 1024 * 1024;
 
 class PhysicsManager
 {
+  private:
+    PhysicsManager() = default;
+    ~PhysicsManager() = default;
+
+  public:
+    PhysicsManager(const PhysicsManager &) = delete;
+    PhysicsManager &operator=(const PhysicsManager &) = delete;
+
+    static PhysicsManager &get() {
+        static PhysicsManager instance;
+        return instance;
+    }
+
     public:
 
         // We need a temp allocator for temporary allocations during the physics update. We're
@@ -72,23 +85,21 @@ class PhysicsManager
         PhysicsSystem physics_system;
         MyBodyActivationListener body_activation_listener;
         MyContactListener contact_listener;
-        BodyInterface &body_interface = physics_system.GetBodyInterface();
+        // BodyInterface &body_interface = physics_system.GetBodyInterface();
 
         float cDeltaTime = 1.0f / 60.0f;
         uint step = 0;
 
-        vector<BodyID> body_ids;
+        std::vector<BodyID> body_ids;
 
-
-        // constructor
-        PhysicsManager();
 
 
         // per frame update function
         void UpdatePhysics(double delta_time);
 
-        // destructor
-        ~PhysicsManager();
+        void StartUp();
+        void ShutDown();
+
 };
 
 #endif

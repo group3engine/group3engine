@@ -6,6 +6,9 @@
 
 #include <utility>
 
+#include <glm/ext.hpp>
+#include <spdlog/spdlog.h>
+
 namespace vk {
 Entity::Entity(std::string aName, Entity *aParent, Mesh *aMesh,
                glm::mat4 aLocalTransform)
@@ -37,7 +40,11 @@ glm::mat4 Entity::getWorldTransform() const {
     if(mHasRigidBody) // if it has physics
     {
         // also apply physics' transformations
-        return_matrix = return_matrix * mRigidBody->GetWorldTransform();
+        auto mat = glm::transpose(mRigidBody->GetWorldTransform());
+        spdlog::info("mat {}", glm::to_string(mat));
+        spdlog::info("return_matrix before {}", glm::to_string(return_matrix));
+        return_matrix = mat * return_matrix;
+        spdlog::info("return_matrix after {}", glm::to_string(return_matrix));
     }
     return return_matrix;
 }
@@ -47,7 +54,7 @@ glm::mat4 Entity::getLocalTransform() {
     if(mHasRigidBody)// if it has physics
     {
         // also apply physics' transformations
-        return_matrix = return_matrix * mRigidBody->GetWorldTransform();
+        return_matrix = return_matrix;
     }
 
     return return_matrix;

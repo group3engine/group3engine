@@ -24,13 +24,9 @@ class RigidBody
         // its ID in the physics manager body interface system
         BodyID ID;
 
-        // pointer to the physics manager
-        PhysicsManager *manager;
-
-
         // Constructor
-        RigidBody(Shape input_shape, PhysicsManager *input_manager); // test object constructor
-        RigidBody(BodyCreationSettings settings, PhysicsManager *input_manager); // custom object constructor
+        RigidBody(Shape input_shape); // test object constructor
+        RigidBody(BodyCreationSettings settings); // custom object constructor
 
         // Functions
         glm::vec4 GetPosition();

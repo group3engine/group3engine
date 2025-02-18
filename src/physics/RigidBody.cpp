@@ -1,15 +1,21 @@
 #include "RigidBody.hpp"
 #include "glm/detail/qualifier.hpp"
 #include "glm/fwd.hpp"
+#include "glm/ext.hpp"
 #include "spdlog/spdlog.h"
+
+#include "PhysicsManager.hpp"
+
+size_t gRigidBodyCounter = 0;
 
 // RigidBody()
 // input: enum default shape (Ball, Floor), a physics manager
 // output: the RigidBody object
 // action: creates the object according to the default test shape configuration
-RigidBody::RigidBody(Shape input_shape, PhysicsManager *input_manager)
+RigidBody::RigidBody(Shape input_shape)
 {
-    manager = input_manager;
+    spdlog::info("Adding RigidBody {}", gRigidBodyCounter++);
+
     if(input_shape == Floor)
     {
         // Next we can create a rigid body to serve as the floor, we make a large box
@@ -26,23 +32,20 @@ RigidBody::RigidBody(Shape input_shape, PhysicsManager *input_manager)
         BodyCreationSettings floor_settings(floor_shape, RVec3(0.0_r, -1.0_r, 0.0_r), Quat::sIdentity(), EMotionType::Static, Layers::NON_MOVING);
         floor_settings.mRestitution = 0.5f;
         // Create the actual rigid body
-        Body *floor = manager->body_interface.CreateBody(floor_settings); // Note that if we run out of bodies this can return nullptr
-        ID = floor->GetID();
+        ID = PhysicsManager::get().physics_system.GetBodyInterface().CreateAndAddBody(floor_settings, EActivation::DontActivate); // Note that if we run out of bodies this can return nullptr
 
-        // Add it to the world
-        manager->body_interface.AddBody(ID, EActivation::DontActivate);
-        manager->body_ids.push_back(ID);
+        PhysicsManager::get().body_ids.push_back(ID);
     }
     else if(input_shape == Ball)
     {
         // Now create a dynamic body to bounce on the floor
         // Note that this uses the shorthand version of creating and adding a body to the world
         BodyCreationSettings sphere_settings(new SphereShape(0.5f), RVec3(0.0_r, 2.0_r, 0.0_r), Quat::sIdentity(), EMotionType::Dynamic, Layers::MOVING);
-        ID = manager->body_interface.CreateAndAddBody(sphere_settings, EActivation::Activate);
+        ID = PhysicsManager::get().physics_system.GetBodyInterface().CreateAndAddBody(sphere_settings, EActivation::Activate);
         // Now you can interact with the dynamic body, in this case we're going to give it a velocity.
         // (note that if we had used CreateBody then we could have set the velocity straight on the body before adding it to the physics system)
-        manager->body_interface.SetLinearVelocity(ID, Vec3(0.0f, 5.0f, 0.0f));
-        manager->body_ids.push_back(ID);
+        PhysicsManager::get().physics_system.GetBodyInterface().SetLinearVelocity(ID, Vec3(0.0f, 5.0f, 0.0f));
+        PhysicsManager::get().body_ids.push_back(ID);
     }
     
 }
@@ -52,16 +55,15 @@ RigidBody::RigidBody(Shape input_shape, PhysicsManager *input_manager)
 // output: the RigidBody object
 // action: creates the object according to the body creation settings given
 // TODO: potentially change the input such that it takes in a struct containing BodyCreationSettings, initial activation mode and starting linear velocity (+ other state stuff)
-RigidBody::RigidBody(BodyCreationSettings settings, PhysicsManager *input_manager)
+RigidBody::RigidBody(BodyCreationSettings settings)
 {
-    // set the physics manager
-    manager = input_manager;
+    spdlog::info("Adding RigidBody {}", gRigidBodyCounter++);
 
     // use the settings to create a body and add it to the system
-    ID = manager->body_interface.CreateAndAddBody(settings, EActivation::Activate);
+    ID = PhysicsManager::get().physics_system.GetBodyInterface().CreateAndAddBody(settings, EActivation::Activate);
 
     // add it to the managers list of IDS
-    manager->body_ids.push_back(ID);
+    PhysicsManager::get().body_ids.push_back(ID);
 }
 
 // GetPosition()
@@ -69,10 +71,14 @@ RigidBody::RigidBody(BodyCreationSettings settings, PhysicsManager *input_manage
 // output: glm vec4 of the position
 glm::vec4 RigidBody::GetPosition()
 {
-    RVec3 position = manager->body_interface.GetCenterOfMassPosition(ID);
+    RVec3 position = PhysicsManager::get().physics_system.GetBodyInterface().GetCenterOfMassPosition(PhysicsManager::get().body_ids[0]);
+
+    spdlog::info("renderer body id {} address {}", ID.GetIndex(), reinterpret_cast<size_t>(&ID));
 
     // we are returning a point so the w componnet is 1.0
     glm::vec4 return_position = glm::vec4(position.GetX(), position.GetY(), position.GetZ(), 1.f);
+
+    spdlog::info("renderer pos {}", glm::to_string(return_position));
 
     return return_position;
 }
@@ -82,7 +88,7 @@ glm::vec4 RigidBody::GetPosition()
 // output: glm vec4 of the velocity
 glm::vec4 RigidBody::GetVelocity()
 {
-    Vec3 velocity = manager->body_interface.GetLinearVelocity(ID);
+    Vec3 velocity = PhysicsManager::get().physics_system.GetBodyInterface().GetLinearVelocity(PhysicsManager::get().body_ids[0]);
 
     // we are returning a vector so the w componnet is 0.0
     glm::vec4 return_velocity = glm::vec4(velocity.GetX(), velocity.GetY(), velocity.GetZ(), 0.f);
@@ -92,14 +98,13 @@ glm::vec4 RigidBody::GetVelocity()
 
 glm::mat4 RigidBody::GetWorldTransform()
 {
-    RMat44 world_transform = manager->body_interface.GetWorldTransform(ID);
+    RMat44 world_transform = PhysicsManager::get().physics_system.GetBodyInterface().GetWorldTransform(PhysicsManager::get().body_ids[0]);
 
     glm::mat4 return_world_transform;
     for(int row = 0; row < 4; row++)
     {
         for(int column = 0; column < 4; column++)
         {
-            spdlog::info("row: {}, column: {}", row, column);
             return_world_transform[row][column] = world_transform(row,column);
         }
     }

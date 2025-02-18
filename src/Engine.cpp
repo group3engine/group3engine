@@ -1,6 +1,8 @@
 #include "Engine.hpp"
 
 #include <glm/glm.hpp>
+#include <glm/ext.hpp>
+
 #include <spdlog/spdlog.h>
 
 #include "Camera.hpp"
@@ -32,23 +34,28 @@ bool vk::Engine::Initialize()
 
 	m_Renderer = std::make_unique<Renderer>(m_context);
 
+    PhysicsManager::get().StartUp();
+
     // ---PHYSICS TEST INITIALISATION---
     // make settings to create the sphere
     BodyCreationSettings sphere_settings(new SphereShape(0.5f), RVec3(0.0_r, 2.0_r, 0.0_r), Quat::sIdentity(), EMotionType::Dynamic, Layers::MOVING);
-    
+
     // add the sphere to the physics system
-    RigidBody ball = RigidBody(sphere_settings, &m_Physics);
+    RigidBody ball = RigidBody(sphere_settings);
 
     // add linear velocity to the ball
-    m_Physics.body_interface.SetLinearVelocity(ball.ID, Vec3(0.0f, 5.0f, 0.0f));
+    PhysicsManager::get().physics_system.GetBodyInterface().SetLinearVelocity(ball.ID, Vec3(0.0f, 5.0f, 0.0f));
     
     // add the floor using the default constructor
-    [[maybe_unused]]RigidBody floor = RigidBody(RigidBody::Floor, &m_Physics);
+    [[maybe_unused]]RigidBody floor = RigidBody(RigidBody::Floor);
 
     m_Renderer->m_scene->m_Entities.at(0).AddRigidBody(&ball);
 
-    m_Physics.UpdatePhysics(1.f/60.f);
+    // PhysicsManager::get().UpdatePhysics(1.f/60.f);
     m_Renderer->m_scene->m_Entities.at(0).mRigidBody->GetWorldTransform();
+
+	spdlog::info("worldTransform {}", glm::to_string(m_Renderer->m_scene->m_Entities.at(0).mRigidBody->GetPosition()));
+
 
     // ---END OF PHYSICS TEST INITIALISATION---
 
@@ -62,6 +69,7 @@ void vk::Engine::Shutdown()
 	m_Renderer.reset();
 	m_context.Destroy(); // Free vulkan device, allocator, window 
 	Platform::get().ShutDown();
+	PhysicsManager::get().ShutDown();
 }
 
 void vk::Engine::Run()
@@ -76,9 +84,28 @@ void vk::Engine::Run()
 
 		Update(deltaTime);
 
-        m_Physics.UpdatePhysics(deltaTime);
-        
-		Render();
+        PhysicsManager::get().UpdatePhysics(1.f/60.f);
+
+        spdlog::info("physics body id {} address {}",
+                     PhysicsManager::get().body_ids[0].GetIndex(),
+                     reinterpret_cast<size_t>(&PhysicsManager::get().body_ids[0]));
+
+        spdlog::info("physics body id 2 {} address {}",
+                     PhysicsManager::get().body_ids[0].GetIndex(),
+                     reinterpret_cast<size_t>(&PhysicsManager::get().body_ids[0]));
+
+        auto pos =
+            PhysicsManager::get()
+                .physics_system.GetBodyInterface()
+                .GetCenterOfMassPosition(PhysicsManager::get().body_ids[0]);
+
+        auto glmpos = glm::vec4(pos.GetX(), pos.GetY(), pos.GetZ(), 1.f);
+
+		spdlog::info("physics pos {}", glm::to_string(glmpos));
+
+        m_Renderer->m_scene->m_Entities.at(0).mRigidBody->GetPosition();
+
+        Render();
 	}
 
 	Shutdown();

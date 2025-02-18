@@ -31,6 +31,5 @@ namespace vk
 		void Render();
 
 		std::unique_ptr<Renderer> m_Renderer;
-        PhysicsManager m_Physics = PhysicsManager();
 	};
 }

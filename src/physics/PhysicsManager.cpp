@@ -1,7 +1,7 @@
 #include "PhysicsManager.hpp"
 #include "spdlog/spdlog.h"
 
-PhysicsManager::PhysicsManager()
+void PhysicsManager::StartUp()
 {
     // Register allocation hook. In this example we'll just let Jolt use malloc / free but you can override these if you want (see Memory.h).
     // This needs to be done before any other Jolt function is called.
@@ -73,16 +73,16 @@ void PhysicsManager::UpdatePhysics(double delta_time = 1/60.f)
     
 }
 
-PhysicsManager::~PhysicsManager()
+void PhysicsManager::ShutDown()
 {
-
+    spdlog::error("Physics manager destructed.");
     for(auto id: body_ids)
     {
         // Remove the sphere from the physics system. Note that the sphere itself keeps all of its state and can be re-added at any time.
-        body_interface.RemoveBody(id);
+        physics_system.GetBodyInterface().RemoveBody(id);
 
         // Destroy the sphere. After this the sphere ID is no longer valid.
-        body_interface.DestroyBody(id);
+        physics_system.GetBodyInterface().DestroyBody(id);
     }
 
     // Unregisters all types with the factory and cleans up the default material
