@@ -37,7 +37,7 @@ class Animation {
     // default constructor
     Animation() = default;
     // resize the channels
-    void ResizeChannels(size_t aSize) { mChannels.resize(aSize); }
+    void ResizeChannels(size_t aSize) { mChannels.reserve(aSize); }
     // add a channel to the animation
     void AddChannel(Channel &aChannel) {
         mTargets.insert(aChannel.target);
@@ -49,7 +49,7 @@ class Animation {
                   });
     }
     // resize the samplers
-    void ResizeSamplers(size_t aSize) { mSamplers.resize(aSize); }
+    void ResizeSamplers(size_t aSize) { mSamplers.reserve(aSize); }
     // add a sampler to the animation
     void AddSampler(Sampler &aSampler) {
         mSamplers.push_back(aSampler);

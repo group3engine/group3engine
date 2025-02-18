@@ -12,6 +12,7 @@
 
 #include "Entity.hpp"
 #include "animation/Animation.hpp"
+#include "animation/Skin.hpp"
 #include "cgltf_write.h"
 #include "glm/gtc/type_ptr.hpp"
 
@@ -438,24 +439,60 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             const auto &gltfChannel = gltfAnimation.channels[j];
             Channel channel = {};
             channel.target = &aEntities[gltfChannel.target_node - data->nodes];
-            channel.sampler = animation.GetSampler(static_cast<int>(gltfChannel.sampler - data->animations->samplers));
-            switch(gltfChannel.target_path) {
-                case cgltf_animation_path_type_translation:
-                    channel.transformChannel = TransformChannel::TRANSLATION;
-                    break;
-                case cgltf_animation_path_type_rotation:
-                    channel.transformChannel = TransformChannel::ROTATION;
-                    break;
-                case cgltf_animation_path_type_scale:
-                    channel.transformChannel = TransformChannel::SCALE;
-                    break;
-                default:
-                    // we don't support other channels, so skip
-                    continue;
+            channel.sampler = animation.GetSampler(static_cast<int>(
+                gltfChannel.sampler - data->animations->samplers));
+            switch (gltfChannel.target_path) {
+            case cgltf_animation_path_type_translation:
+                channel.transformChannel = TransformChannel::TRANSLATION;
+                break;
+            case cgltf_animation_path_type_rotation:
+                channel.transformChannel = TransformChannel::ROTATION;
+                break;
+            case cgltf_animation_path_type_scale:
+                channel.transformChannel = TransformChannel::SCALE;
+                break;
+            default:
+                // we don't support other channels, so skip
+                continue;
             }
             animation.AddChannel(channel);
         }
         animations.push_back(animation);
+    }
+    std::vector<Skin> skins;
+    // add skins
+    for (size_t i = 0; i < data->skins_count; i++) {
+        const auto &gltfSkin = data->skins[i];
+        Skin skin;
+        skin.SetName(gltfSkin.name);
+        skin.ResizeJoints(gltfSkin.joints_count);
+        // get the inverse bind matrices
+        std::vector<glm::mat4> inverseBindMatrices;
+        inverseBindMatrices.resize(gltfSkin.joints_count);
+        for (size_t j = 0; j < gltfSkin.joints_count; j++) {
+            // load the inverse bind matrix from the accessor
+            const auto &gltfAccessor = *gltfSkin.inverse_bind_matrices;
+            assert(gltfAccessor.type == cgltf_type_mat4);
+            assert(gltfAccessor.component_type == cgltf_component_type_r_32f);
+            cgltf_accessor_unpack_floats(
+                &gltfAccessor, glm::value_ptr(inverseBindMatrices[j]), 16);
+        }
+        // get the joints
+        std::vector<Entity *> joint_nodes;
+        joint_nodes.resize(gltfSkin.joints_count);
+        for (size_t j = 0; j < gltfSkin.joints_count; j++) {
+            joint_nodes[j] = &aEntities[gltfSkin.joints[j] - data->nodes];
+        }
+        // add the joints
+        for (size_t j = 0; j < gltfSkin.joints_count; j++) {
+            Joint joint{};
+            joint.entity = joint_nodes[j];
+            joint.inverseBindMatrix = inverseBindMatrices[j];
+            skin.AddJoint(joint);
+        }
+        // get the root
+        skin.SetRoot(&aEntities[gltfSkin.skeleton - data->nodes]);
+        skins.push_back(skin);
     }
 
     //    if (aIsDebug) {
