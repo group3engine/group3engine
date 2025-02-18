@@ -18,7 +18,7 @@ class TextureManager {
     TextureManager(Context &aContext);
     ~TextureManager();
 
-    void addTexture(const std::filesystem::path& aTexturePath, const std::string& aTextureName);
+    void addTexture(std::filesystem::path aTexturePath, const std::string& aTextureName);
 
     Texture *GetTexture(std::string aName) { return &mTextureMap[aName]; }
 

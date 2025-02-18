@@ -119,8 +119,8 @@ void vk::ShadowMap::CreatePipeline()
 
 	// Default pipeline
 	auto ShadowMapPipelineRes = vk::PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
-		.AddShader("assets/shaders/shadow_map.vert.spv", ShaderType::VERTEX)
-		.AddShader("assets/shaders/shadow_map.frag.spv", ShaderType::FRAGMENT)
+		.AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "shadow_map.vert.spv", ShaderType::VERTEX)
+		.AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "shadow_map.frag.spv", ShaderType::FRAGMENT)
 		.SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
 		.SetDynamicState({ {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR} })
 		.SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_FRONT_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE)

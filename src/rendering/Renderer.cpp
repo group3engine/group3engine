@@ -27,7 +27,7 @@ vk::Renderer::Renderer(Context& context) : context{context}
 	CreateResources();
 
 	// Current path is the current working directory, i.e., where the root CMakeLists.txt is
-	std::filesystem::path basePath = std::filesystem::current_path() / "assets";
+	std::filesystem::path basePath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets";
 	std::filesystem::path gltfPath = basePath / Sample::Sponza;
 
 	// Samplers

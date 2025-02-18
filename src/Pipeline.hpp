@@ -64,8 +64,8 @@ namespace vk {
             {}
 
             // Add a shader to the pipeline
-            PipelineBuilder& AddShader(std::filesystem::path shaderPath, ShaderType type) {
-                shaders.push_back({ ShaderTypeToVkShaderStage(type), CreateShaderModule(shaderPath.make_preferred()) });
+            PipelineBuilder& AddShader(const std::filesystem::path& shaderPath, ShaderType type) {
+                shaders.push_back({ ShaderTypeToVkShaderStage(type), CreateShaderModule(shaderPath) });
                 return *this;
             }
 
@@ -212,7 +212,8 @@ namespace vk {
 
             VertexBinding binding;
 
-            VkShaderModule CreateShaderModule(const std::filesystem::path& shaderPath) {
+            VkShaderModule CreateShaderModule(std::filesystem::path shaderPath) {
+                shaderPath.make_preferred();
 
                 std::vector<char> shaderCode = ReadShader(shaderPath);
 

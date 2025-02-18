@@ -49,7 +49,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
 
     cgltf_options options = {};
     cgltf_data *data = nullptr;
-    cgltf_result result = cgltf_parse_file(&options, aFilepath.c_str(), &data);
+    cgltf_result result = cgltf_parse_file(&options, aFilepath.string().c_str(), &data);
     if (result != cgltf_result_success) {
         std::cout << "Failed to parse file.\n";
         std::exit(EXIT_FAILURE);
@@ -67,7 +67,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         std::cout << "data->textures_count=" << data->textures_count << '\n';
         std::cout << "total_primitives=" << total_primitives << '\n';
     }
-    result = cgltf_load_buffers(&options, data, aFilepath.c_str());
+    result = cgltf_load_buffers(&options, data, aFilepath.string().c_str());
     if (result != cgltf_result_success) {
         std::cout << "Failed to load buffers file.\n";
         return GLTF_LOAD_FAIL;
