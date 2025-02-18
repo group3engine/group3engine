@@ -41,15 +41,16 @@ std::string DecodeURI(std::string_view uri, std::string_view gltfPath) {
 }
 
 int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
-             MaterialManager &aMaterialManager, TextureManager &aTextureManager, std::vector<Entity> &aEntities,
-             bool aIsDebug) {
+             MaterialManager &aMaterialManager, TextureManager &aTextureManager,
+             std::vector<Entity> &aEntities, bool aIsDebug) {
     // Convert directory separators to preferred directory separator
     // Slight try at cross-platform for Windows
     aFilepath.make_preferred();
 
     cgltf_options options = {};
     cgltf_data *data = nullptr;
-    cgltf_result result = cgltf_parse_file(&options, aFilepath.string().c_str(), &data);
+    cgltf_result result =
+        cgltf_parse_file(&options, aFilepath.string().c_str(), &data);
     if (result != cgltf_result_success) {
         std::cout << "Failed to parse file.\n";
         std::exit(EXIT_FAILURE);
@@ -99,7 +100,8 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         const auto &gltfMaterial = data->materials[i];
 
         Material material = LoadMaterialDefault();
-        if (gltfMaterial.name) material.name = gltfMaterial.name;
+        if (gltfMaterial.name)
+            material.name = gltfMaterial.name;
 
         // PBR Metallic Roughness
         if (gltfMaterial.has_pbr_metallic_roughness) {
@@ -112,10 +114,10 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                     gltfMaterial.pbr_metallic_roughness.base_color_texture
                         .texture->image->uri;
                 std::string imageBaseColorName =
-                    DecodeURI(imageBaseColorFileName,
-                              aFilepath.string());
+                    DecodeURI(imageBaseColorFileName, aFilepath.string());
 
-                aTextureManager.addTexture(imageBaseColorName, imageBaseColorFileName);
+                aTextureManager.addTexture(imageBaseColorName,
+                                           imageBaseColorFileName);
                 material.pbrMetallicRoughness.baseColorTexture =
                     aTextureManager.GetTexture(imageBaseColorFileName);
                 material.pbrMetallicRoughness.baseColorTextureName =
@@ -142,9 +144,8 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 std::string imageMetallicRoughnessFileName =
                     gltfMaterial.pbr_metallic_roughness
                         .metallic_roughness_texture.texture->image->uri;
-                std::string imageMetallicRoughnessName =
-                    DecodeURI(imageMetallicRoughnessFileName,
-                              aFilepath.string());
+                std::string imageMetallicRoughnessName = DecodeURI(
+                    imageMetallicRoughnessFileName, aFilepath.string());
 
                 aTextureManager.addTexture(imageMetallicRoughnessName,
                                            imageMetallicRoughnessFileName);
@@ -152,7 +153,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                     aTextureManager.GetTexture(imageMetallicRoughnessFileName);
 
                 material.pbrMetallicRoughness.metallicRoughnessTextureName =
-                        imageMetallicRoughnessFileName;
+                    imageMetallicRoughnessFileName;
 
             } else {
                 material.pbrMetallicRoughness.metallicRoughnessTexture =
@@ -204,6 +205,8 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             std::vector<float> positions;
             std::vector<float> normals;
             std::vector<float> texcoords;
+            std::vector<float> joints;
+            std::vector<float> weights;
 
             // Positions
             if (const cgltf_accessor *pos = cgltf_find_accessor(
@@ -211,8 +214,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 size_t count = pos->count * 3;
                 positions.resize(count);
                 assert(cgltf_num_components(pos->type) == 3);
-                cgltf_accessor_unpack_floats(
-                    pos, positions.data(), count);
+                cgltf_accessor_unpack_floats(pos, positions.data(), count);
             }
 
             // Normals
@@ -221,8 +223,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 size_t count = nrm->count * 3;
                 normals.resize(count);
                 assert(cgltf_num_components(nrm->type) == 3);
-                cgltf_accessor_unpack_floats(nrm, normals.data(),
-                                             count);
+                cgltf_accessor_unpack_floats(nrm, normals.data(), count);
             }
 
             // Texcoords
@@ -231,15 +232,31 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 size_t count = tex->count * 2;
                 texcoords.resize(count);
                 assert(cgltf_num_components(tex->type) == 2);
-                cgltf_accessor_unpack_floats(
-                    tex, texcoords.data(), count);
+                cgltf_accessor_unpack_floats(tex, texcoords.data(), count);
             } else {
-                texcoords.resize(positions.size() /
-                                               3 * 2);
+                texcoords.resize(positions.size() / 3 * 2);
                 for (size_t i = 0; i < texcoords.size(); i += 2) {
                     texcoords[i] = 0.0f;
                     texcoords[i + 1] = 0.0f;
                 }
+            }
+            // joints
+            if (const cgltf_accessor *jointsAccessor = cgltf_find_accessor(
+                    &gltfPrimitive, cgltf_attribute_type_joints, 0)) {
+                size_t count = jointsAccessor->count * 4;
+                joints.resize(count);
+                assert(cgltf_num_components(jointsAccessor->type) == 4);
+                cgltf_accessor_unpack_floats(jointsAccessor, joints.data(),
+                                             count);
+            }
+            // weights
+            if (const cgltf_accessor *weightsAccessor = cgltf_find_accessor(
+                    &gltfPrimitive, cgltf_attribute_type_weights, 0)) {
+                size_t count = weightsAccessor->count * 4;
+                weights.resize(count);
+                assert(cgltf_num_components(weightsAccessor->type) == 4);
+                cgltf_accessor_unpack_floats(weightsAccessor, weights.data(),
+                                             count);
             }
 
             // load up the vertices
@@ -248,11 +265,10 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 meshPrimitive.vertices[i].pos = {positions[i * 3],
                                                  positions[i * 3 + 1],
                                                  positions[i * 3 + 2]};
-                meshPrimitive.vertices[i].normal = {normals[i * 3],
-                                                    normals[i * 3 + 1],
-                                                    normals[i * 3 + 2]};
+                meshPrimitive.vertices[i].normal = {
+                    normals[i * 3], normals[i * 3 + 1], normals[i * 3 + 2]};
                 meshPrimitive.vertices[i].tex = {texcoords[i * 2],
-                                                texcoords[i * 2 + 1]};
+                                                 texcoords[i * 2 + 1]};
             }
 
             // Indices
@@ -317,7 +333,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             }
             Transform transform = {.translation = translation,
                                    .rotation = rotation,
-                                   .scale = scale};
+                                   .scale = scale * 10.f};
             entity.SetTransform(transform);
         }
         // add the mesh
@@ -382,4 +398,4 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
 
     return GLTF_LOAD_SUCCESS;
 }
-}  // namespace vk
+} // namespace vk
