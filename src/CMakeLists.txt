@@ -4,7 +4,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_executable(src ${CPP_SOURCE_FILES}
         animation/Animation.cpp
-        animation/Animation.hpp)
+        animation/Animation.hpp
+        animation/Skin.cpp
+        animation/Skin.hpp)
 
 add_subdirectory(core)
 add_subdirectory(physics)
