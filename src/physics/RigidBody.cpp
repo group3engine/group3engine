@@ -1,5 +1,6 @@
 #include "RigidBody.hpp"
 #include "glm/detail/qualifier.hpp"
+#include "glm/fwd.hpp"
 
 // RigidBody()
 // input: enum default shape (Ball, Floor), a physics manager
@@ -86,4 +87,22 @@ glm::vec4 RigidBody::GetVelocity()
     glm::vec4 return_velocity = glm::vec4(velocity.GetX(), velocity.GetY(), velocity.GetZ(), 0.f);
 
     return return_velocity;
+}
+
+glm::mat4 RigidBody::GetWorldTransform()
+{
+    RMat44 world_transform = manager->body_interface.GetWorldTransform(ID);
+
+    glm::mat4 return_world_transform;
+    for(int row = 0; row < 4; row++)
+    {
+        for(int column = 0; column < 4; column++)
+        {
+            return_world_transform[row][column] = world_transform(row,column);
+        }
+    }
+    
+
+    return return_world_transform;
+
 }

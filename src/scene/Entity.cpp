@@ -26,13 +26,32 @@ void Entity::SetParent(Entity *aParent) {
     mParent->AddChild(this);
 }
 glm::mat4 Entity::getWorldTransform() const {
+
+    glm::mat4 return_matrix;
     if (mParent) {
-        return mParent->getWorldTransform() * mLocalTransform.getMatrix();
+        return_matrix = mParent->getWorldTransform() * mLocalTransform.getMatrix();
     } else {
-        return mLocalTransform.getMatrix();
+        return_matrix = mLocalTransform.getMatrix();
     }
+
+    if(mHasRigidBody) // if it has physics
+    {
+        // also apply physics' transformations
+        return_matrix = return_matrix * mRigidBody->GetWorldTransform();
+    }
+    return return_matrix;
 }
-glm::mat4 Entity::getLocalTransform() { return mLocalTransform.getMatrix(); }
+glm::mat4 Entity::getLocalTransform() { 
+    glm::mat4 return_matrix = mLocalTransform.getMatrix();
+
+    if(mHasRigidBody)// if it has physics
+    {
+        // also apply physics' transformations
+        return_matrix = return_matrix * mRigidBody->GetWorldTransform();
+    }
+
+    return return_matrix;
+}
 void Entity::SetTransform(glm::mat4 aTransform) {
     glm::vec3 translation, scale;
     glm::quat rotation;

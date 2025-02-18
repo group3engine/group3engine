@@ -70,6 +70,8 @@ void vk::Engine::Run()
 		PollInputEvents();
 
 		Update(deltaTime);
+        
+        m_Physics.UpdatePhysics(deltaTime);
 
 		Render();
 	}
@@ -124,7 +126,6 @@ void vk::Engine::Update(double deltaTime)
 {
 	UpdateLogic();
 	m_Renderer->Update(deltaTime);
-    m_Physics.UpdatePhysics(deltaTime);
 }
 
 void vk::Engine::Render()

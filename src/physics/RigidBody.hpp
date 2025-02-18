@@ -35,6 +35,7 @@ class RigidBody
         // Functions
         glm::vec4 GetPosition();
         glm::vec4 GetVelocity();
+        glm::mat4 GetWorldTransform();
 
 
 };

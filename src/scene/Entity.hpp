@@ -10,6 +10,7 @@
 #include "GLTFImportStructs.hpp"
 #include "glm/fwd.hpp"
 #include "glm/gtx/matrix_decompose.hpp"
+#include "physics/RigidBody.hpp"
 
 namespace vk {
 class Entity {
@@ -38,6 +39,10 @@ class Entity {
     void AddMesh(Mesh *mesh) {
         mMesh = mesh;
         mHasMesh = true;
+    }
+    void AddRigidBody(RigidBody *rigidBody) {
+        mRigidBody = rigidBody;
+        mHasRigidBody = true;
     }
     void SetTransform(Transform aTransform) { mLocalTransform = aTransform; }
     void SetTransform(glm::mat4 aTransform);
@@ -68,7 +73,8 @@ class Entity {
     Transform mLocalTransform{};
     bool mHasMesh = false;
 
-    //    bool mHasPhysics = false;
+    RigidBody *mRigidBody = nullptr;
+    bool mHasRigidBody = false;
 };
 }  // namespace vk
 #endif  // VULKANTIME_ENTITY_HPP
