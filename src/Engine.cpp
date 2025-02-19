@@ -1,7 +1,7 @@
 #include "Engine.hpp"
 
-#include <glm/glm.hpp>
 #include <glm/ext.hpp>
+#include <glm/glm.hpp>
 
 #include <spdlog/spdlog.h>
 
@@ -11,156 +11,118 @@
 #include "Input.hpp"
 #include "Utils.hpp"
 
-vk::Engine::Engine()
-{
-	m_isRunning = false;
-	m_lastFrameTime = 0.0;
+vk::Engine::Engine() {
+    m_isRunning = false;
+    m_lastFrameTime = 0.0;
 }
 
-bool vk::Engine::Initialize()
-{
-	// TODO: Could probably store this somewhere else
-	int windowWidth = 1280;
-	int windowHeight = 720;
+bool vk::Engine::Initialize() {
+    // TODO: Could probably store this somewhere else
+    int windowWidth = 1280;
+    int windowHeight = 720;
 
-	Platform::get().StartUp(windowWidth, windowHeight);
+    Platform::get().StartUp(windowWidth, windowHeight);
 
-	if (m_context.MakeContext(Platform::get().window))
-	{
-		m_isRunning = true;
-	}
+    if (m_context.MakeContext(Platform::get().window)) {
+        m_isRunning = true;
+    }
 
-	std::printf("Engine initialized\n");
+    std::printf("Engine initialized\n");
 
-	m_Renderer = std::make_unique<Renderer>(m_context);
+    m_Renderer = std::make_unique<Renderer>(m_context);
 
     PhysicsManager::get().StartUp();
 
     // ---PHYSICS TEST INITIALISATION---
-    // make settings to create the sphere
-    BodyCreationSettings sphere_settings(new SphereShape(0.5f), RVec3(0.0_r, 2.0_r, 0.0_r), Quat::sIdentity(), EMotionType::Dynamic, Layers::MOVING);
 
-    // add the sphere to the physics system
-    RigidBody ball = RigidBody(sphere_settings);
+    RigidBody floor(RigidBody::Floor);
+    // Add rigid body to the physics system
+    // NOTE: Doing this outside of the constructor gives us a bit more flexibility
+    floor.Init(PhysicsManager::get());
 
-    // add linear velocity to the ball
-    PhysicsManager::get().physics_system.GetBodyInterface().SetLinearVelocity(ball.ID, Vec3(0.0f, 5.0f, 0.0f));
-    
-    // add the floor using the default constructor
-    [[maybe_unused]]RigidBody floor = RigidBody(RigidBody::Floor);
+    auto &frontEntity = m_Renderer->m_scene->m_Entities.front();
+    frontEntity.AddRigidBody(std::make_unique<RigidBody>(RigidBody::Ball));
+    frontEntity.mRigidBody->Init(PhysicsManager::get());
 
-    m_Renderer->m_scene->m_Entities.at(0).AddRigidBody(&ball);
-
-    // PhysicsManager::get().UpdatePhysics(1.f/60.f);
-    m_Renderer->m_scene->m_Entities.at(0).mRigidBody->GetWorldTransform();
-
-	spdlog::info("worldTransform {}", glm::to_string(m_Renderer->m_scene->m_Entities.at(0).mRigidBody->GetPosition()));
-
+    // Add linear velocity to the front entity (ball)
+    PhysicsManager::get().mPhysicsSystem.GetBodyInterface().SetLinearVelocity(
+        frontEntity.mRigidBody->mBodyId, Vec3(0.0f, 5.0f, 0.0f));
 
     // ---END OF PHYSICS TEST INITIALISATION---
 
-	return m_isRunning;
+    return m_isRunning;
 }
 
-
-void vk::Engine::Shutdown()
-{
-	m_Renderer->Destroy();
-	m_Renderer.reset();
-	m_context.Destroy(); // Free vulkan device, allocator, window 
-	Platform::get().ShutDown();
-	PhysicsManager::get().ShutDown();
+void vk::Engine::Shutdown() {
+    m_Renderer->Destroy();
+    m_Renderer.reset();
+    m_context.Destroy(); // Free vulkan device, allocator, window
+    Platform::get().ShutDown();
+    PhysicsManager::get().ShutDown();
 }
 
-void vk::Engine::Run()
-{
-	while (m_isRunning && !glfwWindowShouldClose(m_context.mWindow))
-	{
-		double currentFrameTime = glfwGetTime();
-		deltaTime = currentFrameTime - m_lastFrameTime;
-		m_lastFrameTime = currentFrameTime;
+void vk::Engine::Run() {
+    while (m_isRunning && !glfwWindowShouldClose(m_context.mWindow)) {
+        double currentFrameTime = glfwGetTime();
+        deltaTime = currentFrameTime - m_lastFrameTime;
+        m_lastFrameTime = currentFrameTime;
 
-		PollInputEvents();
+        PollInputEvents();
 
-		Update(deltaTime);
+        Update(deltaTime);
 
-        PhysicsManager::get().UpdatePhysics(1.f/60.f);
-
-        spdlog::info("physics body id {} address {}",
-                     PhysicsManager::get().body_ids[0].GetIndex(),
-                     reinterpret_cast<size_t>(&PhysicsManager::get().body_ids[0]));
-
-        spdlog::info("physics body id 2 {} address {}",
-                     PhysicsManager::get().body_ids[0].GetIndex(),
-                     reinterpret_cast<size_t>(&PhysicsManager::get().body_ids[0]));
-
-        auto pos =
-            PhysicsManager::get()
-                .physics_system.GetBodyInterface()
-                .GetCenterOfMassPosition(PhysicsManager::get().body_ids[0]);
-
-        auto glmpos = glm::vec4(pos.GetX(), pos.GetY(), pos.GetZ(), 1.f);
-
-		spdlog::info("physics pos {}", glm::to_string(glmpos));
-
-        m_Renderer->m_scene->m_Entities.at(0).mRigidBody->GetPosition();
+        PhysicsManager::get().UpdatePhysics(1.f / 60.f);
 
         Render();
-	}
+    }
 
-	Shutdown();
+    Shutdown();
 }
 
 void vk::Engine::UpdateLogic() {
-	if (IsKeyDown(KEY::_ESCAPE)) {
-		glfwSetWindowShouldClose(Platform::get().window, GLFW_TRUE);
-	}
+    if (IsKeyDown(KEY::_ESCAPE)) {
+        glfwSetWindowShouldClose(Platform::get().window, GLFW_TRUE);
+    }
 
-	auto camera =
-		static_cast<Camera *>(glfwGetWindowUserPointer(Platform::get().window));
-	assert(camera);
+    auto camera = static_cast<Camera *>(glfwGetWindowUserPointer(Platform::get().window));
+    assert(camera);
 
-	camera->SetInput(EInputState::FORWARD, IsKeyDown(KEY::_W));
-	camera->SetInput(EInputState::BACKWARD, IsKeyDown(KEY::_S));
-	camera->SetInput(EInputState::LEFT, IsKeyDown(KEY::_A));
-	camera->SetInput(EInputState::RIGHT, IsKeyDown(KEY::_D));
+    camera->SetInput(EInputState::FORWARD, IsKeyDown(KEY::_W));
+    camera->SetInput(EInputState::BACKWARD, IsKeyDown(KEY::_S));
+    camera->SetInput(EInputState::LEFT, IsKeyDown(KEY::_A));
+    camera->SetInput(EInputState::RIGHT, IsKeyDown(KEY::_D));
 
-	camera->SetInput(EInputState::DOWN, IsKeyDown(KEY::_Q));
-	camera->SetInput(EInputState::UP, IsKeyDown(KEY::_E));
+    camera->SetInput(EInputState::DOWN, IsKeyDown(KEY::_Q));
+    camera->SetInput(EInputState::UP, IsKeyDown(KEY::_E));
 
-	camera->SetInput(EInputState::FAST, IsKeyDown(KEY::_LEFT_SHIFT));
-	camera->SetInput(EInputState::SLOW, IsKeyDown(KEY::_LEFT_CONTROL));
+    camera->SetInput(EInputState::FAST, IsKeyDown(KEY::_LEFT_SHIFT));
+    camera->SetInput(EInputState::SLOW, IsKeyDown(KEY::_LEFT_CONTROL));
 
-	if (IsKeyPressed(KEY::_5)) {
-		postProcessSettings.Enable =
-			postProcessSettings.Enable == true ? false : true;
+    if (IsKeyPressed(KEY::_5)) {
+        postProcessSettings.Enable = postProcessSettings.Enable == true ? false : true;
 
-		const std::string result =
-			postProcessSettings.Enable == true ? "Enabled"
-												: "Disabled";
+        const std::string result = postProcessSettings.Enable == true ? "Enabled" : "Disabled";
 
-		SPDLOG_INFO("Post process: {}", result);
-	}
+        SPDLOG_INFO("Post process: {}", result);
+    }
 
-	if (IsMouseButtonPressed(MOUSE_BUTTON::_RIGHT)) {
-		auto& flag = camera->inputMap[std::size_t(EInputState::MOUSING)];
-		flag = !flag;
+    if (IsMouseButtonPressed(MOUSE_BUTTON::_RIGHT)) {
+        auto &flag = camera->inputMap[std::size_t(EInputState::MOUSING)];
+        flag = !flag;
 
-		if (flag) {
-			glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-		} else {
-			glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-		}
-	}
+        if (flag) {
+            glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        } else {
+            glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        }
+    }
 }
 
-void vk::Engine::Update(double deltaTime)
-{
-	UpdateLogic();
-	m_Renderer->Update(deltaTime);
+void vk::Engine::Update(double deltaTime) {
+    UpdateLogic();
+    m_Renderer->Update(deltaTime);
 }
 
-void vk::Engine::Render()
-{
-	m_Renderer->Render();
+void vk::Engine::Render() {
+    m_Renderer->Render();
 }
