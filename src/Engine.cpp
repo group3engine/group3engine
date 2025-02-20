@@ -76,7 +76,7 @@ bool Engine::Initialize() {
 
     // NOTE: This has to happen after the scene has been initialised currently
     // TODO: Not ideal having this as a separate public method just to be able
-    // to initialise the render passes correctly after the scene is intialised.
+    // to initialise the render passes correctly after the scene is initialised.
     mRenderer->CreateRenderPasses();
 
     PhysicsManager::get().StartUp();
