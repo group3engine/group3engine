@@ -82,7 +82,7 @@ Image LoadTextureFromDisk(std::filesystem::path path, Context &context, VkFormat
 
     int width, height, texChannels;
     // stbi_set_flip_vertically_on_load(1);
-    stbi_uc *pixels = stbi_load(path.c_str(), &width, &height, &texChannels, 4);
+    stbi_uc *pixels = stbi_load(path.string().c_str(), &width, &height, &texChannels, 4);
 
     const auto imageSize = width * height * 4; // width * height * rgba
 
@@ -100,7 +100,7 @@ Image LoadTextureFromDisk(std::filesystem::path path, Context &context, VkFormat
 
     uint32_t mipLevels = ComputeMipLevels(width, height);
 
-    Image img = CreateImageTexture2D(path, context, width, height, format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
+    Image img = CreateImageTexture2D(path.string(), context, width, height, format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
 
     vkutil::ExecuteSingleTimeCommands(context, [&](VkCommandBuffer cmd) {
         // Transition from LAYOUT_UNDEFINED to LAYOUT_TRANSFER_DST_OPTIMAL to copy contents
