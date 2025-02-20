@@ -287,18 +287,18 @@ void Bloom::CreatePipeline() {
     m_HorizontalBlurPipeline = pipelineResult.first;
     m_HorizontalBlurPipelineLayout = pipelineResult.second;
 
-	auto verticalPipelineResult = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::NONE, 0)
-		.AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "fs_tri.vert.spv", ShaderType::VERTEX)
-		.AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "bloom_blur_y.frag.spv", ShaderType::FRAGMENT)
-		.SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-		.SetDynamicState({ {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR} })
-		.SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE)
-		.SetPipelineLayout({ {m_VerticalBlurDescriptorSetLayout} })
-		.SetSampling(VK_SAMPLE_COUNT_1_BIT)
-		.AddBlendAttachmentState()
-		.SetDepthState(VK_FALSE, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL) // Turn depth read and write OFF ========
-		.SetRenderPass(m_renderPass)
-		.Build();
+    auto verticalPipelineResult = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::NONE, 0)
+                                      .AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "fs_tri.vert.spv", ShaderType::VERTEX)
+                                      .AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "bloom_blur_y.frag.spv", ShaderType::FRAGMENT)
+                                      .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+                                      .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}})
+                                      .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE)
+                                      .SetPipelineLayout({{m_VerticalBlurDescriptorSetLayout}})
+                                      .SetSampling(VK_SAMPLE_COUNT_1_BIT)
+                                      .AddBlendAttachmentState()
+                                      .SetDepthState(VK_FALSE, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL) // Turn depth read and write OFF ========
+                                      .SetRenderPass(m_renderPass)
+                                      .Build();
 
     m_VerticalBlurPipeline = verticalPipelineResult.first;
     m_VerticalBlurPipelineLayout = verticalPipelineResult.second;

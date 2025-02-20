@@ -20,8 +20,8 @@ Engine::Engine() {
 
 void Engine::InitScene() {
     // Current path is the current working directory, i.e., where the root CMakeLists.txt is
-	std::filesystem::path basePath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets";
-	std::filesystem::path gltfPath = basePath / Sample::Sponza;
+    std::filesystem::path basePath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets";
+    std::filesystem::path gltfPath = basePath / Sample::Sponza;
 
     // Define Light sources
     Light directionalLight;
