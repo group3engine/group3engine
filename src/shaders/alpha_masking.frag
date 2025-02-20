@@ -208,7 +208,7 @@ void main()
 
 	float shadowTerm = 1.0 - Shadows(WorldPos.xyz);
 
-	vec3 ambient = vec3(0.9) * color * shadowTerm;
+	vec3 ambient = vec3(0.02) * color * shadowTerm;
 	outLight += ambient;
 	fragColor = vec4(vec3(outLight), 1.0);
 

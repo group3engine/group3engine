@@ -14,21 +14,26 @@ void vk::Scene::Update()
 
 	for (auto& light : m_Lights)
 	{
-		glm::mat4 ortho = glm::ortho(-11.0f, 11.0f, -11.0f, 11.0f, 01.f, 28.1f);
+		glm::mat4 ortho = glm::ortho(-light.view, light.view, -light.view, light.view, light.near, light.far);
 		glm::mat4 view = glm::lookAt(glm::vec3(light.position), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0));
 		light.LightSpaceMatrix = ortho * view;
 	}
 
-	// Fill GPU Data with data defined for the scene 
-	for (size_t i = 0; i < m_Lights.size(); i++)
-	{
-		m_LightBuffer.lights[i].type = static_cast<int>(m_Lights[i].Type);
-		m_LightBuffer.lights[i].LightPosition = m_Lights[i].position;
-		m_LightBuffer.lights[i].LightColour = m_Lights[i].colour;
-		m_LightBuffer.lights[i].LightSpaceMatrix = m_Lights[i].LightSpaceMatrix;
-	}
+	// Fill GPU Data with data defined for the scene
+        for (size_t i = 0; i < m_Lights.size(); i++) {
+            m_LightBuffer.lights[i].type = static_cast<int>(m_Lights[i].Type);
 
-	// Pass the light data to the GPU to update all light properties 
+            if (m_Lights[i].Type == LightType::Directional) {
+                m_Lights[i].position.z += sin(glfwGetTime()) * 0.01;
+            }
+
+            m_LightBuffer.lights[i].LightPosition = m_Lights[i].position;
+            m_LightBuffer.lights[i].LightColour = m_Lights[i].colour;
+            m_LightBuffer.lights[i].LightSpaceMatrix =
+            m_Lights[i].LightSpaceMatrix;
+        }
+
+	// Pass the light data to the GPU to update all light properties
 	m_LightUBO[currentFrame].WriteToBuffer(m_LightBuffer, sizeof(LightBuffer));
 }
 

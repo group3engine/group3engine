@@ -8,6 +8,7 @@
 #include "Light.hpp"
 #include "Utils.hpp"
 #include "SampleGLTFFilePaths.hpp"
+#include <imgui.h>
 
 namespace
 {
@@ -27,42 +28,42 @@ vk::Renderer::Renderer(Context& context) : context{context}
 	CreateResources();
 
 	// Current path is the current working directory, i.e., where the root CMakeLists.txt is
-	std::filesystem::path basePath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets";
-	std::filesystem::path gltfPath = basePath / Sample::Sponza;
+	std::filesystem::path basePath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/glTF/Sponza/Sponza.gltf";
+	std::filesystem::path gltfPath = basePath;
 
 	// Samplers
 	repeatSamplerAniso	 	  = CreateSampler(context, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_TRUE,  VK_COMPARE_OP_LESS_OR_EQUAL);
 	repeatSampler			  = CreateSampler(context, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL);
 	clampToEdgeSamplerAniso   = CreateSampler(context, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_FALSE, VK_COMPARE_OP_GREATER);
-	
+
 	// Camera
 	m_camera = std::make_shared<Camera>(context, cameraPos, glm::normalize(cameraPos + cameraDir), up, context.extent.width / (float)context.extent.height);
-	
+
 	// GLFW callbacks
 	glfwSetWindowUserPointer(context.mWindow, m_camera.get());
 
 	// Define Light sources
 	Light directionalLight;
 	directionalLight.Type = LightType::Directional;
-	directionalLight.position = glm::vec4(-8.161, 23.6f, 4.0f, 1.0f); // -0.2972
+	directionalLight.position = glm::vec4(-8.161, 41.6f, 4.0f, 1.0f); // -0.2972
 	directionalLight.colour   = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	std::vector<glm::vec4> spotLightPositions;
 
-	// Random spot light positions put side by side each other 
+	// Random spot light positions put side by side each other
 	for (size_t i = 0; i < 25; i++)
 	{
 		spotLightPositions.push_back(glm::vec4(-9.0 + i * 0.8, 0.2f, 0.5f, 1.0f));
 	}
 
 	// Create the scene which will store models and lights
-	// Add GLTF to the scene 
-	// Add a directional light source defined earlier 
+	// Add GLTF to the scene
+	// Add a directional light source defined earlier
 	m_scene = std::make_shared<Scene>(context);
 	m_scene->Load(gltfPath);
 	m_scene->AddLightSource(directionalLight);
 
-	// Loop through the positions and instantiate a light 
+	// Loop through the positions and instantiate a light
 	// and pass to the scene to add the lights to the scene
 	for (const auto& position : spotLightPositions)
 	{
@@ -86,13 +87,18 @@ vk::Renderer::Renderer(Context& context) : context{context}
 	m_ForwardPass   = std::make_unique<ForwardPass>(context, m_ShadowMap->GetRenderTarget(), m_DepthPrepass->GetRenderTarget(), m_scene, m_camera);
 	m_BloomPass		= std::make_unique<Bloom>(context, m_ForwardPass->GetBrightnessTarget());
 	m_CompositePass = std::make_unique<Composite>(context, m_ForwardPass->GetRenderTarget(), m_BloomPass->GetRenderTarget());
-	m_PresentPass   = std::make_unique<PresentPass>(context, m_CompositePass->GetRenderTarget()); 
+	m_PresentPass   = std::make_unique<PresentPass>(context, m_CompositePass->GetRenderTarget());
+
+	// ImGui
+	ImGuiRenderer::Initialize(context);
+	ImGuiRenderer::AddTexture(clampToEdgeSamplerAniso, m_ShadowMap->GetRenderTarget().imageView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL);
 }
 
 void vk::Renderer::Destroy()
 {
 	vkDeviceWaitIdle(context.device);
 
+	ImGuiRenderer::Shutdown(context);
 	m_DepthPrepass.reset();
 	m_ForwardPass.reset();
 	m_ShadowMap.reset();
@@ -256,7 +262,6 @@ void vk::Renderer::Render()
 		m_BloomPass->Execute(cmd);
 		m_CompositePass->Execute(cmd);
 		m_PresentPass->Execute(cmd, index);
-
 		vkEndCommandBuffer(cmd);
 	}
 
@@ -322,6 +327,8 @@ void vk::Renderer::Update(double deltaTime)
 	m_camera->Update(context.extent.width, context.extent.height, deltaTime);
 	m_scene->Update();
 
+
+	ImGuiRenderer::Update(m_scene, m_camera);
 	// Update passes
 	m_ShadowMap->Update();
 	m_ForwardPass->Update();
