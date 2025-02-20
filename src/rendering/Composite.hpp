@@ -4,41 +4,37 @@
 #include "Image.hpp"
 #include <vector>
 
-namespace vk
-{
-	class Context;
+class Context;
 
-	class Composite
-	{
-	public:
-		explicit Composite(Context& context, Image& LightingPass, Image& BloomPass);
-		~Composite();
+class Composite {
+  public:
+    explicit Composite(Context &context, Image &LightingPass, Image &BloomPass);
+    ~Composite();
 
-		void Execute(VkCommandBuffer cmd);
-		void Update();
-		void Resize();
+    void Execute(VkCommandBuffer cmd);
+    void Update();
+    void Resize();
 
-		Image& GetRenderTarget() { return m_RenderTarget; }
+    Image &GetRenderTarget() { return m_RenderTarget; }
 
-	private:
-		void CreatePipeline();
-		void CreateRenderPass();
-		void CreateFramebuffer();
-		void BuildDescriptors();
+  private:
+    void CreatePipeline();
+    void CreateRenderPass();
+    void CreateFramebuffer();
+    void BuildDescriptors();
 
-		Context& context;
-		Image m_RenderTarget;
-		Image& LightingPass;
-		Image& BloomPass;
+    Context &context;
+    Image m_RenderTarget;
+    Image &LightingPass;
+    Image &BloomPass;
 
-		VkPipeline m_Pipeline;
-		VkPipelineLayout m_PipelineLayout;
-		std::vector<VkDescriptorSet> m_descriptorSets;
-		VkDescriptorSetLayout m_descriptorSetLayout;
-		VkRenderPass m_renderPass;
-		VkFramebuffer m_framebuffer;
+    VkPipeline m_Pipeline;
+    VkPipelineLayout m_PipelineLayout;
+    std::vector<VkDescriptorSet> m_descriptorSets;
+    VkDescriptorSetLayout m_descriptorSetLayout;
+    VkRenderPass m_renderPass;
+    VkFramebuffer m_framebuffer;
 
-		uint32_t m_width;
-		uint32_t m_height;
-	};
-}
+    uint32_t m_width;
+    uint32_t m_height;
+};

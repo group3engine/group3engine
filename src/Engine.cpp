@@ -9,14 +9,54 @@
 #include "GLFW.hpp"
 #include "Image.hpp"
 #include "Input.hpp"
+#include "SampleGLTFFilePaths.hpp"
+#include "Scene.hpp"
 #include "Utils.hpp"
 
-vk::Engine::Engine() {
+Engine::Engine() {
     m_isRunning = false;
     m_lastFrameTime = 0.0;
 }
 
-bool vk::Engine::Initialize() {
+void Engine::InitScene() {
+    // Current path is the current working directory, i.e., where the root CMakeLists.txt is
+    std::filesystem::path basePath = std::filesystem::current_path() / "assets";
+    std::filesystem::path gltfPath = basePath / Sample::Sponza;
+
+    // Define Light sources
+    Light directionalLight;
+    directionalLight.Type = LightType::Directional;
+    directionalLight.position = glm::vec4(-8.161, 24.2f, 4.0f, 1.0f); // -0.2972
+    directionalLight.colour = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+    std::vector<glm::vec4> spotLightPositions;
+
+    // Random spot light positions put side by side each other
+    for (size_t i = 0; i < 25; i++) {
+        spotLightPositions.push_back(glm::vec4(-9.0 + i * 0.8, 0.7f, 0.5f, 1.0f));
+    }
+
+    // Create the scene which will store models and lights
+    // Add GLTF to the scene
+    // Add a directional light source defined earlier
+    mScene->Load(gltfPath);
+    mScene->AddLightSource(directionalLight);
+
+    // Loop through the positions and instantiate a light
+    // and pass to the scene to add the lights to the scene
+    for (const auto &position : spotLightPositions) {
+        Light spotLight = {};
+        spotLight.Type = LightType::Spot;
+        spotLight.position = position;
+        spotLight.colour = glm::vec4(glm::linearRand(0.0f, 1.0f), glm::linearRand(0.0f, 1.f),
+                                     glm::linearRand(0.0f, 1.0f), 1.0f);
+        mScene->AddLightSource(spotLight);
+    }
+
+    SPDLOG_DEBUG("Number of Lights: {}", mScene->GetLights().size());
+}
+
+bool Engine::Initialize() {
     // TODO: Could probably store this somewhere else
     int windowWidth = 1280;
     int windowHeight = 720;
@@ -27,9 +67,17 @@ bool vk::Engine::Initialize() {
         m_isRunning = true;
     }
 
-    std::printf("Engine initialized\n");
+    mScene = std::make_shared<Scene>(m_context);
 
-    m_Renderer = std::make_unique<Renderer>(m_context);
+    mRenderer = std::make_unique<Renderer>(m_context, mScene);
+
+    // NOTE: This has to come after the renderer has been initialised currently.
+    InitScene();
+
+    // NOTE: This has to happen after the scene has been initialised currently
+    // TODO: Not ideal having this as a separate public method just to be able
+    // to initialise the render passes correctly after the scene is intialised.
+    mRenderer->CreateRenderPasses();
 
     PhysicsManager::get().StartUp();
 
@@ -40,7 +88,7 @@ bool vk::Engine::Initialize() {
     // NOTE: Doing this outside of the constructor gives us a bit more flexibility
     floor.Init(PhysicsManager::get());
 
-    auto &frontEntity = m_Renderer->m_scene->m_Entities.front();
+    auto &frontEntity = mScene->m_Entities.front();
     frontEntity.AddRigidBody(std::make_unique<RigidBody>(RigidBody::Ball));
     frontEntity.mRigidBody->Init(PhysicsManager::get());
 
@@ -50,26 +98,29 @@ bool vk::Engine::Initialize() {
 
     // ---END OF PHYSICS TEST INITIALISATION---
 
+    SPDLOG_DEBUG("Engine initialised.");
+
     return m_isRunning;
 }
 
-void vk::Engine::Shutdown() {
-    m_Renderer->Destroy();
-    m_Renderer.reset();
+void Engine::Shutdown() {
+    mRenderer->Destroy();
+    mRenderer.reset();
+    mScene->Destroy();
     m_context.Destroy(); // Free vulkan device, allocator, window
     Platform::get().ShutDown();
     PhysicsManager::get().ShutDown();
 }
 
-void vk::Engine::Run() {
+void Engine::Run() {
     while (m_isRunning && !glfwWindowShouldClose(m_context.mWindow)) {
         double currentFrameTime = glfwGetTime();
-        deltaTime = currentFrameTime - m_lastFrameTime;
+        GlobalUtil::deltaTime = currentFrameTime - m_lastFrameTime;
         m_lastFrameTime = currentFrameTime;
 
         PollInputEvents();
 
-        Update(deltaTime);
+        Update(GlobalUtil::deltaTime);
 
         PhysicsManager::get().UpdatePhysics(1.f / 60.f);
 
@@ -79,7 +130,7 @@ void vk::Engine::Run() {
     Shutdown();
 }
 
-void vk::Engine::UpdateLogic() {
+void Engine::UpdateLogic() {
     if (IsKeyDown(KEY::_ESCAPE)) {
         glfwSetWindowShouldClose(Platform::get().window, GLFW_TRUE);
     }
@@ -99,9 +150,9 @@ void vk::Engine::UpdateLogic() {
     camera->SetInput(EInputState::SLOW, IsKeyDown(KEY::_LEFT_CONTROL));
 
     if (IsKeyPressed(KEY::_5)) {
-        postProcessSettings.Enable = postProcessSettings.Enable == true ? false : true;
+        vkutil::postProcessSettings.Enable = vkutil::postProcessSettings.Enable == true ? false : true;
 
-        const std::string result = postProcessSettings.Enable == true ? "Enabled" : "Disabled";
+        const std::string result = vkutil::postProcessSettings.Enable == true ? "Enabled" : "Disabled";
 
         SPDLOG_INFO("Post process: {}", result);
     }
@@ -118,11 +169,12 @@ void vk::Engine::UpdateLogic() {
     }
 }
 
-void vk::Engine::Update(double deltaTime) {
+void Engine::Update(double deltaTime) {
     UpdateLogic();
-    m_Renderer->Update(deltaTime);
+    mScene->Update();
+    mRenderer->Update(deltaTime);
 }
 
-void vk::Engine::Render() {
-    m_Renderer->Render();
+void Engine::Render() {
+    mRenderer->Render();
 }

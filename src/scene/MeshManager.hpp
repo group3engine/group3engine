@@ -1,18 +1,17 @@
-//
-// Created by thomas on 05/02/25.
-//
+#ifndef SCENE_MESHMANAGER_HPP
+#define SCENE_MESHMANAGER_HPP
 
-#ifndef VULKANTIME_MESHMANAGER_HPP
-#define VULKANTIME_MESHMANAGER_HPP
 #include <vector>
 
+#include "Context.hpp"
+#include "Buffer.hpp"
 #include "GLTFImportStructs.hpp"
-#include "../Context.hpp"
-#include "../vkutil/Buffer.hpp"
-namespace vk {
+
 class MeshManager {
-   public:
-    explicit MeshManager(Context &aContext) : mContext(aContext) {};
+  public:
+    explicit MeshManager(Context &aContext)
+        : mContext(aContext){};
+
     ~MeshManager() {
         for (auto &meshGPU : mMeshesGPU) {
             meshGPU.mVertices.Destroy();
@@ -27,11 +26,13 @@ class MeshManager {
         mMeshes.reserve(aSize);
         mMeshesGPU.resize(aPrimSize);
     }
+
     // add a mesh to the manager
     void addMesh(Mesh aMesh) {
         mMeshes.push_back(aMesh);
         uploadLastMesh();
     }
+
     // debug output meshes
     void debugOuptutMeshes();
     // upload the last mesh added to the GPU
@@ -40,11 +41,9 @@ class MeshManager {
     // get a mesh by index
     Mesh *getMesh(size_t aIndex) { return &mMeshes[aIndex]; }
 
-   private:
+  private:
     std::vector<Mesh> mMeshes;
     std::vector<MeshPrimitiveGPU> mMeshesGPU;
     Context &mContext;
 };
-}  // namespace vk
-
-#endif  // VULKANTIME_MESHMANAGER_HPP
+#endif // VULKANTIME_MESHMANAGER_HPP

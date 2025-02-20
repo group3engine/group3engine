@@ -11,10 +11,10 @@
 
 class Entity {
   public:
-    Entity(std::string aName, Entity *aParent, vk::Mesh *aMesh, vk::Transform aLocalTransform)
+    Entity(std::string aName, Entity *aParent, Mesh *aMesh, Transform aLocalTransform)
         : mName(std::move(aName)), mParent(aParent), mMesh(aMesh), mLocalTransform(aLocalTransform),
           mHasMesh(true) {}
-    Entity(std::string aName, Entity *aParent, vk::Mesh *aMesh, glm::mat4 aLocalTransform);
+    Entity(std::string aName, Entity *aParent, Mesh *aMesh, glm::mat4 aLocalTransform);
 
     Entity() = default;
     // Delete copy constructors because of unique pointer to rigid body
@@ -30,7 +30,7 @@ class Entity {
 
     void AddChild(Entity *aChild) { mChildren.push_back(aChild); }
 
-    void AddMesh(vk::Mesh *mesh) {
+    void AddMesh(Mesh *mesh) {
         mMesh = mesh;
         mHasMesh = true;
     }
@@ -40,7 +40,7 @@ class Entity {
         mHasRigidBody = true;
     }
 
-    void SetTransform(vk::Transform aTransform) { mLocalTransform = aTransform; }
+    void SetTransform(Transform aTransform) { mLocalTransform = aTransform; }
     void SetTransform(glm::mat4 aTransform);
 
     [[nodiscard]] glm::mat4 getWorldTransform() const;
@@ -67,9 +67,9 @@ class Entity {
     Entity *mParent = nullptr;
     std::vector<Entity *> mChildren;
 
-    vk::Mesh *mMesh = nullptr;
+    Mesh *mMesh = nullptr;
 
-    vk::Transform mLocalTransform{};
+    Transform mLocalTransform{};
 
     bool mHasMesh = false;
     bool mHasRigidBody = false;

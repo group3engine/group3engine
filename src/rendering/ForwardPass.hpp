@@ -9,46 +9,41 @@
 #define ALPHA_MASK_FRAGMENT_SHADER SHADER_DIR "alpha_masking.frag.spv"
 #define ALPHA_MASK_VERTEX_SHADER SHADER_DIR "default.vert.spv"
 
-namespace vk
-{
-	class Context;
-	class Scene;
-	class Buffer;
+class Context;
+class Scene;
+class Buffer;
 
-	class ForwardPass
-	{
-	public:
+class ForwardPass {
+  public:
+    ForwardPass(Context &context, Image &shadowMap, Image &depthPrepass, std::shared_ptr<Scene> &scene, std::shared_ptr<Camera> &camera);
+    ~ForwardPass();
+    void Execute(VkCommandBuffer cmd);
+    void Update();
 
-		ForwardPass(Context& context, Image& shadowMap, Image& depthPrepass, std::shared_ptr<Scene>& scene, std::shared_ptr<Camera>& camera);
-		~ForwardPass();
-		void Execute(VkCommandBuffer cmd);
-		void Update();
+    void Resize();
+    Image &GetRenderTarget() { return m_RenderTarget; }
+    Image &GetBrightnessTarget() { return m_BrightnessTexture; }
 
-		void Resize();
-		Image& GetRenderTarget() { return m_RenderTarget; }
-		Image& GetBrightnessTarget() { return m_BrightnessTexture; }
+  private:
+    void CreatePipeline();
+    void CreateRenderPass();
+    void CreateFramebuffer();
+    void BuildDescriptors();
 
-	private:
-		void CreatePipeline();
-		void CreateRenderPass();
-		void CreateFramebuffer();
-		void BuildDescriptors();
+    Image m_RenderTarget;
+    Image m_DepthTarget;
+    Image m_BrightnessTexture;
 
-		Image m_RenderTarget;
-		Image m_DepthTarget;
-		Image m_BrightnessTexture;
+    VkRenderPass m_renderPass;
+    VkFramebuffer m_framebuffer;
+    VkDescriptorSetLayout meshDescriptorSetLayout;
 
-		VkRenderPass m_renderPass;
-		VkFramebuffer m_framebuffer;
-		VkDescriptorSetLayout meshDescriptorSetLayout;
-
-		Context& context;
-		Image& shadowMap;
-		Image& depthPrepass;
-		std::shared_ptr<Scene> scene;
-		std::shared_ptr<Camera> camera;
-		std::vector<VkDescriptorSet> m_descriptorSets;
-		std::pair<VkPipeline, VkPipelineLayout> m_opaquePipeline;
-                std::pair<VkPipeline, VkPipelineLayout> m_alphaMaskPipeline;
-	};
-}
+    Context &context;
+    Image &shadowMap;
+    Image &depthPrepass;
+    std::shared_ptr<Scene> scene;
+    std::shared_ptr<Camera> camera;
+    std::vector<VkDescriptorSet> m_descriptorSets;
+    std::pair<VkPipeline, VkPipelineLayout> m_opaquePipeline;
+    std::pair<VkPipeline, VkPipelineLayout> m_alphaMaskPipeline;
+};

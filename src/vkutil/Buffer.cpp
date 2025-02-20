@@ -2,82 +2,77 @@
 #include "Buffer.hpp"
 #include "Utils.hpp"
 
-vk::Buffer::Buffer() noexcept : buffer{ VK_NULL_HANDLE }, allocation{ VK_NULL_HANDLE }, allocator{ VK_NULL_HANDLE }, name{ "" } {}
-
-vk::Buffer::Buffer(const std::string& name, VmaAllocator allocator, VkBuffer buffer, VmaAllocation allocation) :
-    buffer{ buffer }, allocation{ allocation }, allocator{ allocator }, name{ name } {}
-
-vk::Buffer::Buffer(Buffer&& other) noexcept : 
-    buffer(std::exchange(other.buffer, VK_NULL_HANDLE)),
-    allocation(std::exchange(other.allocation, VK_NULL_HANDLE)),
-    allocator(std::exchange(other.allocator, VK_NULL_HANDLE)),
-    name(std::exchange(other.name, "")) {}
-
-vk::Buffer& vk::Buffer::operator=(vk::Buffer&& other) noexcept
-{
-    std::swap(buffer, other.buffer);
-	std::swap(allocation, other.allocation);
-	std::swap(allocator, other.allocator);
-    std::swap(name, other.name);
-
-	return *this;
+Buffer::Buffer() noexcept
+    : buffer{VK_NULL_HANDLE}, allocation{VK_NULL_HANDLE}, allocator{VK_NULL_HANDLE}, name{""} {
 }
 
-void vk::Buffer::Destroy()
-{
-    if (buffer != VK_NULL_HANDLE)
-    {
+Buffer::Buffer(const std::string &name, VmaAllocator allocator, VkBuffer buffer, VmaAllocation allocation)
+    : buffer{buffer}, allocation{allocation}, allocator{allocator}, name{name} {
+}
+
+Buffer::Buffer(Buffer &&other) noexcept
+    : buffer(std::exchange(other.buffer, VK_NULL_HANDLE)),
+      allocation(std::exchange(other.allocation, VK_NULL_HANDLE)),
+      allocator(std::exchange(other.allocator, VK_NULL_HANDLE)),
+      name(std::exchange(other.name, "")) {
+}
+
+Buffer &Buffer::operator=(Buffer &&other) noexcept {
+    std::swap(buffer, other.buffer);
+    std::swap(allocation, other.allocation);
+    std::swap(allocator, other.allocator);
+    std::swap(name, other.name);
+
+    return *this;
+}
+
+void Buffer::Destroy() {
+    if (buffer != VK_NULL_HANDLE) {
         assert(allocator != VK_NULL_HANDLE);
         assert(allocation != VK_NULL_HANDLE);
         vmaDestroyBuffer(allocator, buffer, allocation);
     }
 }
 
-vk::Buffer vk::CreateBuffer(const std::string& name, vk::Context const& context, VkDeviceSize bSize, VkBufferUsageFlags usage, VmaAllocationCreateFlags memoryFlags, VmaMemoryUsage memUsage)
-{
-	VkBufferCreateInfo bufferInfo = {
-		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-		.size = bSize,
-		.usage = usage
-	};
+Buffer CreateBuffer(const std::string &name, Context const &context, VkDeviceSize bSize, VkBufferUsageFlags usage, VmaAllocationCreateFlags memoryFlags, VmaMemoryUsage memUsage) {
+    VkBufferCreateInfo bufferInfo = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .size = bSize,
+        .usage = usage};
 
-	VmaAllocationCreateInfo allocInfo = {
-		.flags = memoryFlags,
-		.usage = memUsage
-	};
+    VmaAllocationCreateInfo allocInfo = {
+        .flags = memoryFlags,
+        .usage = memUsage};
 
-	VkBuffer buffer = VK_NULL_HANDLE;
-	VmaAllocation allocation = VK_NULL_HANDLE;
+    VkBuffer buffer = VK_NULL_HANDLE;
+    VmaAllocation allocation = VK_NULL_HANDLE;
 
-	VK_CHECK(vmaCreateBuffer(context.allocator, &bufferInfo, &allocInfo, &buffer, &allocation, nullptr), "Failed to create & allocate buffer");
+    VK_CHECK(vmaCreateBuffer(context.allocator, &bufferInfo, &allocInfo, &buffer, &allocation, nullptr), "Failed to create & allocate buffer");
 
     vmaSetAllocationName(context.allocator, allocation, name.c_str());
     context.SetObjectName(context.device, (uint64_t)buffer, VK_OBJECT_TYPE_BUFFER, name.c_str());
 
-	return Buffer(name, context.allocator, buffer, allocation);
+    return Buffer(name, context.allocator, buffer, allocation);
 }
 
-void vk::CreateAndUploadBuffer(vk::Context const& context, const void* data, VkDeviceSize size, VkBufferUsageFlags usage, vk::Buffer& destinationBuffer)
-{
+void CreateAndUploadBuffer(Context const &context, const void *data, VkDeviceSize size, VkBufferUsageFlags usage, Buffer &destinationBuffer) {
     // Create the destination buffer
-    destinationBuffer = vk::CreateBuffer("buffer", context, size,
-        usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 0, VMA_MEMORY_USAGE_AUTO);
+    destinationBuffer = CreateBuffer("buffer", context, size,
+                                     usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 0, VMA_MEMORY_USAGE_AUTO);
 
     // Create the staging buffer
-    vk::Buffer stagingBuffer = vk::CreateBuffer("staging buffer", context, size,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
-        VMA_MEMORY_USAGE_AUTO);
+    Buffer stagingBuffer = CreateBuffer("staging buffer", context, size,
+                                        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                                        VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+                                        VMA_MEMORY_USAGE_AUTO);
 
     // Write data to the staging buffer
     stagingBuffer.WriteToBuffer(data, size);
 
     // Perform the copy operation using single-time commands
-    ExecuteSingleTimeCommands(context, [&](VkCommandBuffer cmd) {
-        
+    vkutil::ExecuteSingleTimeCommands(context, [&](VkCommandBuffer cmd) {
         VkBufferCopy copy = {
-            .size = size
-        };
+            .size = size};
         vkCmdCopyBuffer(cmd, stagingBuffer.buffer, destinationBuffer.buffer, 1, &copy);
 
         VkAccessFlags dstAccessMask = (usage & VK_BUFFER_USAGE_VERTEX_BUFFER_BIT) ? VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT : VK_ACCESS_INDEX_READ_BIT;
@@ -93,8 +88,7 @@ void vk::CreateAndUploadBuffer(vk::Context const& context, const void* data, VkD
         };
 
         vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferBarrier, 0, nullptr);
-
-        });
+    });
 
     stagingBuffer.Destroy();
 }

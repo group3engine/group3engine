@@ -5,31 +5,27 @@
 #include "Camera.hpp"
 #include "Context.hpp"
 #include "PhysicsManager.hpp"
-#include "RigidBody.hpp"
 #include "Renderer.hpp"
+#include "RigidBody.hpp"
 
+class Engine {
+  public:
+    Engine();
+    void InitScene();
+    bool Initialize();
+    void Run();
+    void Shutdown();
 
-namespace vk
-{
-	class Engine
-	{
-	public:
-		Engine();
-		bool Initialize();
-		void Run();
-		void Shutdown();
+  private:
+    Context m_context;
+    bool m_isRunning;
+    double m_lastFrameTime;
 
-	private:
+    void UpdateLogic();
 
-		Context m_context;
-		bool m_isRunning;
-		double m_lastFrameTime;
+    void Update(double deltaTime);
+    void Render();
 
-		void UpdateLogic();
-
-		void Update(double deltaTime);
-		void Render();
-
-		std::unique_ptr<Renderer> m_Renderer;
-	};
-}
+    std::shared_ptr<Scene> mScene;
+    std::unique_ptr<Renderer> mRenderer;
+};

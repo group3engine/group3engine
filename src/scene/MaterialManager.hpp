@@ -3,20 +3,24 @@
 
 #include <vector>
 
-#include "../Context.hpp"
-#include "../Utils.hpp"
+#include "Context.hpp"
+#include "Utils.hpp"
 #include "GLTFImportStructs.hpp"
-namespace vk {
+
 class MaterialManager {
-   public:
+  public:
     MaterialManager(Context &aContext);
+
     // TODO: this is copying a material by value into the vector, not ideal
     void AddMaterial(Material &material) {
         mMaterials.emplace_back(std::move(material));
         UploadLastMaterial();
     }
+
     void UploadLastMaterial();
+
     void ReserveMaterials(size_t size) { mMaterials.reserve(size); }
+
     Material *GetMaterial(size_t index) { return &mMaterials[index]; }
 
     void DebugOutputMaterials();
@@ -25,14 +29,14 @@ class MaterialManager {
         // destroy the descriptor pool
         vkDestroyDescriptorPool(mContext.device, mDescriptorPool, nullptr);
         // destroy the descriptor set layout
-        vkDestroyDescriptorSetLayout(mContext.device, materialDescriptorSetLayout, nullptr);
+        vkDestroyDescriptorSetLayout(mContext.device, vkutil::materialDescriptorSetLayout, nullptr);
 
         for (auto &material : mMaterials) {
             material.materialBuffer.Destroy();
         }
     }
 
-   private:
+  private:
     VkDescriptorSet create_material_descriptor_set(std::vector<VkImageView> const &aImageViews,
                                                    Buffer const &aMaterialBuffer);
 
@@ -41,5 +45,4 @@ class MaterialManager {
     Context &mContext;
     VkDescriptorPool mDescriptorPool;
 };
-}  // namespace vk
-#endif  // VULKANTIME_MATERIALMANAGER_HPP
+#endif // VULKANTIME_MATERIALMANAGER_HPP

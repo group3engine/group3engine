@@ -12,23 +12,20 @@
 #include "../Context.hpp"
 #include "../Image.hpp"
 
-namespace vk {
 class TextureManager {
-   public:
+  public:
     TextureManager(Context &aContext);
     ~TextureManager();
 
-    void addTexture(const std::filesystem::path& aTexturePath, const std::string& aTextureName);
+    void addTexture(const std::filesystem::path &aTexturePath, const std::string &aTextureName);
 
     Texture *GetTexture(std::string aName) { return &mTextureMap[aName]; }
 
-   private:
+  private:
     Context &mContext;
     VkCommandPool mCommandPool;
 
     // map of texture names to texture
     std::unordered_map<std::string, Texture> mTextureMap;
 };
-
-}  // namespace vk
-#endif  // VULKANTIME_TEXTUREMANAGER_HPP
+#endif // VULKANTIME_TEXTUREMANAGER_HPP

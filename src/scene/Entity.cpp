@@ -5,7 +5,7 @@
 #include <glm/ext.hpp>
 #include <spdlog/spdlog.h>
 
-Entity::Entity(std::string aName, Entity *aParent, vk::Mesh *aMesh, glm::mat4 aLocalTransform)
+Entity::Entity(std::string aName, Entity *aParent, Mesh *aMesh, glm::mat4 aLocalTransform)
     : mName(std::move(aName)), mParent(aParent), mMesh(aMesh), mHasMesh(true) {
     // convert the transformation matrix to a translation, rotation
     // (quaternion), scale

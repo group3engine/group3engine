@@ -20,26 +20,23 @@
 #include "Engine.hpp"
 #include <string>
 
-int main() try
-{
-	vk::Engine engine;
+int main() try {
+    Engine engine;
 
-	if (!engine.Initialize())
-	{
-		std::cout << "Failed to initialize engine. " << std::endl;
-		return 0;
-	}
+    if (!engine.Initialize()) {
+        std::cout << "Failed to initialize engine. " << std::endl;
+        return 0;
+    }
 
-	engine.Run();
+    engine.Run();
 
-	return 0;
-}
-catch( std::exception const& eErr )
-{
-	std::fprintf( stderr, "\n" );
-	std::fprintf( stderr, "Error: %s\n", eErr.what() );
-	return 1;
+    return 0;
+
+} catch (std::exception const &eErr) {
+
+    std::fprintf(stderr, "\n");
+    std::fprintf(stderr, "Error: %s\n", eErr.what());
+    return 1;
 }
 
-
-//EOF vim:syntax=cpp:foldmethod=marker:ts=4:noexpandtab: 
+// EOF vim:syntax=cpp:foldmethod=marker:ts=4:noexpandtab:

@@ -14,8 +14,6 @@
 #include "cgltf_write.h"
 #include "glm/gtc/type_ptr.hpp"
 
-namespace vk {
-
 Material LoadMaterialDefault() {
     PBRMetallicRoughnessMaterial pbrMetallicRoughness{
         nullptr, nullptr, {{1, 1, 1, 1}, 0.0f, 1.0f, 0.0f}, "", ""};
@@ -99,7 +97,8 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         const auto &gltfMaterial = data->materials[i];
 
         Material material = LoadMaterialDefault();
-        if (gltfMaterial.name) material.name = gltfMaterial.name;
+        if (gltfMaterial.name)
+            material.name = gltfMaterial.name;
 
         // PBR Metallic Roughness
         if (gltfMaterial.has_pbr_metallic_roughness) {
@@ -152,7 +151,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                     aTextureManager.GetTexture(imageMetallicRoughnessFileName);
 
                 material.pbrMetallicRoughness.metallicRoughnessTextureName =
-                        imageMetallicRoughnessFileName;
+                    imageMetallicRoughnessFileName;
 
             } else {
                 material.pbrMetallicRoughness.metallicRoughnessTexture =
@@ -235,7 +234,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                     tex, texcoords.data(), count);
             } else {
                 texcoords.resize(positions.size() /
-                                               3 * 2);
+                                 3 * 2);
                 for (size_t i = 0; i < texcoords.size(); i += 2) {
                     texcoords[i] = 0.0f;
                     texcoords[i + 1] = 0.0f;
@@ -252,7 +251,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                                                     normals[i * 3 + 1],
                                                     normals[i * 3 + 2]};
                 meshPrimitive.vertices[i].tex = {texcoords[i * 2],
-                                                texcoords[i * 2 + 1]};
+                                                 texcoords[i * 2 + 1]};
             }
 
             // Indices
@@ -382,4 +381,3 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
 
     return GLTF_LOAD_SUCCESS;
 }
-}  // namespace vk

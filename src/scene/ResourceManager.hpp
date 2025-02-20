@@ -16,10 +16,9 @@
 
 #define GLTF_LOAD_FAIL 0
 #define GLTF_LOAD_SUCCESS 1
-namespace vk {
+
 // returns 0 if failed
 int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
              MaterialManager &aMaterialManager, TextureManager &aTextureManager, std::vector<Entity> &aEntities,
              bool aIsDebug);
-} // namespace vk
 #endif // GROUP3ENGINE_RESOURCEMANAGER_HPP

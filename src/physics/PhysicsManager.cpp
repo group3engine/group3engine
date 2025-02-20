@@ -1,8 +1,7 @@
 #include "PhysicsManager.hpp"
 #include "spdlog/spdlog.h"
 
-void PhysicsManager::StartUp()
-{
+void PhysicsManager::StartUp() {
     // Register allocation hook. In this example we'll just let Jolt use malloc / free but you can override these if you want (see Memory.h).
     // This needs to be done before any other Jolt function is called.
     RegisterDefaultAllocator();
@@ -32,7 +31,7 @@ void PhysicsManager::StartUp()
     // We need a job system that will execute physics jobs on multiple threads. Typically
     // you would implement the JobSystem interface yourself and let Jolt Physics run on top
     // of your own job scheduler. JobSystemThreadPool is an example implementation.
-    //JobSystemThreadPool
+    // JobSystemThreadPool
 
     // Now we can create the actual physics system.
     mPhysicsSystem.Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, mBroadPhaseLayerInterface, mObjectVsBroadphaseLayerFilter, mObjectVsObjectLayerFilter);
@@ -56,8 +55,7 @@ void PhysicsManager::StartUp()
     mPhysicsSystem.OptimizeBroadPhase();
 }
 
-void PhysicsManager::UpdatePhysics(double delta_time = 1/60.f)
-{
+void PhysicsManager::UpdatePhysics(double delta_time = 1 / 60.f) {
     // Next step
     cDeltaTime = delta_time;
 
@@ -67,12 +65,10 @@ void PhysicsManager::UpdatePhysics(double delta_time = 1/60.f)
 
     // Step the world
     mPhysicsSystem.Update(cDeltaTime, cCollisionSteps, mTempAllocator.get(), mJobSystem.get());
-
 }
 
-void PhysicsManager::ShutDown()
-{
-    for (auto id: mBodyIds) {
+void PhysicsManager::ShutDown() {
+    for (auto id : mBodyIds) {
         // Remove the sphere from the physics system. Note that the sphere itself keeps all of its state and can be re-added at any time.
         mPhysicsSystem.GetBodyInterface().RemoveBody(id);
 

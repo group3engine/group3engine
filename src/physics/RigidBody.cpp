@@ -4,7 +4,8 @@
 
 #include "PhysicsManager.hpp"
 
-RigidBody::RigidBody(Shape shape) : mShape(shape) {
+RigidBody::RigidBody(Shape shape)
+    : mShape(shape) {
     if (mShape == Shape::Floor) {
         // Next we can create a rigid body to serve as the floor, we make a
         // large box Create the settings for the collision volume (the shape).

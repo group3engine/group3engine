@@ -4,12 +4,11 @@
 
 #include "MeshManager.hpp"
 
-
 #include <cstring>
 #include <glm/glm.hpp>
 #include <iostream>
 #include <limits>
-namespace vk {
+
 void MeshManager::debugOuptutMeshes() {
     std::cout << "meshes.size()=" << mMeshes.size() << '\n';
     std::cout << "meshPrimitives.size()=" << mMeshes[0].meshPrimitives.size()
@@ -22,6 +21,7 @@ void MeshManager::debugOuptutMeshes() {
                                    mMeshes[0].meshPrimitives[0].indices.end())
               << '\n';
 }
+
 void MeshManager::uploadLastMesh() {
     auto &mesh = mMeshes.back();
     // get the mesh primitve offset
@@ -39,7 +39,7 @@ void MeshManager::uploadLastMesh() {
         CreateAndUploadBuffer(mContext, meshPrimitive.vertices.data(), vertexSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, meshGPU.mVertices);
         // upload the indices
         VkDeviceSize indexSize = meshPrimitive.indices.size() * sizeof(std::uint32_t);
-        vk::CreateAndUploadBuffer(
+        CreateAndUploadBuffer(
             mContext, meshPrimitive.indices.data(),
             indexSize,
             VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
@@ -49,4 +49,3 @@ void MeshManager::uploadLastMesh() {
         meshPrimitive.meshGPU = &meshGPU;
     }
 }
-}  // namespace vk

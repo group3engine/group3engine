@@ -2,65 +2,63 @@
 
 #include <vector>
 
-#include "Image.hpp"
 #include "Volk.hpp"
 #include "VMA.hpp"
 
 #include <GLFW/glfw3.h>
 
-namespace vk
-{
-	class Context
-	{
-	public:
-		Context();
-		void Destroy();
-		bool MakeContext(GLFWwindow *window);
-		void CreateLogicalDevice();
-		void CreateAllocator();
-		void CreateSwapchain();
-		void TeardownSwapchain();
-		void RecreateSwapchain();
+#include "Image.hpp"
 
-		void SetObjectName(VkDevice device, uint64_t objectHandle, VkObjectType objectType, const char* name) const;
+class Context {
+  public:
+    Context();
+    void Destroy();
+    bool MakeContext(GLFWwindow *window);
+    void CreateLogicalDevice();
+    void CreateAllocator();
+    void CreateSwapchain();
+    void TeardownSwapchain();
+    void RecreateSwapchain();
 
-		GLFWwindow* mWindow;
-		VkInstance instance;
+    void SetObjectName(VkDevice device, uint64_t objectHandle, VkObjectType objectType,
+                       const char *name) const;
 
-		VkPhysicalDevice pDevice;
-		VkDevice device;
-		VkSurfaceKHR surface;
+    GLFWwindow *mWindow;
+    VkInstance instance;
 
-		uint32_t graphicsFamilyIndex;
-		uint32_t presentFamilyIndex;
+    VkPhysicalDevice pDevice;
+    VkDevice device;
+    VkSurfaceKHR surface;
 
-		VkQueue graphicsQueue;
-		VkQueue presentQueue;
+    uint32_t graphicsFamilyIndex;
+    uint32_t presentFamilyIndex;
 
-		VkDebugUtilsMessengerEXT debugMessenger;
-		bool enableDebugUtil;
+    VkQueue graphicsQueue;
+    VkQueue presentQueue;
 
-		uint32_t numIndices;
-		VmaAllocator allocator;
-		
-		// Swapchain
-		VkSwapchainKHR swapchain;
-		VkSwapchainKHR oldSwapchain;
-		std::vector<VkImage> swapchainImages;
-		std::vector<VkImageView> swapchainImageViews;
-		std::vector<VkFramebuffer> swapchainFramebuffers;
-		VkRenderPass renderPass;
-		VkFormat swapchainFormat;
-		VkExtent2D extent{};
-		VkPresentModeKHR presentMode;
-		bool isSwapchainOutdated;
-		VkCommandPool transientCommandPool;
-		VkDescriptorPool descriptorPool;
-		PFN_vkSetDebugUtilsObjectNameEXT vkSetDebugUtilsObjectNameEXT;
+    VkDebugUtilsMessengerEXT debugMessenger;
+    bool enableDebugUtil;
 
-	private:
-		// Create transient pool once to use for one-time submit command buffers
-		void CreateTransientCommandPool();
-		void CreateDescriptorPool();
-	};
-}
+    uint32_t numIndices;
+    VmaAllocator allocator;
+
+    // Swapchain
+    VkSwapchainKHR swapchain;
+    VkSwapchainKHR oldSwapchain;
+    std::vector<VkImage> swapchainImages;
+    std::vector<VkImageView> swapchainImageViews;
+    std::vector<VkFramebuffer> swapchainFramebuffers;
+    VkRenderPass renderPass;
+    VkFormat swapchainFormat;
+    VkExtent2D extent{};
+    VkPresentModeKHR presentMode;
+    bool isSwapchainOutdated;
+    VkCommandPool transientCommandPool;
+    VkDescriptorPool descriptorPool;
+    PFN_vkSetDebugUtilsObjectNameEXT vkSetDebugUtilsObjectNameEXT;
+
+  private:
+    // Create transient pool once to use for one-time submit command buffers
+    void CreateTransientCommandPool();
+    void CreateDescriptorPool();
+};
