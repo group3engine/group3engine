@@ -4,6 +4,7 @@
 
 #include "Entity.hpp"
 
+#include <glm/gtx/matrix_decompose.hpp>
 #include <utility>
 
 namespace vk {
@@ -39,20 +40,21 @@ void Entity::SetTransform(glm::mat4 aTransform) {
     glm::vec3 skew;
     glm::vec4 perspective;
     glm::decompose(aTransform, scale, rotation, translation, skew, perspective);
-    mLocalTransform = {
-        .translation = translation, .rotation = rotation, .scale = scale};
+    mLocalTransform = {.translation = translation,
+                       .rotation = rotation,
+                       .scale = scale * 10.f};
 }
 void Entity::RecordDrawOpaque(VkCommandBuffer aCmdBuff,
                               VkPipelineLayout aPipelineLayout) {
     if (mHasMesh) {
         // push the model matrix
         glm::mat4 mModelMatrix = getWorldTransform();
-        vkCmdPushConstants(
-            aCmdBuff, aPipelineLayout,
-            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
-            sizeof(glm::mat4), &mModelMatrix);
+        vkCmdPushConstants(aCmdBuff, aPipelineLayout,
+                           VK_SHADER_STAGE_VERTEX_BIT |
+                               VK_SHADER_STAGE_FRAGMENT_BIT,
+                           0, sizeof(glm::mat4), &mModelMatrix);
         // for each mesh primitive
-        for (auto meshPrimitive : mMesh->meshPrimitives) {
+        for (const auto& meshPrimitive : mMesh->meshPrimitives) {
             // skip alpha cutout materials
             if (meshPrimitive.material->alphaCutout) {
                 continue;
@@ -86,12 +88,12 @@ void Entity::RecordDrawShadow(VkCommandBuffer aCmdBuff,
     if (mHasMesh) {
         // push the model matrix
         glm::mat4 mModelMatrix = getWorldTransform();
-        vkCmdPushConstants(
-            aCmdBuff, aPipelineLayout,
-            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
-            sizeof(glm::mat4), &mModelMatrix);
+        vkCmdPushConstants(aCmdBuff, aPipelineLayout,
+                           VK_SHADER_STAGE_VERTEX_BIT |
+                               VK_SHADER_STAGE_FRAGMENT_BIT,
+                           0, sizeof(glm::mat4), &mModelMatrix);
         // for each mesh primitive
-        for (auto meshPrimitive : mMesh->meshPrimitives) {
+        for (const auto& meshPrimitive : mMesh->meshPrimitives) {
             // bind the mesh primitives material
             vkCmdBindDescriptorSets(
                 aCmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, aPipelineLayout, 1,
@@ -121,12 +123,12 @@ void Entity::RecordDrawCutout(VkCommandBuffer aCmdBuff,
     if (mHasMesh) {
         // push the model matrix
         glm::mat4 mModelMatrix = getWorldTransform();
-        vkCmdPushConstants(
-            aCmdBuff, aPipelineLayout,
-            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
-            sizeof(glm::mat4), &mModelMatrix);
+        vkCmdPushConstants(aCmdBuff, aPipelineLayout,
+                           VK_SHADER_STAGE_VERTEX_BIT |
+                               VK_SHADER_STAGE_FRAGMENT_BIT,
+                           0, sizeof(glm::mat4), &mModelMatrix);
         // for each mesh primitive
-        for (auto meshPrimitive : mMesh->meshPrimitives) {
+        for (const auto& meshPrimitive : mMesh->meshPrimitives) {
             // skip alpha cutout materials
             if (!meshPrimitive.material->alphaCutout) {
                 continue;
@@ -155,4 +157,10 @@ void Entity::RecordDrawCutout(VkCommandBuffer aCmdBuff,
         }
     }
 }
-}  // namespace vk
+void Entity::SetAnimator(Animator *aAnimator) { mAnimator = aAnimator; }
+void Entity::Update(float deltaTime) { mAnimator->Update(deltaTime); }
+Entity::~Entity() {
+    // delete the animator if it exists
+    delete mAnimator;
+}
+} // namespace vk

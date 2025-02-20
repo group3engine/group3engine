@@ -7,9 +7,9 @@
 #include "Volk.hpp"
 #include <utility>
 
+#include "Animator.hpp"
 #include "GLTFImportStructs.hpp"
-#include "glm/fwd.hpp"
-#include "glm/gtx/matrix_decompose.hpp"
+#include <glm/glm.hpp>
 
 namespace vk {
 class Entity {
@@ -30,7 +30,7 @@ class Entity {
     Entity(Entity &&) = default;
     Entity &operator=(const Entity &) = default;
     Entity &operator=(Entity &&) = default;
-    virtual ~Entity() = default;
+    virtual ~Entity();
 
     void SetName(std::string aName) { mName = std::move(aName); }
     void SetParent(Entity *aParent);
@@ -54,9 +54,11 @@ class Entity {
 
     void RecordDrawCutout(VkCommandBuffer aCmdBuff,
                           VkPipelineLayout aPipelineLayout);
+    // move an animator to the entity
+    void SetAnimator(Animator *aAnimator);
 
    protected:
-    virtual void Update(){}
+    virtual void Update(float deltaTime);
     virtual void LateUpdate(){}
     virtual void Awake(){}
 
@@ -67,6 +69,7 @@ class Entity {
     Mesh *mMesh = nullptr;
     Transform mLocalTransform{};
     bool mHasMesh = false;
+    Animator *mAnimator = nullptr;
 
     //    bool mHasPhysics = false;
 };

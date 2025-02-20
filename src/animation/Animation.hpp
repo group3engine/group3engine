@@ -5,8 +5,15 @@
 #ifndef GROUP3ENGINE_ANIMATION_HPP
 #define GROUP3ENGINE_ANIMATION_HPP
 
-#include "Entity.hpp"
+#include "GLTFImportStructs.hpp"
+#include <glm/vec4.hpp>
 #include <set>
+#include <vector>
+
+// forward declaration of Entity
+namespace vk {
+class Entity;
+}
 
 enum class Interpolation {
     LINEAR,
@@ -39,15 +46,7 @@ class Animation {
     // resize the channels
     void ResizeChannels(size_t aSize) { mChannels.reserve(aSize); }
     // add a channel to the animation
-    void AddChannel(Channel &aChannel) {
-        mTargets.insert(aChannel.target);
-        mChannels.push_back(aChannel);
-        // sort the channels by target
-        std::sort(mChannels.begin(), mChannels.end(),
-                  [](const Channel &a, const Channel &b) {
-                      return a.target < b.target;
-                  });
-    }
+    void AddChannel(Channel &aChannel);
     // resize the samplers
     void ResizeSamplers(size_t aSize) { mSamplers.reserve(aSize); }
     // add a sampler to the animation
@@ -69,6 +68,8 @@ class Animation {
     void SetName(char *aName);
 
     Sampler* GetSampler(int i);
+
+    float GetMaxTime();
 
   private:
     // list of channels

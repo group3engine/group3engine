@@ -393,6 +393,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
     }
     // add animations
     std::vector<Animation> animations;
+    std::vector<Animation *> animationPointers;
     for (size_t i = 0; i < data->animations_count; i++) {
         const auto &gltfAnimation = data->animations[i];
         Animation animation;
@@ -458,6 +459,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             animation.AddChannel(channel);
         }
         animations.push_back(animation);
+        animationPointers.push_back(&animations.back());
     }
     std::vector<Skin> skins;
     // add skins
@@ -493,6 +495,17 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         // get the root
         skin.SetRoot(&aEntities[gltfSkin.skeleton - data->nodes]);
         skins.push_back(skin);
+    }
+    // for each entity, if it has a skin, add an animator
+    for (size_t i = 0; i < aEntities.size(); i++) {
+        const auto &gltfNode = data->nodes[i];
+        if (gltfNode.skin) {
+            int skinIndex = static_cast<int>(gltfNode.skin - data->skins);
+            auto *animator =
+                new Animator(&aMeshManager.mContext, &skins[skinIndex]);
+            aEntities[i].SetAnimator(animator);
+
+        }
     }
 
     //    if (aIsDebug) {

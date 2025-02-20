@@ -40,10 +40,11 @@ class MeshManager {
     // get a mesh by index
     Mesh *getMesh(size_t aIndex) { return &mMeshes[aIndex]; }
 
-   private:
+    Context &mContext;
+
+  private:
     std::vector<Mesh> mMeshes;
     std::vector<MeshPrimitiveGPU> mMeshesGPU;
-    Context &mContext;
 };
 }  // namespace vk
 

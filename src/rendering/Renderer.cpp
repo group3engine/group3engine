@@ -28,7 +28,7 @@ vk::Renderer::Renderer(Context& context) : context{context}
 
 	// Current path is the current working directory, i.e., where the root CMakeLists.txt is
 	std::filesystem::path basePath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets";
-	std::filesystem::path gltfPath = basePath / Sample::Sponza;
+	std::filesystem::path gltfPath = basePath / Sample::Laughing;
 
 	// Samplers
 	repeatSamplerAniso	 	  = CreateSampler(context, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_TRUE,  VK_COMPARE_OP_LESS_OR_EQUAL);

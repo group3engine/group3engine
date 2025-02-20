@@ -97,3 +97,13 @@ glm::vec4 Animation::Slerp(Keyframe &a, Keyframe &b, float time) {
 }
 void Animation::SetName(char *aName) { mName = aName; }
 Sampler* Animation::GetSampler(int i) { return &mSamplers[i]; }
+float Animation::GetMaxTime() { return mMaxTime; }
+void Animation::AddChannel(Channel &aChannel)  {
+    mTargets.insert(aChannel.target);
+    mChannels.push_back(aChannel);
+    // sort the channels by target
+    std::sort(mChannels.begin(), mChannels.end(),
+              [](const Channel &a, const Channel &b) {
+                  return a.target < b.target;
+              });
+}
