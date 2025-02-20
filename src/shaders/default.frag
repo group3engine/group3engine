@@ -165,6 +165,8 @@ float Shadows(vec3 WorldPos)
 void main()
 {
 	vec3 color = texture(uTextureColour, uv).rgb * uNumbers.baseColour.rgb;
+    fragColor = vec4(color, 1.0);
+    return;
 	vec3 emissive = vec3(0.0);
 
     // == Metal and Roughness ==

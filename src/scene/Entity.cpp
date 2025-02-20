@@ -33,7 +33,8 @@ glm::mat4 Entity::getWorldTransform() const {
     if (mHasRigidBody) {
         // also apply physics transformations
         auto mat = glm::transpose(mRigidBody->GetWorldTransform());
-        return_matrix = mat * return_matrix;
+        return mat;
+        //return_matrix = mat * return_matrix;
     }
 
     return return_matrix;

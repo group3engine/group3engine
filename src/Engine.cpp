@@ -12,6 +12,9 @@
 #include "SampleGLTFFilePaths.hpp"
 #include "Scene.hpp"
 #include "Utils.hpp"
+#include "glm/ext/quaternion_trigonometric.hpp"
+#include "glm/fwd.hpp"
+#include "glm/trigonometric.hpp"
 
 Engine::Engine() {
     m_isRunning = false;
@@ -21,12 +24,12 @@ Engine::Engine() {
 void Engine::InitScene() {
     // Current path is the current working directory, i.e., where the root CMakeLists.txt is
     std::filesystem::path basePath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets";
-    std::filesystem::path gltfPath = basePath / Sample::Sponza;
+    std::filesystem::path gltfPath = basePath / Sample::Dust2;
 
     // Define Light sources
     Light directionalLight;
     directionalLight.Type = LightType::Directional;
-    directionalLight.position = glm::vec4(-8.161, 24.2f, 4.0f, 1.0f); // -0.2972
+    directionalLight.position = glm::vec4(21.261806f, 4.575542f, -9.722689f, 1.0f); // -0.2972
     directionalLight.colour = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
     std::vector<glm::vec4> spotLightPositions;
@@ -83,20 +86,35 @@ bool Engine::Initialize() {
 
     // ---PHYSICS TEST INITIALISATION---
 
-    RigidBody floor(RigidBody::Floor);
+    RigidBody floor(RigidBody::Floor, glm::vec3(0.f, 0.f, 0.f), glm::quat(glm::angleAxis(glm::radians(45.0f), glm::vec3(0.0f, 0.f, 1.f))));
     // Add rigid body to the physics system
     // NOTE: Doing this outside of the constructor gives us a bit more flexibility
     floor.Init(PhysicsManager::get());
+    floor.SetPosition(glm::vec3(0.f, -1.f, 0.f));
+    floor.SetRotation(glm::quat(glm::angleAxis(glm::radians(4.0f), glm::vec3(0.0f, 0.f, 1.f))));
 
-    auto &frontEntity = mScene->m_Entities.front();
-    frontEntity.AddRigidBody(std::make_unique<RigidBody>(RigidBody::Ball));
-    frontEntity.mRigidBody->Init(PhysicsManager::get());
+    auto &cube = mScene->m_Entities.back();
+    
+
+
+    glm::vec3 translation, scale;
+    glm::quat rotation;
+    glm::vec3 skew;
+    glm::vec4 perspective;
+    glm::decompose(cube.getWorldTransform(), scale, rotation, translation, skew, perspective);
+
+    cube.AddRigidBody(std::make_unique<RigidBody>(RigidBody::Ball, translation, rotation));
+    cube.mRigidBody->Init(PhysicsManager::get());
+
+    cube.mRigidBody->SetPosition(glm::vec3(-21.633175, 100.160901, -35.744064));
 
     // Add linear velocity to the front entity (ball)
-    PhysicsManager::get().mPhysicsSystem.GetBodyInterface().SetLinearVelocity(
-        frontEntity.mRigidBody->mBodyId, Vec3(0.0f, 5.0f, 0.0f));
+    
+    
+
 
     // ---END OF PHYSICS TEST INITIALISATION---
+
 
     SPDLOG_DEBUG("Engine initialised.");
 
@@ -123,6 +141,8 @@ void Engine::Run() {
         Update(GlobalUtil::deltaTime);
 
         PhysicsManager::get().UpdatePhysics(1.f / 60.f);
+
+        
 
         Render();
     }
@@ -166,6 +186,11 @@ void Engine::UpdateLogic() {
         } else {
             glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         }
+    }
+
+    if(IsKeyPressed(KEY::eP))
+    {
+        SPDLOG_INFO("Camera Location: {}", glm::to_string(camera->GetPosition()));
     }
 }
 

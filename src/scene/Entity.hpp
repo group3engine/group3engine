@@ -60,9 +60,9 @@ class Entity {
 
   public:
     std::unique_ptr<RigidBody> mRigidBody;
-
-  private:
     std::string mName{};
+  private:
+    
 
     Entity *mParent = nullptr;
     std::vector<Entity *> mChildren;
