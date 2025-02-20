@@ -168,8 +168,8 @@ void main()
 	vec3 emissive = vec3(0.0);
 
     // == Metal and Roughness ==
-	float roughness = 1.0;
-	float metallic = 0.0;
+	float roughness = texture(uTextureMetallicRoughness, uv).g * uNumbers.roughness;
+	float metallic = texture(uTextureMetallicRoughness, uv).g * uNumbers.metallness;
 
     vec3 outLight = vec3(0.0);
 

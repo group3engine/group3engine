@@ -44,7 +44,7 @@ namespace vk
 
         void Initialize(const Context &context);
         void Shutdown(const Context &context);
-        void Update(std::shared_ptr<Scene> scene, std::shared_ptr<Camera> camera);
+        void Update(const std::shared_ptr<Scene>& scene, const std::shared_ptr<Camera>& camera);
         void Render(VkCommandBuffer cmd, const Context& context, uint32_t imageIndex);
 
         inline VkDescriptorPool imGuiDescriptorPool;
