@@ -5,12 +5,13 @@
 #ifndef VULKANTIME_GLTFIMPORTSTRUCTS_HPP
 #define VULKANTIME_GLTFIMPORTSTRUCTS_HPP
 
-#include <stb_image.h>
-
+#include <array>
 #include <cstdint>
-#include <glm/vec4.hpp>
 #include <string>
 #include <vector>
+
+#include <glm/vec4.hpp>
+#include <stb_image.h>
 
 #include "Buffer.hpp"
 #include "Image.hpp"

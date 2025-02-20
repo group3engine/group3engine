@@ -20,8 +20,8 @@ Engine::Engine() {
 
 void Engine::InitScene() {
     // Current path is the current working directory, i.e., where the root CMakeLists.txt is
-    std::filesystem::path basePath = std::filesystem::current_path() / "assets";
-    std::filesystem::path gltfPath = basePath / Sample::Sponza;
+	std::filesystem::path basePath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets";
+	std::filesystem::path gltfPath = basePath / Sample::Sponza;
 
     // Define Light sources
     Light directionalLight;
@@ -131,25 +131,25 @@ void Engine::Run() {
 }
 
 void Engine::UpdateLogic() {
-    if (IsKeyDown(KEY::_ESCAPE)) {
+    if (IsKeyDown(KEY::eESCAPE)) {
         glfwSetWindowShouldClose(Platform::get().window, GLFW_TRUE);
     }
 
     auto camera = static_cast<Camera *>(glfwGetWindowUserPointer(Platform::get().window));
     assert(camera);
 
-    camera->SetInput(EInputState::FORWARD, IsKeyDown(KEY::_W));
-    camera->SetInput(EInputState::BACKWARD, IsKeyDown(KEY::_S));
-    camera->SetInput(EInputState::LEFT, IsKeyDown(KEY::_A));
-    camera->SetInput(EInputState::RIGHT, IsKeyDown(KEY::_D));
+    camera->SetInput(EInputState::FORWARD, IsKeyDown(KEY::eW));
+    camera->SetInput(EInputState::BACKWARD, IsKeyDown(KEY::eS));
+    camera->SetInput(EInputState::LEFT, IsKeyDown(KEY::eA));
+    camera->SetInput(EInputState::RIGHT, IsKeyDown(KEY::eD));
 
-    camera->SetInput(EInputState::DOWN, IsKeyDown(KEY::_Q));
-    camera->SetInput(EInputState::UP, IsKeyDown(KEY::_E));
+    camera->SetInput(EInputState::DOWN, IsKeyDown(KEY::eQ));
+    camera->SetInput(EInputState::UP, IsKeyDown(KEY::eE));
 
-    camera->SetInput(EInputState::FAST, IsKeyDown(KEY::_LEFT_SHIFT));
-    camera->SetInput(EInputState::SLOW, IsKeyDown(KEY::_LEFT_CONTROL));
+    camera->SetInput(EInputState::FAST, IsKeyDown(KEY::eLEFT_SHIFT));
+    camera->SetInput(EInputState::SLOW, IsKeyDown(KEY::eLEFT_CONTROL));
 
-    if (IsKeyPressed(KEY::_5)) {
+    if (IsKeyPressed(KEY::e5)) {
         vkutil::postProcessSettings.Enable = vkutil::postProcessSettings.Enable == true ? false : true;
 
         const std::string result = vkutil::postProcessSettings.Enable == true ? "Enabled" : "Disabled";
@@ -157,7 +157,7 @@ void Engine::UpdateLogic() {
         SPDLOG_INFO("Post process: {}", result);
     }
 
-    if (IsMouseButtonPressed(MOUSE_BUTTON::_RIGHT)) {
+    if (IsMouseButtonPressed(MOUSE_BUTTON::eRIGHT)) {
         auto &flag = camera->inputMap[std::size_t(EInputState::MOUSING)];
         flag = !flag;
 

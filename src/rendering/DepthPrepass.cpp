@@ -120,7 +120,7 @@ void DepthPrepass::CreatePipeline() {
         .size = sizeof(vkutil::MeshPushConstants)};
 
     auto pipelineResult = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
-                              .AddShader("assets/shaders/default.vert.spv", ShaderType::VERTEX)
+                              .AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "default.vert.spv", ShaderType::VERTEX)
                               .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
                               .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}})
                               .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE)
