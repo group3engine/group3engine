@@ -6,6 +6,7 @@
 #define GROUP3ENGINE_SKIN_HPP
 
 #include <glm/glm.hpp>
+#include <string>
 
 namespace vk
 {

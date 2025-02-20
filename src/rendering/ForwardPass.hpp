@@ -8,6 +8,8 @@
 #define OPAQUE_VERTEX_SHADER SHADER_DIR / "default.vert.spv"
 #define ALPHA_MASK_FRAGMENT_SHADER SHADER_DIR / "alpha_masking.frag.spv"
 #define ALPHA_MASK_VERTEX_SHADER SHADER_DIR / "default.vert.spv"
+#define SKINNED_FRAGMENT_SHADER SHADER_DIR / "default.frag.spv"
+#define SKINNED_VERTEX_SHADER SHADER_DIR / "skinned.vert.spv"
 
 namespace vk
 {
@@ -41,6 +43,7 @@ namespace vk
 		VkRenderPass m_renderPass;
 		VkFramebuffer m_framebuffer;
 		VkDescriptorSetLayout meshDescriptorSetLayout;
+                VkDescriptorSetLayout skinDescriptorSetLayout;
 
 		Context& context;
 		Image& shadowMap;
@@ -50,5 +53,6 @@ namespace vk
 		std::vector<VkDescriptorSet> m_descriptorSets;
 		std::pair<VkPipeline, VkPipelineLayout> m_opaquePipeline;
                 std::pair<VkPipeline, VkPipelineLayout> m_alphaMaskPipeline;
+                std::pair<VkPipeline, VkPipelineLayout> m_skinnedPipeline;
 	};
 }

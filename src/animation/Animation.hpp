@@ -35,7 +35,7 @@ struct Sampler {
 enum class TransformChannel { TRANSLATION, ROTATION, SCALE };
 struct Channel {
     vk::Entity *target;
-    Sampler *sampler;
+    int sampler;
     TransformChannel transformChannel;
 };
 

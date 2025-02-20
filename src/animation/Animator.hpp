@@ -60,7 +60,7 @@ class Animator {
     // the skin that the animator is animating
     Skin *mSkin{};
     // a list of animations by reference
-    std::vector<Animation *> mAnimations;
+    std::vector<Animation *> mAnimations = {};
 
     // a map of animations (by index) to a sample
     std::unordered_map<int, AnimationSample> mAnimationSamples;

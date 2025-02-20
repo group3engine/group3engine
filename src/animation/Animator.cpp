@@ -52,7 +52,7 @@ Animator::Animator(vk::Context *aContext, Skin *aSkin)
 }
 void Animator::UpdateJointBuffer() {
     // get the joints from the skin
-    auto joints = mSkin->GetJoints();
+    auto joints = mSkin->GetJointMatrices();
     // upload the joints to the buffer
     mJointBuffer.WriteToBuffer(joints.data(),
                                sizeof(glm::mat4) * joints.size());

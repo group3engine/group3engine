@@ -57,8 +57,12 @@ class Entity {
     // move an animator to the entity
     void SetAnimator(Animator *aAnimator);
 
-   protected:
+    void RecordDrawSkinned(VkCommandBuffer aCmdBuff,
+                           VkPipelineLayout aPipeLayout);
+
     virtual void Update(float deltaTime);
+
+  protected:
     virtual void LateUpdate(){}
     virtual void Awake(){}
 

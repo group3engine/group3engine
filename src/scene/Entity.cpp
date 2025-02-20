@@ -46,7 +46,7 @@ void Entity::SetTransform(glm::mat4 aTransform) {
 }
 void Entity::RecordDrawOpaque(VkCommandBuffer aCmdBuff,
                               VkPipelineLayout aPipelineLayout) {
-    if (mHasMesh) {
+    if (mHasMesh && mAnimator == nullptr) {
         // push the model matrix
         glm::mat4 mModelMatrix = getWorldTransform();
         vkCmdPushConstants(aCmdBuff, aPipelineLayout,
@@ -54,7 +54,7 @@ void Entity::RecordDrawOpaque(VkCommandBuffer aCmdBuff,
                                VK_SHADER_STAGE_FRAGMENT_BIT,
                            0, sizeof(glm::mat4), &mModelMatrix);
         // for each mesh primitive
-        for (const auto& meshPrimitive : mMesh->meshPrimitives) {
+        for (const auto &meshPrimitive : mMesh->meshPrimitives) {
             // skip alpha cutout materials
             if (meshPrimitive.material->alphaCutout) {
                 continue;
@@ -93,7 +93,7 @@ void Entity::RecordDrawShadow(VkCommandBuffer aCmdBuff,
                                VK_SHADER_STAGE_FRAGMENT_BIT,
                            0, sizeof(glm::mat4), &mModelMatrix);
         // for each mesh primitive
-        for (const auto& meshPrimitive : mMesh->meshPrimitives) {
+        for (const auto &meshPrimitive : mMesh->meshPrimitives) {
             // bind the mesh primitives material
             vkCmdBindDescriptorSets(
                 aCmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, aPipelineLayout, 1,
@@ -120,7 +120,7 @@ void Entity::RecordDrawShadow(VkCommandBuffer aCmdBuff,
 }
 void Entity::RecordDrawCutout(VkCommandBuffer aCmdBuff,
                               VkPipelineLayout aPipelineLayout) {
-    if (mHasMesh) {
+    if (mHasMesh && mAnimator == nullptr) {
         // push the model matrix
         glm::mat4 mModelMatrix = getWorldTransform();
         vkCmdPushConstants(aCmdBuff, aPipelineLayout,
@@ -128,7 +128,7 @@ void Entity::RecordDrawCutout(VkCommandBuffer aCmdBuff,
                                VK_SHADER_STAGE_FRAGMENT_BIT,
                            0, sizeof(glm::mat4), &mModelMatrix);
         // for each mesh primitive
-        for (const auto& meshPrimitive : mMesh->meshPrimitives) {
+        for (const auto &meshPrimitive : mMesh->meshPrimitives) {
             // skip alpha cutout materials
             if (!meshPrimitive.material->alphaCutout) {
                 continue;
@@ -158,9 +158,47 @@ void Entity::RecordDrawCutout(VkCommandBuffer aCmdBuff,
     }
 }
 void Entity::SetAnimator(Animator *aAnimator) { mAnimator = aAnimator; }
-void Entity::Update(float deltaTime) { mAnimator->Update(deltaTime); }
+void Entity::Update(float deltaTime) { if(mAnimator) mAnimator->Update(deltaTime); }
 Entity::~Entity() {
     // delete the animator if it exists
     delete mAnimator;
+}
+void Entity::RecordDrawSkinned(VkCommandBuffer aCmdBuff,
+                               VkPipelineLayout aPipeLayout) {
+    // we only need to render if we have a skinned mesh
+    if (mHasMesh && mAnimator != nullptr) {
+        // push the model matrix
+        glm::mat4 mModelMatrix = getWorldTransform();
+        vkCmdPushConstants(aCmdBuff, aPipeLayout,
+                           VK_SHADER_STAGE_VERTEX_BIT |
+                               VK_SHADER_STAGE_FRAGMENT_BIT,
+                           0, sizeof(glm::mat4), &mModelMatrix);
+        // bind the joint descriptor set
+        mAnimator->BindDescriptorSet(aCmdBuff, aPipeLayout, 2);
+        // for each mesh primitive
+        for (const auto &meshPrimitive : mMesh->meshPrimitives) {
+            // bind the mesh primitives material
+            vkCmdBindDescriptorSets(
+                aCmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, aPipeLayout, 1, 1,
+                &meshPrimitive.material->descriptorSet, 0, nullptr);
+            // bind the vertex buffers
+            VkBuffer buffers[] = {meshPrimitive.meshGPU->mVertices.buffer};
+
+            VkDeviceSize offsets[] = {0, 0};
+
+            vkCmdBindVertexBuffers(aCmdBuff, 0,
+                                   sizeof(buffers) / sizeof(buffers[0]),
+                                   buffers, offsets);
+
+            // bind the index buffer
+            vkCmdBindIndexBuffer(aCmdBuff,
+                                 meshPrimitive.meshGPU->mIndices.buffer, 0,
+                                 VK_INDEX_TYPE_UINT32);
+
+            // draw the mesh
+            vkCmdDrawIndexed(aCmdBuff, meshPrimitive.meshGPU->mIndexCount, 1, 0,
+                             0, 0);
+        }
+    }
 }
 } // namespace vk

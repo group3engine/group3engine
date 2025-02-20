@@ -4,54 +4,50 @@
 
 #include "ResourceManager.hpp"
 
-void vk::Scene::AddLightSource(Light& LightSource)
-{
-	m_Lights.push_back(std::move(LightSource));
+void vk::Scene::AddLightSource(Light &LightSource) {
+    m_Lights.push_back(std::move(LightSource));
 }
 
-void vk::Scene::Update()
-{
+void vk::Scene::Update() {
 
-	for (auto& light : m_Lights)
-	{
-		glm::mat4 ortho = glm::ortho(-11.0f, 11.0f, -11.0f, 11.0f, 01.f, 28.1f);
-		glm::mat4 view = glm::lookAt(glm::vec3(light.position), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0));
-		light.LightSpaceMatrix = ortho * view;
-	}
+    for (auto &light : m_Lights) {
+        glm::mat4 ortho = glm::ortho(-11.0f, 11.0f, -11.0f, 11.0f, 01.f, 28.1f);
+        glm::mat4 view =
+            glm::lookAt(glm::vec3(light.position), glm::vec3(0.0f, 0.0f, 0.0f),
+                        glm::vec3(0.0f, 1.0f, 0.0));
+        light.LightSpaceMatrix = ortho * view;
+    }
 
-	// Fill GPU Data with data defined for the scene 
-	for (size_t i = 0; i < m_Lights.size(); i++)
-	{
-		m_LightBuffer.lights[i].type = static_cast<int>(m_Lights[i].Type);
-		m_LightBuffer.lights[i].LightPosition = m_Lights[i].position;
-		m_LightBuffer.lights[i].LightColour = m_Lights[i].colour;
-		m_LightBuffer.lights[i].LightSpaceMatrix = m_Lights[i].LightSpaceMatrix;
-	}
+    // Fill GPU Data with data defined for the scene
+    for (size_t i = 0; i < m_Lights.size(); i++) {
+        m_LightBuffer.lights[i].type = static_cast<int>(m_Lights[i].Type);
+        m_LightBuffer.lights[i].LightPosition = m_Lights[i].position;
+        m_LightBuffer.lights[i].LightColour = m_Lights[i].colour;
+        m_LightBuffer.lights[i].LightSpaceMatrix = m_Lights[i].LightSpaceMatrix;
+    }
 
-	// Pass the light data to the GPU to update all light properties 
-	m_LightUBO[currentFrame].WriteToBuffer(m_LightBuffer, sizeof(LightBuffer));
+    // Pass the light data to the GPU to update all light properties
+    m_LightUBO[currentFrame].WriteToBuffer(m_LightBuffer, sizeof(LightBuffer));
 }
 
-void vk::Scene::Destroy()
-{
-	for (auto& buffer : m_LightUBO)
-	{
-		buffer.Destroy();
-	}
-        // delete the mesh manager, material manager and texture manager
-        delete mMeshManager;
-        delete mMaterialManager;
-        delete mTextureManager;
+void vk::Scene::Destroy() {
+    for (auto &buffer : m_LightUBO) {
+        buffer.Destroy();
+    }
+    // delete the mesh manager, material manager and texture manager
+    delete mMeshManager;
+    delete mMaterialManager;
+    delete mTextureManager;
 }
-void vk::Scene::Load(const std::filesystem::path& aFilepath) {
+void vk::Scene::Load(const std::filesystem::path &aFilepath) {
     // Load the GLTF file
-    LoadGLTF(aFilepath, *mMeshManager, *mMaterialManager, *mTextureManager, m_Entities, false);
+    LoadGLTF(aFilepath, *mMeshManager, *mMaterialManager, *mTextureManager,
+             m_Entities, false, m_Animations, m_Skins);
 }
-vk::Scene::Scene(Context& context) : context(context)
-{
+vk::Scene::Scene(Context &context) : context(context) {
     m_LightUBO.resize(MAX_FRAMES_IN_FLIGHT);
     // Light uniform buffers
-    for (auto& buffer : m_LightUBO) {
+    for (auto &buffer : m_LightUBO) {
         buffer = vk::CreateBuffer(
             "LightUBO", context, sizeof(LightBuffer),
             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -59,28 +55,35 @@ vk::Scene::Scene(Context& context) : context(context)
     }
 
     // create the mesh manager, material manager and texture manager
-        mMeshManager = new MeshManager(context);
-        mMaterialManager = new MaterialManager(context);
-        mTextureManager = new TextureManager(context);
-
-
-
+    mMeshManager = new MeshManager(context);
+    mMaterialManager = new MaterialManager(context);
+    mTextureManager = new TextureManager(context);
 }
 void vk::Scene::DrawOpaque(VkCommandBuffer cmd,
                            VkPipelineLayout pipelineLayout) {
-        for (auto& entity : m_Entities) {
-            entity.RecordDrawOpaque(cmd, pipelineLayout);
-        }
+    for (auto &entity : m_Entities) {
+        entity.RecordDrawOpaque(cmd, pipelineLayout);
+    }
 }
 void vk::Scene::DrawAlphaMasked(VkCommandBuffer cmd,
                                 VkPipelineLayout pipelineLayout) {
-        for (auto& entity : m_Entities) {
-            entity.RecordDrawCutout(cmd, pipelineLayout);
-        }
+    for (auto &entity : m_Entities) {
+        entity.RecordDrawCutout(cmd, pipelineLayout);
+    }
 }
 void vk::Scene::DrawShadowMap(VkCommandBuffer cmd,
                               VkPipelineLayout pipelineLayout) {
-        for (auto& entity : m_Entities) {
-            entity.RecordDrawShadow(cmd, pipelineLayout);
-        }
+    for (auto &entity : m_Entities) {
+        entity.RecordDrawShadow(cmd, pipelineLayout);
+    }
+}
+void vk::Scene::DrawSkinned(VkCommandBuffer cmd,
+                            VkPipelineLayout pipelineLayout) {
+    // update the entities
+    for(auto &entity : m_Entities) {
+        entity.Update(0.03f);
+    }
+    for (auto &entity : m_Entities) {
+        entity.RecordDrawSkinned(cmd, pipelineLayout);
+    }
 }

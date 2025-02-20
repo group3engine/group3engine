@@ -18,7 +18,7 @@ Animation::GetAnimation(float aTime) {
     // result and start a new transform
     for (auto channel : mChannels) {
         // get the sampler
-        auto &sampler = *channel.sampler;
+        auto &sampler = mSamplers[channel.sampler];
         // get the sampler value
         glm::vec4 value =
             GetSamplerValue(sampler, aTime, TransformChannel::TRANSLATION);

@@ -44,7 +44,8 @@ std::string DecodeURI(std::string_view uri, std::string_view gltfPath) {
 
 int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
              MaterialManager &aMaterialManager, TextureManager &aTextureManager,
-             std::vector<Entity> &aEntities, bool aIsDebug) {
+             std::vector<Entity> &aEntities, bool aIsDebug,
+             std::vector<Animation> &aAnimations, std::vector<Skin> &aSkins) {
     // Convert directory separators to preferred directory separator
     // Slight try at cross-platform for Windows
     aFilepath.make_preferred();
@@ -392,7 +393,6 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         }
     }
     // add animations
-    std::vector<Animation> animations;
     std::vector<Animation *> animationPointers;
     for (size_t i = 0; i < data->animations_count; i++) {
         const auto &gltfAnimation = data->animations[i];
@@ -440,8 +440,8 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             const auto &gltfChannel = gltfAnimation.channels[j];
             Channel channel = {};
             channel.target = &aEntities[gltfChannel.target_node - data->nodes];
-            channel.sampler = animation.GetSampler(static_cast<int>(
-                gltfChannel.sampler - data->animations->samplers));
+            channel.sampler = static_cast<int>(
+                gltfChannel.sampler - data->animations->samplers);
             switch (gltfChannel.target_path) {
             case cgltf_animation_path_type_translation:
                 channel.transformChannel = TransformChannel::TRANSLATION;
@@ -458,10 +458,9 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             }
             animation.AddChannel(channel);
         }
-        animations.push_back(animation);
-        animationPointers.push_back(&animations.back());
+        aAnimations.push_back(animation);
+        animationPointers.push_back(&aAnimations.back());
     }
-    std::vector<Skin> skins;
     // add skins
     for (size_t i = 0; i < data->skins_count; i++) {
         const auto &gltfSkin = data->skins[i];
@@ -494,7 +493,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         }
         // get the root
         skin.SetRoot(&aEntities[gltfSkin.skeleton - data->nodes]);
-        skins.push_back(skin);
+        aSkins.push_back(skin);
     }
     // for each entity, if it has a skin, add an animator
     for (size_t i = 0; i < aEntities.size(); i++) {
@@ -502,9 +501,9 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         if (gltfNode.skin) {
             int skinIndex = static_cast<int>(gltfNode.skin - data->skins);
             auto *animator =
-                new Animator(&aMeshManager.mContext, &skins[skinIndex]);
+                new Animator(&aMeshManager.mContext, &aSkins[skinIndex]);
             aEntities[i].SetAnimator(animator);
-
+            animator->SetAnimations(animationPointers);
         }
     }
 
