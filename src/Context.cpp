@@ -18,7 +18,7 @@ namespace
 
 	// Debug
 	VKAPI_ATTR VkBool32 VKAPI_CALL DebugUtilsCallback(VkDebugUtilsMessageSeverityFlagBitsEXT aSeverity, VkDebugUtilsMessageTypeFlagsEXT aType, VkDebugUtilsMessengerCallbackDataEXT const* aData, void*);
-    
+
     float ScoreDevice(VkPhysicalDevice pDevice, VkSurfaceKHR surface);
     VkPhysicalDevice SelectPhysicalDevice(VkInstance instance, VkSurfaceKHR surface);
     std::pair<std::optional<uint32_t>, std::optional<uint32_t>> GetGraphicsQueueFamily(VkPhysicalDevice pDevice, VkSurfaceKHR surface);
@@ -300,33 +300,45 @@ namespace
         VkRenderPass renderPass = builder
             .AddAttachment(format, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
             .AddColorAttachmentRef(0, 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
-            
-            // External -> 0 : Color : Wait for presentation pass to finish? 
-            .AddDependency(VK_SUBPASS_EXTERNAL, 0, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_ACCESS_NONE, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_DEPENDENCY_BY_REGION_BIT)
-            
-            // 0 -> External : Color : 
-            .AddDependency(0, VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_ACCESS_NONE, VK_DEPENDENCY_BY_REGION_BIT)
-            
+
+            // External -> 0 : Color : Wait for presentation pass to finish?
+            .AddDependency(
+				VK_SUBPASS_EXTERNAL,
+				0,
+				VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_ACCESS_NONE,
+				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+				VK_DEPENDENCY_BY_REGION_BIT
+			)
+
+            // 0 -> External : Color :
+            .AddDependency(
+				0,
+				VK_SUBPASS_EXTERNAL,
+				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+				VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+				VK_ACCESS_NONE,
+				VK_DEPENDENCY_BY_REGION_BIT
+			)
+
 
             .Build();
-
 
         return renderPass;
     }
 }
 
 
-vk::Context::Context() : 
-	mWindow(nullptr), 
-	instance(VK_NULL_HANDLE), 
-	pDevice(VK_NULL_HANDLE), 
+vk::Context::Context() :
+	mWindow(nullptr),
+	instance(VK_NULL_HANDLE),
+	pDevice(VK_NULL_HANDLE),
 	device(VK_NULL_HANDLE),
-	surface(VK_NULL_HANDLE), 
-	graphicsFamilyIndex(0), 
-	presentFamilyIndex(0), 
+	surface(VK_NULL_HANDLE),
+	graphicsFamilyIndex(0),
+	presentFamilyIndex(0),
 	graphicsQueue(VK_NULL_HANDLE),
-	presentQueue(VK_NULL_HANDLE), 
-	debugMessenger(VK_NULL_HANDLE), 
+	presentQueue(VK_NULL_HANDLE),
+	debugMessenger(VK_NULL_HANDLE),
 	enableDebugUtil(false),
     numIndices(0),
     allocator(VK_NULL_HANDLE),
@@ -346,7 +358,7 @@ vk::Context::Context() :
 
 void vk::Context::Destroy()
 {
-    vkDeviceWaitIdle(device);   
+    vkDeviceWaitIdle(device);
 
     swapchainImages.clear();
 
@@ -440,7 +452,7 @@ void vk::Context::RecreateSwapchain()
     {
         throw;
     }
-    
+
 }
 
 void vk::Context::SetObjectName(VkDevice device, uint64_t objectHandle, VkObjectType objectType, const char* name) const {
@@ -599,6 +611,7 @@ void vk::Context::CreateSwapchain()
     VK_CHECK(vkCreateSwapchainKHR(device, &swapchainCreateInfo, nullptr, &swapchain), "Failed to create swapchain");
 
     renderPass = CreateSwapchainRenderPass(device, swapchainFormat);
+    SetObjectName(device, (uint64_t)(renderPass), VK_OBJECT_TYPE_RENDER_PASS, "SwapChainRenderPass");
     swapchainImages = GetSwapchainImages(device, swapchain);
     swapchainImageViews = CreateSwapchainImageViews(device, swapchainFormat, swapchainImages);
     swapchainFramebuffers = CreateSwapchainFramebuffers(device, swapchainImageViews, renderPass, extent);
@@ -630,7 +643,7 @@ bool vk::Context::MakeContext(GLFWwindow *window)
         enableDebugUtil = true;
         enabledExtensions.emplace_back("VK_EXT_debug_utils");
     }
-#endif 
+#endif
 
     uint32_t reqExtCount = 0;
     const char** requiredExt = glfwGetRequiredInstanceExtensions(&reqExtCount);
@@ -710,7 +723,7 @@ bool vk::Context::MakeContext(GLFWwindow *window)
 
     graphicsFamilyIndex = qFamilies.first.has_value() ? qFamilies.first.value() : 0;
     presentFamilyIndex = qFamilies.second.has_value() ? qFamilies.second.value() : 0;
-    
+
     numIndices = graphicsFamilyIndex != presentFamilyIndex ? 2 : 1;
 
     CreateLogicalDevice();
