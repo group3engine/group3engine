@@ -13,7 +13,7 @@ void vk::ImGuiRenderer::Initialize(const Context &context) {
     pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
     pool_info.maxSets = 1000;
-    pool_info.poolSizeCount = (uint32_t)ImGuiPoolSizes.size();
+    pool_info.poolSizeCount = static_cast<uint64_t>(ImGuiPoolSizes.size());
     pool_info.pPoolSizes = ImGuiPoolSizes.data();
 
     // TODO: @DEBUG: This should use the engines error logger to make the user aware if this fails
@@ -44,7 +44,7 @@ void vk::ImGuiRenderer::Initialize(const Context &context) {
     io.Fonts->AddFontDefault();
 }
 
-void vk::ImGuiRenderer::Update(std::shared_ptr<Scene> scene, std::shared_ptr<Camera> camera)
+void vk::ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::shared_ptr<Camera>& camera)
 {
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
