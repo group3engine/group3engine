@@ -51,6 +51,9 @@ void main()
 	uv = tex;
 	// calculate the skinned transform
 	vec4 skinnedTransform = jointBuffer.jointTransforms[int(joints.x)] * vec4(pos, 1.0) * weights.x;
+	skinnedTransform += jointBuffer.jointTransforms[int(joints.y)] * vec4(pos, 1.0) * weights.y;
+	skinnedTransform += jointBuffer.jointTransforms[int(joints.z)] * vec4(pos, 1.0) * weights.z;
+	skinnedTransform += jointBuffer.jointTransforms[int(joints.w)] * vec4(pos, 1.0) * weights.w;
 
 	// calculate the skinned position
 	WorldPos = pc.ModelMatrix * vec4(pos, 1.0);
