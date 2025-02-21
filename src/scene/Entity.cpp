@@ -33,7 +33,7 @@ glm::mat4 Entity::getWorldTransform() const {
     if (mHasCharacter) {
         auto mat = glm::identity<glm::mat4>();
         mat[0][3] = mPosition.x;
-        mat[1][3] = mPosition.y;
+        mat[1][3] = mPosition.y + 0.25f;
         mat[2][3] = mPosition.z;
         return glm::transpose(mat);
     }

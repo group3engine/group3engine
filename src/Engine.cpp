@@ -101,8 +101,8 @@ bool Engine::Initialize() {
     RigidBody floor(RigidBody::Floor, glm::vec3(0.f, 0.f, 0.f), glm::quat(glm::angleAxis(glm::radians(45.0f), glm::vec3(0.0f, 0.f, 1.f))));
     // Add rigid body to the physics system
     // NOTE: Doing this outside of the constructor gives us a bit more flexibility
-    floor.Init(PhysicsManager::get());
-    floor.SetPosition(glm::vec3(0.f, -0.5f, 0.f));
+    // floor.Init(PhysicsManager::get());
+    // floor.SetPosition(glm::vec3(0.f, -0.5f, 0.f));
     // floor.SetRotation(glm::quat(glm::angleAxis(glm::radians(4.0f), glm::vec3(0.0f, 0.f, 1.f))));
 
 
@@ -126,17 +126,29 @@ bool Engine::Initialize() {
             continue;
         }
 
+        // if (entity.mName != "Object_25") {
+        //     continue;
+        // } else {
+        //     SPDLOG_INFO("Processing floor");
+        // }
+
+        size_t totalVertices = 0;
+        size_t totalTriangles = 0;
+
         for (const auto &primitive : mesh->meshPrimitives) {
             // Create an array of vertices
             VertexList vertices;
             for (const auto &vertex : primitive.vertices) {
-                vertices.emplace_back(vertex.pos.x, vertex.pos.y, vertex.pos.z);
+                auto worldPos = entity.getWorldTransform() * glm::vec4(vertex.pos, 1.0f);
+                vertices.emplace_back(worldPos.x, worldPos.y, worldPos.z);
+                ++totalVertices;
             }
 
             IndexedTriangleList indexedTriangles;
             for (size_t i = 0; i < primitive.indices.size(); i += 3) {
                 indexedTriangles.push_back(IndexedTriangle(
                     primitive.indices[i], primitive.indices[i + 1], primitive.indices[i + 2]));
+                ++totalTriangles;
             }
 
             assert(!vertices.empty());
@@ -162,6 +174,9 @@ bool Engine::Initialize() {
 
             PhysicsManager::get().mBodyIds.push_back(bodyID);
         }
+
+        SPDLOG_INFO("total vertices {}", totalVertices);
+        SPDLOG_INFO("total triangles {}", totalTriangles);
     }
 
 
@@ -175,7 +190,7 @@ bool Engine::Initialize() {
     mCharacterVirtualTest.SetJobSystem(PhysicsManager::get().mJobSystem.get());
     mCharacterVirtualTest.SetTempAllocator(PhysicsManager::get().mTempAllocator.get());
     mCharacterVirtualTest.Initialize();
-    glm::vec3 cubePos = glm::vec3(-21.633175, 5.0f, -35.744064);
+    glm::vec3 cubePos = glm::vec3(-21.538, 5.0f, -29.02);
     mCharacterVirtualTest.SetCharacterPosition(RVec3(cubePos.x, cubePos.y, cubePos.z));
     // ---END OF PHYSICS TEST INITIALISATION---
 
@@ -221,6 +236,8 @@ void Engine::Run() {
         auto &cube = mScene->m_Entities.back();
         auto characterVirtualPos = mCharacterVirtualTest.GetCharacterPosition();
         cube.mPosition = glm::vec3(characterVirtualPos.GetX(), characterVirtualPos.GetY(), characterVirtualPos.GetZ());
+
+        SPDLOG_INFO("cube.mPosition {}", glm::to_string(cube.mPosition));
 
         Render();
     }
