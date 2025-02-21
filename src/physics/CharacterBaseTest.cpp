@@ -29,7 +29,7 @@ void CharacterBaseTest::Initialize()
 	switch (sShapeType)
 	{
 	case EType::Box:
-		mStandingShape = RotatedTranslatedShapeSettings(Vec3(0, 0.5f * cCharacterHeightStanding + cCharacterRadiusStanding, 0), Quat::sIdentity(), new BoxShape(Vec3(cCharacterRadiusStanding, 0.5f * cCharacterHeightStanding + cCharacterRadiusStanding, cCharacterRadiusStanding))).Create().Get();
+		mStandingShape = RotatedTranslatedShapeSettings(Vec3(0, 0/* this is the offset from the characters origin to its center*/, 0), Quat::sIdentity(), new BoxShape(Vec3(cCharacterRadiusStanding, cCharacterRadiusStanding, cCharacterRadiusStanding))).Create().Get();
 		break;
 	}
 
