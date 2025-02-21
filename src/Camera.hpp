@@ -70,6 +70,8 @@ class Camera {
     glm::vec3 GetDirection() const { return m_direction; }
     glm::vec3 GetUp() const { return m_up; }
 
+    float GetFoV() { return m_transform.fov; }
+
     void SetInput(EInputState inputState, bool state) {
         inputMap[static_cast<size_t>(inputState)] = state;
     }

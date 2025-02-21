@@ -60,6 +60,10 @@ class Entity {
 
   public:
     std::unique_ptr<RigidBody> mRigidBody;
+
+    glm::vec3 mPosition{};
+    bool mHasCharacter = false;
+
     std::string mName{};
   private:
     

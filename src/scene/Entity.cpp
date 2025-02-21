@@ -30,7 +30,14 @@ glm::mat4 Entity::getWorldTransform() const {
         return_matrix = mLocalTransform.getMatrix();
     }
 
-    if (mHasRigidBody) {
+    if (mHasCharacter) {
+        auto mat = glm::identity<glm::mat4>();
+        mat[0][3] = mPosition.x;
+        mat[1][3] = mPosition.y + 1.0f;
+        mat[2][3] = mPosition.z;
+        return glm::transpose(mat);
+    }
+    else if (mHasRigidBody) {
         // also apply physics transformations
         auto mat = glm::transpose(mRigidBody->GetWorldTransform());
         return mat;

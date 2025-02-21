@@ -27,7 +27,7 @@ RigidBody::RigidBody(Shape shape, glm::vec3 glm_position, glm::quat glm_rotation
         // set other properties like the restitution / friction.
         mJoltCreationSettings = {floorShape, RVec3(0.0_r, 0.0_r, 0.0_r), Quat::sIdentity(),
                                  EMotionType::Static, Layers::NON_MOVING};
-        mJoltCreationSettings.mRestitution = 0.9f;
+        mJoltCreationSettings.mRestitution = 0.5f;
     } else if (mShape == Shape::Ball) {
         RVec3 position(glm_position.x, glm_position.y, glm_position.z);
         Quat rotation(glm_rotation.x, glm_rotation.y, glm_rotation.z, glm_rotation.w);

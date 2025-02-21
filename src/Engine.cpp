@@ -16,6 +16,8 @@
 #include "glm/fwd.hpp"
 #include "glm/trigonometric.hpp"
 
+#include "CharacterVirtualTest.h"
+
 Engine::Engine() {
     m_isRunning = false;
     m_lastFrameTime = 0.0;
@@ -106,12 +108,18 @@ bool Engine::Initialize() {
     cube.AddRigidBody(std::make_unique<RigidBody>(RigidBody::Ball, translation, rotation));
     cube.mRigidBody->Init(PhysicsManager::get());
 
-    cube.mRigidBody->SetPosition(glm::vec3(-21.633175, 100.160901, -35.744064));
+    cube.mRigidBody->SetPosition(glm::vec3(-21.633175, 0.0f, -35.744064));
+
+    cube.mHasCharacter = true;
 
     // Add linear velocity to the front entity (ball)
     
     
 
+    mCharacterVirtualTest.SetPhysicsSystem(&PhysicsManager::get().mPhysicsSystem);
+    mCharacterVirtualTest.SetJobSystem(PhysicsManager::get().mJobSystem.get());
+    mCharacterVirtualTest.SetTempAllocator(PhysicsManager::get().mTempAllocator.get());
+    mCharacterVirtualTest.Initialize();
 
     // ---END OF PHYSICS TEST INITIALISATION---
 
@@ -131,6 +139,8 @@ void Engine::Shutdown() {
 }
 
 void Engine::Run() {
+    auto camera = static_cast<Camera *>(glfwGetWindowUserPointer(Platform::get().window));
+
     while (m_isRunning && !glfwWindowShouldClose(m_context.mWindow)) {
         double currentFrameTime = glfwGetTime();
         GlobalUtil::deltaTime = currentFrameTime - m_lastFrameTime;
@@ -140,9 +150,21 @@ void Engine::Run() {
 
         Update(GlobalUtil::deltaTime);
 
+        ProcessInputParams processInputParams{};
+        auto cameraForward = camera->GetDirection();
+        processInputParams.mCameraState.mForward = {cameraForward.x, cameraForward.y, cameraForward.z};
+        mCharacterVirtualTest.ProcessInput(processInputParams);
+
+        PreUpdateParams preUpdateParams{};
+        preUpdateParams.mDeltaTime = 1.f / 60.0f;
+
+        mCharacterVirtualTest.PrePhysicsUpdate(preUpdateParams);
+
         PhysicsManager::get().UpdatePhysics(1.f / 60.f);
 
-        
+        auto &cube = mScene->m_Entities.back();
+        auto characterVirtualPos = mCharacterVirtualTest.GetCharacterPosition();
+        cube.mPosition = glm::vec3(characterVirtualPos.GetX(), characterVirtualPos.GetY(), characterVirtualPos.GetZ());
 
         Render();
     }

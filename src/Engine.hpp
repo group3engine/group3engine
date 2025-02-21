@@ -8,6 +8,8 @@
 #include "Renderer.hpp"
 #include "RigidBody.hpp"
 
+#include "CharacterVirtualTest.h"
+
 class Engine {
   public:
     Engine();
@@ -28,4 +30,6 @@ class Engine {
 
     std::shared_ptr<Scene> mScene;
     std::unique_ptr<Renderer> mRenderer;
+
+    CharacterVirtualTest mCharacterVirtualTest;
 };
