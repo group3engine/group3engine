@@ -6,6 +6,7 @@
 #include "Scene.hpp"
 #include "Utils.hpp"
 #include "Buffer.hpp"
+#include "ImGuiRenderer.hpp"
 
 /*
         This pass will just take the forward pass shading image and present it
@@ -90,6 +91,8 @@ void PresentPass::Execute(VkCommandBuffer cmd, uint32_t imageIndex) {
 
     // Draw large triangle here
     vkCmdDraw(cmd, 3, 1, 0, 0);
+
+	ImGuiRenderer::Render(cmd, context, imageIndex);
 
     vkCmdEndRenderPass(cmd);
 

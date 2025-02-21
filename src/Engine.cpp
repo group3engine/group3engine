@@ -91,7 +91,7 @@ bool Engine::Initialize() {
     // NOTE: Doing this outside of the constructor gives us a bit more flexibility
     floor.Init(PhysicsManager::get());
     floor.SetPosition(glm::vec3(0.f, -1.f, 0.f));
-    floor.SetRotation(glm::quat(glm::angleAxis(glm::radians(4.0f), glm::vec3(0.0f, 0.f, 1.f))));
+    // floor.SetRotation(glm::quat(glm::angleAxis(glm::radians(4.0f), glm::vec3(0.0f, 0.f, 1.f))));
 
     auto &cube = mScene->m_Entities.back();
     

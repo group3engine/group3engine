@@ -8,6 +8,7 @@
 #include "Light.hpp"
 #include "Utils.hpp"
 #include "SampleGLTFFilePaths.hpp"
+#include <imgui.h>
 
 namespace {
 // This should be placed elsewhere. Put here for simplicity while testing
@@ -45,10 +46,16 @@ void Renderer::CreateRenderPasses() {
     m_BloomPass = std::make_unique<Bloom>(context, m_ForwardPass->GetBrightnessTarget());
     m_CompositePass = std::make_unique<Composite>(context, m_ForwardPass->GetRenderTarget(), m_BloomPass->GetRenderTarget());
     m_PresentPass = std::make_unique<PresentPass>(context, m_CompositePass->GetRenderTarget());
+
+    // ImGui
+    ImGuiRenderer::Initialize(context);
+    ImGuiRenderer::AddTexture(vkutil::clampToEdgeSamplerAniso, m_ShadowMap->GetRenderTarget().imageView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL);
 }
 
 void Renderer::Destroy() {
     vkDeviceWaitIdle(context.device);
+
+    ImGuiRenderer::Shutdown(context);
 
     m_DepthPrepass.reset();
     m_ForwardPass.reset();
@@ -246,6 +253,8 @@ void Renderer::Present(uint32_t imageIndex) {
 
 void Renderer::Update(double deltaTime) {
     m_camera->Update(context.extent.width, context.extent.height, deltaTime);
+
+    ImGuiRenderer::Update(m_scene, m_camera);
 
     // Update passes
     m_ShadowMap->Update();

@@ -265,16 +265,30 @@ VkRenderPass CreateSwapchainRenderPass(VkDevice device, VkFormat format) {
     RenderPass builder(device, 1);
 
     VkRenderPass renderPass = builder
-                                  .AddAttachment(format, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
-                                  .AddColorAttachmentRef(0, 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+        .AddAttachment(format, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
+        .AddColorAttachmentRef(0, 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
 
-                                  // External -> 0 : Color : Wait for presentation pass to finish?
-                                  .AddDependency(VK_SUBPASS_EXTERNAL, 0, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_ACCESS_NONE, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_DEPENDENCY_BY_REGION_BIT)
+        // External -> 0 : Color : Wait for presentation pass to finish?
+        .AddDependency(
+            VK_SUBPASS_EXTERNAL,
+            0,
+            VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_ACCESS_NONE,
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            VK_DEPENDENCY_BY_REGION_BIT
+        )
 
-                                  // 0 -> External : Color :
-                                  .AddDependency(0, VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_ACCESS_NONE, VK_DEPENDENCY_BY_REGION_BIT)
+        // 0 -> External : Color :
+        .AddDependency(
+            0,
+            VK_SUBPASS_EXTERNAL,
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+            VK_ACCESS_NONE,
+            VK_DEPENDENCY_BY_REGION_BIT
+        )
 
-                                  .Build();
+
+        .Build();
 
     return renderPass;
 }
@@ -527,6 +541,7 @@ void Context::CreateSwapchain() {
     VK_CHECK(vkCreateSwapchainKHR(device, &swapchainCreateInfo, nullptr, &swapchain), "Failed to create swapchain");
 
     renderPass = CreateSwapchainRenderPass(device, swapchainFormat);
+    SetObjectName(device, (uint64_t)(renderPass), VK_OBJECT_TYPE_RENDER_PASS, "SwapChainRenderPass");
     swapchainImages = GetSwapchainImages(device, swapchain);
     swapchainImageViews = CreateSwapchainImageViews(device, swapchainFormat, swapchainImages);
     swapchainFramebuffers = CreateSwapchainFramebuffers(device, swapchainImageViews, renderPass, extent);

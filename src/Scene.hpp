@@ -35,6 +35,7 @@ class Scene {
 
     std::vector<Entity> m_Entities;
 
+    std::vector<Entity>& GetEntities() { return m_Entities; }
   private:
     Context &context;
     MeshManager *mMeshManager;
@@ -43,7 +44,7 @@ class Scene {
 
     std::vector<size_t> m_FrontMeshes;
     std::vector<size_t> m_BackMeshes;
-    std::vector<Light> m_Lights;
+    std::vector<Light>  m_Lights;
     vkutil::LightBuffer m_LightBuffer;
     std::vector<Buffer> m_LightUBO;
 };

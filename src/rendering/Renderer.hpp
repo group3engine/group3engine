@@ -13,6 +13,7 @@
 #include "PresentPass.hpp"
 #include "Scene.hpp"
 #include "ShadowMap.hpp"
+#include "ImGuiRenderer.hpp"
 
 class Context;
 
