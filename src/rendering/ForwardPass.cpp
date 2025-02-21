@@ -165,11 +165,11 @@ void vk::ForwardPass::Execute(VkCommandBuffer cmd)
 	vkCmdBeginRenderPass(cmd, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
 	vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_opaquePipeline.second, 0, 1, &m_descriptorSets[currentFrame], 0, nullptr);
 
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_opaquePipeline.first);
-        scene->DrawOpaque(cmd, m_opaquePipeline.second);
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_opaquePipeline.first);
+    scene->DrawOpaque(cmd, m_opaquePipeline.second);
 
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_alphaMaskPipeline.first);
-        scene->DrawAlphaMasked(cmd, m_alphaMaskPipeline.second);
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_alphaMaskPipeline.first);
+    scene->DrawAlphaMasked(cmd, m_alphaMaskPipeline.second);
 
 	vkCmdEndRenderPass(cmd);
 

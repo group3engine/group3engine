@@ -13,6 +13,7 @@
 #include "Composite.hpp"
 #include "DepthPrepass.hpp"
 #include "ForwardPass.hpp"
+#include "ImGuiRenderer.hpp"
 
 namespace vk
 {
@@ -28,7 +29,7 @@ namespace vk
 		void Render();
 		void Update(double deltaTime);
 
-		
+
 	private:
 		void CreateResources();
 		void CreateFences();
