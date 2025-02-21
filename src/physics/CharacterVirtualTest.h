@@ -31,6 +31,8 @@ public:
 	// Get position of the character
 	virtual RVec3			GetCharacterPosition() const override				{ return mCharacter->GetPosition(); }
 
+	void SetCharacterPosition(RVec3 pos) { mCharacter->SetPosition(pos); }
+
 protected:
 	// Common function to be called when contacts are added/persisted
 	void					OnContactCommon(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings);

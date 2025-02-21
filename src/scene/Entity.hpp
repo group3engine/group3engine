@@ -53,6 +53,8 @@ class Entity {
 
     void RecordDrawCutout(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout);
 
+    const Mesh *GetMesh() const { return mMesh; }
+
   protected:
     virtual void Update() {}
     virtual void LateUpdate() {}

@@ -18,6 +18,16 @@
 
 #include "CharacterVirtualTest.h"
 
+#include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
+#include <Jolt/Physics/Body/BodyCreationSettings.h>
+#include <Jolt/Physics/Collision/Shape/BoxShape.h>
+#include <Jolt/Physics/Collision/Shape/MeshShape.h>
+#include <Jolt/Physics/Collision/PhysicsMaterialSimple.h>
+#include <Jolt/Geometry/Triangle.h>
+#include <Jolt/Physics/Body/BodyCreationSettings.h>
+#include <Jolt/Core/HashCombine.h>
+#include <Jolt/Geometry/IndexedTriangle.h>
+
 Engine::Engine() {
     m_isRunning = false;
     m_lastFrameTime = 0.0;
@@ -92,35 +102,81 @@ bool Engine::Initialize() {
     // Add rigid body to the physics system
     // NOTE: Doing this outside of the constructor gives us a bit more flexibility
     floor.Init(PhysicsManager::get());
-    floor.SetPosition(glm::vec3(0.f, -1.f, 0.f));
+    floor.SetPosition(glm::vec3(0.f, -0.5f, 0.f));
     // floor.SetRotation(glm::quat(glm::angleAxis(glm::radians(4.0f), glm::vec3(0.0f, 0.f, 1.f))));
 
+
+    // --- Mesh shape for each entity ----------------------------------------
+
+    // Shapes are refcounted and can be shared between bodies
+    JPH::Ref<Shape> shape;
+
+    for (auto it = mScene->m_Entities.begin(); it != mScene->m_Entities.end(); ++it) {
+        const auto &entity = *it;
+
+        if (entity.mName == "Cube") {
+            SPDLOG_INFO("Skipping cube");
+            continue;
+        }
+
+        const auto *mesh = entity.GetMesh();
+
+        if (!mesh) {
+            SPDLOG_WARN("Entity {} does not have mesh", entity.mName);
+            continue;
+        }
+
+        for (const auto &primitive : mesh->meshPrimitives) {
+            // Create an array of vertices
+            VertexList vertices;
+            for (const auto &vertex : primitive.vertices) {
+                vertices.emplace_back(vertex.pos.x, vertex.pos.y, vertex.pos.z);
+            }
+
+            IndexedTriangleList indexedTriangles;
+            for (size_t i = 0; i < primitive.indices.size(); i += 3) {
+                indexedTriangles.push_back(IndexedTriangle(
+                    primitive.indices[i], primitive.indices[i + 1], primitive.indices[i + 2]));
+            }
+
+            assert(!vertices.empty());
+
+            // Create the settings object for a mesh shape
+            JPH::MeshShapeSettings settings(vertices, indexedTriangles);
+
+            // Create shape
+            JPH::Shape::ShapeResult result = settings.Create();
+            if (result.IsValid())
+                shape = result.Get();
+            else
+                SPDLOG_ERROR("Shape result is invalid.");
+
+            BodyCreationSettings bodyCreationSettings = {result.Get(), RVec3(0.0_r, 0.0_r, 0.0_r),
+                                                         Quat::sIdentity(), EMotionType::Static,
+                                                         Layers::NON_MOVING};
+
+            auto bodyID = PhysicsManager::get().mPhysicsSystem.GetBodyInterface().CreateAndAddBody(
+                bodyCreationSettings, EActivation::DontActivate);
+
+            assert(!bodyID.IsInvalid());
+
+            PhysicsManager::get().mBodyIds.push_back(bodyID);
+        }
+    }
+
+
     auto &cube = mScene->m_Entities.back();
-    
 
-
-    glm::vec3 translation, scale;
-    glm::quat rotation;
-    glm::vec3 skew;
-    glm::vec4 perspective;
-    glm::decompose(cube.getWorldTransform(), scale, rotation, translation, skew, perspective);
-
-    cube.AddRigidBody(std::make_unique<RigidBody>(RigidBody::Ball, translation, rotation));
-    cube.mRigidBody->Init(PhysicsManager::get());
-
-    cube.mRigidBody->SetPosition(glm::vec3(-21.633175, 0.0f, -35.744064));
+    assert(cube.mName == "Cube");
 
     cube.mHasCharacter = true;
-
-    // Add linear velocity to the front entity (ball)
-    
-    
 
     mCharacterVirtualTest.SetPhysicsSystem(&PhysicsManager::get().mPhysicsSystem);
     mCharacterVirtualTest.SetJobSystem(PhysicsManager::get().mJobSystem.get());
     mCharacterVirtualTest.SetTempAllocator(PhysicsManager::get().mTempAllocator.get());
     mCharacterVirtualTest.Initialize();
-
+    glm::vec3 cubePos = glm::vec3(-21.633175, 5.0f, -35.744064);
+    mCharacterVirtualTest.SetCharacterPosition(RVec3(cubePos.x, cubePos.y, cubePos.z));
     // ---END OF PHYSICS TEST INITIALISATION---
 
 
