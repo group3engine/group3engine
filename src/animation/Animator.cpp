@@ -4,9 +4,11 @@
 
 #include "Animator.hpp"
 
-#include "Utils.hpp"
-#include <cmath>
 #include "Entity.hpp"
+#include "Utils.hpp"
+#include "glm/gtx/string_cast.hpp"
+#include <cmath>
+#include <glm/gtx/matrix_decompose.hpp>
 
 Animator::~Animator() {
     // free the vulkan resources
@@ -49,10 +51,32 @@ Animator::Animator(vk::Context *aContext, Skin *aSkin)
         "JointBuffer", *mContext, sizeof(glm::mat4) * mSkin->GetJoints().size(),
         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
         VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+    // make the descriptor set point to the joint buffer
+    VkDescriptorBufferInfo bufferInfo{};
+    bufferInfo.buffer = mJointBuffer.buffer;
+    bufferInfo.offset = 0;
+    bufferInfo.range = sizeof(glm::mat4) * mSkin->GetJoints().size();
+    vk::UpdateDescriptorSet(*mContext, 0, bufferInfo, mDescriptorSet,
+                            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 }
 void Animator::UpdateJointBuffer() {
     // get the joints from the skin
     auto joints = mSkin->GetJointMatrices();
+    // for each joint matrix, decompose it into its components
+        for (auto &joint : joints) {
+        // get the translation, rotation and scale
+        glm::vec3 translation, scale;
+        glm::quat rotation;
+        glm::vec3 skew;
+        glm::vec4 perspective;
+        glm::decompose(joint, scale, rotation, translation, skew, perspective);
+        // debug output
+        std::cout << "Translation: " << glm::to_string(translation) << std::endl;
+        std::cout << "Rotation: " << glm::to_string(rotation) << std::endl;
+        std::cout << "Scale: " << glm::to_string(scale) << std::endl;
+
+
+        }
     // upload the joints to the buffer
     mJointBuffer.WriteToBuffer(joints.data(),
                                sizeof(glm::mat4) * joints.size());

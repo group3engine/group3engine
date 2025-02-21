@@ -39,17 +39,21 @@ mat3 adjugate( in mat4 m )
 	cross(m[2].xyz, m[0].xyz),
 	cross(m[0].xyz, m[1].xyz));
 }
+mat4 rotationX45 = mat4(
+1.0, 0.0,                 0.0,                0.0,
+0.0, cos(radians(45.0)), -sin(radians(45.0)), 0.0,
+0.0, sin(radians(45.0)),  cos(radians(45.0)), 0.0,
+0.0, 0.0,                 0.0,                1.0
+);
 
 void main()
 {
-	WorldNormal = normalize(adjugate(pc.ModelMatrix) * normal);
 	uv = tex;
 	// calculate the skinned transform
-	mat4 skinnedTransform = jointBuffer.jointTransforms[int(joints.x)] * weights.x +
-		jointBuffer.jointTransforms[int(joints.y)] * weights.y +
-		jointBuffer.jointTransforms[int(joints.z)] * weights.z +
-		jointBuffer.jointTransforms[int(joints.w)] * weights.w;
+	vec4 skinnedTransform = jointBuffer.jointTransforms[int(joints.x)] * vec4(pos, 1.0) * weights.x;
+
 	// calculate the skinned position
-	WorldPos = pc.ModelMatrix * skinnedTransform * vec4(pos, 1.0);
-	gl_Position = ubo.projection * ubo.view * pc.ModelMatrix * vec4(pos, 1.0);
+	WorldPos = pc.ModelMatrix * vec4(pos, 1.0);
+	gl_Position = ubo.projection * ubo.view * pc.ModelMatrix * skinnedTransform;
+	WorldNormal = adjugate(pc.ModelMatrix) * normal;
 }

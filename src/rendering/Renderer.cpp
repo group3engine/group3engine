@@ -45,11 +45,11 @@ vk::Renderer::Renderer(Context& context) : context{context}
 	Light directionalLight;
 	directionalLight.Type = LightType::Directional;
 	directionalLight.position = glm::vec4(-8.161, 23.6f, 4.0f, 1.0f); // -0.2972
-	directionalLight.colour   = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	directionalLight.colour   = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) * 0.f;
 
 	std::vector<glm::vec4> spotLightPositions;
 
-	// Random spot light positions put side by side each other 
+	// Random spot light positions put side by side each other
 	for (size_t i = 0; i < 25; i++)
 	{
 		spotLightPositions.push_back(glm::vec4(-9.0 + i * 0.8, 0.2f, 0.5f, 1.0f));
@@ -62,7 +62,7 @@ vk::Renderer::Renderer(Context& context) : context{context}
 	m_scene->Load(gltfPath);
 	m_scene->AddLightSource(directionalLight);
 
-	// Loop through the positions and instantiate a light 
+	// Loop through the positions and instantiate a light
 	// and pass to the scene to add the lights to the scene
 	for (const auto& position : spotLightPositions)
 	{

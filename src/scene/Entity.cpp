@@ -42,7 +42,7 @@ void Entity::SetTransform(glm::mat4 aTransform) {
     glm::decompose(aTransform, scale, rotation, translation, skew, perspective);
     mLocalTransform = {.translation = translation,
                        .rotation = rotation,
-                       .scale = scale * 10.f};
+                       .scale = scale};
 }
 void Entity::RecordDrawOpaque(VkCommandBuffer aCmdBuff,
                               VkPipelineLayout aPipelineLayout) {

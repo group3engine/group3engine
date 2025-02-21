@@ -11,7 +11,10 @@ Animation::GetAnimation(float aTime) {
     std::vector<std::pair<vk::Entity *, vk::Transform>> result;
     // reserve one pair for each channel
     result.reserve(mTargets.size());
-    vk::Transform transform{};
+    vk::Transform transform;
+    transform.translation = {0, 0, 0};
+    transform.rotation = {0, 0, 0, 1};
+    transform.scale = {1, 1, 1};
     vk::Entity *lastTarget = nullptr;
     // for each channel, get the animation. If it is the same target as last
     // time, add it to the transform. Otherwise, add the last transform to the
@@ -30,6 +33,9 @@ Animation::GetAnimation(float aTime) {
             }
             lastTarget = channel.target;
             transform = {};
+            transform.translation = {0, 0, 0};
+            transform.rotation = {0, 0, 0, 1};
+            transform.scale = {1, 1, 1};
         }
         switch (channel.transformChannel) {
         case TransformChannel::TRANSLATION:
@@ -96,14 +102,13 @@ glm::vec4 Animation::Slerp(Keyframe &a, Keyframe &b, float time) {
     return {q.x, q.y, q.z, q.w};
 }
 void Animation::SetName(char *aName) { mName = aName; }
-Sampler* Animation::GetSampler(int i) { return &mSamplers[i]; }
+Sampler *Animation::GetSampler(int i) { return &mSamplers[i]; }
 float Animation::GetMaxTime() { return mMaxTime; }
-void Animation::AddChannel(Channel &aChannel)  {
+void Animation::AddChannel(Channel &aChannel) {
     mTargets.insert(aChannel.target);
     mChannels.push_back(aChannel);
     // sort the channels by target
-    std::sort(mChannels.begin(), mChannels.end(),
-              [](const Channel &a, const Channel &b) {
-                  return a.target < b.target;
-              });
+    std::sort(
+        mChannels.begin(), mChannels.end(),
+        [](const Channel &a, const Channel &b) { return a.target < b.target; });
 }

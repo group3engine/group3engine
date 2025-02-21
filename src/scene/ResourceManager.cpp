@@ -272,6 +272,17 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                     normals[i * 3], normals[i * 3 + 1], normals[i * 3 + 2]};
                 meshPrimitive.vertices[i].tex = {texcoords[i * 2],
                                                  texcoords[i * 2 + 1]};
+                // if the mesh has joints and weights
+                if (!joints.empty() && !weights.empty()) {
+                    meshPrimitive.vertices[i].joints = {joints[i * 4],
+                                                       joints[i * 4 + 1],
+                                                       joints[i * 4 + 2],
+                                                       joints[i * 4 + 3]};
+                    meshPrimitive.vertices[i].weights = {weights[i * 4],
+                                                        weights[i * 4 + 1],
+                                                        weights[i * 4 + 2],
+                                                        weights[i * 4 + 3]};
+                }
             }
 
             // Indices
@@ -336,7 +347,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             }
             Transform transform = {.translation = translation,
                                    .rotation = rotation,
-                                   .scale = scale * 10.f};
+                                   .scale = scale};
             entity.SetTransform(transform);
         }
         // add the mesh
@@ -414,24 +425,33 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 sampler.keyframes[k].time = times[k];
             }
             std::vector<float> values;
-            values.resize(gltfSampler.output->count);
+            bool vec3 = false;
+            if (gltfSampler.output->type == cgltf_type_vec3) {
+                vec3 = true;
+            } else {
+                assert(gltfSampler.output->type == cgltf_type_vec4);
+            }
+            int outputSize = vec3 ? 3 : 4;
+            outputSize *= gltfSampler.output->count;
+            values.resize(outputSize);
             cgltf_accessor_unpack_floats(gltfSampler.output, values.data(),
-                                         sampler.keyframes.size());
+                                         values.size());
             // if output size is 4 * input size, then it is a vec4, otherwise it
             // is a vec3
-            if (values.size() == 4 * times.size()) {
-                for (size_t k = 0; k < sampler.keyframes.size(); k++) {
-                    sampler.keyframes[k].value = {
-                        values[k * 4], values[k * 4 + 1], values[k * 4 + 2],
-                        values[k * 4 + 3]};
-                }
-            } else {
+            if (vec3) {
                 for (size_t k = 0; k < sampler.keyframes.size(); k++) {
                     sampler.keyframes[k].value = {values[k * 3],
                                                   values[k * 3 + 1],
                                                   values[k * 3 + 2], 1.0f};
                 }
+            } else {
+                for (size_t k = 0; k < sampler.keyframes.size(); k++) {
+                    sampler.keyframes[k].value = {
+                        values[k * 4], values[k * 4 + 1], values[k * 4 + 2],
+                        values[k * 4 + 3]};
+                }
             }
+
             animation.AddSampler(sampler);
         }
         // add the channels
@@ -440,8 +460,8 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             const auto &gltfChannel = gltfAnimation.channels[j];
             Channel channel = {};
             channel.target = &aEntities[gltfChannel.target_node - data->nodes];
-            channel.sampler = static_cast<int>(
-                gltfChannel.sampler - data->animations->samplers);
+            channel.sampler = static_cast<int>(gltfChannel.sampler -
+                                               data->animations->samplers);
             switch (gltfChannel.target_path) {
             case cgltf_animation_path_type_translation:
                 channel.transformChannel = TransformChannel::TRANSLATION;
