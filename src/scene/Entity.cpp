@@ -40,9 +40,8 @@ void Entity::SetTransform(glm::mat4 aTransform) {
     glm::vec3 skew;
     glm::vec4 perspective;
     glm::decompose(aTransform, scale, rotation, translation, skew, perspective);
-    mLocalTransform = {.translation = translation,
-                       .rotation = rotation,
-                       .scale = scale};
+    mLocalTransform = {
+        .translation = translation, .rotation = rotation, .scale = scale};
 }
 void Entity::RecordDrawOpaque(VkCommandBuffer aCmdBuff,
                               VkPipelineLayout aPipelineLayout) {
@@ -158,7 +157,10 @@ void Entity::RecordDrawCutout(VkCommandBuffer aCmdBuff,
     }
 }
 void Entity::SetAnimator(Animator *aAnimator) { mAnimator = aAnimator; }
-void Entity::Update(float deltaTime) { if(mAnimator) mAnimator->Update(deltaTime); }
+void Entity::Update(float deltaTime) {
+    if (mAnimator)
+        mAnimator->Update(deltaTime);
+}
 Entity::~Entity() {
     // delete the animator if it exists
     delete mAnimator;
@@ -199,6 +201,14 @@ void Entity::RecordDrawSkinned(VkCommandBuffer aCmdBuff,
             vkCmdDrawIndexed(aCmdBuff, meshPrimitive.meshGPU->mIndexCount, 1, 0,
                              0, 0);
         }
+    }
+}
+glm::mat4 Entity::getSkinnedWorldTransform() const {
+    if (mParent) {
+        return mParent->getSkinnedWorldTransform() *
+               mLocalTransform.getMatrix() * mInverseBindMatrix;
+    } else {
+        return mLocalTransform.getMatrix() * mInverseBindMatrix;
     }
 }
 } // namespace vk

@@ -414,6 +414,8 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         for (size_t j = 0; j < gltfAnimation.samplers_count; j++) {
             const auto &gltfSampler = gltfAnimation.samplers[j];
             Sampler sampler;
+            assert(gltfSampler.interpolation == cgltf_interpolation_type_linear ||
+                   gltfSampler.interpolation == cgltf_interpolation_type_step);
             sampler.interpolation =
                 static_cast<Interpolation>(gltfSampler.interpolation);
             sampler.keyframes.resize(gltfSampler.input->count);

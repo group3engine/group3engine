@@ -42,7 +42,15 @@ class Entity {
     void SetTransform(Transform aTransform) { mLocalTransform = aTransform; }
     void SetTransform(glm::mat4 aTransform);
 
+    void SetInverseBindMatrix(glm::mat4 aInverseBindMatrix) {
+        mInverseBindMatrix = aInverseBindMatrix;
+    }
+
     [[nodiscard]] glm::mat4 getWorldTransform() const;
+
+    [[nodiscard]] glm::mat4 getSkinnedWorldTransform() const;
+
+    [[nodiscard]]
 
     glm::mat4 getLocalTransform();
 
@@ -76,6 +84,7 @@ class Entity {
     Animator *mAnimator = nullptr;
 
     //    bool mHasPhysics = false;
+    glm::mat4 mInverseBindMatrix = glm::mat4(1.0f);
 };
 }  // namespace vk
 #endif  // VULKANTIME_ENTITY_HPP

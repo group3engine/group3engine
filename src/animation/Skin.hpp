@@ -24,7 +24,7 @@ class Skin {
   public:
     Skin() = default;
     void ResizeJoints(size_t aSize) { mJoints.reserve(aSize); }
-    void AddJoint(Joint aJoint) { mJoints.push_back(aJoint); }
+    void AddJoint(Joint aJoint);
     void SetJoints(std::vector<Joint> aJoints) { mJoints = std::move(aJoints); }
     void SetRoot(vk::Entity *aRoot) { mRoot = aRoot; }
 
