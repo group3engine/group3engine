@@ -448,9 +448,9 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 }
             } else {
                 for (size_t k = 0; k < sampler.keyframes.size(); k++) {
-                    sampler.keyframes[k].value = {
+                    sampler.keyframes[k].value = glm::normalize(glm::vec4{
                         values[k * 4], values[k * 4 + 1], values[k * 4 + 2],
-                        values[k * 4 + 3]};
+                        values[k * 4 + 3]});
                 }
             }
 
