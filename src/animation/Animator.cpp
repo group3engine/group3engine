@@ -63,7 +63,7 @@ void Animator::UpdateJointBuffer() {
     // get the joints from the skin
     auto joints = mSkin->GetJointMatrices();
     // for each joint matrix, decompose it into its components
-        for (auto &joint : joints) {
+    for (auto &joint : joints) {
         // get the translation, rotation and scale
         glm::vec3 translation, scale;
         glm::quat rotation;
@@ -71,12 +71,11 @@ void Animator::UpdateJointBuffer() {
         glm::vec4 perspective;
         glm::decompose(joint, scale, rotation, translation, skew, perspective);
         // debug output
-        std::cout << "Translation: " << glm::to_string(translation) << std::endl;
+        std::cout << "Translation: " << glm::to_string(translation)
+                  << std::endl;
         std::cout << "Rotation: " << glm::to_string(rotation) << std::endl;
         std::cout << "Scale: " << glm::to_string(scale) << std::endl;
-
-
-        }
+    }
     // upload the joints to the buffer
     mJointBuffer.WriteToBuffer(joints.data(),
                                sizeof(glm::mat4) * joints.size());
@@ -101,6 +100,6 @@ void Animator::UpdateJointsTransform() {
     for (auto &data : animationData) {
         auto entity = data.first;
         auto transform = data.second;
-        entity->SetTransform(transform);
+        entity->SetJointTransform(transform.getMatrix());
     }
 }

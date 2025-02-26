@@ -204,11 +204,10 @@ void Entity::RecordDrawSkinned(VkCommandBuffer aCmdBuff,
     }
 }
 glm::mat4 Entity::getSkinnedWorldTransform() const {
-    if (mParent) {
-        return mParent->getSkinnedWorldTransform() *
-               mLocalTransform.getMatrix() * mInverseBindMatrix;
+    if(mParent) {
+        return mParent->getSkinnedWorldTransform() * mJointTransform * mInverseBindMatrix;
     } else {
-        return mLocalTransform.getMatrix() * mInverseBindMatrix;
+        return mJointTransform * mInverseBindMatrix;
     }
 }
 } // namespace vk

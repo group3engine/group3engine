@@ -41,6 +41,7 @@ class Entity {
     }
     void SetTransform(Transform aTransform) { mLocalTransform = aTransform; }
     void SetTransform(glm::mat4 aTransform);
+    void SetJointTransform(glm::mat4 aJointTransform) { mJointTransform = aJointTransform; }
 
     void SetInverseBindMatrix(glm::mat4 aInverseBindMatrix) {
         mInverseBindMatrix = aInverseBindMatrix;
@@ -85,6 +86,7 @@ class Entity {
 
     //    bool mHasPhysics = false;
     glm::mat4 mInverseBindMatrix = glm::mat4(1.0f);
+    glm::mat4 mJointTransform = glm::mat4(1.0f);
 };
 }  // namespace vk
 #endif  // VULKANTIME_ENTITY_HPP

@@ -24,7 +24,7 @@ Animation::GetAnimation(float aTime) {
         auto &sampler = mSamplers[channel.sampler];
         // get the sampler value
         glm::vec4 value =
-            GetSamplerValue(sampler, aTime, TransformChannel::TRANSLATION);
+            GetSamplerValue(sampler, aTime, channel.transformChannel);
         // is the target the same as last time?
         if (channel.target == lastTarget) {
         } else {
@@ -57,6 +57,7 @@ Animation::GetAnimation(float aTime) {
 }
 glm::vec4 Animation::GetSamplerValue(Sampler &aSampler, float aTime,
                                      TransformChannel aTransformChannel) {
+//    return aSampler.keyframes.front().value;
     // edge cases
     {
         // if there are no keyframes, return the identity

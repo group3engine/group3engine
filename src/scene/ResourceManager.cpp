@@ -337,7 +337,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 rotation = {gltfNode.rotation[3], gltfNode.rotation[0],
                             gltfNode.rotation[1], gltfNode.rotation[2]};
             } else {
-                rotation = {1, 0, 0, 0};
+                rotation = glm::quat(glm::vec4{0, 0, 0, 1});
             }
             if (gltfNode.has_scale) {
                 scale = {gltfNode.scale[0], gltfNode.scale[1],
