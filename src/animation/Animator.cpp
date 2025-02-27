@@ -6,6 +6,7 @@
 
 #include "Entity.hpp"
 #include "Utils.hpp"
+#include "glm/gtx/quaternion.hpp"
 #include "glm/gtx/string_cast.hpp"
 #include <cmath>
 #include <glm/gtx/matrix_decompose.hpp>

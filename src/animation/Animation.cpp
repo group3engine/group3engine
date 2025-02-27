@@ -24,7 +24,7 @@ Animation::GetAnimation(float aTime) {
         auto &sampler = mSamplers[channel.sampler];
         // get the sampler value
         glm::vec4 value =
-            GetSamplerValue(sampler, aTime, channel.transformChannel);
+            glm::normalize(GetSamplerValue(sampler, aTime, channel.transformChannel));
         // is the target the same as last time?
         if (channel.target == lastTarget) {
         } else {
@@ -42,7 +42,7 @@ Animation::GetAnimation(float aTime) {
             transform.translation = value;
             break;
         case TransformChannel::ROTATION:
-            transform.rotation = glm::quat(value);
+            transform.rotation = {value.x, value.y, value.z, value.w};
             break;
         case TransformChannel::SCALE:
             transform.scale = value;
@@ -57,7 +57,7 @@ Animation::GetAnimation(float aTime) {
 }
 glm::vec4 Animation::GetSamplerValue(Sampler &aSampler, float aTime,
                                      TransformChannel aTransformChannel) {
-//    return aSampler.keyframes.front().value;
+    return aSampler.keyframes.front().value;
     // edge cases
     {
         // if there are no keyframes, return the identity
@@ -84,6 +84,7 @@ glm::vec4 Animation::GetSamplerValue(Sampler &aSampler, float aTime,
     if (aSampler.interpolation == Interpolation::STEP) {
         return keyframe1->value;
     }
+
     // interpolate between the two keyframes
     // if this is a rotation, use spherical linear interpolation
     if (aTransformChannel == TransformChannel::ROTATION) {
@@ -99,7 +100,7 @@ glm::vec4 Animation::Lerp(Keyframe &a, Keyframe &b, float time) {
 glm::vec4 Animation::Slerp(Keyframe &a, Keyframe &b, float time) {
     float t = (time - a.time) / (b.time - a.time);
     glm::quat q =
-        glm::normalize(glm::slerp(glm::quat(a.value), glm::quat(b.value), t));
+        glm::normalize(glm::slerp(glm::quat{a.value.x, a.value.y, a.value.z, a.value.w}, glm::quat{b.value.x, b.value.y, b.value.z, b.value.w}, t));
     return {q.x, q.y, q.z, q.w};
 }
 void Animation::SetName(char *aName) { mName = aName; }
