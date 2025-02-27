@@ -211,6 +211,7 @@ void Engine::Shutdown() {
 
 void Engine::Run() {
     auto camera = static_cast<Camera *>(glfwGetWindowUserPointer(Platform::get().window));
+    camera->SetPhysics(&PhysicsManager::get());
 
     while (m_isRunning && !glfwWindowShouldClose(m_context.mWindow)) {
         double currentFrameTime = glfwGetTime();
@@ -219,7 +220,7 @@ void Engine::Run() {
 
         PollInputEvents();
 
-        Update(GlobalUtil::deltaTime);
+        
 
         ProcessInputParams processInputParams{};
         auto cameraForward = camera->GetDirection();
@@ -236,6 +237,9 @@ void Engine::Run() {
         auto &cube = mScene->m_Entities.back();
         auto characterVirtualPos = mCharacterVirtualTest.GetCharacterPosition();
         cube.mPosition = glm::vec3(characterVirtualPos.GetX(), characterVirtualPos.GetY(), characterVirtualPos.GetZ());
+        
+
+        Update(GlobalUtil::deltaTime, cube.mPosition);
 
         SPDLOG_INFO("cube.mPosition {}", glm::to_string(cube.mPosition));
 
@@ -289,10 +293,10 @@ void Engine::UpdateLogic() {
     }
 }
 
-void Engine::Update(double deltaTime) {
+void Engine::Update(double deltaTime, glm::vec3 character_position) {
     UpdateLogic();
     mScene->Update();
-    mRenderer->Update(deltaTime);
+    mRenderer->Update(deltaTime, character_position);
 }
 
 void Engine::Render() {

@@ -6,6 +6,7 @@
 #include <iostream>
 
 #include "Context.hpp"
+#include "PhysicsManager.hpp"
 #include "Utils.hpp"
 #include "Buffer.hpp"
 
@@ -50,13 +51,14 @@ class Camera {
     void SetFoV(float fov) { m_transform.fov = fov; }
     void SetNearPlane(float nearPlane) { m_transform.nearPlane = nearPlane; }
     void SetFarPlane(float farPlane) { m_transform.farPlane = farPlane; }
+    void SetPhysics(PhysicsManager* input_physics_reference) {m_physics_reference = input_physics_reference; }
 
     const CameraTransform &GetCameraTransform() const { return m_transform; }
     std::vector<Buffer> &GetBuffers() { return m_cameraUBO; }
 
-    void Update(uint32_t width, uint32_t height, double deltaTime);
+    void Update(uint32_t width, uint32_t height, double deltaTime, glm::vec3 character_postion);
     void UpdateTransforms(uint32_t width, uint32_t height);
-    void UpdateCameraMovement();
+    void UpdateCameraMovement(glm::vec3 position);
     void UpdateCameraRotation();
     void UpdateCameraAngles(const glm::vec2 &offset);
 
@@ -79,6 +81,8 @@ class Camera {
     bool inputMap[std::size_t(EInputState::MAX)] = {};
     bool wasMousing = false;
 
+    
+
   private:
     Context &context;
     CameraTransform m_transform;
@@ -93,4 +97,6 @@ class Camera {
     float m_mouseSensitivity;
     double yaw = 90.0f;
     double pitch = 0.0f;
+    
+    const PhysicsManager* m_physics_reference;
 };

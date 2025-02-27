@@ -6,10 +6,16 @@
 #include <iostream>
 
 #include "Context.hpp"
+#include "Jolt/Math/Vec3.h"
+#include "Jolt/Physics/Collision/CastResult.h"
+#include "Jolt/Physics/Collision/NarrowPhaseQuery.h"
+#include "Jolt/Physics/Collision/RayCast.h"
+#include "PhysicsManager.hpp"
 #include "Utils.hpp"
 #include "Buffer.hpp"
 
 #include "Input.hpp"
+#include "glm/fwd.hpp"
 
 Camera::Camera(Context &context, const glm::vec3 position, glm::vec3 direction, glm::vec3 up, float aspect)
     : context{context}, m_position{position}, m_direction{direction}, m_up{up} {
@@ -37,7 +43,7 @@ Camera::~Camera() {
     }
 }
 
-void Camera::Update(uint32_t width, uint32_t height, [[maybe_unused]] double deltaTime) {
+void Camera::Update(uint32_t width, uint32_t height, [[maybe_unused]] double deltaTime, glm::vec3 character_position) {
     UpdateTransforms(width, height);
 
     // Write new data to the buffer to update uniform
@@ -45,7 +51,7 @@ void Camera::Update(uint32_t width, uint32_t height, [[maybe_unused]] double del
     m_cameraUBO[vkutil::currentFrame].WriteToBuffer(m_transform, size);
 
     UpdateCameraRotation();
-    UpdateCameraMovement();
+    UpdateCameraMovement(character_position);
 }
 
 void Camera::UpdateTransforms(uint32_t width, uint32_t height) {
@@ -60,56 +66,31 @@ void Camera::UpdateTransforms(uint32_t width, uint32_t height) {
     m_transform.fov = m_transform.fov;
 }
 
-void Camera::UpdateCameraMovement() {
-    if (inputMap[std::size_t(EInputState::FAST)]) {
-        m_cameraSpeed = std::min(m_cameraSpeed + m_speedIncreaseAmount * (float)GlobalUtil::deltaTime, maxSpeed);
-        SetSpeed(m_cameraSpeed);
+void Camera::UpdateCameraMovement(glm::vec3 input_position) {
+    glm::vec3 forward = glm::normalize(m_direction);
+    glm::vec3 rightVector = glm::normalize(glm::cross(m_direction, m_up));
+
+    glm::vec3 third_person_camera_offset = (-2.f * forward) + (0.5f * m_up) + (0.5f * rightVector);
+
+    RRayCast ray;
+    ray.mOrigin = Vec3(input_position.x, input_position.y, input_position.z);
+    ray.mDirection = Vec3(third_person_camera_offset.x, third_person_camera_offset.y, third_person_camera_offset.z);
+
+    JPH::RayCastResult result;
+    bool hit = m_physics_reference->get().mPhysicsSystem.GetNarrowPhaseQuery().CastRay(ray, result);
+
+    if(hit)
+    {
+        m_position = input_position + third_person_camera_offset * result.mFraction;
+    }
+    else 
+    {
+        m_position = input_position + third_person_camera_offset;
     }
 
-    else if (inputMap[std::size_t(EInputState::SLOW)]) {
-        m_cameraSpeed = std::max(m_cameraSpeed - m_speedDecreaseAmount * (float)GlobalUtil::deltaTime, minSpeed);
-        SetSpeed(m_cameraSpeed);
-    } else {
-        SetSpeed(defaultSpeed);
-    }
 
-    glm::vec3 movementAmount = glm::vec3(0.0f, 0.0f, 0.0f);
 
-    if (inputMap[std::size_t(EInputState::FORWARD)]) {
-        glm::vec3 forward = glm::normalize(m_direction);
-        movementAmount += forward;
-    }
-
-    if (inputMap[std::size_t(EInputState::BACKWARD)]) {
-        glm::vec3 forward = glm::normalize(m_direction);
-        movementAmount -= forward;
-    }
-
-    if (inputMap[std::size_t(EInputState::LEFT)]) {
-        glm::vec3 rightVector = glm::normalize(glm::cross(m_direction, m_up));
-        movementAmount -= rightVector;
-    }
-
-    if (inputMap[std::size_t(EInputState::RIGHT)]) {
-        glm::vec3 rightVector = glm::normalize(glm::cross(m_direction, m_up));
-        movementAmount += rightVector;
-    }
-
-    if (inputMap[std::size_t(EInputState::UP)]) {
-        movementAmount += m_up;
-    }
-
-    if (inputMap[std::size_t(EInputState::DOWN)]) {
-        movementAmount -= m_up;
-    }
-
-    // Calculate the movement amount scaled by speed and delta time
-    float speed = static_cast<float>(m_cameraSpeed * GlobalUtil::deltaTime);
-    glm::vec3 targetPosition = m_position + (movementAmount * speed);
-
-    m_position = targetPosition;
-
-    // std::cout << "CamPos: " << m_position.x << ", " << m_position.y << ", " << m_position.z << std::endl;
+    //m_position = input_position + third_person_camera_offset;
 }
 
 void Camera::UpdateCameraRotation() {

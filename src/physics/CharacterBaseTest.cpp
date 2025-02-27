@@ -46,10 +46,10 @@ void CharacterBaseTest::ProcessInput(const ProcessInputParams &inParams)
 {
 	// Determine controller input
 	mControlInput = Vec3::sZero();
-	if (IsKeyDown(KEY::eLEFT))	mControlInput.SetZ(-1);
-	if (IsKeyDown(KEY::eRIGHT))	mControlInput.SetZ(1);
-	if (IsKeyDown(KEY::eUP))	mControlInput.SetX(1);
-	if (IsKeyDown(KEY::eDOWN))	mControlInput.SetX(-1);
+	if (IsKeyDown(KEY::eA))	mControlInput.SetZ(-1);
+	if (IsKeyDown(KEY::eD))	mControlInput.SetZ(1);
+	if (IsKeyDown(KEY::eW))	mControlInput.SetX(1);
+	if (IsKeyDown(KEY::eS))	mControlInput.SetX(-1);
 	if (mControlInput != Vec3::sZero())
 		mControlInput = mControlInput.Normalized();
 
