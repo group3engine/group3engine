@@ -26,13 +26,13 @@ void Animator::BindDescriptorSet(VkCommandBuffer aCmdBuff,
                             aPipelineLayout, aSet, 1, &mDescriptorSet, 0,
                             nullptr);
 }
-void Animator::Update(float aDeltaTime) {
+void Animator::Update(float aDeltaTime, vk::Entity* aMesh) {
     // update the animation samples
     UpdateAnimationSamples(aDeltaTime);
     // update the joints transform
     UpdateJointsTransform();
     // update the joint buffer
-    UpdateJointBuffer();
+    UpdateJointBuffer(aMesh);
 }
 Animator::Animator(vk::Context *aContext, Skin *aSkin)
     : mContext(aContext), mSkin(aSkin) {
@@ -60,9 +60,9 @@ Animator::Animator(vk::Context *aContext, Skin *aSkin)
     vk::UpdateDescriptorSet(*mContext, 0, bufferInfo, mDescriptorSet,
                             VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 }
-void Animator::UpdateJointBuffer() {
+void Animator::UpdateJointBuffer(vk::Entity* aMesh) {
     // get the joints from the skin
-    auto joints = mSkin->GetJointMatrices();
+    auto joints = mSkin->GetJointMatrices(aMesh);
     // for each joint matrix, decompose it into its components
     for (auto &joint : joints) {
         // get the translation, rotation and scale

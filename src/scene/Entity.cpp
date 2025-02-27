@@ -5,8 +5,10 @@
 #include "Entity.hpp"
 
 #include <glm/gtx/matrix_decompose.hpp>
+#include <iostream>
 #include <utility>
 
+#include <glm/gtx/io.hpp>
 namespace vk {
 Entity::Entity(std::string aName, Entity *aParent, Mesh *aMesh,
                glm::mat4 aLocalTransform)
@@ -40,6 +42,9 @@ void Entity::SetTransform(glm::mat4 aTransform) {
     glm::vec3 skew;
     glm::vec4 perspective;
     glm::decompose(aTransform, scale, rotation, translation, skew, perspective);
+    assert(perspective.w == 1.0f && perspective.x == 0.0f &&
+           perspective.y == 0.0f && perspective.z == 0.0f);
+    assert(skew.x == 0.0f && skew.y == 0.0f && skew.z == 0.0f);
     mLocalTransform = {
         .translation = translation, .rotation = rotation, .scale = scale};
 }
@@ -159,7 +164,7 @@ void Entity::RecordDrawCutout(VkCommandBuffer aCmdBuff,
 void Entity::SetAnimator(Animator *aAnimator) { mAnimator = aAnimator; }
 void Entity::Update(float deltaTime) {
     if (mAnimator)
-        mAnimator->Update(deltaTime);
+        mAnimator->Update(deltaTime, this);
 }
 Entity::~Entity() {
     // delete the animator if it exists
@@ -203,11 +208,11 @@ void Entity::RecordDrawSkinned(VkCommandBuffer aCmdBuff,
         }
     }
 }
-glm::mat4 Entity::getSkinnedWorldTransform() const {
+glm::mat4 Entity::getSkinnedWorldTransform(Entity const *aRoot) const {
     if(mParent) {
-        return mParent->getSkinnedWorldTransform()  * mJointTransform*mLocalTransform.getMatrix();
+        return mParent->getSkinnedWorldTransform(aRoot) *  mAnimationTransform * mLocalTransform.getMatrix();
     } else {
-        return mJointTransform*mLocalTransform.getMatrix();
+        return mAnimationTransform *  mLocalTransform.getMatrix();
     }
 }
 } // namespace vk

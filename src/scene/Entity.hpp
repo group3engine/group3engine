@@ -33,7 +33,10 @@ class Entity {
     virtual ~Entity();
 
     void SetName(std::string aName) { mName = std::move(aName); }
+    std::string GetName() const { return mName; }
     void SetParent(Entity *aParent);
+    [[nodiscard]] Entity *GetParent() const { return mParent; }
+    [[nodiscard]] std::vector<Entity *> GetChildren() const { return children; }
     void AddChild(Entity *aChild) { children.push_back(aChild); }
     void AddMesh(Mesh *mesh) {
         mMesh = mesh;
@@ -41,7 +44,8 @@ class Entity {
     }
     void SetTransform(Transform aTransform) { mLocalTransform = aTransform; }
     void SetTransform(glm::mat4 aTransform);
-    void SetJointTransform(glm::mat4 aJointTransform) { mJointTransform = aJointTransform; }
+    void SetJointTransform(glm::mat4 aJointTransform) {
+        mAnimationTransform = aJointTransform; }
 
     void SetInverseBindMatrix(glm::mat4 aInverseBindMatrix) {
         mInverseBindMatrix = aInverseBindMatrix;
@@ -49,7 +53,8 @@ class Entity {
 
     [[nodiscard]] glm::mat4 getWorldTransform() const;
 
-    [[nodiscard]] glm::mat4 getSkinnedWorldTransform() const;
+    [[nodiscard]] glm::mat4
+    getSkinnedWorldTransform(Entity const *aRoot) const;
 
     [[nodiscard]]
 
@@ -86,7 +91,7 @@ class Entity {
 
     //    bool mHasPhysics = false;
     glm::mat4 mInverseBindMatrix = glm::mat4(1.0f);
-    glm::mat4 mJointTransform = glm::mat4(1.0f);
+    glm::mat4 mAnimationTransform = glm::mat4(1.0f);
 };
 }  // namespace vk
 #endif  // VULKANTIME_ENTITY_HPP

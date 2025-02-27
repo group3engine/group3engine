@@ -31,14 +31,14 @@ class Animator {
         mAnimations = std::move(aAnimations);
     }
     // update the animator
-    void Update(float aDeltaTime);
+    void Update(float aDeltaTime, vk::Entity* aMesh);
     // bind the descriptor set (for use when rendering)
     void BindDescriptorSet(VkCommandBuffer aCmdBuff,
                            VkPipelineLayout aPipelineLayout, int aSet);
 
   private:
     // update the joint buffer
-    void UpdateJointBuffer();
+    void UpdateJointBuffer(vk::Entity* aMesh);
     // update the animation samples
     void UpdateAnimationSamples(float aDeltaTime);
     // update the joints transform based on the animation samples

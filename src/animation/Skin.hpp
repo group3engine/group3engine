@@ -8,12 +8,9 @@
 #include <glm/glm.hpp>
 #include <string>
 
-namespace vk
-{
-        class Entity;
+namespace vk {
+class Entity;
 }
-
-
 
 struct Joint {
     vk::Entity *entity;
@@ -30,9 +27,9 @@ class Skin {
 
     [[nodiscard]] std::vector<Joint> GetJoints() const { return mJoints; }
     // function to get the joint matrices
-    [[nodiscard]] std::vector<glm::mat4> GetJointMatrices() const;
+    [[nodiscard]] std::vector<glm::mat4> GetJointMatrices(vk::Entity* aMesh) const;
 
-    void SetName(char *aName) {mName = aName;}
+    void SetName(char *aName) { mName = aName; }
     [[nodiscard]] std::string GetName() const { return mName; }
 
   private:
@@ -41,7 +38,7 @@ class Skin {
     // root joint
     vk::Entity *mRoot;
     // name of the skin
-        std::string mName;
+    std::string mName;
 };
 
 #endif // GROUP3ENGINE_SKIN_HPP

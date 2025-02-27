@@ -336,8 +336,8 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 translation = {0, 0, 0};
             }
             if (gltfNode.has_rotation) {
-                rotation = {gltfNode.rotation[3], gltfNode.rotation[0],
-                            gltfNode.rotation[1], gltfNode.rotation[2]};
+                rotation = {gltfNode.rotation[0], gltfNode.rotation[1],
+                            gltfNode.rotation[2], gltfNode.rotation[3]};
             } else {
                 rotation = {0, 0, 0, 1};
             }
@@ -491,6 +491,9 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         Skin skin;
         skin.SetName(gltfSkin.name);
         skin.ResizeJoints(gltfSkin.joints_count);
+        // get the "skeleton" node
+        auto *skeleton = &aEntities[gltfSkin.skeleton - data->nodes];
+        skin.SetRoot(skeleton);
         // get the inverse bind matrices
         std::vector<glm::mat4> inverseBindMatrices;
 
