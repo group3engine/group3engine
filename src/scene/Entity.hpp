@@ -45,7 +45,7 @@ class Entity {
     void SetTransform(Transform aTransform) { mLocalTransform = aTransform; }
     void SetTransform(glm::mat4 aTransform);
     void SetJointTransform(glm::mat4 aJointTransform) {
-        mAnimationTransform = aJointTransform; }
+        SetTransform(aJointTransform); }
 
     void SetInverseBindMatrix(glm::mat4 aInverseBindMatrix) {
         mInverseBindMatrix = aInverseBindMatrix;
@@ -75,6 +75,8 @@ class Entity {
                            VkPipelineLayout aPipeLayout);
 
     virtual void Update(float deltaTime);
+
+    Transform GetTransform();
 
   protected:
     virtual void LateUpdate(){}

@@ -3,6 +3,7 @@
 //
 
 #include "Animation.hpp"
+#include "Entity.hpp"
 std::vector<std::pair<vk::Entity *, vk::Transform>>
 Animation::GetAnimation(float aTime) {
     // modulus the time by the max time
@@ -11,11 +12,9 @@ Animation::GetAnimation(float aTime) {
     std::vector<std::pair<vk::Entity *, vk::Transform>> result;
     // reserve one pair for each channel
     result.reserve(mTargets.size());
-    vk::Transform transform;
-    transform.translation = {0, 0, 0};
-    transform.rotation = {0, 0, 0, 1};
-    transform.scale = {1, 1, 1};
+    vk::Transform transform = mChannels[0].target->GetTransform();
     vk::Entity *lastTarget = nullptr;
+    int channelNumber = 0;
     // for each channel, get the animation. If it is the same target as last
     // time, add it to the transform. Otherwise, add the last transform to the
     // result and start a new transform
@@ -31,10 +30,7 @@ Animation::GetAnimation(float aTime) {
                 result.emplace_back(lastTarget, transform);
             }
             lastTarget = channel.target;
-            transform = {};
-            transform.translation = {0, 0, 0};
-            transform.rotation = {0, 0, 0, 1};
-            transform.scale = {1, 1, 1};
+            transform = mChannels[++channelNumber].target->GetTransform();
         }
         switch (channel.transformChannel) {
         case TransformChannel::TRANSLATION:

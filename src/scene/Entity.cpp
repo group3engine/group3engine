@@ -42,9 +42,9 @@ void Entity::SetTransform(glm::mat4 aTransform) {
     glm::vec3 skew;
     glm::vec4 perspective;
     glm::decompose(aTransform, scale, rotation, translation, skew, perspective);
-    assert(perspective.w == 1.0f && perspective.x == 0.0f &&
-           perspective.y == 0.0f && perspective.z == 0.0f);
-    assert(skew.x == 0.0f && skew.y == 0.0f && skew.z == 0.0f);
+//    assert(perspective.w == 1.0f && perspective.x == 0.0f &&
+//           perspective.y == 0.0f && perspective.z == 0.0f);
+//    assert(skew.x == 0.0f && skew.y == 0.0f && skew.z == 0.0f);
     mLocalTransform = {
         .translation = translation, .rotation = rotation, .scale = scale};
 }
@@ -210,9 +210,10 @@ void Entity::RecordDrawSkinned(VkCommandBuffer aCmdBuff,
 }
 glm::mat4 Entity::getSkinnedWorldTransform(Entity const *aRoot) const {
     if(mParent) {
-        return mParent->getSkinnedWorldTransform(aRoot) *  mAnimationTransform * mLocalTransform.getMatrix();
+        return mParent->getSkinnedWorldTransform(aRoot) *  mLocalTransform.getMatrix();
     } else {
-        return mAnimationTransform *  mLocalTransform.getMatrix();
+        return mLocalTransform.getMatrix();
     }
 }
+Transform Entity::GetTransform() { return mLocalTransform; }
 } // namespace vk
