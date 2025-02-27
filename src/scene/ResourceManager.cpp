@@ -16,6 +16,8 @@
 #include "cgltf_write.h"
 #include "glm/gtc/type_ptr.hpp"
 
+#include <glm/gtx/io.hpp>
+
 namespace vk {
 
 Material LoadMaterialDefault() {
@@ -491,15 +493,20 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         skin.ResizeJoints(gltfSkin.joints_count);
         // get the inverse bind matrices
         std::vector<glm::mat4> inverseBindMatrices;
-        inverseBindMatrices.resize(gltfSkin.joints_count);
-        for (size_t j = 0; j < gltfSkin.joints_count; j++) {
-            // load the inverse bind matrix from the accessor
-            const auto &gltfAccessor = *gltfSkin.inverse_bind_matrices;
-            assert(gltfAccessor.type == cgltf_type_mat4);
-            assert(gltfAccessor.component_type == cgltf_component_type_r_32f);
-            cgltf_accessor_unpack_floats(
-                &gltfAccessor, glm::value_ptr(inverseBindMatrices[j]), 16);
+
+        for (size_t j = 0; j < gltfSkin.joints_count; ++j) {
+            float inverse_bind_matrix[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+
+            if (gltfSkin.inverse_bind_matrices) {
+                cgltf_accessor_read_float(gltfSkin.inverse_bind_matrices, j, inverse_bind_matrix, 16);
+
+                auto m = glm::make_mat4(inverse_bind_matrix);
+                std::cout << j << " " << m << '\n';
+
+                inverseBindMatrices.push_back(m);
+            }
         }
+
         // get the joints
         std::vector<Entity *> joint_nodes;
         joint_nodes.resize(gltfSkin.joints_count);
