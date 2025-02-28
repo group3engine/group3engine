@@ -82,25 +82,49 @@ void Animator::UpdateJointBuffer(vk::Entity* aMesh) {
                                sizeof(glm::mat4) * joints.size());
 }
 void Animator::UpdateAnimationSamples(float aDeltaTime) {
-    // TODO: make an animation system. For now I will simply add deltaTime to
-    // the time of the first animation, % by the duration and set the weight to
-    // 1
+    // TODO: make an animation system
     if (mAnimations.empty()) {
         return;
     }
-    mAnimationSamples[0] = {(std::fmod(mAnimationSamples[0].time + aDeltaTime,
-                                       mAnimations[0]->GetMaxTime())),
-                            1};
+    // for each animation, set the weight to 0 and time to 0
+    for (auto &sample : mAnimationSamples) {
+        if(sample.first != activeAnimation) {
+            sample.second.weight = 0;
+            sample.second.time = 0;
+        }
+    }
+    if(activeAnimation != -1) {
+        mAnimationSamples[activeAnimation] = {
+            (std::fmod(mAnimationSamples[activeAnimation].time + aDeltaTime,
+                       mAnimations[activeAnimation]->GetMaxTime())),
+            1};
+    }
 }
 void Animator::UpdateJointsTransform() {
     // TODO: make this blend the animations
     // For now, I will simply get the first animation and apply it to the joints
-    auto animation = mAnimationSamples[0];
-    auto animationData = mAnimations[0]->GetAnimation(animation.time);
-    // for each entity in the animation data, update its transform
-    for (auto &data : animationData) {
-        auto entity = data.first;
-        auto transform = data.second;
-        entity->SetJointTransform(transform.getMatrix());
+    if(activeAnimation == -1) {
+    }
+    else {
+        auto animation = mAnimationSamples[activeAnimation];
+        auto animationData =
+            mAnimations[activeAnimation]->GetAnimation(animation.time);
+        // for each entity in the animation data, update its transform
+        for (auto &data : animationData) {
+            auto entity = data.first;
+            auto transform = data.second;
+            entity->SetJointTransform(transform.getMatrix());
+        }
+    }
+}
+void Animator::SetActiveAnimation(const std::string& aName) {
+    // for each animation, check if the name matches the string
+        // if it does, set it as the active animation
+    activeAnimation = -1;
+    for(size_t i = 0; i < mAnimations.size(); i++) {
+        if(aName == mAnimations[i]->GetName()) {
+            activeAnimation = static_cast<int>(i);
+            return;
+        }
     }
 }

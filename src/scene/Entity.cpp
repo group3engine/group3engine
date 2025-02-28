@@ -42,9 +42,9 @@ void Entity::SetTransform(glm::mat4 aTransform) {
     glm::vec3 skew;
     glm::vec4 perspective;
     glm::decompose(aTransform, scale, rotation, translation, skew, perspective);
-//    assert(perspective.w == 1.0f && perspective.x == 0.0f &&
-//           perspective.y == 0.0f && perspective.z == 0.0f);
-//    assert(skew.x == 0.0f && skew.y == 0.0f && skew.z == 0.0f);
+    //    assert(perspective.w == 1.0f && perspective.x == 0.0f &&
+    //           perspective.y == 0.0f && perspective.z == 0.0f);
+    //    assert(skew.x == 0.0f && skew.y == 0.0f && skew.z == 0.0f);
     mLocalTransform = {
         .translation = translation, .rotation = rotation, .scale = scale};
 }
@@ -163,8 +163,15 @@ void Entity::RecordDrawCutout(VkCommandBuffer aCmdBuff,
 }
 void Entity::SetAnimator(Animator *aAnimator) { mAnimator = aAnimator; }
 void Entity::Update(float deltaTime) {
-    if (mAnimator)
+    frameNumber++;
+    if (mAnimator) {
         mAnimator->Update(deltaTime, this);
+        if ((frameNumber / 60) % 2) {
+            mAnimator->SetActiveAnimation("laughing");
+        } else {
+            mAnimator->SetActiveAnimation("idle");
+        }
+    }
 }
 Entity::~Entity() {
     // delete the animator if it exists
@@ -209,8 +216,9 @@ void Entity::RecordDrawSkinned(VkCommandBuffer aCmdBuff,
     }
 }
 glm::mat4 Entity::getSkinnedWorldTransform(Entity const *aRoot) const {
-    if(mParent) {
-        return mParent->getSkinnedWorldTransform(aRoot) *  mLocalTransform.getMatrix();
+    if (mParent) {
+        return mParent->getSkinnedWorldTransform(aRoot) *
+               mLocalTransform.getMatrix();
     } else {
         return mLocalTransform.getMatrix();
     }

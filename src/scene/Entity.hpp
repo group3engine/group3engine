@@ -90,6 +90,7 @@ class Entity {
     Transform mLocalTransform{};
     bool mHasMesh = false;
     Animator *mAnimator = nullptr;
+    int frameNumber = 0;
 
     //    bool mHasPhysics = false;
     glm::mat4 mInverseBindMatrix = glm::mat4(1.0f);

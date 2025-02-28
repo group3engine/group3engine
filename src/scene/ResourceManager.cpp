@@ -407,12 +407,14 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
     }
     // add animations
     std::vector<Animation *> animationPointers;
+    aAnimations.reserve(data->animations_count);
     for (size_t i = 0; i < data->animations_count; i++) {
         const auto &gltfAnimation = data->animations[i];
-        Animation animation;
-        animation.SetName(gltfAnimation.name);
+        aAnimations.emplace_back();
+        Animation* animation = &aAnimations.back();
+        animation->SetName(gltfAnimation.name);
         // add the samplers
-        animation.ResizeSamplers(gltfAnimation.samplers_count);
+        animation->ResizeSamplers(gltfAnimation.samplers_count);
         for (size_t j = 0; j < gltfAnimation.samplers_count; j++) {
             const auto &gltfSampler = gltfAnimation.samplers[j];
             Sampler sampler;
@@ -456,10 +458,10 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 }
             }
 
-            animation.AddSampler(sampler);
+            animation->AddSampler(sampler);
         }
         // add the channels
-        animation.ResizeChannels(gltfAnimation.channels_count);
+        animation->ResizeChannels(gltfAnimation.channels_count);
         for (size_t j = 0; j < gltfAnimation.channels_count; j++) {
             const auto &gltfChannel = gltfAnimation.channels[j];
             Channel channel = {};
@@ -480,10 +482,9 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 // we don't support other channels, so skip
                 continue;
             }
-            animation.AddChannel(channel);
+            animation->AddChannel(channel);
         }
-        aAnimations.push_back(animation);
-        animationPointers.push_back(&aAnimations.back());
+        animationPointers.push_back(animation);
     }
     // add skins
     for (size_t i = 0; i < data->skins_count; i++) {

@@ -36,6 +36,11 @@ class Animator {
     void BindDescriptorSet(VkCommandBuffer aCmdBuff,
                            VkPipelineLayout aPipelineLayout, int aSet);
 
+    void SetActiveAnimation(int index) {
+        activeAnimation = index;
+    }
+    void SetActiveAnimation(const std::string&);
+
   private:
     // update the joint buffer
     void UpdateJointBuffer(vk::Entity* aMesh);
@@ -56,6 +61,8 @@ class Animator {
     VkDescriptorPool mDescriptorPool{};
     // buffer for the joint matrices
     vk::Buffer mJointBuffer;
+
+    int activeAnimation = -1;
 
     // the skin that the animator is animating
     Skin *mSkin{};
