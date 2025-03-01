@@ -63,6 +63,8 @@ vk::ForwardPass::~ForwardPass()
         vkDestroyPipelineLayout(context.device, m_opaquePipeline.second, nullptr);
         vkDestroyPipeline(context.device, m_alphaMaskPipeline.first, nullptr);
         vkDestroyPipelineLayout(context.device, m_alphaMaskPipeline.second, nullptr);
+        vkDestroyPipeline(context.device, m_skinnedPipeline.first, nullptr);
+        vkDestroyPipelineLayout(context.device, m_skinnedPipeline.second, nullptr);
 
 	vkDestroyFramebuffer(context.device, m_framebuffer, nullptr);
 	vkDestroyRenderPass(context.device, m_renderPass, nullptr);

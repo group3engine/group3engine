@@ -45,6 +45,8 @@ void vk::Scene::Destroy()
         delete mMeshManager;
         delete mMaterialManager;
         delete mTextureManager;
+        // delete the entities
+        m_Entities.clear();
 }
 void vk::Scene::Load(const std::filesystem::path& aFilepath) {
     // Load the GLTF file
