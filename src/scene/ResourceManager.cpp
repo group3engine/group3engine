@@ -467,7 +467,8 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             Channel channel = {};
             channel.target = &aEntities[gltfChannel.target_node - data->nodes];
             channel.sampler = static_cast<int>(gltfChannel.sampler -
-                                               data->animations->samplers);
+                                               gltfAnimation.samplers);
+            assert(channel.sampler >= 0);
             switch (gltfChannel.target_path) {
             case cgltf_animation_path_type_translation:
                 channel.transformChannel = TransformChannel::TRANSLATION;

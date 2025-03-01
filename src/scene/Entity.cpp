@@ -167,7 +167,7 @@ void Entity::Update(float deltaTime) {
     if (mAnimator) {
         mAnimator->Update(deltaTime, this);
         if ((frameNumber / 60) % 2) {
-            mAnimator->SetActiveAnimation("laughing");
+            mAnimator->SetActiveAnimation("laugh");
         } else {
             mAnimator->SetActiveAnimation("idle");
         }
