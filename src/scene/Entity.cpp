@@ -165,11 +165,12 @@ void Entity::SetAnimator(Animator *aAnimator) { mAnimator = aAnimator; }
 void Entity::Update(float deltaTime) {
     frameNumber++;
     if (mAnimator) {
+        mAnimator->SetTimeScale(0.1f);
         mAnimator->Update(deltaTime, this);
-        if ((frameNumber / 60) % 2) {
-            mAnimator->SetActiveAnimation("laugh");
+        if ((frameNumber / 300) % 2) {
+            mAnimator->SetActiveAnimation("laugh", 3.f);
         } else {
-            mAnimator->SetActiveAnimation("idle");
+            mAnimator->SetActiveAnimation("idle", 3.f);
         }
     }
 }

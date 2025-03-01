@@ -152,6 +152,14 @@ struct Transform {
         glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), scale);
         return translationMatrix * rotationMatrix * scaleMatrix;
     }
+    Transform Interpolate(Transform other, float t)
+    {
+        Transform result{};
+        result.translation = translation * (1 - t) + other.translation * t;
+        result.rotation = glm::normalize(glm::slerp(rotation, other.rotation, t));
+        result.scale = scale * (1-t) + other.scale * t;
+        return result;
+    }
 };
 } // namespace vk
 

@@ -36,10 +36,12 @@ class Animator {
     void BindDescriptorSet(VkCommandBuffer aCmdBuff,
                            VkPipelineLayout aPipelineLayout, int aSet);
 
-    void SetActiveAnimation(int index) {
-        activeAnimation = index;
+    void SetActiveAnimation(int index) { mActiveAnimation = index;
     }
     void SetActiveAnimation(const std::string&);
+    void SetActiveAnimation(const std::string& aName, float blendTime);
+
+    void SetTimeScale(float aTimeScale);
 
   private:
     // update the joint buffer
@@ -48,6 +50,8 @@ class Animator {
     void UpdateAnimationSamples(float aDeltaTime);
     // update the joints transform based on the animation samples
     void UpdateJointsTransform();
+    // blends two animations
+    std::vector<std::pair<vk::Entity *, vk::Transform>> BlendAnimations(std::vector<std::pair<vk::Entity *, vk::Transform>> aLeftAnimation, std::vector<std::pair<vk::Entity *, vk::Transform>> aRightAnimation, float t);
 
   public:
   private:
@@ -62,7 +66,8 @@ class Animator {
     // buffer for the joint matrices
     vk::Buffer mJointBuffer;
 
-    int activeAnimation = -1;
+    int mActiveAnimation = -1;
+    int mLastAnimation = -1;
 
     // the skin that the animator is animating
     Skin *mSkin{};
@@ -71,6 +76,14 @@ class Animator {
 
     // a map of animations (by index) to a sample
     std::unordered_map<int, AnimationSample> mAnimationSamples;
+
+    // the multiplier for an animations time
+    float mAnimationTimeScale = 1.f;
+
+
+    float mTotalBlendTime = 0.f;
+    float mCurrentBlendingTime = 0.f;
+    std::string mCurrentAnimationName{};
 };
 
 #endif // GROUP3ENGINE_ANIMATOR_HPP
