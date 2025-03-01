@@ -71,6 +71,9 @@ vk::ForwardPass::~ForwardPass()
 	if (meshDescriptorSetLayout != VK_NULL_HANDLE) {
 		vkDestroyDescriptorSetLayout(context.device, meshDescriptorSetLayout, nullptr);
 	}
+        if(skinDescriptorSetLayout != VK_NULL_HANDLE) {
+            vkDestroyDescriptorSetLayout(context.device, skinDescriptorSetLayout, nullptr);
+        }
 }
 
 void vk::ForwardPass::Resize()
