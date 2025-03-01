@@ -71,7 +71,9 @@ endif()
 add_subdirectory(extern/glfw)
 add_subdirectory(extern/glm)
 add_subdirectory(extern/spdlog)
+add_subdirectory(extern/imgui)
 add_subdirectory(extern/volk)
+
 
 set(PHYSICS_REPO_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/extern/JoltPhysics)
 include(${PHYSICS_REPO_ROOT}/Jolt/Jolt.cmake)
@@ -101,8 +103,8 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   target_compile_options(src PRIVATE /permissive- /W4 /w14640)
 endif()
 
-file(GLOB_RECURSE GLSL_SOURCE_FILES "src/shaders/*.vert" "src/shaders/*.frag")
-file(GLOB_RECURSE GLSL_HEADER_FILES "src/shaders/*.glsl")
+file(GLOB_RECURSE GLSL_SOURCE_FILES "${CMAKE_SOURCE_DIR}/src/shaders/*.vert" "${CMAKE_SOURCE_DIR}/src/shaders/*.frag")
+file(GLOB_RECURSE GLSL_HEADER_FILES "${CMAKE_SOURCE_DIR}/src/shaders/*.glsl")
 
 if(APPLE)
   set(GLSLC "${CMAKE_SOURCE_DIR}/extern/shaderc/macos-x86_64/glslc")
@@ -114,7 +116,7 @@ endif()
 
 # Compile shaders
 # https://gist.github.com/evilactually/a0d191701cb48f157b05be7f74d79396
-set(SPIRV_OUTPUT_DIR "../assets/shaders/")
+set(SPIRV_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/assets/shaders/")
 foreach(GLSL ${GLSL_SOURCE_FILES})
   get_filename_component(STEM ${GLSL} NAME_WLE)
   get_filename_component(EXTENSION ${GLSL} EXT)
@@ -133,7 +135,7 @@ add_dependencies(src compile_shaders)
 # Check git submodules
 # https://cliutils.gitlab.io/modern-cmake/chapters/projects/submodule.html
 find_package(Git QUIET)
-if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
+if(GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
 # Update submodules as needed
     option(GIT_SUBMODULE "Check submodules during build" ON)
     if(GIT_SUBMODULE)
