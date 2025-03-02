@@ -57,7 +57,6 @@ Animation::GetAnimation(float aTime) {
 }
 glm::vec4 Animation::GetSamplerValue(Sampler &aSampler, float aTime,
                                      TransformChannel aTransformChannel){
-//    return aSampler.keyframes.front().value;
     // edge cases
     {
         // if there are no keyframes, return the identity
@@ -74,13 +73,14 @@ glm::vec4 Animation::GetSamplerValue(Sampler &aSampler, float aTime,
         }
     }
     // find the two keyframes that the time is between
-    // TODO: binary search if this is slow
-    auto keyframe1 = aSampler.keyframes.begin();
+    auto it = std::lower_bound(
+        aSampler.keyframes.begin(),
+        aSampler.keyframes.end(),
+        aTime,
+        [](const auto &frame, auto time){ return frame.time < time; });
+
+    auto keyframe1 = std::prev(it);
     auto keyframe2 = std::next(keyframe1);
-    while (keyframe2->time < aTime) {
-        keyframe1 = keyframe2;
-        keyframe2 = std::next(keyframe1);
-    }
     if (aSampler.interpolation == Interpolation::STEP) {
         return keyframe1->value;
     }
