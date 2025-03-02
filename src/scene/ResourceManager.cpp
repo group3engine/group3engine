@@ -506,7 +506,6 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 cgltf_accessor_read_float(gltfSkin.inverse_bind_matrices, j, inverse_bind_matrix, 16);
 
                 auto m = glm::make_mat4(inverse_bind_matrix);
-                std::cout << j << " " << m << '\n';
 
                 inverseBindMatrices.push_back(m);
             }
