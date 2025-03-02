@@ -112,6 +112,8 @@ void Animation::AddChannel(Channel &aChannel) {
     mTargets.insert(aChannel.target);
     mChannels.push_back(aChannel);
     // sort the channels by target
+    // they need to be sorted by target so that we can easily combine the channels for a target
+    // stop and think before you remove this line
     std::sort(
         mChannels.begin(), mChannels.end(),
         [](const Channel &a, const Channel &b) { return a.target < b.target; });
