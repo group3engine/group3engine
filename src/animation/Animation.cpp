@@ -23,15 +23,16 @@ Animation::GetAnimation(float aTime) {
     for (auto channel : mChannels) {
         // get the sampler
         auto &sampler = mSamplers[channel.sampler];
-        // get the sampler value
+        // get the sampler value - this is one of a translation, rotation, or scale, stored as a vec4 xyz(w)
         glm::vec4 value = GetSamplerValue(sampler, aTime, channel.transformChannel);
-        // is the target the same as last time?
+        // is the target the same as last time? If not, we've finished sampling channels for this target, so it can be added to the result
         if (channel.target == lastTarget) {
         } else {
             if (lastTarget != nullptr) {
                 result.emplace_back(lastTarget, transform);
             }
             lastTarget = channel.target;
+            // we use the currrent transform of the object as default for if there isn't a keyframe for a channel to keep the value. This follows GLTF spec (I think)
             transform = mChannels[++channelNumber].target->GetTransform();
         }
         switch (channel.transformChannel) {
@@ -44,6 +45,8 @@ Animation::GetAnimation(float aTime) {
         case TransformChannel::SCALE:
             transform.scale = value;
             break;
+        default:
+            assert(false);
         }
     }
     // add the last transform
