@@ -34,7 +34,7 @@ class Entity {
     virtual ~Entity();
 
     void SetName(std::string aName) { mName = std::move(aName); }
-    std::string GetName() const { return mName; }
+    [[nodiscard]] std::string GetName() const { return mName; }
     void SetParent(Entity *aParent);
     [[nodiscard]] Entity *GetParent() const { return mParent; }
     [[nodiscard]] std::vector<Entity *> GetChildren() const { return children; }
@@ -91,7 +91,7 @@ class Entity {
     Transform mLocalTransform{};
     bool mHasMesh = false;
     Animator *mAnimator = nullptr;
-    int frameNumber = 0;
+    size_t frameNumber = 0;
 
     //    bool mHasPhysics = false;
     glm::mat4 mInverseBindMatrix = glm::mat4(1.0f);

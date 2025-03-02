@@ -8,7 +8,6 @@
 #include <iostream>
 #include <utility>
 
-#include <glm/gtx/io.hpp>
 namespace vk {
 Entity::Entity(std::string aName, Entity *aParent, Mesh *aMesh,
                glm::mat4 aLocalTransform)
