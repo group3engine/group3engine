@@ -104,7 +104,7 @@ glm::vec4 Animation::Slerp(Keyframe &a, Keyframe &b, float time) {
     return {q.x, q.y, q.z, q.w};
 }
 void Animation::SetName(std::string aName) { mName = std::move(aName); }
-Sampler *Animation::GetSampler(int i) { return &mSamplers[i]; }
+Sampler *Animation::GetSampler(size_t i) { return &mSamplers[i]; }
 float Animation::GetMaxTime() const { return mMaxTime; }
 void Animation::AddChannel(Channel &aChannel) {
     mTargets.insert(aChannel.target);

@@ -35,7 +35,7 @@ struct Sampler {
 enum class TransformChannel { TRANSLATION, ROTATION, SCALE };
 struct Channel {
     vk::Entity *target;
-    int sampler;
+    size_t sampler;
     TransformChannel transformChannel;
 };
 
@@ -73,7 +73,7 @@ class Animation {
     void SetName(std::string aName);
     [[nodiscard]] std::string GetName() const { return mName; }
 
-    Sampler* GetSampler(int i);
+    Sampler* GetSampler(size_t i);
 
     [[nodiscard]] float GetMaxTime() const;
 

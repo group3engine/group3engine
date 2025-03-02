@@ -438,7 +438,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 assert(gltfSampler.output->type == cgltf_type_vec4);
             }
             int outputSize = vec3 ? 3 : 4;
-            outputSize *= gltfSampler.output->count;
+            outputSize *= static_cast<int>(gltfSampler.output->count);
             values.resize(outputSize);
             cgltf_accessor_unpack_floats(gltfSampler.output, values.data(),
                                          values.size());
@@ -466,7 +466,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             const auto &gltfChannel = gltfAnimation.channels[j];
             Channel channel = {};
             channel.target = &aEntities[gltfChannel.target_node - data->nodes];
-            channel.sampler = static_cast<int>(gltfChannel.sampler -
+            channel.sampler = static_cast<size_t>(gltfChannel.sampler -
                                                gltfAnimation.samplers);
             assert(channel.sampler >= 0);
             switch (gltfChannel.target_path) {
