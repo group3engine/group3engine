@@ -37,7 +37,7 @@ class Entity {
     [[nodiscard]] const std::string& GetName() const { return mName; }
     void SetParent(Entity *aParent);
     [[nodiscard]] Entity *GetParent() const { return mParent; }
-    [[nodiscard]] std::vector<const Entity *> GetChildren() { return children; }
+    [[nodiscard]] std::vector<const Entity *> const& GetChildren() { return children; }
     void AddChild(Entity *aChild) { children.push_back(aChild); }
     void AddMesh(Mesh *mesh) {
         mMesh = mesh;
