@@ -6,12 +6,12 @@
 
 #include <utility>
 #include "Entity.hpp"
-std::vector<std::pair<vk::Entity *, vk::Transform>>
+std::vector<NodeAnimation>
 Animation::GetAnimation(float aTime) {
     // modulus the time by the max time
     aTime = std::fmod(aTime, mMaxTime);
     // result vector
-    std::vector<std::pair<vk::Entity *, vk::Transform>> result;
+    std::vector<NodeAnimation> result;
     // reserve one pair for each channel
     result.reserve(mTargets.size());
     vk::Transform transform = mChannels[0].target->GetTransform();

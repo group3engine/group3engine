@@ -39,6 +39,11 @@ struct Channel {
     TransformChannel transformChannel;
 };
 
+struct NodeAnimation{
+    vk::Entity *target;
+    vk::Transform transform;
+};
+
 class Animation {
   public:
     // default constructor
@@ -62,7 +67,7 @@ class Animation {
         mMaxTime = std::max(mMaxTime, mSamplers.back().keyframes.back().time);
     }
     // get the animation at a given time
-    std::vector<std::pair<vk::Entity *, vk::Transform>>
+    std::vector<NodeAnimation>
     GetAnimation(float aTime);
 
     void SetName(std::string aName);

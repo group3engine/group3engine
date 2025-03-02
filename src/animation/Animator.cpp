@@ -145,8 +145,8 @@ void Animator::UpdateJointsTransform() {
         }
         // for each entity in the animation data, update its transform
         for (auto &data : animationData) {
-            auto entity = data.first;
-            auto transform = data.second;
+            auto entity = data.target;
+            auto transform = data.transform;
             entity->SetJointTransform(transform.getMatrix());
         }
     }
@@ -179,11 +179,11 @@ void Animator::SetActiveAnimation(const std::string &aName, float blendTime) {
         }
     }
 }
-std::vector<std::pair<vk::Entity *, vk::Transform>> Animator::BlendAnimations(
-    std::vector<std::pair<vk::Entity *, vk::Transform>> aLeftAnimation,
-    std::vector<std::pair<vk::Entity *, vk::Transform>> aRightAnimation,
+std::vector<NodeAnimation> Animator::BlendAnimations(
+    std::vector<NodeAnimation> aLeftAnimation,
+    std::vector<NodeAnimation> aRightAnimation,
     float t) {
-    std::vector<std::pair<vk::Entity *, vk::Transform>> blendedAnimation;
+    std::vector<NodeAnimation> blendedAnimation;
     size_t leftCounter, rightCounter;
     leftCounter = rightCounter = 0;
     // we can assume that the two animation vectors have arrived to us sorted by
@@ -198,16 +198,16 @@ std::vector<std::pair<vk::Entity *, vk::Transform>> Animator::BlendAnimations(
         // leftcounter is out of range this can't be triggered
         if (rightCounter >= aRightAnimation.size() ||
             (leftCounter < aLeftAnimation.size() &&
-             aLeftAnimation[leftCounter].first <
-                 aRightAnimation[rightCounter].first)) {
+             aLeftAnimation[leftCounter].target <
+                 aRightAnimation[rightCounter].target)) {
             vk::Transform rightTransform{};
             rightTransform.translation = {1, 1, 1};
             rightTransform.rotation = {0, 0, 0, 1};
             rightTransform.scale = {1, 1, 1};
-            vk::Transform leftTransform = aLeftAnimation[leftCounter].second;
+            vk::Transform leftTransform = aLeftAnimation[leftCounter].transform;
             vk::Transform resultingTransform =
                 leftTransform.Interpolate(rightTransform, t);
-            blendedAnimation.emplace_back(aLeftAnimation[leftCounter].first,
+            blendedAnimation.emplace_back(aLeftAnimation[leftCounter].target,
                                           resultingTransform);
             leftCounter++;
         }
@@ -217,29 +217,29 @@ std::vector<std::pair<vk::Entity *, vk::Transform>> Animator::BlendAnimations(
         // pointer if rightcounter is out of range this can't be triggered
         else if (leftCounter >= aLeftAnimation.size() ||
                  (rightCounter < aRightAnimation.size() &&
-                  aRightAnimation[rightCounter].first <
-                      aLeftAnimation[leftCounter].first)) {
+                  aRightAnimation[rightCounter].target <
+                      aLeftAnimation[leftCounter].target)) {
             vk::Transform leftTransform{};
             leftTransform.translation = {1, 1, 1};
             leftTransform.rotation = {0, 0, 0, 1};
             leftTransform.scale = {1, 1, 1};
-            vk::Transform rightTransform = aRightAnimation[rightCounter].second;
+            vk::Transform rightTransform = aRightAnimation[rightCounter].transform;
             vk::Transform resultingTransform =
                 leftTransform.Interpolate(rightTransform, t);
-            blendedAnimation.emplace_back(aRightAnimation[rightCounter].first,
+            blendedAnimation.emplace_back(aRightAnimation[rightCounter].target,
                                           resultingTransform);
 
             rightCounter++;
         }
         // final, base, most likely case: both have the animation. Simply blend
         // and increment both counters
-        else if (aLeftAnimation[leftCounter].first ==
-                 aRightAnimation[rightCounter].first) {
-            vk::Transform leftTransform = aLeftAnimation[leftCounter].second;
-            vk::Transform rightTransform = aRightAnimation[rightCounter].second;
+        else if (aLeftAnimation[leftCounter].target ==
+                 aRightAnimation[rightCounter].target) {
+            vk::Transform leftTransform = aLeftAnimation[leftCounter].transform;
+            vk::Transform rightTransform = aRightAnimation[rightCounter].transform;
             vk::Transform resultingTransform =
                 leftTransform.Interpolate(rightTransform, t);
-            blendedAnimation.emplace_back(aRightAnimation[rightCounter].first,
+            blendedAnimation.emplace_back(aRightAnimation[rightCounter].target,
                                           resultingTransform);
 
             leftCounter++;

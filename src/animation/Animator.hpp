@@ -51,7 +51,7 @@ class Animator {
     // update the joints transform based on the animation samples
     void UpdateJointsTransform();
     // blends two animations
-    std::vector<std::pair<vk::Entity *, vk::Transform>> BlendAnimations(std::vector<std::pair<vk::Entity *, vk::Transform>> aLeftAnimation, std::vector<std::pair<vk::Entity *, vk::Transform>> aRightAnimation, float t);
+    std::vector<NodeAnimation> BlendAnimations(std::vector<NodeAnimation> aLeftAnimation, std::vector<NodeAnimation> aRightAnimation, float t);
 
   public:
   private:
