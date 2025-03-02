@@ -50,8 +50,7 @@ class Animator {
     void UpdateAnimationSamples(double aDeltaTime);
     // update the joints transform based on the animation samples
     void UpdateJointsTransform();
-    // blends two animations
-    std::vector<NodeAnimation> BlendAnimations(std::vector<NodeAnimation> aLeftAnimation, std::vector<NodeAnimation> aRightAnimation, float t);
+
 
   public:
   private:

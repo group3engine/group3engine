@@ -77,7 +77,6 @@ void Animator::UpdateJointBuffer(vk::Entity *aMesh) {
                                sizeof(glm::mat4) * joints.size());
 }
 void Animator::UpdateAnimationSamples(double aDeltaTime) {
-    // TODO: make an animation system
     if (mAnimations.empty()) {
         return;
     }
@@ -121,22 +120,20 @@ void Animator::UpdateAnimationSamples(double aDeltaTime) {
     }
 }
 void Animator::UpdateJointsTransform() {
-    // TODO: make this blend the animations
     // For now, I will simply get the first animation and apply it to the joints
     if (mActiveAnimation == -1) {
     } else {
-        auto currentAnimation = mAnimationSamples[mActiveAnimation];
-        auto currentAnimationData =
+        const AnimationSample &currentAnimation = mAnimationSamples[mActiveAnimation];
+        const std::vector<NodeAnimation> &currentAnimationData =
             mAnimations[mActiveAnimation]->GetAnimation(static_cast<float>(currentAnimation.time));
-        auto animationData = currentAnimationData;
+        std::vector<NodeAnimation> animationData = currentAnimationData;
         // If we are blending
         if (mTotalBlendTime > 0.01f) {
-            auto pastAnimation = mAnimationSamples[mLastAnimation];
-            auto pastAnimationData =
+            const AnimationSample &pastAnimation = mAnimationSamples[mLastAnimation];
+            const std::vector<NodeAnimation> &pastAnimationData =
                 mAnimations[mLastAnimation]->GetAnimation(static_cast<float>(pastAnimation.time));
             animationData =
-                BlendAnimations(pastAnimationData, currentAnimationData,
-                                currentAnimation.weight);
+                NodeAnimation::BlendAnimations(pastAnimationData, currentAnimationData, currentAnimation.weight);
         }
         // for each entity in the animation data, update its transform
         for (auto &data : animationData) {
@@ -174,76 +171,7 @@ void Animator::SetActiveAnimation(const std::string &aName, float blendTime) {
         }
     }
 }
-std::vector<NodeAnimation> Animator::BlendAnimations(
-    std::vector<NodeAnimation> aLeftAnimation,
-    std::vector<NodeAnimation> aRightAnimation,
-    float t) {
-    std::vector<NodeAnimation> blendedAnimation;
-    size_t leftCounter, rightCounter;
-    leftCounter = rightCounter = 0;
-    // we can assume that the two animation vectors have arrived to us sorted by
-    // entity pointer, and use this to inform the merge. If one of the two
-    // animations is missing an entity, we will assume an identity
-    // transformation
-    while (leftCounter < aLeftAnimation.size() ||
-           rightCounter < aRightAnimation.size()) {
-        // first case: no left animation, but right animation
-        // if rightcounter is out of range this is triggered, or if
-        // rightanimation pointer is greater than leftanimation pointer if
-        // leftcounter is out of range this can't be triggered
-        if (rightCounter >= aRightAnimation.size() ||
-            (leftCounter < aLeftAnimation.size() &&
-             aLeftAnimation[leftCounter].target <
-                 aRightAnimation[rightCounter].target)) {
-            vk::Transform rightTransform{};
-            rightTransform.translation = {1, 1, 1};
-            rightTransform.rotation = {0, 0, 0, 1};
-            rightTransform.scale = {1, 1, 1};
-            vk::Transform leftTransform = aLeftAnimation[leftCounter].transform;
-            vk::Transform resultingTransform =
-                leftTransform.Interpolate(rightTransform, t);
-            blendedAnimation.emplace_back(aLeftAnimation[leftCounter].target,
-                                          resultingTransform);
-            leftCounter++;
-        }
-        // second case, same as first but swap right with left - no right
-        // animation, but left animation if leftcounter is out of range this is
-        // triggered, or if leftanimation pointer is greater than rightanimation
-        // pointer if rightcounter is out of range this can't be triggered
-        else if (leftCounter >= aLeftAnimation.size() ||
-                 (rightCounter < aRightAnimation.size() &&
-                  aRightAnimation[rightCounter].target <
-                      aLeftAnimation[leftCounter].target)) {
-            vk::Transform leftTransform{};
-            leftTransform.translation = {1, 1, 1};
-            leftTransform.rotation = {0, 0, 0, 1};
-            leftTransform.scale = {1, 1, 1};
-            vk::Transform rightTransform = aRightAnimation[rightCounter].transform;
-            vk::Transform resultingTransform =
-                leftTransform.Interpolate(rightTransform, t);
-            blendedAnimation.emplace_back(aRightAnimation[rightCounter].target,
-                                          resultingTransform);
 
-            rightCounter++;
-        }
-        // final, base, most likely case: both have the animation. Simply blend
-        // and increment both counters
-        else if (aLeftAnimation[leftCounter].target ==
-                 aRightAnimation[rightCounter].target) {
-            vk::Transform leftTransform = aLeftAnimation[leftCounter].transform;
-            vk::Transform rightTransform = aRightAnimation[rightCounter].transform;
-            vk::Transform resultingTransform =
-                leftTransform.Interpolate(rightTransform, t);
-            blendedAnimation.emplace_back(aRightAnimation[rightCounter].target,
-                                          resultingTransform);
-
-            leftCounter++;
-            rightCounter++;
-        }
-    }
-
-    return blendedAnimation;
-}
 void Animator::SetTimeScale(float aTimeScale) {
     mAnimationTimeScale = aTimeScale;
 }

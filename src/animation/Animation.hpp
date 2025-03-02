@@ -48,6 +48,8 @@ struct Channel {
 struct NodeAnimation {
     vk::Entity *target;
     vk::Transform transform;
+    // blends two animations
+    static std::vector<NodeAnimation> BlendAnimations(std::vector<NodeAnimation> aLeftAnimation, std::vector<NodeAnimation> aRightAnimation, float t);
 };
 
 class Animation {
