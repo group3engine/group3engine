@@ -10,10 +10,13 @@
 #include "Animator.hpp"
 #include "GLTFImportStructs.hpp"
 #include "animation/Animator.hpp"
+#include <atomic>
 #include <glm/glm.hpp>
 
 namespace vk {
 class Entity {
+  private:
+    static std::atomic<uint32_t> kEntityCount;
    public:
     Entity(std::string aName, Entity *aParent, Mesh *aMesh,
            Transform aLocalTransform)
@@ -96,6 +99,9 @@ class Entity {
     //    bool mHasPhysics = false;
     glm::mat4 mInverseBindMatrix = glm::mat4(1.0f);
     glm::mat4 mAnimationTransform = glm::mat4(1.0f);
+
+
+    uint32_t mEntityID = kEntityCount++;
 };
 }  // namespace vk
 #endif  // VULKANTIME_ENTITY_HPP

@@ -9,6 +9,9 @@
 #include <utility>
 
 namespace vk {
+std::atomic<uint32_t> Entity::kEntityCount{0};
+
+
 Entity::Entity(std::string aName, Entity *aParent, Mesh *aMesh,
                glm::mat4 aLocalTransform)
     : mName(std::move(aName)), mParent(aParent), mMesh(aMesh), mHasMesh(true) {
