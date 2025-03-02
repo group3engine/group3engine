@@ -13,8 +13,8 @@ class Entity;
 }
 
 struct Joint {
-    vk::Entity *entity;
-    glm::mat4 inverseBindMatrix;
+    vk::Entity *entity = nullptr;
+    glm::mat4 inverseBindMatrix = glm::mat4(1.0f);
 };
 
 class Skin {

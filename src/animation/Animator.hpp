@@ -12,8 +12,8 @@
 
 #include <utility>
 struct AnimationSample {
-    double time;
-    float weight;
+    double time = 0;
+    float weight = 0;
 };
 
 class Animator {
