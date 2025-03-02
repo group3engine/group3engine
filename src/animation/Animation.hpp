@@ -25,21 +25,27 @@ enum class Interpolation {
 struct Keyframe {
     float time;
     glm::vec4 value;
+
+    static glm::vec4 Lerp(Keyframe const &a, Keyframe const &b, float time);
+    static glm::vec4 Slerp(Keyframe const &a, Keyframe const &b, float time);
 };
+
+enum class TransformChannel { TRANSLATION, ROTATION, SCALE };
 
 struct Sampler {
     Interpolation interpolation;
     std::vector<Keyframe> keyframes;
+    // function to get the value of a sampler at a given time
+    glm::vec4 GetSamplerValue(float aTime,
+                              TransformChannel aTransformChannel);
 };
-
-enum class TransformChannel { TRANSLATION, ROTATION, SCALE };
 struct Channel {
     vk::Entity *target;
     size_t sampler;
     TransformChannel transformChannel;
 };
 
-struct NodeAnimation{
+struct NodeAnimation {
     vk::Entity *target;
     vk::Transform transform;
 };
@@ -67,13 +73,12 @@ class Animation {
         mMaxTime = std::max(mMaxTime, mSamplers.back().keyframes.back().time);
     }
     // get the animation at a given time
-    std::vector<NodeAnimation>
-    GetAnimation(float aTime);
+    std::vector<NodeAnimation> GetAnimation(float aTime);
 
     void SetName(std::string aName);
-    [[nodiscard]] std::string GetName() const { return mName; }
+    [[nodiscard]] const std::string &GetName() const { return mName; }
 
-    Sampler* GetSampler(size_t i);
+    Sampler *GetSampler(size_t i);
 
     [[nodiscard]] float GetMaxTime() const;
 
@@ -86,14 +91,7 @@ class Animation {
     std::set<vk::Entity *> mTargets;
     // the highest time in the animation
     float mMaxTime = 0;
-    // function to get the value of a sampler at a given time
-    glm::vec4 GetSamplerValue(Sampler &aSampler, float aTime,
-                              TransformChannel aTransformChannel);
-    // function to interpolate between two keyframes
-    glm::vec4 Lerp(Keyframe &a, Keyframe &b, float time);
-    // function to spherical linear interpolate between two quaternions
-    // (keyframes)
-    glm::vec4 Slerp(Keyframe &a, Keyframe &b, float time);
+    // the name of the animation
     std::string mName;
 };
 

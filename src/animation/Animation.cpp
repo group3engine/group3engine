@@ -4,10 +4,9 @@
 
 #include "Animation.hpp"
 
-#include <utility>
 #include "Entity.hpp"
-std::vector<NodeAnimation>
-Animation::GetAnimation(float aTime) {
+#include <utility>
+std::vector<NodeAnimation> Animation::GetAnimation(float aTime) {
     // modulus the time by the max time
     aTime = std::fmod(aTime, mMaxTime);
     // result vector
@@ -23,16 +22,20 @@ Animation::GetAnimation(float aTime) {
     for (auto channel : mChannels) {
         // get the sampler
         auto &sampler = mSamplers[channel.sampler];
-        // get the sampler value - this is one of a translation, rotation, or scale, stored as a vec4 xyz(w)
-        glm::vec4 value = GetSamplerValue(sampler, aTime, channel.transformChannel);
-        // is the target the same as last time? If not, we've finished sampling channels for this target, so it can be added to the result
+        // get the sampler value - this is one of a translation, rotation, or
+        // scale, stored as a vec4 xyz(w)
+        glm::vec4 value = sampler.GetSamplerValue(aTime, channel.transformChannel);
+        // is the target the same as last time? If not, we've finished sampling
+        // channels for this target, so it can be added to the result
         if (channel.target == lastTarget) {
         } else {
             if (lastTarget != nullptr) {
                 result.emplace_back(lastTarget, transform);
             }
             lastTarget = channel.target;
-            // we use the currrent transform of the object as default for if there isn't a keyframe for a channel to keep the value. This follows GLTF spec (I think)
+            // we use the currrent transform of the object as default for if
+            // there isn't a keyframe for a channel to keep the value. This
+            // follows GLTF spec (I think)
             transform = mChannels[++channelNumber].target->GetTransform();
         }
         switch (channel.transformChannel) {
@@ -55,52 +58,51 @@ Animation::GetAnimation(float aTime) {
     }
     return result;
 }
-glm::vec4 Animation::GetSamplerValue(Sampler &aSampler, float aTime,
-                                     TransformChannel aTransformChannel){
+glm::vec4 Sampler::GetSamplerValue(float aTime,
+                                     TransformChannel aTransformChannel) {
     // edge cases
     {
         // if there are no keyframes, return the identity
-        if (aSampler.keyframes.empty()) {
+        if (keyframes.empty()) {
             return {0, 0, 0, 1};
         }
         // if it is before the first keyframe, return the first keyframe
-        if (aTime < aSampler.keyframes.front().time) {
-            return aSampler.keyframes.front().value;
+        if (aTime < keyframes.front().time) {
+            return keyframes.front().value;
         }
         // if it is after the last keyframe, return the last keyframe
-        if (aTime > aSampler.keyframes.back().time) {
-            return aSampler.keyframes.back().value;
+        if (aTime > keyframes.back().time) {
+            return keyframes.back().value;
         }
     }
     // find the two keyframes that the time is between
     auto it = std::lower_bound(
-        aSampler.keyframes.begin(),
-        aSampler.keyframes.end(),
-        aTime,
-        [](const auto &frame, auto time){ return frame.time < time; });
+        keyframes.begin(), keyframes.end(), aTime,
+        [](const auto &frame, auto time) { return frame.time < time; });
 
     auto keyframe1 = std::prev(it);
     auto keyframe2 = std::next(keyframe1);
-    if (aSampler.interpolation == Interpolation::STEP) {
+    if (interpolation == Interpolation::STEP) {
         return keyframe1->value;
     }
 
     // interpolate between the two keyframes
     // if this is a rotation, use spherical linear interpolation
     if (aTransformChannel == TransformChannel::ROTATION) {
-        return Slerp(*keyframe1, *keyframe2, aTime);
+        return Keyframe::Slerp(*keyframe1, *keyframe2, aTime);
     }
     // otherwise, use linear interpolation
-    return Lerp(*keyframe1, *keyframe2, aTime);
+    return Keyframe::Lerp(*keyframe1, *keyframe2, aTime);
 }
-glm::vec4 Animation::Lerp(Keyframe &a, Keyframe &b, float time) {
+glm::vec4 Keyframe::Lerp(Keyframe const &a, Keyframe const &b, float time) {
     float t = (time - a.time) / (b.time - a.time);
     return a.value * (1 - t) + b.value * t;
 }
-glm::vec4 Animation::Slerp(Keyframe &a, Keyframe &b, float time) {
+glm::vec4 Keyframe::Slerp(Keyframe const &a, Keyframe const &b, float time) {
     float t = (time - a.time) / (b.time - a.time);
-    glm::quat q =
-        glm::normalize(glm::slerp(glm::quat{a.value.x, a.value.y, a.value.z, a.value.w}, glm::quat{b.value.x, b.value.y, b.value.z, b.value.w}, t));
+    glm::quat q = glm::normalize(
+        glm::slerp(glm::quat{a.value.x, a.value.y, a.value.z, a.value.w},
+                   glm::quat{b.value.x, b.value.y, b.value.z, b.value.w}, t));
     return {q.x, q.y, q.z, q.w};
 }
 void Animation::SetName(std::string aName) { mName = std::move(aName); }
