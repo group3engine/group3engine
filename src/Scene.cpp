@@ -8,8 +8,10 @@ void vk::Scene::AddLightSource(Light &LightSource) {
     m_Lights.push_back(std::move(LightSource));
 }
 
-void vk::Scene::Update() {
-
+void vk::Scene::Update(double aDeltaTime) {
+    for(auto &entity : m_Entities) {
+        entity.Update(aDeltaTime);
+    }
 	for (auto& light : m_Lights)
 	{
 		glm::mat4 ortho = glm::ortho(-light.view, light.view, -light.view, light.view, light.near, light.far);
@@ -92,10 +94,6 @@ void vk::Scene::DrawShadowMap(VkCommandBuffer cmd,
 }
 void vk::Scene::DrawSkinned(VkCommandBuffer cmd,
                             VkPipelineLayout pipelineLayout) {
-    // update the entities
-    for(auto &entity : m_Entities) {
-        entity.Update(0.03f);
-    }
     for (auto &entity : m_Entities) {
         entity.RecordDrawSkinned(cmd, pipelineLayout);
     }

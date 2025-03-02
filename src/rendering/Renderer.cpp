@@ -325,7 +325,7 @@ void vk::Renderer::Present(uint32_t imageIndex)
 void vk::Renderer::Update(double deltaTime)
 {
 	m_camera->Update(context.extent.width, context.extent.height, deltaTime);
-	m_scene->Update();
+        m_scene->Update(deltaTime);
 
 
 	ImGuiRenderer::Update(m_scene, m_camera);

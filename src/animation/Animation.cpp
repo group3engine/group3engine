@@ -3,6 +3,8 @@
 //
 
 #include "Animation.hpp"
+
+#include <utility>
 #include "Entity.hpp"
 std::vector<std::pair<vk::Entity *, vk::Transform>>
 Animation::GetAnimation(float aTime) {
@@ -98,9 +100,9 @@ glm::vec4 Animation::Slerp(Keyframe &a, Keyframe &b, float time) {
         glm::normalize(glm::slerp(glm::quat{a.value.x, a.value.y, a.value.z, a.value.w}, glm::quat{b.value.x, b.value.y, b.value.z, b.value.w}, t));
     return {q.x, q.y, q.z, q.w};
 }
-void Animation::SetName(std::string aName) { mName = aName; }
+void Animation::SetName(std::string aName) { mName = std::move(aName); }
 Sampler *Animation::GetSampler(int i) { return &mSamplers[i]; }
-float Animation::GetMaxTime() { return mMaxTime; }
+float Animation::GetMaxTime() const { return mMaxTime; }
 void Animation::AddChannel(Channel &aChannel) {
     mTargets.insert(aChannel.target);
     mChannels.push_back(aChannel);

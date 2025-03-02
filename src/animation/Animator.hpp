@@ -12,7 +12,7 @@
 
 #include <utility>
 struct AnimationSample {
-    float time;
+    double time;
     float weight;
 };
 
@@ -31,7 +31,7 @@ class Animator {
         mAnimations = std::move(aAnimations);
     }
     // update the animator
-    void Update(float aDeltaTime, vk::Entity* aMesh);
+    void Update(double aDeltaTime, vk::Entity* aMesh);
     // bind the descriptor set (for use when rendering)
     void BindDescriptorSet(VkCommandBuffer aCmdBuff,
                            VkPipelineLayout aPipelineLayout, int aSet);
@@ -47,7 +47,7 @@ class Animator {
     // update the joint buffer
     void UpdateJointBuffer(vk::Entity* aMesh);
     // update the animation samples
-    void UpdateAnimationSamples(float aDeltaTime);
+    void UpdateAnimationSamples(double aDeltaTime);
     // update the joints transform based on the animation samples
     void UpdateJointsTransform();
     // blends two animations
@@ -81,8 +81,8 @@ class Animator {
     float mAnimationTimeScale = 1.f;
 
 
-    float mTotalBlendTime = 0.f;
-    float mCurrentBlendingTime = 0.f;
+    double mTotalBlendTime = 0.f;
+    double mCurrentBlendingTime = 0.f;
     std::string mCurrentAnimationName{};
 };
 

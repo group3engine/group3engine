@@ -9,6 +9,7 @@
 
 #include "Animator.hpp"
 #include "GLTFImportStructs.hpp"
+#include "animation/Animator.hpp"
 #include <glm/glm.hpp>
 
 namespace vk {
@@ -74,7 +75,7 @@ class Entity {
     void RecordDrawSkinned(VkCommandBuffer aCmdBuff,
                            VkPipelineLayout aPipeLayout);
 
-    virtual void Update(float deltaTime);
+    virtual void Update(double deltaTime);
 
     Transform GetTransform();
 

@@ -162,10 +162,9 @@ void Entity::RecordDrawCutout(VkCommandBuffer aCmdBuff,
     }
 }
 void Entity::SetAnimator(Animator *aAnimator) { mAnimator = aAnimator; }
-void Entity::Update(float deltaTime) {
+void Entity::Update(double deltaTime) {
     frameNumber++;
     if (mAnimator) {
-        mAnimator->SetTimeScale(0.1f);
         mAnimator->Update(deltaTime, this);
         if ((frameNumber / 300) % 2) {
             mAnimator->SetActiveAnimation("laugh", 3.f);

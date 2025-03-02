@@ -70,7 +70,7 @@ class Animation {
 
     Sampler* GetSampler(int i);
 
-    float GetMaxTime();
+    [[nodiscard]] float GetMaxTime() const;
 
   private:
     // list of channels

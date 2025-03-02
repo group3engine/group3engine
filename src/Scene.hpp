@@ -30,7 +30,7 @@ namespace vk
 		void DrawShadowMap(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
                 void DrawSkinned(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
 		void AddLightSource(Light& LightSource);
-		void Update();
+                void Update(double aDeltaTime);
 
 		void Destroy();
 

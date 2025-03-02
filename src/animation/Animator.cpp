@@ -26,7 +26,7 @@ void Animator::BindDescriptorSet(VkCommandBuffer aCmdBuff,
                             aPipelineLayout, aSet, 1, &mDescriptorSet, 0,
                             nullptr);
 }
-void Animator::Update(float aDeltaTime, vk::Entity *aMesh) {
+void Animator::Update(double aDeltaTime, vk::Entity *aMesh) {
     // update the animation samples
     UpdateAnimationSamples(aDeltaTime);
     // update the joints transform
@@ -81,7 +81,7 @@ void Animator::UpdateJointBuffer(vk::Entity *aMesh) {
     mJointBuffer.WriteToBuffer(joints.data(),
                                sizeof(glm::mat4) * joints.size());
 }
-void Animator::UpdateAnimationSamples(float aDeltaTime) {
+void Animator::UpdateAnimationSamples(double aDeltaTime) {
     // TODO: make an animation system
     if (mAnimations.empty()) {
         return;
@@ -105,7 +105,7 @@ void Animator::UpdateAnimationSamples(float aDeltaTime) {
         if (mCurrentBlendingTime > mTotalBlendTime) {
             mTotalBlendTime = 0.f;
         } else {
-            currentWeight = mCurrentBlendingTime / mTotalBlendTime;
+            currentWeight = static_cast<float>(mCurrentBlendingTime / static_cast<double>(mTotalBlendTime));
             pastWeight = 1.f - currentWeight;
         }
     }
@@ -132,13 +132,13 @@ void Animator::UpdateJointsTransform() {
     } else {
         auto currentAnimation = mAnimationSamples[mActiveAnimation];
         auto currentAnimationData =
-            mAnimations[mActiveAnimation]->GetAnimation(currentAnimation.time);
+            mAnimations[mActiveAnimation]->GetAnimation(static_cast<float>(currentAnimation.time));
         auto animationData = currentAnimationData;
         // If we are blending
         if (mTotalBlendTime > 0.01f) {
             auto pastAnimation = mAnimationSamples[mLastAnimation];
             auto pastAnimationData =
-                mAnimations[mLastAnimation]->GetAnimation(pastAnimation.time);
+                mAnimations[mLastAnimation]->GetAnimation(static_cast<float>(pastAnimation.time));
             animationData =
                 BlendAnimations(pastAnimationData, currentAnimationData,
                                 currentAnimation.weight);
