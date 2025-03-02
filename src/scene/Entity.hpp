@@ -37,7 +37,7 @@ class Entity {
     [[nodiscard]] std::string GetName() const { return mName; }
     void SetParent(Entity *aParent);
     [[nodiscard]] Entity *GetParent() const { return mParent; }
-    [[nodiscard]] std::vector<Entity *> GetChildren() const { return children; }
+    [[nodiscard]] std::vector<const Entity *> GetChildren() { return children; }
     void AddChild(Entity *aChild) { children.push_back(aChild); }
     void AddMesh(Mesh *mesh) {
         mMesh = mesh;
@@ -86,7 +86,7 @@ class Entity {
    private:
     std::string mName{};
     Entity *mParent = nullptr;
-    std::vector<Entity *> children;
+    std::vector<const Entity *> children;
     Mesh *mMesh = nullptr;
     Transform mLocalTransform{};
     bool mHasMesh = false;
