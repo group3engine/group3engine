@@ -34,7 +34,7 @@ class Entity {
     virtual ~Entity();
 
     void SetName(std::string aName) { mName = std::move(aName); }
-    [[nodiscard]] std::string GetName() const { return mName; }
+    [[nodiscard]] const std::string& GetName() const { return mName; }
     void SetParent(Entity *aParent);
     [[nodiscard]] Entity *GetParent() const { return mParent; }
     [[nodiscard]] std::vector<const Entity *> GetChildren() { return children; }
