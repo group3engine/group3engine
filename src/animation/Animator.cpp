@@ -71,11 +71,6 @@ void Animator::UpdateJointBuffer(vk::Entity *aMesh) {
         glm::vec3 skew;
         glm::vec4 perspective;
         glm::decompose(joint, scale, rotation, translation, skew, perspective);
-        // debug output
-        std::cout << "Translation: " << glm::to_string(translation)
-                  << std::endl;
-        std::cout << "Rotation: " << glm::to_string(rotation) << std::endl;
-        std::cout << "Scale: " << glm::to_string(scale) << std::endl;
     }
     // upload the joints to the buffer
     mJointBuffer.WriteToBuffer(joints.data(),
