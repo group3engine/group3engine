@@ -116,7 +116,7 @@ void Animation::AddChannel(Channel &aChannel) {
     // stop and think before you remove this line
     std::sort(
         mChannels.begin(), mChannels.end(),
-        [](const Channel &a, const Channel &b) { return a.target < b.target; });
+        [](const Channel &a, const Channel &b) { return *a.target < *b.target; });
 }
 
 
@@ -140,8 +140,8 @@ std::vector<NodeAnimation> NodeAnimation::BlendAnimations(
         // leftcounter is out of range this can't be triggered
         if (rightCounter >= aRightAnimation.size() ||
             (leftCounter < aLeftAnimation.size() &&
-             aLeftAnimation[leftCounter].target <
-                 aRightAnimation[rightCounter].target)) {
+             *aLeftAnimation[leftCounter].target <
+                 *aRightAnimation[rightCounter].target)) {
             vk::Transform rightTransform{};
             rightTransform.translation = {1, 1, 1};
             rightTransform.rotation = {0, 0, 0, 1};
@@ -159,8 +159,8 @@ std::vector<NodeAnimation> NodeAnimation::BlendAnimations(
         // pointer if rightcounter is out of range this can't be triggered
         else if (leftCounter >= aLeftAnimation.size() ||
                  (rightCounter < aRightAnimation.size() &&
-                  aRightAnimation[rightCounter].target <
-                      aLeftAnimation[leftCounter].target)) {
+                  *aRightAnimation[rightCounter].target <
+                      *aLeftAnimation[leftCounter].target)) {
             vk::Transform leftTransform{};
             leftTransform.translation = {1, 1, 1};
             leftTransform.rotation = {0, 0, 0, 1};
@@ -175,8 +175,8 @@ std::vector<NodeAnimation> NodeAnimation::BlendAnimations(
         }
         // final, base, most likely case: both have the animation. Simply blend
         // and increment both counters
-        else if (aLeftAnimation[leftCounter].target ==
-                 aRightAnimation[rightCounter].target) {
+        else if (*aLeftAnimation[leftCounter].target ==
+                 *aRightAnimation[rightCounter].target) {
             vk::Transform leftTransform = aLeftAnimation[leftCounter].transform;
             vk::Transform rightTransform = aRightAnimation[rightCounter].transform;
             vk::Transform resultingTransform =

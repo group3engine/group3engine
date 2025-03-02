@@ -39,10 +39,12 @@ class Entity {
         return mEntityID == aOther.mEntityID;
     }
     // greater than operator
+    // the order is meaningless but stable
     bool operator>(const Entity &aOther) const {
         return mEntityID > aOther.mEntityID;
     }
     // less than operator
+    // the order is meaningless but stable
     bool operator<(const Entity &aOther) const {
         return mEntityID < aOther.mEntityID;
     }
