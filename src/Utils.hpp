@@ -71,7 +71,18 @@ namespace vk
 		float offsets[22];
 	};
 
+	struct SSAOSettings
+	{
+		int NumDirections;
+		int NumSteps;
+		float Radius;
+		float StepSize;
+		float intensity;
+	};
+
 	inline PostProcessing postProcessSettings = {};
+
+	inline SSAOSettings ssaoSettings = {6, 6, 1.4f, 0.001f, 1.0f};
 	inline double deltaTime;
 	inline uint32_t setRenderingPipeline = 1;
 	inline uint32_t setAlphaMakingPipeline = 2;
@@ -103,12 +114,12 @@ namespace vk
 	void UpdateDescriptorSet(Context& context, uint32_t binding, VkDescriptorBufferInfo bufferInfo, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType);
 	// Update image descriptor
 	void UpdateDescriptorSet(Context& context, uint32_t binding, VkDescriptorImageInfo imageInfo, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType);
-	
+
 	VkSampler CreateSampler(Context& context, VkSamplerAddressMode mode, VkBool32 EnableAnisotropic, VkCompareOp compareOp, VkFilter magFilter = VK_FILTER_LINEAR, VkFilter minFilter = VK_FILTER_LINEAR, VkSamplerMipmapMode samplerMipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR);
 
 	// Don't use this. Needs to be removed.
 	void BulkImageUpdate(Context& context, uint32_t binding, std::vector<VkDescriptorImageInfo> imageInfos, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType);
-	
+
 	inline void RenderPassLabel(VkCommandBuffer commandBuffer, const char* labelName) {
 		VkDebugUtilsLabelEXT label = {};
 		label.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
@@ -124,9 +135,9 @@ namespace vk
 
 /*
 * Render normal geometry and then render foliage using different pipeline
-* Color the base color into a metallic map 
-* Reference learnopengl camera movement and mouse look 
-* FIFO PRESENT MODE AND WAIT FOR V-SYNC 
+* Color the base color into a metallic map
+* Reference learnopengl camera movement and mouse look
+* FIFO PRESENT MODE AND WAIT FOR V-SYNC
 * Textues must be TRILINEAR (check sampler)
 * Mouse movement should be activated on right mouse button click and deacitvated once right mouse is pressed again
 TODO:
@@ -139,15 +150,15 @@ TODO:
 give ForwardPass it's own RT to render to (needs own render pass + framebuffer etc) - this pass will now make the depth buffer read  + write which can be used for final present pass to determine depth?
 take RT in another pass as shader read only
 do post process
-write to swapchain image 
+write to swapchain image
 
 */
 
 
 /*
 	- The light needs to be placed somewhere so one light is across lighting deferred and shadow map
-	- shadow frag coord needs to be pre-computed so its one single multiplication and a call to textureProj	
-	
-	- Add point light to remaining braziers 
+	- shadow frag coord needs to be pre-computed so its one single multiplication and a call to textureProj
+
+	- Add point light to remaining braziers
 	- Make sure to remove debug GLSL compiler flags -g -O0 in glslc.lua
 */

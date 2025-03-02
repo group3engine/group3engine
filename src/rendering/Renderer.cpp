@@ -85,8 +85,9 @@ vk::Renderer::Renderer(Context& context) : context{context}
 	m_ShadowMap	    = std::make_unique<ShadowMap>(context, m_scene);
 	m_DepthPrepass  = std::make_unique<DepthPrepass>(context, m_scene, m_camera);
 	m_ForwardPass   = std::make_unique<ForwardPass>(context, m_ShadowMap->GetRenderTarget(), m_DepthPrepass->GetRenderTarget(), m_scene, m_camera);
+    m_SSAO			= std::make_unique<SSAO>(context, m_ForwardPass->GetDepthTarget(), m_camera);
 	m_BloomPass		= std::make_unique<Bloom>(context, m_ForwardPass->GetBrightnessTarget());
-	m_CompositePass = std::make_unique<Composite>(context, m_ForwardPass->GetRenderTarget(), m_BloomPass->GetRenderTarget());
+	m_CompositePass = std::make_unique<Composite>(context, m_ForwardPass->GetRenderTarget(), m_BloomPass->GetRenderTarget(), m_SSAO->GetRenderTarget());
 	m_PresentPass   = std::make_unique<PresentPass>(context, m_CompositePass->GetRenderTarget());
 
 	// ImGui
@@ -104,6 +105,7 @@ void vk::Renderer::Destroy()
 	m_ShadowMap.reset();
 	m_BloomPass.reset();
 	m_CompositePass.reset();
+    m_SSAO.reset();
 	m_PresentPass.reset();
 	m_camera.reset();
 	m_scene->Destroy();
@@ -234,6 +236,7 @@ void vk::Renderer::Render()
 		m_DepthPrepass->Resize();
 		m_ShadowMap->Resize();
 		m_ForwardPass->Resize();
+		m_SSAO->Resize();
 		m_BloomPass->Resize();
 		m_CompositePass->Resize();
 		m_PresentPass->Resize();
@@ -259,6 +262,7 @@ void vk::Renderer::Render()
 		m_ShadowMap->Execute(cmd);
 		m_DepthPrepass->Execute(cmd);
 		m_ForwardPass->Execute(cmd);
+        m_SSAO->Execute(cmd);
 		m_BloomPass->Execute(cmd);
 		m_CompositePass->Execute(cmd);
 		m_PresentPass->Execute(cmd, index);
@@ -316,6 +320,7 @@ void vk::Renderer::Present(uint32_t imageIndex)
 		m_DepthPrepass->Resize();
 		m_ShadowMap->Resize();
 		m_ForwardPass->Resize();
+		m_SSAO->Resize();
 		m_BloomPass->Resize();
 		m_CompositePass->Resize();
 		m_PresentPass->Resize();
@@ -329,6 +334,7 @@ void vk::Renderer::Update(double deltaTime)
 
 
 	ImGuiRenderer::Update(m_scene, m_camera);
+    m_SSAO->Update();
 	// Update passes
 	m_ShadowMap->Update();
 	m_ForwardPass->Update();

@@ -6,6 +6,7 @@ layout(location = 0) out vec4 fragColor;
 
 layout(set = 0, binding = 0) uniform sampler2D renderedScene;
 layout(set = 0, binding = 1) uniform sampler2D bloomPass;
+layout(set = 0, binding = 2) uniform sampler2D SSAO;
 
 // Combine the deferred lighting pass and the bloom pass to produce the final output image
 
@@ -13,8 +14,9 @@ void main()
 {
 	vec4 lighting = texture(renderedScene, uv);
 	vec4 bloom = texture(bloomPass, uv);
+	vec4 ssao = texture(SSAO, uv);
 
-	vec3 hdrColor = lighting.rgb;
+	vec3 hdrColor = lighting.rgb * ssao.x;
 	vec3 ldrColor = hdrColor / (hdrColor + vec3(1.0));
 
 	vec3 result = ldrColor + bloom.rgb;

@@ -86,6 +86,16 @@ void vk::ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::s
         }
     }
 
+    // SSAO settings
+    if (ImGui::CollapsingHeader("SSAO"))
+    {
+        ImGui::SliderInt("Directions: ", &ssaoSettings.NumDirections, 1, 64);
+        ImGui::SliderInt("Steps: ", &ssaoSettings.NumSteps, 1, 64);
+        ImGui::SliderFloat("Radius: ", &ssaoSettings.Radius, 0.1f, 10.0f);
+        ImGui::SliderFloat("StepSize: ", &ssaoSettings.StepSize, 0.0f, 0.1f);
+        ImGui::SliderFloat("Intensity: ", &ssaoSettings.intensity, 0.0f, 10.0f);
+    }
+
     static bool enableTextureDebug = false;
     ImGui::Checkbox("Debug Textures", &enableTextureDebug);
     if (enableTextureDebug)

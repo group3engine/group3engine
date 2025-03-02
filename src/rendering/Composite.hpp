@@ -11,7 +11,7 @@ namespace vk
 	class Composite
 	{
 	public:
-		explicit Composite(Context& context, Image& LightingPass, Image& BloomPass);
+		explicit Composite(Context& context, Image& LightingPass, Image& BloomPass, Image& SSAO);
 		~Composite();
 
 		void Execute(VkCommandBuffer cmd);
@@ -30,6 +30,7 @@ namespace vk
 		Image m_RenderTarget;
 		Image& LightingPass;
 		Image& BloomPass;
+        Image& SSAO;
 
 		VkPipeline m_Pipeline;
 		VkPipelineLayout m_PipelineLayout;

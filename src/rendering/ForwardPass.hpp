@@ -27,6 +27,7 @@ namespace vk
 		void Resize();
 		Image& GetRenderTarget() { return m_RenderTarget; }
 		Image& GetBrightnessTarget() { return m_BrightnessTexture; }
+        Image& GetDepthTarget() { return m_DepthTarget; }
 
 	private:
 		void CreatePipeline();
@@ -49,6 +50,6 @@ namespace vk
 		std::shared_ptr<Camera> camera;
 		std::vector<VkDescriptorSet> m_descriptorSets;
 		std::pair<VkPipeline, VkPipelineLayout> m_opaquePipeline;
-                std::pair<VkPipeline, VkPipelineLayout> m_alphaMaskPipeline;
+        std::pair<VkPipeline, VkPipelineLayout> m_alphaMaskPipeline;
 	};
 }
