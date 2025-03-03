@@ -403,6 +403,49 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             aEntities[ni].SetParent(&aEntities[parentIndex]);
         }
     }
+    // add skins
+    for (size_t i = 0; i < data->skins_count; i++) {
+        const auto &gltfSkin = data->skins[i];
+        Skin skin;
+        skin.SetName(gltfSkin.name);
+        skin.ResizeJoints(gltfSkin.joints_count);
+        // get the "skeleton" node
+        auto *skeleton = &aEntities[gltfSkin.skeleton - data->nodes];
+        skin.SetRoot(skeleton);
+        // get the inverse bind matrices
+        std::vector<glm::mat4> inverseBindMatrices;
+
+        for (size_t j = 0; j < gltfSkin.joints_count; ++j) {
+            float inverse_bind_matrix[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+
+            if (gltfSkin.inverse_bind_matrices) {
+                cgltf_accessor_read_float(gltfSkin.inverse_bind_matrices, j, inverse_bind_matrix, 16);
+
+                auto m = glm::make_mat4(inverse_bind_matrix);
+
+                inverseBindMatrices.push_back(m);
+            }
+        }
+
+        // get the joints
+        std::vector<Entity *> joint_nodes;
+        joint_nodes.resize(gltfSkin.joints_count);
+        for (size_t j = 0; j < gltfSkin.joints_count; j++) {
+            joint_nodes[j] = &aEntities[gltfSkin.joints[j] - data->nodes];
+        }
+        // add the joints
+        for (size_t j = 0; j < gltfSkin.joints_count; j++) {
+            Joint joint{};
+            joint.entity = joint_nodes[j];
+            joint.inverseBindMatrix = inverseBindMatrices[j];
+            skin.AddJoint(joint);
+        }
+        // get the root
+        skin.SetRoot(&aEntities[gltfSkin.skeleton - data->nodes]);
+        aSkins.push_back(skin);
+    }
+
+
     // add animations
     std::vector<Animation *> animationPointers;
     aAnimations.reserve(data->animations_count);
@@ -485,47 +528,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         }
         animationPointers.push_back(animation);
     }
-    // add skins
-    for (size_t i = 0; i < data->skins_count; i++) {
-        const auto &gltfSkin = data->skins[i];
-        Skin skin;
-        skin.SetName(gltfSkin.name);
-        skin.ResizeJoints(gltfSkin.joints_count);
-        // get the "skeleton" node
-        auto *skeleton = &aEntities[gltfSkin.skeleton - data->nodes];
-        skin.SetRoot(skeleton);
-        // get the inverse bind matrices
-        std::vector<glm::mat4> inverseBindMatrices;
 
-        for (size_t j = 0; j < gltfSkin.joints_count; ++j) {
-            float inverse_bind_matrix[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
-
-            if (gltfSkin.inverse_bind_matrices) {
-                cgltf_accessor_read_float(gltfSkin.inverse_bind_matrices, j, inverse_bind_matrix, 16);
-
-                auto m = glm::make_mat4(inverse_bind_matrix);
-
-                inverseBindMatrices.push_back(m);
-            }
-        }
-
-        // get the joints
-        std::vector<Entity *> joint_nodes;
-        joint_nodes.resize(gltfSkin.joints_count);
-        for (size_t j = 0; j < gltfSkin.joints_count; j++) {
-            joint_nodes[j] = &aEntities[gltfSkin.joints[j] - data->nodes];
-        }
-        // add the joints
-        for (size_t j = 0; j < gltfSkin.joints_count; j++) {
-            Joint joint{};
-            joint.entity = joint_nodes[j];
-            joint.inverseBindMatrix = inverseBindMatrices[j];
-            skin.AddJoint(joint);
-        }
-        // get the root
-        skin.SetRoot(&aEntities[gltfSkin.skeleton - data->nodes]);
-        aSkins.push_back(skin);
-    }
     // for each entity, if it has a skin, add an animator
     for (size_t i = 0; i < aEntities.size(); i++) {
         const auto &gltfNode = data->nodes[i];
