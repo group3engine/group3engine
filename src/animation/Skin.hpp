@@ -8,12 +8,10 @@
 #include <glm/glm.hpp>
 #include <string>
 
-namespace vk {
 class Entity;
-}
 
 struct Joint {
-    vk::Entity *entity = nullptr;
+    Entity *entity = nullptr;
     glm::mat4 inverseBindMatrix = glm::mat4(1.0f);
 };
 
@@ -23,11 +21,11 @@ class Skin {
     void ResizeJoints(size_t aSize) { mJoints.reserve(aSize); }
     void AddJoint(Joint aJoint);
     void SetJoints(std::vector<Joint> aJoints) { mJoints = std::move(aJoints); }
-    void SetRoot(vk::Entity *aRoot) { mRoot = aRoot; }
+    void SetRoot(Entity *aRoot) { mRoot = aRoot; }
 
     [[nodiscard]] std::vector<Joint> GetJoints() const { return mJoints; }
     // function to get the joint matrices
-    [[nodiscard]] std::vector<glm::mat4> GetJointMatrices(vk::Entity* aMesh) const;
+    [[nodiscard]] std::vector<glm::mat4> GetJointMatrices(Entity* aMesh) const;
 
     void SetName(char *aName) { mName = aName; }
     [[nodiscard]] std::string GetName() const { return mName; }
@@ -36,7 +34,7 @@ class Skin {
     // list of joints
     std::vector<Joint> mJoints;
     // root joint
-    vk::Entity *mRoot;
+    Entity *mRoot;
     // name of the skin
     std::string mName;
 };

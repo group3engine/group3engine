@@ -1,19 +1,19 @@
-//
-// Created by thomas on 07/02/25.
-//
+#ifndef SCENE_ENTITY_HPP
+#define SCENE_ENTITY_HPP
 
-#ifndef VULKANTIME_ENTITY_HPP
-#define VULKANTIME_ENTITY_HPP
-#include "Volk.hpp"
 #include <utility>
+
+#include <glm/glm.hpp>
+#include <glm/fwd.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 
 #include "Animator.hpp"
 #include "GLTFImportStructs.hpp"
-#include "animation/Animator.hpp"
-#include <atomic>
-#include <glm/glm.hpp>
+#include "RigidBody.hpp"
 
-namespace vk {
+#include <atomic>
+
+
 class Entity {
   private:
     static std::atomic<uint32_t> kEntityCount;
@@ -27,10 +27,10 @@ class Entity {
            glm::mat4 aLocalTransform);
 
     Entity() = default;
-
-    Entity(const Entity &) = default;
+    // Delete copy constructors because of unique pointer to rigid body
+    Entity(const Entity &) = delete;
+    Entity &operator=(const Entity &) = delete;
     Entity(Entity &&) = default;
-    Entity &operator=(const Entity &) = default;
     Entity &operator=(Entity &&) = default;
     virtual ~Entity();
 
@@ -51,16 +51,23 @@ class Entity {
 
     void SetName(std::string aName) { mName = std::move(aName); }
     [[nodiscard]] const std::string &GetName() const { return mName; }
+
     void SetParent(Entity *aParent);
+
     [[nodiscard]] Entity *GetParent() const { return mParent; }
-    [[nodiscard]] std::vector<const Entity *> const &GetChildren() {
-        return children;
-    }
-    void AddChild(Entity *aChild) { children.push_back(aChild); }
+    [[nodiscard]] std::vector<Entity *> const &GetChildren() { return mChildren; }
+    void AddChild(Entity *aChild) { mChildren.push_back(aChild); }
+
     void AddMesh(Mesh *mesh) {
         mMesh = mesh;
         mHasMesh = true;
     }
+
+    void AddRigidBody(std::unique_ptr<RigidBody> rigidBody) {
+        mRigidBody = std::move(rigidBody);
+        mHasRigidBody = true;
+    }
+
     void SetTransform(Transform aTransform) { mLocalTransform = aTransform; }
     void SetTransform(glm::mat4 aTransform);
     void SetJointTransform(glm::mat4 aJointTransform) {
@@ -75,18 +82,16 @@ class Entity {
 
     [[nodiscard]] glm::mat4 getSkinnedWorldTransform(Entity const *aRoot) const;
 
-    [[nodiscard]]
-
     glm::mat4 getLocalTransform();
 
-    void RecordDrawOpaque(VkCommandBuffer aCmdBuff,
-                          VkPipelineLayout aPipelineLayout);
+    void RecordDrawOpaque(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout);
 
-    void RecordDrawShadow(VkCommandBuffer aCmdBuff,
-                          VkPipelineLayout aPipelineLayout) const;
+    void RecordDrawShadow(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout) const;
 
-    void RecordDrawCutout(VkCommandBuffer aCmdBuff,
-                          VkPipelineLayout aPipelineLayout);
+    void RecordDrawCutout(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout);
+
+    const Mesh *GetMesh() const { return mMesh; }
+
     // move an animator to the entity
     void SetAnimator(Animator *aAnimator);
 
@@ -98,24 +103,35 @@ class Entity {
     Transform GetTransform();
 
   protected:
+    virtual void Update() {}
     virtual void LateUpdate() {}
     virtual void Awake() {}
 
-  private:
+  public:
+    std::unique_ptr<RigidBody> mRigidBody;
+
+    glm::vec3 mPosition{};
+    bool mHasCharacter = false;
+
     std::string mName{};
+  private:
+    
+
     Entity *mParent = nullptr;
-    std::vector<const Entity *> children;
+    std::vector<Entity *> mChildren;
+
     Mesh *mMesh = nullptr;
+
     Transform mLocalTransform{};
+
     bool mHasMesh = false;
     Animator *mAnimator = nullptr;
     size_t frameNumber = 0;
-
-    //    bool mHasPhysics = false;
     glm::mat4 mInverseBindMatrix = glm::mat4(1.0f);
     glm::mat4 mAnimationTransform = glm::mat4(1.0f);
 
+    bool mHasRigidBody = false;
+
     uint32_t mEntityID = kEntityCount++;
 };
-} // namespace vk
 #endif // VULKANTIME_ENTITY_HPP

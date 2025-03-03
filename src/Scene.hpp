@@ -16,41 +16,38 @@
 #include "TextureManager.hpp"
 #include "Utils.hpp"
 
-namespace vk
-{
-	class Scene
-	{
-	public:
+class Scene {
+  public:
+    explicit Scene(Context &context);
+    void Load(const std::filesystem::path &aFilepath);
 
-		explicit Scene(Context& context);
-		void Load(const std::filesystem::path& aFilepath);
+    void DrawOpaque(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
+    void DrawAlphaMasked(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
+    void DrawShadowMap(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
+    void DrawSkinned(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
+    void AddLightSource(Light& LightSource);
+    void Update(double aDeltaTime);
 
-		void DrawOpaque(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
-		void DrawAlphaMasked(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
-		void DrawShadowMap(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
-                void DrawSkinned(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
-		void AddLightSource(Light& LightSource);
-                void Update(double aDeltaTime);
+    void Destroy();
 
-		void Destroy();
+    std::vector<Light> &GetLights() { return m_Lights; }
 
-		std::vector<Light>&							   GetLights() { return m_Lights; }
-		std::vector<Buffer>&						   GetLightsUBO() { return m_LightUBO; }
+    std::vector<Buffer> &GetLightsUBO() { return m_LightUBO; }
 
-		std::vector<Entity>& GetEntities() { return m_Entities; }
-	private:
-		Context& context;
-                MeshManager *mMeshManager;
-                MaterialManager *mMaterialManager;
-                TextureManager *mTextureManager;
+    std::vector<Entity>& GetEntities() { return m_Entities; }
+  private:
+    Context &context;
+    MeshManager *mMeshManager;
+    MaterialManager *mMaterialManager;
+    TextureManager *mTextureManager;
 
-		std::vector<size_t> m_FrontMeshes;
-		std::vector<size_t> m_BackMeshes;
-		std::vector<Light>  m_Lights;
-		LightBuffer m_LightBuffer;
-		std::vector<Buffer> m_LightUBO;
-		std::vector<Entity> m_Entities;
-                std::vector<Animation> m_Animations;
-                std::vector<Skin> m_Skins;
-	};
-}
+    std::vector<size_t> m_FrontMeshes;
+    std::vector<size_t> m_BackMeshes;
+    std::vector<Light>  m_Lights;
+    vkutil::LightBuffer m_LightBuffer;
+    std::vector<Buffer> m_LightUBO;
+    std::vector<Entity> m_Entities;
+    std::vector<Animation> m_Animations;
+    std::vector<Skin> m_Skins;
+};
+

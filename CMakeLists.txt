@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.19...3.31)
+cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
 
 project(group3engine CXX)
 
@@ -37,6 +37,8 @@ endif()
 
 add_subdirectory(src)
 
+set(INTERPROCEDURAL_OPTIMIZATION OFF CACHE BOOL "" FORCE)
+
 set_target_properties(src PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED YES CXX_EXTENSIONS NO)
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
@@ -74,9 +76,8 @@ add_subdirectory(extern/spdlog)
 add_subdirectory(extern/imgui)
 add_subdirectory(extern/volk)
 
-
-set(PHYSICS_REPO_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/extern/JoltPhysics)
-include(${PHYSICS_REPO_ROOT}/Jolt/Jolt.cmake)
+add_subdirectory(extern/JoltPhysics/Build)
+target_include_directories(src PUBLIC ${JoltPhysics_SOURCE_DIR}/..)
 
 # Add header-only libraries
 add_library(cgltf INTERFACE)

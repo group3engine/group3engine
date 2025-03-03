@@ -19,8 +19,6 @@
 #include "glm/gtc/quaternion.hpp"
 #include "glm/gtx/transform.hpp"
 
-namespace vk {
-
 struct Vertex {
     glm::vec3 pos;
     glm::vec2 tex;
@@ -74,6 +72,7 @@ struct Texture {
     Image image;
     std::string name;
 };
+
 struct PBRMaterialNumbers {
     glm::vec4 baseColorFactor;
     float metallicFactor;
@@ -98,6 +97,7 @@ struct Material {
     Buffer materialBuffer;
     bool alphaCutout;
     float alphaCutoff;
+
     // move constructor
     Material(Material &&aOther) noexcept
         : name(std::move(aOther.name)),
@@ -116,6 +116,7 @@ struct MeshPrimitiveGPU {
     Buffer mIndices;
     std::uint32_t mIndexCount;
 };
+
 struct MeshPrimitive {
     std::vector<Vertex> vertices;
     // TODO: Bone weights
@@ -145,6 +146,7 @@ struct Transform {
     glm::vec3 translation;
     glm::quat rotation;
     glm::vec3 scale;
+
     // function to get the matrix
     [[nodiscard]] glm::mat4 getMatrix() const {
         glm::mat4 translationMatrix = glm::translate(translation);
@@ -161,6 +163,4 @@ struct Transform {
         return result;
     }
 };
-} // namespace vk
-
 #endif // VULKANTIME_GLTFIMPORTSTRUCTS_HPP

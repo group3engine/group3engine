@@ -4,14 +4,15 @@
 
 #include "ResourceManager.hpp"
 
-void vk::Scene::AddLightSource(Light &LightSource) {
+void Scene::AddLightSource(Light &LightSource) {
     m_Lights.push_back(std::move(LightSource));
 }
 
-void vk::Scene::Update(double aDeltaTime) {
+void Scene::Update(double aDeltaTime) {
     for(auto &entity : m_Entities) {
         entity.Update(aDeltaTime);
     }
+
 	for (auto& light : m_Lights)
 	{
 		glm::mat4 ortho = glm::ortho(-light.view, light.view, -light.view, light.view, light.near, light.far);
@@ -34,10 +35,10 @@ void vk::Scene::Update(double aDeltaTime) {
         }
 
 	// Pass the light data to the GPU to update all light properties
-	m_LightUBO[currentFrame].WriteToBuffer(m_LightBuffer, sizeof(LightBuffer));
+	m_LightUBO[vkutil::currentFrame].WriteToBuffer(m_LightBuffer, sizeof(vkutil::LightBuffer));
 }
 
-void vk::Scene::Destroy()
+void Scene::Destroy()
 {
 	for (auto& buffer : m_LightUBO)
 	{
@@ -47,21 +48,24 @@ void vk::Scene::Destroy()
         delete mMeshManager;
         delete mMaterialManager;
         delete mTextureManager;
+
         // delete the entities
         m_Entities.clear();
 }
-void vk::Scene::Load(const std::filesystem::path& aFilepath) {
+
+void Scene::Load(const std::filesystem::path &aFilepath) {
     // Load the GLTF file
     LoadGLTF(aFilepath, *mMeshManager, *mMaterialManager, *mTextureManager,
              m_Entities, false, m_Animations, m_Skins);
 }
-vk::Scene::Scene(Context& context) : context(context)
-{
-    m_LightUBO.resize(MAX_FRAMES_IN_FLIGHT);
+
+Scene::Scene(Context &context)
+    : context(context) {
+    m_LightUBO.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
     // Light uniform buffers
-    for (auto& buffer : m_LightUBO) {
-        buffer = vk::CreateBuffer(
-            "LightUBO", context, sizeof(LightBuffer),
+    for (auto &buffer : m_LightUBO) {
+        buffer = CreateBuffer(
+            "LightUBO", context, sizeof(vkutil::LightBuffer),
             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
             VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
     }
@@ -70,30 +74,30 @@ vk::Scene::Scene(Context& context) : context(context)
     mMeshManager = new MeshManager(context);
     mMaterialManager = new MaterialManager(context);
     mTextureManager = new TextureManager(context);
+}
 
+void Scene::DrawOpaque(VkCommandBuffer cmd,
+                       VkPipelineLayout pipelineLayout) {
+    for (auto &entity : m_Entities) {
+        entity.RecordDrawOpaque(cmd, pipelineLayout);
+    }
+}
 
-
-}
-void vk::Scene::DrawOpaque(VkCommandBuffer cmd,
-                           VkPipelineLayout pipelineLayout) {
-        for (auto& entity : m_Entities) {
-            entity.RecordDrawOpaque(cmd, pipelineLayout);
-        }
-}
-void vk::Scene::DrawAlphaMasked(VkCommandBuffer cmd,
-                                VkPipelineLayout pipelineLayout) {
-        for (auto& entity : m_Entities) {
-            entity.RecordDrawCutout(cmd, pipelineLayout);
-        }
-}
-void vk::Scene::DrawShadowMap(VkCommandBuffer cmd,
-                              VkPipelineLayout pipelineLayout) {
-        for (auto& entity : m_Entities) {
-            entity.RecordDrawShadow(cmd, pipelineLayout);
-        }
-}
-void vk::Scene::DrawSkinned(VkCommandBuffer cmd,
+void Scene::DrawAlphaMasked(VkCommandBuffer cmd,
                             VkPipelineLayout pipelineLayout) {
+    for (auto &entity : m_Entities) {
+        entity.RecordDrawCutout(cmd, pipelineLayout);
+    }
+}
+void Scene::DrawShadowMap(VkCommandBuffer cmd,
+                          VkPipelineLayout pipelineLayout) {
+    for (auto& entity : m_Entities) {
+        entity.RecordDrawShadow(cmd, pipelineLayout);
+    }
+}
+
+void Scene::DrawSkinned(VkCommandBuffer cmd,
+                        VkPipelineLayout pipelineLayout) {
     for (auto &entity : m_Entities) {
         entity.RecordDrawSkinned(cmd, pipelineLayout);
     }

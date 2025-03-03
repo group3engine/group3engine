@@ -13,8 +13,8 @@ std::vector<NodeAnimation> Animation::CalcNodeAnimation(float aTime) {
     std::vector<NodeAnimation> result;
     // reserve one pair for each channel
     result.reserve(mTargets.size());
-    vk::Transform transform = mChannels[0].target->GetTransform();
-    vk::Entity *lastTarget = nullptr;
+    Transform transform = mChannels[0].target->GetTransform();
+    Entity *lastTarget = nullptr;
     int channelNumber = 0;
     // for each channel, get the animation. If it is the same target as last
     // time, add it to the transform. Otherwise, add the last transform to the
@@ -142,12 +142,12 @@ std::vector<NodeAnimation> NodeAnimation::BlendAnimations(
             (leftCounter < aLeftAnimation.size() &&
              *aLeftAnimation[leftCounter].target <
                  *aRightAnimation[rightCounter].target)) {
-            vk::Transform rightTransform{};
+            Transform rightTransform{};
             rightTransform.translation = {1, 1, 1};
             rightTransform.rotation = {0, 0, 0, 1};
             rightTransform.scale = {1, 1, 1};
-            vk::Transform leftTransform = aLeftAnimation[leftCounter].transform;
-            vk::Transform resultingTransform =
+            Transform leftTransform = aLeftAnimation[leftCounter].transform;
+            Transform resultingTransform =
                 leftTransform.Interpolate(rightTransform, t);
             blendedAnimation.emplace_back(aLeftAnimation[leftCounter].target,
                                           resultingTransform);
@@ -161,12 +161,12 @@ std::vector<NodeAnimation> NodeAnimation::BlendAnimations(
                  (rightCounter < aRightAnimation.size() &&
                   *aRightAnimation[rightCounter].target <
                       *aLeftAnimation[leftCounter].target)) {
-            vk::Transform leftTransform{};
+            Transform leftTransform{};
             leftTransform.translation = {1, 1, 1};
             leftTransform.rotation = {0, 0, 0, 1};
             leftTransform.scale = {1, 1, 1};
-            vk::Transform rightTransform = aRightAnimation[rightCounter].transform;
-            vk::Transform resultingTransform =
+            Transform rightTransform = aRightAnimation[rightCounter].transform;
+            Transform resultingTransform =
                 leftTransform.Interpolate(rightTransform, t);
             blendedAnimation.emplace_back(aRightAnimation[rightCounter].target,
                                           resultingTransform);
@@ -177,9 +177,9 @@ std::vector<NodeAnimation> NodeAnimation::BlendAnimations(
         // and increment both counters
         else if (*aLeftAnimation[leftCounter].target ==
                  *aRightAnimation[rightCounter].target) {
-            vk::Transform leftTransform = aLeftAnimation[leftCounter].transform;
-            vk::Transform rightTransform = aRightAnimation[rightCounter].transform;
-            vk::Transform resultingTransform =
+            Transform leftTransform = aLeftAnimation[leftCounter].transform;
+            Transform rightTransform = aRightAnimation[rightCounter].transform;
+            Transform resultingTransform =
                 leftTransform.Interpolate(rightTransform, t);
             blendedAnimation.emplace_back(aRightAnimation[rightCounter].target,
                                           resultingTransform);

@@ -11,9 +11,7 @@
 #include <vector>
 
 // forward declaration of Entity
-namespace vk {
 class Entity;
-}
 
 enum class Interpolation {
     LINEAR,
@@ -40,14 +38,14 @@ struct Sampler {
                               TransformChannel aTransformChannel);
 };
 struct Channel {
-    vk::Entity *target;
+    Entity *target;
     size_t sampler;
     TransformChannel transformChannel;
 };
 
 struct NodeAnimation {
-    vk::Entity *target;
-    vk::Transform transform;
+    Entity *target;
+    Transform transform;
     // blends two animations
     static std::vector<NodeAnimation>
     BlendAnimations(const std::vector<NodeAnimation> &aLeftAnimation,
@@ -92,7 +90,7 @@ class Animation {
     // list of samplers
     std::vector<Sampler> mSamplers;
     // set of target entities
-    std::set<vk::Entity *> mTargets;
+    std::set<Entity *> mTargets;
     // the highest time in the animation
     float mMaxTime = 0;
     // the name of the animation

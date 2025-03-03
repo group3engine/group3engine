@@ -26,7 +26,7 @@ void Animator::BindDescriptorSet(VkCommandBuffer aCmdBuff,
                             aPipelineLayout, aSet, 1, &mDescriptorSet, 0,
                             nullptr);
 }
-void Animator::Update(double aDeltaTime, vk::Entity *aMesh) {
+void Animator::Update(double aDeltaTime, Entity *aMesh) {
     // update the animation samples
     UpdateAnimationSamples(aDeltaTime);
     // update the joints transform
@@ -34,21 +34,21 @@ void Animator::Update(double aDeltaTime, vk::Entity *aMesh) {
     // update the joint buffer
     UpdateJointBuffer(aMesh);
 }
-Animator::Animator(vk::Context *aContext, Skin *aSkin)
+Animator::Animator(Context *aContext, Skin *aSkin)
     : mContext(aContext), mSkin(aSkin) {
     // create the descriptor set layout
-    mDescriptorSetLayout = vk::CreateDescriptorSetLayout(
+    mDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(
         *mContext, {
                        {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1,
                         VK_SHADER_STAGE_VERTEX_BIT, nullptr},
                    });
     // create the descriptor pool
-    vk::CreateDescriptorPool(*mContext, 1, 1, mDescriptorPool);
+    vkutil::CreateDescriptorPool(*mContext, 1, 1, mDescriptorPool);
     // allocate the descriptor set
-    vk::AllocateDescriptorSet(*mContext, mDescriptorPool, mDescriptorSetLayout,
+    vkutil::AllocateDescriptorSet(*mContext, mDescriptorPool, mDescriptorSetLayout,
                               1, mDescriptorSet);
     // create the joint buffer
-    mJointBuffer = vk::CreateBuffer(
+    mJointBuffer = CreateBuffer(
         "JointBuffer", *mContext, sizeof(glm::mat4) * mSkin->GetJoints().size(),
         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
         VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
@@ -57,10 +57,10 @@ Animator::Animator(vk::Context *aContext, Skin *aSkin)
     bufferInfo.buffer = mJointBuffer.buffer;
     bufferInfo.offset = 0;
     bufferInfo.range = sizeof(glm::mat4) * mSkin->GetJoints().size();
-    vk::UpdateDescriptorSet(*mContext, 0, bufferInfo, mDescriptorSet,
+    vkutil::UpdateDescriptorSet(*mContext, 0, bufferInfo, mDescriptorSet,
                             VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 }
-void Animator::UpdateJointBuffer(vk::Entity *aMesh) {
+void Animator::UpdateJointBuffer(Entity *aMesh) {
     // get the joints from the skin
     auto joints = mSkin->GetJointMatrices(aMesh);
     // for each joint matrix, decompose it into its components

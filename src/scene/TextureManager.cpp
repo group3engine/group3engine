@@ -4,26 +4,25 @@
 
 #include "TextureManager.hpp"
 
-
 #include "Utils.hpp"
 
-namespace vk {
-void TextureManager::addTexture(std::filesystem::path aTexturePath,
-                                const std::string& aTextureName) {
+void TextureManager::addTexture(const std::filesystem::path &aTexturePath,
+                                const std::string &aTextureName) {
     // check if the texture already exists, if it does, yay :)
     if (mTextureMap.find(aTextureName) != mTextureMap.end()) {
         return;
     }
     // load the texture
-    Image textureImage = vk::LoadTextureFromDisk(
+    Image textureImage = LoadTextureFromDisk(
         aTexturePath, mContext,
-        VK_FORMAT_R8G8B8A8_UNORM);  // create the texture
+        VK_FORMAT_R8G8B8A8_UNORM); // create the texture
     Texture texture;
     texture.name = aTextureName;
     texture.image = std::move(textureImage);
     // add the texture to the map
     mTextureMap[aTextureName] = std::move(texture);
 }
+
 TextureManager::~TextureManager() {
     // free the command pool
     vkDestroyCommandPool(mContext.device, mCommandPool, nullptr);
@@ -46,4 +45,3 @@ TextureManager::TextureManager(Context &aContext)
     mCommandPool = VK_NULL_HANDLE;
     VK_CHECK(vkCreateCommandPool(mContext.device, &cmdPool, nullptr, &mCommandPool), "Failed to create command pool");
 }
-}  // namespace vk

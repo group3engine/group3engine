@@ -8,7 +8,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
 
-void vk::ImGuiRenderer::Initialize(const Context &context) {
+void ImGuiRenderer::Initialize(const Context &context) {
     VkDescriptorPoolCreateInfo pool_info = {};
     pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
@@ -34,7 +34,7 @@ void vk::ImGuiRenderer::Initialize(const Context &context) {
     info.QueueFamily = context.graphicsFamilyIndex;
     info.DescriptorPool = ImGuiRenderer::imGuiDescriptorPool;
     info.MinImageCount = 3;
-    info.ImageCount = MAX_FRAMES_IN_FLIGHT;
+    info.ImageCount = vkutil::MAX_FRAMES_IN_FLIGHT;
     info.Subpass = 0;
     info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
     info.RenderPass = context.renderPass;
@@ -44,7 +44,7 @@ void vk::ImGuiRenderer::Initialize(const Context &context) {
     io.Fonts->AddFontDefault();
 }
 
-void vk::ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::shared_ptr<Camera>& camera)
+void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::shared_ptr<Camera>& camera)
 {
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -120,14 +120,14 @@ void vk::ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::s
     //ImGui::ShowDemoWindow();
 }
 
-void vk::ImGuiRenderer::Render(VkCommandBuffer cmd, const Context &context, uint32_t imageIndex)
+void ImGuiRenderer::Render(VkCommandBuffer cmd, const Context &context, uint32_t imageIndex)
 {
     ImGui::Render();
     ImDrawData *main_draw_data = ImGui::GetDrawData();
     ImGui_ImplVulkan_RenderDrawData(main_draw_data, cmd);
 }
 
-void vk::ImGuiRenderer::Shutdown(const Context& context)
+void ImGuiRenderer::Shutdown(const Context& context)
 {
     ImGui_ImplVulkan_Shutdown();
     vkDestroyDescriptorPool(context.device, imGuiDescriptorPool, nullptr);
@@ -136,7 +136,7 @@ void vk::ImGuiRenderer::Shutdown(const Context& context)
     ImGui_ImplGlfw_Shutdown();
 }
 
-void vk::ImGuiRenderer::AddTexture(VkSampler sampler, VkImageView imageView, VkImageLayout imageLayout)
+void ImGuiRenderer::AddTexture(VkSampler sampler, VkImageView imageView, VkImageLayout imageLayout)
 {
     ImTextureID textureID = ImGui_ImplVulkan_AddTexture(sampler, imageView, imageLayout);
 	textureIDs.push_back(static_cast<void*>(textureID));

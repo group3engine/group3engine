@@ -4,29 +4,32 @@
 
 #include "Camera.hpp"
 #include "Context.hpp"
+#include "PhysicsManager.hpp"
 #include "Renderer.hpp"
+#include "RigidBody.hpp"
 
-namespace vk
-{
-	class Engine
-	{
-	public:
-		Engine();
-		bool Initialize();
-		void Run();
-		void Shutdown();
+#include "CharacterVirtualTest.h"
 
-	private:
+class Engine {
+  public:
+    Engine();
+    void InitScene();
+    bool Initialize();
+    void Run();
+    void Shutdown();
 
-		Context m_context;
-		bool m_isRunning;
-		double m_lastFrameTime;
+  private:
+    Context m_context;
+    bool m_isRunning;
+    double m_lastFrameTime;
 
-		void UpdateLogic();
+    void UpdateLogic();
 
-		void Update(double deltaTime);
-		void Render();
+    void Update(double deltaTime, glm::vec3 character_position);
+    void Render();
 
-		std::unique_ptr<Renderer> m_Renderer;
-	};
-}
+    std::shared_ptr<Scene> mScene;
+    std::unique_ptr<Renderer> mRenderer;
+
+    CharacterVirtualTest mCharacterVirtualTest;
+};

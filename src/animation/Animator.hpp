@@ -18,7 +18,7 @@ struct AnimationSample {
 class Animator {
   public:
     // constructor
-    Animator(vk::Context *aContext, Skin *aSkin);
+    Animator(Context *aContext, Skin *aSkin);
     // destructor
     ~Animator();
     // add an animation to the animator
@@ -30,7 +30,7 @@ class Animator {
         mAnimations = std::move(aAnimations);
     }
     // update the animator
-    void Update(double aDeltaTime, vk::Entity* aMesh);
+    void Update(double aDeltaTime, Entity* aMesh);
     // bind the descriptor set (for use when rendering)
     void BindDescriptorSet(VkCommandBuffer aCmdBuff,
                            VkPipelineLayout aPipelineLayout, int aSet);
@@ -44,7 +44,7 @@ class Animator {
 
   private:
     // update the joint buffer
-    void UpdateJointBuffer(vk::Entity* aMesh);
+    void UpdateJointBuffer(Entity* aMesh);
     // update the animation samples
     void UpdateAnimationSamples(double aDeltaTime);
     // update the joints transform based on the animation samples
@@ -54,7 +54,7 @@ class Animator {
   public:
   private:
     // context
-    vk::Context *mContext{};
+    Context *mContext{};
     // descriptor set layout for the joint matrices
     VkDescriptorSetLayout mDescriptorSetLayout{};
     // descriptor set for the joint matrices
@@ -62,7 +62,7 @@ class Animator {
     // descriptor pool for the joint matrices
     VkDescriptorPool mDescriptorPool{};
     // buffer for the joint matrices
-    vk::Buffer mJointBuffer;
+    Buffer mJointBuffer;
 
     int mActiveAnimation = -1;
     int mLastAnimation = -1;

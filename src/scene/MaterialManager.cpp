@@ -3,8 +3,6 @@
 #include <glm/ext.hpp>
 #include <iostream>
 
-namespace vk {
-
 void MaterialManager::DebugOutputMaterials() {
     for (auto &material : mMaterials) {
         // assert that the texture name is the same as the one in the material
@@ -31,10 +29,11 @@ void MaterialManager::DebugOutputMaterials() {
         << material.pbrMetallicRoughness.pbrMaterialNumbers.roughnessFactor
         << '\n';
 }
+
 void MaterialManager::UploadLastMaterial() {
     auto &material = mMaterials.back();
     // create the material buffer
-    vk::CreateAndUploadBuffer(
+    CreateAndUploadBuffer(
         mContext, &material.pbrMetallicRoughness.pbrMaterialNumbers,
         sizeof(PBRMaterialNumbers),
         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
@@ -49,12 +48,13 @@ void MaterialManager::UploadLastMaterial() {
     material.descriptorSet =
         create_material_descriptor_set(imageViews, material.materialBuffer);
 }
+
 MaterialManager::MaterialManager(Context &aContext)
     : mContext(aContext) {
-    vk::materialDescriptorSetLayout = create_material_descriptor_layout();
+    vkutil::materialDescriptorSetLayout = create_material_descriptor_layout();
     // create the descriptor pool
     mDescriptorPool = VK_NULL_HANDLE;
-    vk::CreateDescriptorPool(mContext, 2048, 1024, mDescriptorPool);
+    vkutil::CreateDescriptorPool(mContext, 2048, 1024, mDescriptorPool);
 }
 
 VkDescriptorSet MaterialManager::create_material_descriptor_set(
@@ -62,8 +62,8 @@ VkDescriptorSet MaterialManager::create_material_descriptor_set(
     Buffer const &aMaterialBuffer) {
     // allocate the descriptor set for this material
     VkDescriptorSet set = VK_NULL_HANDLE;
-    vk::AllocateDescriptorSet(mContext, mDescriptorPool, vk::materialDescriptorSetLayout, 1,
-                              set);
+    vkutil::AllocateDescriptorSet(mContext, mDescriptorPool, vkutil::materialDescriptorSetLayout, 1,
+                                  set);
     // write the descriptor set
     VkWriteDescriptorSet desc[3]{};
     VkDescriptorImageInfo textureInfo[3]{};
@@ -76,7 +76,7 @@ VkDescriptorSet MaterialManager::create_material_descriptor_set(
         } else {
             textureInfo[i].imageView = aImageViews[0];
         }
-        textureInfo[i].sampler = vk::repeatSamplerAniso;
+        textureInfo[i].sampler = vkutil::repeatSamplerAniso;
     }
     // write the descriptor sets
     for (int i = 0; i < 2; i++) {
@@ -106,21 +106,22 @@ VkDescriptorSet MaterialManager::create_material_descriptor_set(
 
     return set;
 }
+
 VkDescriptorSetLayout MaterialManager::create_material_descriptor_layout() const {
     // base colour, roughness, metalness, and material numbers
     VkDescriptorSetLayoutBinding bindings[3]{};
     // base colour
-    bindings[0].binding = 0;  // this must match the binding in the shader
+    bindings[0].binding = 0; // this must match the binding in the shader
     bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     bindings[0].descriptorCount = 1;
     bindings[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     // metallicroughness
-    bindings[1].binding = 1;  // this must match the binding in the shader
+    bindings[1].binding = 1; // this must match the binding in the shader
     bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     bindings[1].descriptorCount = 1;
     bindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     // material numbers
-    bindings[2].binding = 2;  // this must match the binding in the shader
+    bindings[2].binding = 2; // this must match the binding in the shader
     bindings[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     bindings[2].descriptorCount = 1;
     bindings[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -137,4 +138,3 @@ VkDescriptorSetLayout MaterialManager::create_material_descriptor_layout() const
 
     return layout;
 }
-}  // namespace vk

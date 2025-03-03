@@ -18,8 +18,6 @@
 
 #include <glm/gtx/io.hpp>
 
-namespace vk {
-
 Material LoadMaterialDefault() {
     PBRMetallicRoughnessMaterial pbrMetallicRoughness{
         nullptr, nullptr, {{1, 1, 1, 1}, 0.0f, 1.0f, 0.0f}, "", ""};
@@ -549,4 +547,3 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
 
     return GLTF_LOAD_SUCCESS;
 }
-} // namespace vk

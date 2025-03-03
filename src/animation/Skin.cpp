@@ -6,7 +6,7 @@
 #include <iostream>
 #include <glm/gtx/io.hpp>
 
-std::vector<glm::mat4> Skin::GetJointMatrices(vk::Entity* aMesh) const {
+std::vector<glm::mat4> Skin::GetJointMatrices(Entity* aMesh) const {
     std::vector<glm::mat4> jointMatrices;
     jointMatrices.reserve(mJoints.size());
     for (const auto &joint : mJoints) {

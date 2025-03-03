@@ -7,126 +7,118 @@
 
 class Context;
 
-#define VK_CHECK(call, message) \
-	do { \
-		VkResult result = call; \
-		if (result != VK_SUCCESS) { \
-			std::cout << "[VK ERROR]: " << message << " VkResult: " << result << std::endl; \
-		} \
-	} while (0)
+#define VK_CHECK(call, message)                                                             \
+    do {                                                                                    \
+        VkResult result = call;                                                             \
+        if (result != VK_SUCCESS) {                                                         \
+            std::cout << "[VK ERROR]: " << message << " VkResult: " << result << std::endl; \
+        }                                                                                   \
+    } while (0)
 
-#define ERROR(message) std::cout << "[ERROR]: " << message << std::endl; \
+#define ERROR(message) std::cout << "[ERROR]: " << message << std::endl;
 
 constexpr int NUM_LIGHTS = 26;
 
-namespace vk
-{
-	enum class RenderType
-	{
-		FORWARD,
-		DEFERRED,
-		MESH_DENSITY
-	};
+namespace vkutil {
+enum class RenderType {
+    FORWARD,
+    DEFERRED,
+    MESH_DENSITY
+};
 
+inline int MAX_FRAMES_IN_FLIGHT;
+inline int currentFrame;
 
-	inline int MAX_FRAMES_IN_FLIGHT;
-	inline int currentFrame;
+inline VkSampler repeatSamplerAniso;
+inline VkSampler repeatSampler;
+inline VkSampler clampToEdgeSamplerAniso;
 
-	inline VkSampler repeatSamplerAniso;
-	inline VkSampler repeatSampler;
-	inline VkSampler clampToEdgeSamplerAniso;
+inline float maxAnisotropic;
+extern RenderType renderType;
+} // namespace vkutil
 
-	inline float maxAnisotropic;
-	extern RenderType renderType;
+namespace vkutil {
+struct alignas(16) MeshPushConstants {
+    glm::mat4 ModelMatrix;
+};
+
+struct LightUBO {
+    alignas(4) int type;
+    alignas(16) glm::vec4 LightPosition;
+    alignas(16) glm::vec4 LightColour;
+    alignas(16) glm::mat4 LightSpaceMatrix;
+};
+
+struct PostProcessing {
+    alignas(1) bool Enable;
+};
+
+struct LightBuffer {
+    LightUBO lights[NUM_LIGHTS];
+};
+
+struct GuassianWeightsBuffer {
+    float weights[22];
+    float offsets[22];
+};
+
+inline PostProcessing postProcessSettings = {};
+inline uint32_t setRenderingPipeline = 1;
+inline uint32_t setAlphaMakingPipeline = 2;
+
+inline VkDescriptorSetLayout materialDescriptorSetLayout;
+} // namespace vkutil
+
+namespace GlobalUtil {
+inline double deltaTime;
 }
 
-namespace vk
-{
-	struct alignas(16) MeshPushConstants
-	{
-		glm::mat4 ModelMatrix;
-	};
+namespace vkutil {
+void ExecuteSingleTimeCommands(Context const &context, std::function<void(VkCommandBuffer)> recordCommands);
 
-	struct LightUBO
-	{
-		alignas(4)	int type;
-		alignas(16) glm::vec4 LightPosition;
-		alignas(16) glm::vec4 LightColour;
-		alignas(16) glm::mat4 LightSpaceMatrix;
-	};
+// Sync
+void ImageBarrier(
+    VkCommandBuffer cmd,
+    VkImage img,
+    VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask,
+    VkImageLayout srcLayout, VkImageLayout dstLayout,
+    VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask,
+    VkImageSubresourceRange = VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
+    uint32_t srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+    uint32_t dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED);
 
-	struct PostProcessing
-	{
-		alignas(1) bool Enable;
-	};
+VkDescriptorSetLayout CreateDescriptorSetLayout(Context &context, const std::vector<VkDescriptorSetLayoutBinding> &bindings);
+void AllocateDescriptorSets(Context &context, VkDescriptorPool descriptorPool, const VkDescriptorSetLayout descriptorLayout, uint32_t setCount, std::vector<VkDescriptorSet> &descriptorSet);
+void AllocateDescriptorSet(Context &context, VkDescriptorPool descriptorPool, const VkDescriptorSetLayout descriptorLayout, uint32_t setCount, VkDescriptorSet &descriptorSet);
+VkDescriptorSetLayoutBinding CreateDescriptorBinding(uint32_t binding, uint32_t count, VkDescriptorType type, VkShaderStageFlags shaderStage);
+void CreateDescriptorPool(Context &context, uint32_t maxDescriptors, uint32_t maxSets, VkDescriptorPool &descriptorPool);
+// Update buffer descriptor
+void UpdateDescriptorSet(Context &context, uint32_t binding, VkDescriptorBufferInfo bufferInfo, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType);
+// Update image descriptor
+void UpdateDescriptorSet(Context &context, uint32_t binding, VkDescriptorImageInfo imageInfo, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType);
 
-	struct LightBuffer
-	{
-		LightUBO lights[NUM_LIGHTS];
-	};
+VkSampler CreateSampler(Context &context, VkSamplerAddressMode mode, VkBool32 EnableAnisotropic, VkCompareOp compareOp, VkFilter magFilter = VK_FILTER_LINEAR, VkFilter minFilter = VK_FILTER_LINEAR, VkSamplerMipmapMode samplerMipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR);
 
-	struct GuassianWeightsBuffer
-	{
-		float weights[22];
-		float offsets[22];
-	};
+// Don't use this. Needs to be removed.
+void BulkImageUpdate(Context &context, uint32_t binding, std::vector<VkDescriptorImageInfo> imageInfos, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType);
 
-	inline PostProcessing postProcessSettings = {};
-	inline double deltaTime;
-	inline uint32_t setRenderingPipeline = 1;
-	inline uint32_t setAlphaMakingPipeline = 2;
-
-	inline VkDescriptorSetLayout materialDescriptorSetLayout;
+inline void RenderPassLabel(VkCommandBuffer commandBuffer, const char *labelName) {
+    VkDebugUtilsLabelEXT label = {};
+    label.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+    label.pLabelName = labelName;
+    vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &label);
 }
 
-namespace vk
-{
-	void ExecuteSingleTimeCommands(Context const& context, std::function<void(VkCommandBuffer)> recordCommands);
-
-	// Sync
-	void ImageBarrier(
-		VkCommandBuffer cmd,
-		VkImage img,
-		VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask,
-		VkImageLayout srcLayout, VkImageLayout dstLayout,
-		VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask,
-		VkImageSubresourceRange = VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 },
-		uint32_t srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-		uint32_t dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED);
-
-	VkDescriptorSetLayout CreateDescriptorSetLayout(Context& context, const std::vector<VkDescriptorSetLayoutBinding>& bindings);
-	void AllocateDescriptorSets(Context& context, VkDescriptorPool descriptorPool, const VkDescriptorSetLayout descriptorLayout, uint32_t setCount, std::vector<VkDescriptorSet>& descriptorSet);
-	void AllocateDescriptorSet(Context& context, VkDescriptorPool descriptorPool, const VkDescriptorSetLayout descriptorLayout, uint32_t setCount, VkDescriptorSet& descriptorSet);
-	VkDescriptorSetLayoutBinding CreateDescriptorBinding(uint32_t binding, uint32_t count, VkDescriptorType type, VkShaderStageFlags shaderStage);
-        void CreateDescriptorPool(Context& context, uint32_t maxDescriptors, uint32_t maxSets, VkDescriptorPool& descriptorPool);
-	// Update buffer descriptor
-	void UpdateDescriptorSet(Context& context, uint32_t binding, VkDescriptorBufferInfo bufferInfo, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType);
-	// Update image descriptor
-	void UpdateDescriptorSet(Context& context, uint32_t binding, VkDescriptorImageInfo imageInfo, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType);
-	
-	VkSampler CreateSampler(Context& context, VkSamplerAddressMode mode, VkBool32 EnableAnisotropic, VkCompareOp compareOp, VkFilter magFilter = VK_FILTER_LINEAR, VkFilter minFilter = VK_FILTER_LINEAR, VkSamplerMipmapMode samplerMipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR);
-
-	// Don't use this. Needs to be removed.
-	void BulkImageUpdate(Context& context, uint32_t binding, std::vector<VkDescriptorImageInfo> imageInfos, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType);
-	
-	inline void RenderPassLabel(VkCommandBuffer commandBuffer, const char* labelName) {
-		VkDebugUtilsLabelEXT label = {};
-		label.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
-		label.pLabelName = labelName;
-		vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &label);
-	}
-
-	inline void EndRenderPassLabel(VkCommandBuffer commandBuffer) {
-		vkCmdEndDebugUtilsLabelEXT(commandBuffer);
-	}
+inline void EndRenderPassLabel(VkCommandBuffer commandBuffer) {
+    vkCmdEndDebugUtilsLabelEXT(commandBuffer);
 }
-
+} // namespace vkutil
 
 /*
 * Render normal geometry and then render foliage using different pipeline
-* Color the base color into a metallic map 
-* Reference learnopengl camera movement and mouse look 
-* FIFO PRESENT MODE AND WAIT FOR V-SYNC 
+* Color the base color into a metallic map
+* Reference learnopengl camera movement and mouse look
+* FIFO PRESENT MODE AND WAIT FOR V-SYNC
 * Textues must be TRILINEAR (check sampler)
 * Mouse movement should be activated on right mouse button click and deacitvated once right mouse is pressed again
 TODO:
@@ -139,15 +131,14 @@ TODO:
 give ForwardPass it's own RT to render to (needs own render pass + framebuffer etc) - this pass will now make the depth buffer read  + write which can be used for final present pass to determine depth?
 take RT in another pass as shader read only
 do post process
-write to swapchain image 
+write to swapchain image
 
 */
 
-
 /*
-	- The light needs to be placed somewhere so one light is across lighting deferred and shadow map
-	- shadow frag coord needs to be pre-computed so its one single multiplication and a call to textureProj	
-	
-	- Add point light to remaining braziers 
-	- Make sure to remove debug GLSL compiler flags -g -O0 in glslc.lua
+        - The light needs to be placed somewhere so one light is across lighting deferred and shadow map
+        - shadow frag coord needs to be pre-computed so its one single multiplication and a call to textureProj
+
+        - Add point light to remaining braziers
+        - Make sure to remove debug GLSL compiler flags -g -O0 in glslc.lua
 */
