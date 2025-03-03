@@ -6,6 +6,7 @@
 #define GROUP3ENGINE_ANIMATION_HPP
 
 #include "GLTFImportStructs.hpp"
+#include "Skin.hpp"
 #include <glm/vec4.hpp>
 #include <set>
 #include <vector>
@@ -76,7 +77,7 @@ class Animation {
         mMaxTime = std::max(mMaxTime, mSamplers.back().keyframes.back().time);
     }
     // get the animation at a given time
-    std::vector<NodeAnimation> CalcNodeAnimation(float aTime);
+    std::vector<NodeAnimation> CalcNodeAnimation(float aTime, const Skin &aTargetSkin);
 
     void SetName(std::string aName);
     [[nodiscard]] const std::string &GetName() const { return mName; }

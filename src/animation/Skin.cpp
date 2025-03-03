@@ -42,4 +42,6 @@ bool Skin::DetargetAnimation(Animation *aAnimation, std::vector<Entity *> aEntit
     // if we have reached this point, then we have found all the joints
     // detarget the animation - give the jointIndex to the channels
     aAnimation->DetargetAnimation(entityToJointIndex);
+    return true;
 }
+Entity *Skin::GetEntity(size_t aIndex) const  { return mJoints[aIndex].entity; }

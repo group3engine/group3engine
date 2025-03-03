@@ -125,13 +125,15 @@ void Animator::UpdateJointsTransform() {
     } else {
         const AnimationSample &currentAnimation = mAnimationSamples[mActiveAnimation];
         const std::vector<NodeAnimation> &currentAnimationData =
-            mAnimations[mActiveAnimation]->CalcNodeAnimation(static_cast<float>(currentAnimation.time));
+            mAnimations[mActiveAnimation]->CalcNodeAnimation(
+                static_cast<float>(currentAnimation.time), *mSkin);
         std::vector<NodeAnimation> animationData = currentAnimationData;
         // If we are blending
         if (mTotalBlendTime > 0.01f) {
             const AnimationSample &pastAnimation = mAnimationSamples[mLastAnimation];
             const std::vector<NodeAnimation> &pastAnimationData =
-                mAnimations[mLastAnimation]->CalcNodeAnimation(static_cast<float>(pastAnimation.time));
+                mAnimations[mLastAnimation]->CalcNodeAnimation(
+                    static_cast<float>(pastAnimation.time), *mSkin);
             animationData =
                 NodeAnimation::BlendAnimations(pastAnimationData, currentAnimationData, currentAnimation.weight);
         }

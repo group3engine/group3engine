@@ -6,15 +6,15 @@
 
 #include "Entity.hpp"
 #include <utility>
-std::vector<NodeAnimation> Animation::CalcNodeAnimation(float aTime) {
+std::vector<NodeAnimation> Animation::CalcNodeAnimation(float aTime, const Skin &aTargetSkin) {
     // modulus the time by the max time
     aTime = std::fmod(aTime, mMaxTime);
     // result vector
     std::vector<NodeAnimation> result;
     // reserve one pair for each channel
     result.reserve(mTargets.size());
-    Transform transform = mChannels[0].target->GetTransform();
-    Entity *lastTarget = nullptr;
+    Transform transform = aTargetSkin.GetEntity(mChannels[0].targetIndex)->GetTransform();
+    int lastTargetIndex = -1;
     int channelNumber = 0;
     // for each channel, get the animation. If it is the same target as last
     // time, add it to the transform. Otherwise, add the last transform to the
@@ -27,16 +27,16 @@ std::vector<NodeAnimation> Animation::CalcNodeAnimation(float aTime) {
         glm::vec4 value = sampler.GetSamplerValue(aTime, channel.transformChannel);
         // is the target the same as last time? If not, we've finished sampling
         // channels for this target, so it can be added to the result
-        if (channel.target == lastTarget) {
+        if (static_cast<int>(channel.targetIndex) == lastTargetIndex) {
         } else {
-            if (lastTarget != nullptr) {
-                result.emplace_back(lastTarget, transform);
+            if (lastTargetIndex != -1) {
+                result.emplace_back(aTargetSkin.GetEntity(lastTargetIndex), transform);
             }
-            lastTarget = channel.target;
+            lastTargetIndex = channel.targetIndex;
             // we use the currrent transform of the object as default for if
             // there isn't a keyframe for a channel to keep the value. This
             // follows GLTF spec (I think)
-            transform = mChannels[++channelNumber].target->GetTransform();
+            transform = aTargetSkin.GetEntity(mChannels[++channelNumber].targetIndex)->GetTransform();
         }
         switch (channel.transformChannel) {
         case TransformChannel::TRANSLATION:
@@ -53,8 +53,8 @@ std::vector<NodeAnimation> Animation::CalcNodeAnimation(float aTime) {
         }
     }
     // add the last transform
-    if (lastTarget != nullptr) {
-        result.emplace_back(lastTarget, transform);
+    if (lastTargetIndex != -1) {
+        result.emplace_back(aTargetSkin.GetEntity(lastTargetIndex), transform);
     }
     return result;
 }

@@ -5,11 +5,11 @@
 #ifndef GROUP3ENGINE_SKIN_HPP
 #define GROUP3ENGINE_SKIN_HPP
 
-#include "Animation.hpp"
 #include <glm/glm.hpp>
 #include <string>
 
 class Entity;
+class Animation;
 
 struct Joint {
     Entity *entity = nullptr;
@@ -25,6 +25,7 @@ class Skin {
     void SetRoot(Entity *aRoot) { mRoot = aRoot; }
 
     [[nodiscard]] std::vector<Joint> GetJoints() const { return mJoints; }
+    [[nodiscard]] Entity* GetEntity(size_t aIndex) const;
     // function to get the joint matrices
     [[nodiscard]] std::vector<glm::mat4> GetJointMatrices(Entity* aMesh) const;
 
