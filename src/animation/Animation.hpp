@@ -49,7 +49,9 @@ struct NodeAnimation {
     vk::Entity *target;
     vk::Transform transform;
     // blends two animations
-    static std::vector<NodeAnimation> BlendAnimations(std::vector<NodeAnimation> aLeftAnimation, std::vector<NodeAnimation> aRightAnimation, float t);
+    static std::vector<NodeAnimation>
+    BlendAnimations(const std::vector<NodeAnimation> &aLeftAnimation,
+                    const std::vector<NodeAnimation> &aRightAnimation, float t);
 };
 
 class Animation {
@@ -75,7 +77,7 @@ class Animation {
         mMaxTime = std::max(mMaxTime, mSamplers.back().keyframes.back().time);
     }
     // get the animation at a given time
-    std::vector<NodeAnimation> GetAnimation(float aTime);
+    std::vector<NodeAnimation> CalcNodeAnimation(float aTime);
 
     void SetName(std::string aName);
     [[nodiscard]] const std::string &GetName() const { return mName; }

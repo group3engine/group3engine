@@ -6,7 +6,7 @@
 
 #include "Entity.hpp"
 #include <utility>
-std::vector<NodeAnimation> Animation::GetAnimation(float aTime) {
+std::vector<NodeAnimation> Animation::CalcNodeAnimation(float aTime) {
     // modulus the time by the max time
     aTime = std::fmod(aTime, mMaxTime);
     // result vector
@@ -122,8 +122,8 @@ void Animation::AddChannel(Channel &aChannel) {
 
 
 std::vector<NodeAnimation> NodeAnimation::BlendAnimations(
-    std::vector<NodeAnimation> aLeftAnimation,
-    std::vector<NodeAnimation> aRightAnimation,
+    const std::vector<NodeAnimation> &aLeftAnimation,
+    const std::vector<NodeAnimation> &aRightAnimation,
     float t) {
     std::vector<NodeAnimation> blendedAnimation;
     size_t leftCounter, rightCounter;
