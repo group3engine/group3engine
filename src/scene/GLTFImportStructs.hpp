@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 
+#include <glm/gtx/quaternion.hpp>
 #include <glm/vec4.hpp>
 #include <stb_image.h>
 
@@ -24,6 +25,8 @@ struct Vertex {
     glm::vec3 pos;
     glm::vec2 tex;
     glm::vec3 normal;
+    glm::vec4 joints;
+    glm::vec4 weights;
 
     static VkVertexInputBindingDescription GetBindingDescription() {
         VkVertexInputBindingDescription bindingDescrip{};
@@ -34,9 +37,9 @@ struct Vertex {
         return bindingDescrip;
     }
 
-    static std::array<VkVertexInputAttributeDescription, 3>
+    static std::array<VkVertexInputAttributeDescription, 5>
     GetAttributeDescriptions() {
-        std::array<VkVertexInputAttributeDescription, 3> attributes = {};
+        std::array<VkVertexInputAttributeDescription, 5> attributes = {};
 
         attributes[0].binding = 0;
         attributes[0].location = 0;
@@ -52,6 +55,16 @@ struct Vertex {
         attributes[2].location = 2;
         attributes[2].format = VK_FORMAT_R32G32B32_SFLOAT;
         attributes[2].offset = offsetof(Vertex, normal);
+
+        attributes[3].binding = 0;
+        attributes[3].location = 3;
+        attributes[3].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+        attributes[3].offset = offsetof(Vertex, joints);
+
+        attributes[4].binding = 0;
+        attributes[4].location = 4;
+        attributes[4].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+        attributes[4].offset = offsetof(Vertex, weights);
 
         return attributes;
     }
@@ -92,8 +105,7 @@ struct Material {
           pbrMetallicRoughness(aOther.pbrMetallicRoughness),
           descriptorSet(aOther.descriptorSet),
           materialBuffer(std::move(aOther.materialBuffer)),
-          alphaCutout(aOther.alphaCutout),
-          alphaCutoff(aOther.alphaCutoff) {}
+          alphaCutout(aOther.alphaCutout), alphaCutoff(aOther.alphaCutoff) {}
 
     // constructor
     Material() = default;
@@ -136,11 +148,19 @@ struct Transform {
     // function to get the matrix
     [[nodiscard]] glm::mat4 getMatrix() const {
         glm::mat4 translationMatrix = glm::translate(translation);
-        glm::mat4 rotationMatrix = glm::mat4_cast(glm::normalize(rotation));
+        glm::mat4 rotationMatrix = glm::toMat4(glm::normalize(rotation));
         glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), scale);
         return translationMatrix * rotationMatrix * scaleMatrix;
     }
+    Transform Interpolate(Transform other, float t)
+    {
+        Transform result{};
+        result.translation = translation * (1 - t) + other.translation * t;
+        result.rotation = glm::normalize(glm::slerp(rotation, other.rotation, t));
+        result.scale = scale * (1-t) + other.scale * t;
+        return result;
+    }
 };
-}  // namespace vk
+} // namespace vk
 
-#endif  // VULKANTIME_GLTFIMPORTSTRUCTS_HPP
+#endif // VULKANTIME_GLTFIMPORTSTRUCTS_HPP

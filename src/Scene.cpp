@@ -4,14 +4,14 @@
 
 #include "ResourceManager.hpp"
 
-void vk::Scene::AddLightSource(Light& LightSource)
-{
-	m_Lights.push_back(std::move(LightSource));
+void vk::Scene::AddLightSource(Light &LightSource) {
+    m_Lights.push_back(std::move(LightSource));
 }
 
-void vk::Scene::Update()
-{
-
+void vk::Scene::Update(double aDeltaTime) {
+    for(auto &entity : m_Entities) {
+        entity.Update(aDeltaTime);
+    }
 	for (auto& light : m_Lights)
 	{
 		glm::mat4 ortho = glm::ortho(-light.view, light.view, -light.view, light.view, light.near, light.far);
@@ -47,10 +47,13 @@ void vk::Scene::Destroy()
         delete mMeshManager;
         delete mMaterialManager;
         delete mTextureManager;
+        // delete the entities
+        m_Entities.clear();
 }
 void vk::Scene::Load(const std::filesystem::path& aFilepath) {
     // Load the GLTF file
-    LoadGLTF(aFilepath, *mMeshManager, *mMaterialManager, *mTextureManager, m_Entities, false);
+    LoadGLTF(aFilepath, *mMeshManager, *mMaterialManager, *mTextureManager,
+             m_Entities, false, m_Animations, m_Skins);
 }
 vk::Scene::Scene(Context& context) : context(context)
 {
@@ -64,9 +67,9 @@ vk::Scene::Scene(Context& context) : context(context)
     }
 
     // create the mesh manager, material manager and texture manager
-        mMeshManager = new MeshManager(context);
-        mMaterialManager = new MaterialManager(context);
-        mTextureManager = new TextureManager(context);
+    mMeshManager = new MeshManager(context);
+    mMaterialManager = new MaterialManager(context);
+    mTextureManager = new TextureManager(context);
 
 
 
@@ -88,4 +91,10 @@ void vk::Scene::DrawShadowMap(VkCommandBuffer cmd,
         for (auto& entity : m_Entities) {
             entity.RecordDrawShadow(cmd, pipelineLayout);
         }
+}
+void vk::Scene::DrawSkinned(VkCommandBuffer cmd,
+                            VkPipelineLayout pipelineLayout) {
+    for (auto &entity : m_Entities) {
+        entity.RecordDrawSkinned(cmd, pipelineLayout);
+    }
 }

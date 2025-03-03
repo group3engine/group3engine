@@ -63,12 +63,17 @@ vk::ForwardPass::~ForwardPass()
         vkDestroyPipelineLayout(context.device, m_opaquePipeline.second, nullptr);
         vkDestroyPipeline(context.device, m_alphaMaskPipeline.first, nullptr);
         vkDestroyPipelineLayout(context.device, m_alphaMaskPipeline.second, nullptr);
+        vkDestroyPipeline(context.device, m_skinnedPipeline.first, nullptr);
+        vkDestroyPipelineLayout(context.device, m_skinnedPipeline.second, nullptr);
 
 	vkDestroyFramebuffer(context.device, m_framebuffer, nullptr);
 	vkDestroyRenderPass(context.device, m_renderPass, nullptr);
 	if (meshDescriptorSetLayout != VK_NULL_HANDLE) {
 		vkDestroyDescriptorSetLayout(context.device, meshDescriptorSetLayout, nullptr);
 	}
+        if(skinDescriptorSetLayout != VK_NULL_HANDLE) {
+            vkDestroyDescriptorSetLayout(context.device, skinDescriptorSetLayout, nullptr);
+        }
 }
 
 void vk::ForwardPass::Resize()
@@ -165,11 +170,14 @@ void vk::ForwardPass::Execute(VkCommandBuffer cmd)
 	vkCmdBeginRenderPass(cmd, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
 	vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_opaquePipeline.second, 0, 1, &m_descriptorSets[currentFrame], 0, nullptr);
 
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_opaquePipeline.first);
-    scene->DrawOpaque(cmd, m_opaquePipeline.second);
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_opaquePipeline.first);
+        scene->DrawOpaque(cmd, m_opaquePipeline.second);
 
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_alphaMaskPipeline.first);
-    scene->DrawAlphaMasked(cmd, m_alphaMaskPipeline.second);
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_alphaMaskPipeline.first);
+        scene->DrawAlphaMasked(cmd, m_alphaMaskPipeline.second);
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                      m_skinnedPipeline.first);
+    scene->DrawSkinned(cmd, m_skinnedPipeline.second);
 
 	vkCmdEndRenderPass(cmd);
 
@@ -220,6 +228,29 @@ void vk::ForwardPass::CreatePipeline()
 		.Build();
 
 	m_alphaMaskPipeline = alphaMaskPipeline;
+
+    auto skinnedPipeline =
+        vk::PipelineBuilder(context.device, PipelineType::GRAPHICS,
+                            VertexBinding::BIND, 0)
+            .AddShader(SKINNED_VERTEX_SHADER, ShaderType::VERTEX)
+            .AddShader(SKINNED_FRAGMENT_SHADER, ShaderType::FRAGMENT)
+            .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+            .SetDynamicState(
+                {{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}})
+            .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT,
+                                   VK_FRONT_FACE_COUNTER_CLOCKWISE)
+            .SetPipelineLayout(
+                {{meshDescriptorSetLayout, materialDescriptorSetLayout,
+                  skinDescriptorSetLayout}},
+                pushConstantRange)
+            .SetSampling(VK_SAMPLE_COUNT_1_BIT)
+            .AddBlendAttachmentState()
+            .AddBlendAttachmentState()
+            .SetDepthState(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL)
+            .SetRenderPass(m_renderPass)
+            .Build();
+
+    m_skinnedPipeline = skinnedPipeline;
 }
 
 void vk::ForwardPass::CreateRenderPass()
@@ -297,6 +328,11 @@ void vk::ForwardPass::BuildDescriptors()
 
 	AllocateDescriptorSets(context, context.descriptorPool, meshDescriptorSetLayout, MAX_FRAMES_IN_FLIGHT, m_descriptorSets);
 
+    skinDescriptorSetLayout = CreateDescriptorSetLayout(
+        context, {
+                     {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1,
+                      VK_SHADER_STAGE_VERTEX_BIT, nullptr},
+                 });
 
 	// Camera Transform UBO
 	for (size_t i = 0; i < (size_t)MAX_FRAMES_IN_FLIGHT; i++)

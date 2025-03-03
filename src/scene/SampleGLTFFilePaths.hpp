@@ -115,6 +115,7 @@ static std::filesystem::path NormalTangentMirrorTest{"NormalTangentMirrorTest/gl
 static std::filesystem::path SciFiHelmet{"SciFiHelmet/glTF/SciFiHelmet.gltf"};
 static std::filesystem::path IridescenceLamp{"IridescenceLamp/glTF/IridescenceLamp.gltf"};
 static std::filesystem::path Corset{"Corset/glTF/Corset.gltf"};
+static std::filesystem::path Laughing{"Sitting Laughing/laugh.gltf"};
 }  // namespace Sample
 
 #endif  // GROUP3ENGINE_SAMPLEGLTFFILEPATHS_HPP

@@ -29,16 +29,16 @@ vk::Renderer::Renderer(Context& context) : context{context}
 
 	// Current path is the current working directory, i.e., where the root CMakeLists.txt is
 	std::filesystem::path basePath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets";
-	std::filesystem::path gltfPath = basePath / Sample::Sponza;
+	std::filesystem::path gltfPath = basePath / Sample::Laughing;
 
 	// Samplers
 	repeatSamplerAniso	 	  = CreateSampler(context, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_TRUE,  VK_COMPARE_OP_LESS_OR_EQUAL);
 	repeatSampler			  = CreateSampler(context, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL);
 	clampToEdgeSamplerAniso   = CreateSampler(context, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_FALSE, VK_COMPARE_OP_GREATER);
-
+	
 	// Camera
 	m_camera = std::make_shared<Camera>(context, cameraPos, glm::normalize(cameraPos + cameraDir), up, context.extent.width / (float)context.extent.height);
-
+	
 	// GLFW callbacks
 	glfwSetWindowUserPointer(context.mWindow, m_camera.get());
 
@@ -50,7 +50,7 @@ vk::Renderer::Renderer(Context& context) : context{context}
 
 	std::vector<glm::vec4> spotLightPositions;
 
-	// Random spot light positions put side by side each other
+	// Random spot light positions put side by side each other 
 	for (size_t i = 0; i < 25; i++)
 	{
 		spotLightPositions.push_back(glm::vec4(-9.0 + i * 0.8, 0.2f, 0.5f, 1.0f));
@@ -63,7 +63,7 @@ vk::Renderer::Renderer(Context& context) : context{context}
 	m_scene->Load(gltfPath);
 	m_scene->AddLightSource(directionalLight);
 
-	// Loop through the positions and instantiate a light
+	// Loop through the positions and instantiate a light 
 	// and pass to the scene to add the lights to the scene
 	for (const auto& position : spotLightPositions)
 	{
@@ -325,7 +325,7 @@ void vk::Renderer::Present(uint32_t imageIndex)
 void vk::Renderer::Update(double deltaTime)
 {
 	m_camera->Update(context.extent.width, context.extent.height, deltaTime);
-	m_scene->Update();
+        m_scene->Update(deltaTime);
 
 
 	ImGuiRenderer::Update(m_scene, m_camera);

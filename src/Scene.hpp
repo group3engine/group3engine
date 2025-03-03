@@ -28,8 +28,9 @@ namespace vk
 		void DrawOpaque(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
 		void DrawAlphaMasked(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
 		void DrawShadowMap(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
+                void DrawSkinned(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
 		void AddLightSource(Light& LightSource);
-		void Update();
+                void Update(double aDeltaTime);
 
 		void Destroy();
 
@@ -49,5 +50,7 @@ namespace vk
 		LightBuffer m_LightBuffer;
 		std::vector<Buffer> m_LightUBO;
 		std::vector<Entity> m_Entities;
+                std::vector<Animation> m_Animations;
+                std::vector<Skin> m_Skins;
 	};
 }
