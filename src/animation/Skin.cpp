@@ -44,4 +44,7 @@ bool Skin::DetargetAnimation(Animation *aAnimation, std::vector<Entity *> aEntit
     aAnimation->DetargetAnimation(entityToJointIndex);
     return true;
 }
-Entity *Skin::GetEntity(size_t aIndex) const  { return mJoints[aIndex].entity; }
+Entity *Skin::GetEntity(size_t aIndex) const  {
+    assert(aIndex < mJoints.size() && aIndex >= 0);
+    return mJoints[aIndex].entity;
+}
