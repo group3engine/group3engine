@@ -180,10 +180,13 @@ void Entity::Update(double deltaTime) {
     frameNumber++;
     if (mAnimator) {
         mAnimator->Update(deltaTime, this);
-        if ((frameNumber / 300) % 2) {
-            mAnimator->SetActiveAnimation("laugh", 3.f);
+        if ((frameNumber / 300) % 3 == 0) {
+            mAnimator->SetActiveAnimation("laugh", 1.f);
+        }
+        else if ((frameNumber / 300) % 3 == 1) {
+            mAnimator->SetActiveAnimation("rumba", 0.5f);
         } else {
-            mAnimator->SetActiveAnimation("idle", 3.f);
+            mAnimator->SetActiveAnimation("idle", 0.5f);
         }
     }
 }
