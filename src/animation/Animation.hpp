@@ -39,6 +39,7 @@ struct Sampler {
 };
 struct Channel {
     Entity *target;
+    size_t targetIndex;
     size_t sampler;
     TransformChannel transformChannel;
 };
@@ -83,6 +84,8 @@ class Animation {
     Sampler *GetSampler(size_t i);
 
     [[nodiscard]] float GetMaxTime() const;
+
+    void DetargetAnimation(std::unordered_map<Entity *, size_t> aJointMap);
 
   private:
     // list of channels

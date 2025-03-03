@@ -5,6 +5,7 @@
 #ifndef GROUP3ENGINE_SKIN_HPP
 #define GROUP3ENGINE_SKIN_HPP
 
+#include "Animation.hpp"
 #include <glm/glm.hpp>
 #include <string>
 
@@ -29,6 +30,9 @@ class Skin {
 
     void SetName(char *aName) { mName = aName; }
     [[nodiscard]] std::string GetName() const { return mName; }
+
+
+    bool DetargetAnimation(Animation *aAnimation, std::vector<Entity *> aEntititiesInAnimation);
 
   private:
     // list of joints

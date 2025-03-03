@@ -503,10 +503,14 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         }
         // add the channels
         animation->ResizeChannels(gltfAnimation.channels_count);
+        // create a vector of the entities targeted by this animation
+        std::vector<Entity *> entitiesInAnimation;
         for (size_t j = 0; j < gltfAnimation.channels_count; j++) {
             const auto &gltfChannel = gltfAnimation.channels[j];
             Channel channel = {};
             channel.target = &aEntities[gltfChannel.target_node - data->nodes];
+            entitiesInAnimation.push_back(channel.target);
+            channel.targetIndex = -1;
             channel.sampler = static_cast<size_t>(gltfChannel.sampler -
                                                gltfAnimation.samplers);
             assert(channel.sampler >= 0);
@@ -526,6 +530,17 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             }
             animation->AddChannel(channel);
         }
+        // find the skin that corresponds to this animation. Error if there isn't one
+        // for each skin, call the IsTheAnimationForThisSkin function
+        bool foundSkin = false;
+        for (auto & aSkin : aSkins) {
+            if (aSkin.DetargetAnimation(animation, entitiesInAnimation)) {
+                foundSkin = true;
+                break;
+            }
+        }
+        assert(foundSkin);
+
         animationPointers.push_back(animation);
     }
 
