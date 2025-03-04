@@ -28,7 +28,7 @@
 #include <Jolt/Core/HashCombine.h>
 #include <Jolt/Geometry/IndexedTriangle.h>
 
-#define TEMP_DISABLE_PHYSICS 1
+#define TEMP_DISABLE_PHYSICS 0
 
 Engine::Engine() {
     m_isRunning = false;
@@ -248,9 +248,9 @@ void Engine::Run() {
         cube.mPosition = glm::vec3(characterVirtualPos.GetX(), characterVirtualPos.GetY(), characterVirtualPos.GetZ());
 
         Update(GlobalUtil::deltaTime, cube.mPosition);
-#endif // !TEMP_DISABLE_PHYSICS
-
+#else // !TEMP_DISABLE_PHYSICS
         Update(GlobalUtil::deltaTime, glm::vec3(0.0f));
+#endif // !TEMP_DISABLE_PHYSICS
 
 #if !TEMP_DISABLE_PHYSICS
         SPDLOG_INFO("cube.mPosition {}", glm::to_string(cube.mPosition));
