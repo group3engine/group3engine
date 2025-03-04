@@ -102,6 +102,8 @@ class Entity {
 
     Transform GetTransform();
 
+    bool IsCharacter() const { return mName.find("Character") != std::string::npos; }
+
   protected:
     virtual void Update() {}
     virtual void LateUpdate() {}

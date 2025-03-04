@@ -16,6 +16,18 @@
 #include "TextureManager.hpp"
 #include "Utils.hpp"
 
+#include "CharacterVirtualTest.h"
+
+struct CharacterEntity {
+    Entity *mEntity = nullptr;
+    std::unique_ptr<CharacterVirtualTest> mCharacterVirtual;
+
+    CharacterEntity() = default;
+    CharacterEntity(Entity *entity,
+                    std::unique_ptr<CharacterVirtualTest> characterVirtual)
+        : mEntity(entity), mCharacterVirtual(std::move(characterVirtual)) {}
+};
+
 class Scene {
   public:
     explicit Scene(Context &context);
@@ -35,6 +47,13 @@ class Scene {
     std::vector<Buffer> &GetLightsUBO() { return m_LightUBO; }
 
     std::vector<Entity>& GetEntities() { return m_Entities; }
+
+    CharacterEntity &GetCharacter() { return mCharacter; }
+
+    void CreateCharacter(Entity *entity, std::unique_ptr<CharacterVirtualTest> characterVirtual) {
+        mCharacter = {entity, std::move(characterVirtual)};
+    }
+
   private:
     Context &context;
     MeshManager *mMeshManager;
@@ -49,5 +68,8 @@ class Scene {
     std::vector<Entity> m_Entities;
     std::vector<Animation> m_Animations;
     std::vector<Skin> m_Skins;
+
+    bool mHasCharacter = false;
+    CharacterEntity mCharacter;
 };
 

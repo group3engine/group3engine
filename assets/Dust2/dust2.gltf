@@ -208,7 +208,7 @@
 		},
 		{
 			"mesh":34,
-			"name":"Cube"
+			"name":"Character"
 		}
 	],
 	"materials":[
@@ -2324,7 +2324,7 @@
 		{
 			"bufferView":112,
 			"componentType":5126,
-			"count":442,
+			"count":443,
 			"max":[
 				256,
 				104,
@@ -2340,13 +2340,13 @@
 		{
 			"bufferView":113,
 			"componentType":5126,
-			"count":442,
+			"count":443,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":114,
 			"componentType":5126,
-			"count":442,
+			"count":443,
 			"type":"VEC2"
 		},
 		{
@@ -3235,170 +3235,170 @@
 		},
 		{
 			"buffer":0,
-			"byteLength":5304,
+			"byteLength":5316,
 			"byteOffset":429604,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":5304,
-			"byteOffset":434908,
+			"byteLength":5316,
+			"byteOffset":434920,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":3536,
-			"byteOffset":440212,
+			"byteLength":3544,
+			"byteOffset":440236,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":1650,
-			"byteOffset":443748,
+			"byteOffset":443780,
 			"target":34963
 		},
 		{
 			"buffer":0,
 			"byteLength":4500,
-			"byteOffset":445400,
+			"byteOffset":445432,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":4500,
-			"byteOffset":449900,
+			"byteOffset":449932,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":3000,
-			"byteOffset":454400,
+			"byteOffset":454432,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":1386,
-			"byteOffset":457400,
+			"byteOffset":457432,
 			"target":34963
 		},
 		{
 			"buffer":0,
 			"byteLength":132,
-			"byteOffset":458788,
+			"byteOffset":458820,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":132,
-			"byteOffset":458920,
+			"byteOffset":458952,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":88,
-			"byteOffset":459052,
+			"byteOffset":459084,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":42,
-			"byteOffset":459140,
+			"byteOffset":459172,
 			"target":34963
 		},
 		{
 			"buffer":0,
 			"byteLength":144,
-			"byteOffset":459184,
+			"byteOffset":459216,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":144,
-			"byteOffset":459328,
+			"byteOffset":459360,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":96,
-			"byteOffset":459472,
+			"byteOffset":459504,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":48,
-			"byteOffset":459568,
+			"byteOffset":459600,
 			"target":34963
 		},
 		{
 			"buffer":0,
 			"byteLength":60,
-			"byteOffset":459616,
+			"byteOffset":459648,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":60,
-			"byteOffset":459676,
+			"byteOffset":459708,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":40,
-			"byteOffset":459736,
+			"byteOffset":459768,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":18,
-			"byteOffset":459776,
+			"byteOffset":459808,
 			"target":34963
 		},
 		{
 			"buffer":0,
 			"byteLength":180,
-			"byteOffset":459796,
+			"byteOffset":459828,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":180,
-			"byteOffset":459976,
+			"byteOffset":460008,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":120,
-			"byteOffset":460156,
+			"byteOffset":460188,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":66,
-			"byteOffset":460276,
+			"byteOffset":460308,
 			"target":34963
 		},
 		{
 			"buffer":0,
 			"byteLength":288,
-			"byteOffset":460344,
+			"byteOffset":460376,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":288,
-			"byteOffset":460632,
+			"byteOffset":460664,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":192,
-			"byteOffset":460920,
+			"byteOffset":460952,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":72,
-			"byteOffset":461112,
+			"byteOffset":461144,
 			"target":34963
 		}
 	],
@@ -3410,7 +3410,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":461184,
+			"byteLength":461216,
 			"uri":"dust2.bin"
 		}
 	]

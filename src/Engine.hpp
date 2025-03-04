@@ -30,6 +30,4 @@ class Engine {
 
     std::shared_ptr<Scene> mScene;
     std::unique_ptr<Renderer> mRenderer;
-
-    CharacterVirtualTest mCharacterVirtualTest;
 };
