@@ -83,3 +83,7 @@ void PhysicsManager::ShutDown() {
     delete Factory::sInstance;
     Factory::sInstance = nullptr;
 }
+void PhysicsManager::RegisterEntity(Entity *entity, BodyID bodyId) {
+    mContactListener.AddBodyEntityMapping(bodyId, entity);
+
+}

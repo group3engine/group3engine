@@ -10,6 +10,7 @@
 #include "Animator.hpp"
 #include "GLTFImportStructs.hpp"
 #include "RigidBody.hpp"
+#include "spdlog/spdlog.h"
 
 #include <atomic>
 
@@ -65,6 +66,7 @@ class Entity {
 
     void AddRigidBody(std::unique_ptr<RigidBody> rigidBody) {
         mRigidBody = std::move(rigidBody);
+        PhysicsManager::get().RegisterEntity(this, mRigidBody->mBodyId);
         mHasRigidBody = true;
     }
 
@@ -99,15 +101,13 @@ class Entity {
                            VkPipelineLayout aPipeLayout);
 
     virtual void Update(double deltaTime);
-
-    Transform GetTransform();
-
-  protected:
     virtual void LateUpdate() {}
     virtual void Awake() {}
-    virtual void OnCollisionStart(Entity *aOther) {}
-    virtual void OnCollisionStay(Entity *aOther) {}
-    virtual void OnCollisionEnd(Entity *aOther) {}
+    virtual void OnCollisionStart(Entity *aOther) {SPDLOG_INFO("I am {} and I collided with {}", mName, aOther->mName);}
+    virtual void OnCollisionStay(Entity *aOther) {SPDLOG_INFO("I am {} and I am colliding with {}", mName, aOther->mName);}
+
+    Transform GetTransform();
+  protected:
 
 
   public:

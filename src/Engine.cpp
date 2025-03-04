@@ -38,7 +38,7 @@ Engine::Engine() {
 void Engine::InitScene() {
     // Current path is the current working directory, i.e., where the root CMakeLists.txt is
     std::filesystem::path basePath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets";
-    std::filesystem::path gltfPath = basePath / Sample::Laughing;
+    std::filesystem::path gltfPath = basePath / Sample::Dust2;
 
     // Define Light sources
     Light directionalLight;
@@ -253,7 +253,7 @@ void Engine::Run() {
 #endif // !TEMP_DISABLE_PHYSICS
 
 #if !TEMP_DISABLE_PHYSICS
-        SPDLOG_INFO("cube.mPosition {}", glm::to_string(cube.mPosition));
+//        SPDLOG_INFO("cube.mPosition {}", glm::to_string(cube.mPosition));
 #endif // !TEMP_DISABLE_PHYSICS
 
         Render();
