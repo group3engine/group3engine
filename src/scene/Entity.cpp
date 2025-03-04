@@ -180,6 +180,7 @@ void Entity::Update(double deltaTime) {
     frameNumber++;
     if (mAnimator) {
         mAnimator->Update(deltaTime, this);
+        // TMP FOR VISUALISATION
         if ((frameNumber / 300) % 3 == 0) {
             mAnimator->SetActiveAnimation("laugh", 1.f);
         }
@@ -188,6 +189,7 @@ void Entity::Update(double deltaTime) {
         } else {
             mAnimator->SetActiveAnimation("idle", 0.5f);
         }
+        //END TMP
     }
 }
 Entity::~Entity() {

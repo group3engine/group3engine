@@ -33,7 +33,7 @@ class Skin {
     [[nodiscard]] std::string GetName() const { return mName; }
 
 
-    bool DetargetAnimation(Animation *aAnimation, std::vector<Entity *> aEntititiesInAnimation);
+    bool DetargetAnimation(Animation *aAnimation, const std::vector<Entity *> &aEntititiesInAnimation);
 
   private:
     // list of joints

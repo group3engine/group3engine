@@ -21,22 +21,19 @@ void Skin::AddJoint(Joint aJoint) {
     aJoint.entity->SetInverseBindMatrix(aJoint.inverseBindMatrix);
 }
 // either detargets the animation or returns false because this isn't the right skin
-bool Skin::DetargetAnimation(Animation *aAnimation, std::vector<Entity *> aEntititiesInAnimation) {
+bool Skin::DetargetAnimation(Animation *aAnimation, const std::vector<Entity *> &aEntititiesInAnimation) {
     // first we need to construct a map from entity pointer to joint index
     std::unordered_map<Entity *, size_t> entityToJointIndex;
     // for each entity, find the joint index
     // if there is no corresponding joint, return false
-    for (auto const entity : aEntititiesInAnimation) {
-        bool found = false;
-        for (size_t i = 0; i < mJoints.size(); i++) {
-            if (mJoints[i].entity == entity) {
-                entityToJointIndex[entity] = i;
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
+    for (auto *entity : aEntititiesInAnimation) {
+        auto it = std::find_if(
+            mJoints.begin(), mJoints.end(),
+            [&entity](const auto &joint) { return joint.entity == entity; });
+        if (it == mJoints.end()) {
             return false;
+        } else {
+            entityToJointIndex[entity] = it - mJoints.begin();
         }
     }
     // if we have reached this point, then we have found all the joints
@@ -45,6 +42,6 @@ bool Skin::DetargetAnimation(Animation *aAnimation, std::vector<Entity *> aEntit
     return true;
 }
 Entity *Skin::GetEntity(size_t aIndex) const  {
-    assert(aIndex < mJoints.size() && aIndex >= 0);
+    assert(aIndex < mJoints.size());
     return mJoints[aIndex].entity;
 }

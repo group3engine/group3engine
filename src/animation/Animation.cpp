@@ -118,7 +118,7 @@ void Animation::AddChannel(Channel &aChannel) {
         mChannels.begin(), mChannels.end(),
         [](const Channel &a, const Channel &b) { return *a.target < *b.target; });
 }
-void Animation::DetargetAnimation(std::unordered_map<Entity *, size_t> aJointMap) {
+void Animation::DetargetAnimation(std::unordered_map<Entity *, size_t> &aJointMap) {
     // for each channel, set the target index to the joint index
     for (auto &channel : mChannels) {
             channel.targetIndex = aJointMap[channel.target];

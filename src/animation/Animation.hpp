@@ -86,7 +86,7 @@ class Animation {
 
     [[nodiscard]] float GetMaxTime() const;
 
-    void DetargetAnimation(std::unordered_map<Entity *, size_t> aJointMap);
+    void DetargetAnimation(std::unordered_map<Entity *, size_t> &aJointMap);
 
   private:
     // list of channels
