@@ -103,9 +103,12 @@ class Entity {
     Transform GetTransform();
 
   protected:
-    virtual void Update() {}
     virtual void LateUpdate() {}
     virtual void Awake() {}
+    virtual void OnCollisionStart(Entity *aOther) {}
+    virtual void OnCollisionStay(Entity *aOther) {}
+    virtual void OnCollisionEnd(Entity *aOther) {}
+
 
   public:
     std::unique_ptr<RigidBody> mRigidBody;
