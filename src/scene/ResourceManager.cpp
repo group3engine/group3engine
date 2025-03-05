@@ -317,6 +317,16 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         const auto &gltfNode = data->nodes[ni];
 
         if (gltfNode.extras.data) {
+            // Our existing cgltf_options does not include a memory allocator
+            // If we want to use cgltf_parse_json_string then we need to pass an options with one
+            cgltf_options fixed_options = options;
+            if (fixed_options.memory.alloc_func == NULL) {
+                fixed_options.memory.alloc_func = &cgltf_default_alloc;
+            }
+            if (fixed_options.memory.free_func == NULL) {
+                fixed_options.memory.free_func = &cgltf_default_free;
+            }
+
             spdlog::info("extras data {}", gltfNode.extras.data);
 
             jsmn_parser parser;
@@ -325,24 +335,50 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             jsmntok_t tokens[256];
 
             int r;
-            r = jsmn_parse(&parser, gltfNode.extras.data, strlen(gltfNode.extras.data), tokens,
-                           256);
+            r = jsmn_parse(&parser, gltfNode.extras.data, strlen(gltfNode.extras.data), tokens, 256);
 
-            spdlog::info("r {}", r);
+            spdlog::info("jsmn_parse ret_tok_num: {}", r);
 
-            for (size_t i = 0; i < r; ++i) {
-                const auto &token = tokens[i];
+            // Cast to match cgltf functionality
+            const uint8_t *json_chunk = reinterpret_cast<const uint8_t *>(gltfNode.extras.data);
 
-                if (token.type == jsmntype_t::JSMN_OBJECT) {
-                    spdlog::info("jsmntype_t::JSMN_OBJECT {} start {} end {}", i, token.start, token.end);
-                }
+            // Current token index
+            int i = 0;
 
-                if (token.type == jsmntype_t::JSMN_STRING) {
-                    spdlog::info("jsmntype_t::JSMN_STRING {} start {} end {}", i, token.start, token.end);
+            // i = 0, token should be an object
+            CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+
+            int size = tokens[i].size;
+            ++i;
+
+            // IDEA: Store parse data in this struct and use C-style char * so
+            // we can use cgltf_parse_json_string. Then, we can store info
+            // in actual entities and construct std::string or enum values
+            // based on the char * string.
+            struct group3_extras {
+                char *entity_type = nullptr;
+            } group3_extras;
+
+            for (int j = 0; j < size; ++j) {
+                // i = 1 now, token should be a string
+                CGLTF_CHECK_KEY(tokens[i]);
+
+                if (cgltf_json_strcmp(tokens + i, json_chunk, "entity_type") == 0) {
+                    // Parse token i + 1, e.g., token 2 (the value of the entity_type key)
+                    // Update i to i + 1, so we can continue parsing
+                    i = cgltf_parse_json_string(&fixed_options, tokens, i + 1, json_chunk, &group3_extras.entity_type);
                 }
             }
+
+            spdlog::info("entity_type : {}", std::string(group3_extras.entity_type));
+
+            // TODO: Convert char * info into std::string or enum value and store in actual entity
+
+            // Free temp parse data
+            // Ignore the user data param
+            fixed_options.memory.free_func(fixed_options.memory.user_data, group3_extras.entity_type);
         }
-        
+
         // add an entity
         aEntities.emplace_back();
         Entity &entity = aEntities.back();
