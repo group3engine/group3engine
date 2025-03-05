@@ -104,6 +104,8 @@ class Entity {
 
     bool IsCharacter() const { return mName.find("Character") != std::string::npos; }
 
+    bool HasAnimator() const { return static_cast<bool>(mAnimator); }
+
   protected:
     virtual void Update() {}
     virtual void LateUpdate() {}

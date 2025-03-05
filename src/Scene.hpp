@@ -48,6 +48,9 @@ class Scene {
 
     std::vector<Entity>& GetEntities() { return m_Entities; }
 
+    void SetHasCharacter(bool hasCharacter) { mHasCharacter = hasCharacter; }
+    bool HasCharacter() const { return mHasCharacter; }
+
     CharacterEntity &GetCharacter() { return mCharacter; }
 
     void CreateCharacter(Entity *entity, std::unique_ptr<CharacterVirtualTest> characterVirtual) {

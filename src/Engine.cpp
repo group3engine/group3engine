@@ -38,7 +38,7 @@ Engine::Engine() {
 void Engine::InitScene() {
     // Current path is the current working directory, i.e., where the root CMakeLists.txt is
     std::filesystem::path basePath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets";
-    std::filesystem::path gltfPath = basePath / Sample::Dust2Laugh;
+    std::filesystem::path gltfPath = basePath / Sample::Laughing;
 
     // Define Light sources
     Light directionalLight;
@@ -110,7 +110,6 @@ bool Engine::Initialize() {
 
     // --- Mesh shape for each entity ----------------------------------------
 
-#if !TEMP_DISABLE_PHYSICS
     // Shapes are refcounted and can be shared between bodies
     JPH::Ref<Shape> shape;
 
@@ -122,18 +121,17 @@ bool Engine::Initialize() {
             continue;
         }
 
+        if (entity.HasAnimator()) {
+            SPDLOG_INFO("Skipping entity {}, as it has an animator", entity.mName);
+            continue;
+        }
+
         const auto *mesh = entity.GetMesh();
 
         if (!mesh) {
             SPDLOG_WARN("Entity {} does not have mesh", entity.mName);
             continue;
         }
-
-        // if (entity.mName != "Object_25") {
-        //     continue;
-        // } else {
-        //     SPDLOG_INFO("Processing floor");
-        // }
 
         size_t totalVertices = 0;
         size_t totalTriangles = 0;
@@ -202,14 +200,14 @@ bool Engine::Initialize() {
         characterVirtual->SetTempAllocator(PhysicsManager::get().mTempAllocator.get());
         characterVirtual->Initialize();
 
-        glm::vec3 cubePos = glm::vec3(-21.538, 5.0f, -29.02);
-        characterVirtual->SetCharacterPosition(RVec3(cubePos.x, cubePos.y, cubePos.z));
+        glm::vec3 pos = glm::vec3(-21.538, 5.0f, -29.02);
+        characterVirtual->SetCharacterPosition(RVec3(pos.x, pos.y, pos.z));
 
         mScene->CreateCharacter(&characterEntity, std::move(characterVirtual));
+        mScene->SetHasCharacter(true);
     }
 
     // ---END OF PHYSICS TEST INITIALISATION---
-#endif // !TEMP_DISABLE_PHYSICS
 
     SPDLOG_DEBUG("Engine initialised.");
 
@@ -242,32 +240,32 @@ void Engine::Run() {
         auto cameraForward = camera->GetDirection();
         processInputParams.mCameraState.mForward = {cameraForward.x, cameraForward.y, cameraForward.z};
 
-#if !TEMP_DISABLE_PHYSICS
-        mScene->GetCharacter().mCharacterVirtual->ProcessInput(processInputParams);
-#endif // !TEMP_DISABLE_PHYSICS
+        if (mScene->HasCharacter()) {
+            mScene->GetCharacter().mCharacterVirtual->ProcessInput(processInputParams);
+        }
 
         PreUpdateParams preUpdateParams{};
         preUpdateParams.mDeltaTime = 1.f / 60.0f;
 
-#if !TEMP_DISABLE_PHYSICS
-        mScene->GetCharacter().mCharacterVirtual->PrePhysicsUpdate(preUpdateParams);
-#endif // !TEMP_DISABLE_PHYSICS
+        if (mScene->HasCharacter()) {
+            mScene->GetCharacter().mCharacterVirtual->PrePhysicsUpdate(preUpdateParams);
+        }
 
         PhysicsManager::get().UpdatePhysics(1.f / 60.f);
 
-#if !TEMP_DISABLE_PHYSICS
-        auto characterVirtualPos = mScene->GetCharacter().mCharacterVirtual->GetCharacterPosition();
-        mScene->GetCharacter().mEntity->mPosition = glm::vec3(
-            characterVirtualPos.GetX(), characterVirtualPos.GetY(), characterVirtualPos.GetZ());
+        if (mScene->HasCharacter()) {
+            auto characterVirtualPos = mScene->GetCharacter().mCharacterVirtual->GetCharacterPosition();
+            mScene->GetCharacter().mEntity->mPosition = glm::vec3(
+                characterVirtualPos.GetX(), characterVirtualPos.GetY(), characterVirtualPos.GetZ());
 
-        Update(GlobalUtil::deltaTime, mScene->GetCharacter().mEntity->mPosition);
-#else // !TEMP_DISABLE_PHYSICS
-        Update(GlobalUtil::deltaTime, glm::vec3(0.0f));
-#endif // !TEMP_DISABLE_PHYSICS
+            Update(GlobalUtil::deltaTime, mScene->GetCharacter().mEntity->mPosition);
+        } else {
+            Update(GlobalUtil::deltaTime, glm::vec3(0.0f));
+        }
 
-#if !TEMP_DISABLE_PHYSICS
-        SPDLOG_INFO("cube.mPosition {}", glm::to_string(mScene->GetCharacter().mEntity->mPosition));
-#endif // !TEMP_DISABLE_PHYSICS
+        if (mScene->HasCharacter()) {
+            SPDLOG_INFO("cube.mPosition {}", glm::to_string(mScene->GetCharacter().mEntity->mPosition));
+        }
 
         Render();
     }
