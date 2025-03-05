@@ -18,6 +18,8 @@
 
 #include <glm/gtx/io.hpp>
 
+#include <spdlog/spdlog.h>
+
 Material LoadMaterialDefault() {
     PBRMetallicRoughnessMaterial pbrMetallicRoughness{
         nullptr, nullptr, {{1, 1, 1, 1}, 0.0f, 1.0f, 0.0f}, "", ""};
@@ -314,6 +316,33 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
     for (size_t ni = 0; ni < data->nodes_count; ni++) {
         const auto &gltfNode = data->nodes[ni];
 
+        if (gltfNode.extras.data) {
+            spdlog::info("extras data {}", gltfNode.extras.data);
+
+            jsmn_parser parser;
+
+            jsmn_init(&parser);
+            jsmntok_t tokens[256];
+
+            int r;
+            r = jsmn_parse(&parser, gltfNode.extras.data, strlen(gltfNode.extras.data), tokens,
+                           256);
+
+            spdlog::info("r {}", r);
+
+            for (size_t i = 0; i < r; ++i) {
+                const auto &token = tokens[i];
+
+                if (token.type == jsmntype_t::JSMN_OBJECT) {
+                    spdlog::info("jsmntype_t::JSMN_OBJECT {} start {} end {}", i, token.start, token.end);
+                }
+
+                if (token.type == jsmntype_t::JSMN_STRING) {
+                    spdlog::info("jsmntype_t::JSMN_STRING {} start {} end {}", i, token.start, token.end);
+                }
+            }
+        }
+        
         // add an entity
         aEntities.emplace_back();
         Entity &entity = aEntities.back();
