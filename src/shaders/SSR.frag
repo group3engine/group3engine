@@ -74,7 +74,7 @@ vec3 NaiveScreenSpaceReflections()
 	vec3 worldReflectionDir = normalize(reflect(camDir, WorldNormal.xyz));
 
 	vec3 RayPos = WorldPos.xyz;
-	vec3 RayStep = worldReflectionDir * stepSize;
+	vec3 RayStep = worldReflectionDir * stepSize * IGN(gl_FragCoord.xy);
 
 	RayPos += RayStep;
 	vec4 color = vec4(0,0,0,0);
@@ -104,7 +104,7 @@ vec3 NaiveScreenSpaceReflections()
 			return mix(color.rgb, vec3(0,0,0), NdotR); // if its closer to 1, we get less reflection since its aligned with camera
 		}
 
-		RayPos += RayStep * (i + noise(uv));
+		RayPos += RayStep;
 	}
 
 	return vec3(0.0, 0.0, 0.0);
