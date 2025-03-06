@@ -173,6 +173,7 @@ void vk::ForwardPass::Execute(VkCommandBuffer cmd)
 
 	vkCmdEndRenderPass(cmd);
 
+
 #ifdef _DEBUG
 	EndRenderPassLabel(cmd);
 #endif // !DEBUG

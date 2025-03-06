@@ -96,6 +96,13 @@ void vk::ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::s
         ImGui::SliderFloat("Intensity: ", &ssaoSettings.intensity, 0.0f, 10.0f);
     }
 
+    // SSR settings
+    if (ImGui::CollapsingHeader("SSR"))
+    {
+        ImGui::SliderInt("MaxSteps: ", &ssrSettings.MaxSteps, 1, 300);
+        ImGui::SliderInt("MaxDistance: ", &ssrSettings.MaxDistance, 1, 300);
+    }
+
     static bool enableTextureDebug = false;
     ImGui::Checkbox("Debug Textures", &enableTextureDebug);
     if (enableTextureDebug)

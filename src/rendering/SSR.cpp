@@ -1,17 +1,18 @@
 #include "Context.hpp"
-#include "SSAO.hpp"
+#include "SSR.hpp"
 #include <array>
 #include "Pipeline.hpp"
 #include "RenderPass.hpp"
 
-vk::SSAO::SSAO(Context &context, Image &depthBuffer, Image& renderedScene, std::shared_ptr<Camera> camera) :
-	context{context}, depthBuffer{depthBuffer}, renderedScene{renderedScene}, camera{camera} {
+vk::SSR::SSR(Context &context, Image &depthBuffer, Image& renderedScene, Image& metallicRoughness, std::shared_ptr<Camera> camera) :
+
+	context{context}, depthBuffer{depthBuffer}, renderedScene{renderedScene}, metallicRoughness{metallicRoughness}, camera{camera} {
 
 	m_width = context.extent.width;
     m_height = context.extent.height;
 
     m_RenderTarget = CreateImageTexture2D(
-        "SSAO_RenderTarget",
+        "SSR_RenderTarget",
         context,
         m_width,
         m_height,
@@ -21,10 +22,10 @@ vk::SSAO::SSAO(Context &context, Image &depthBuffer, Image& renderedScene, std::
         1
     );
 
-	m_SSAOUniform.resize(MAX_FRAMES_IN_FLIGHT);
-	for (auto& buffer : m_SSAOUniform)
+	m_SSRUniform.resize(MAX_FRAMES_IN_FLIGHT);
+	for (auto& buffer : m_SSRUniform)
 	{
-		buffer = CreateBuffer("SSAOSettingsUBO", context, sizeof(SSAOSettings), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+		buffer = CreateBuffer("SSRSettingsUBO", context, sizeof(SSRSettings), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
 	}
 
     BuildDescriptors();
@@ -33,9 +34,9 @@ vk::SSAO::SSAO(Context &context, Image &depthBuffer, Image& renderedScene, std::
     CreatePipeline();
 }
 
-vk::SSAO::~SSAO()
+vk::SSR::~SSR()
 {
-	for (auto& buffer : m_SSAOUniform)
+	for (auto& buffer : m_SSRUniform)
 	{
         buffer.Destroy();
 	}
@@ -47,12 +48,12 @@ vk::SSAO::~SSAO()
     vkDestroyRenderPass(context.device, m_RenderPass, nullptr);
 }
 
-void vk::SSAO::Update()
+void vk::SSR::Update()
 {
-	m_SSAOUniform[currentFrame].WriteToBuffer(ssaoSettings, sizeof(SSAOSettings));
+	m_SSRUniform[currentFrame].WriteToBuffer(ssrSettings, sizeof(SSRSettings));
 }
 
-void vk::SSAO::Resize()
+void vk::SSR::Resize()
 {
     m_width = context.extent.width;
     m_height = context.extent.height;
@@ -60,7 +61,7 @@ void vk::SSAO::Resize()
     m_RenderTarget.Destroy(context.device);
 
     m_RenderTarget = CreateImageTexture2D(
-        "SSAO_RenderTarget",
+        "SSR_RenderTarget",
 		context,
 		m_width,
 		m_height,
@@ -92,6 +93,15 @@ void vk::SSAO::Resize()
 
 	for (size_t i = 0; i < (size_t)MAX_FRAMES_IN_FLIGHT; i++)
 	{
+		VkDescriptorBufferInfo bufferInfo{};
+		bufferInfo.buffer = m_SSRUniform[i].buffer;
+		bufferInfo.offset = 0;
+		bufferInfo.range = sizeof(SSRSettings);
+		UpdateDescriptorSet(context, 2, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+	}
+
+	for (size_t i = 0; i < (size_t)MAX_FRAMES_IN_FLIGHT; i++)
+	{
 		VkDescriptorImageInfo imageInfo = {
 			.sampler = clampToEdgeSamplerAniso,
 			.imageView = renderedScene.imageView,
@@ -101,15 +111,27 @@ void vk::SSAO::Resize()
 		UpdateDescriptorSet(context, 3, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 	}
 
+
+	for (size_t i = 0; i < (size_t)MAX_FRAMES_IN_FLIGHT; i++)
+	{
+		VkDescriptorImageInfo imageInfo = {
+			.sampler = clampToEdgeSamplerAniso,
+			.imageView = metallicRoughness.imageView,
+			.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+		};
+
+		UpdateDescriptorSet(context, 4, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+	}
+
     vkDestroyFramebuffer(context.device, m_Framebuffer, nullptr);
     CreateFramebuffer();
 }
 
-void vk::SSAO::Execute(VkCommandBuffer cmd)
+void vk::SSR::Execute(VkCommandBuffer cmd)
 {
 
 #ifdef _DEBUG
-    RenderPassLabel(cmd, "SSAO");
+    RenderPassLabel(cmd, "SSR");
 #endif // !DEBUG
 
     VkRenderPassBeginInfo renderPassInfo{};
@@ -135,13 +157,12 @@ void vk::SSAO::Execute(VkCommandBuffer cmd)
     vkCmdDraw(cmd, 3, 1, 0, 0);
 
     vkCmdEndRenderPass(cmd);
-
 #ifdef _DEBUG
     EndRenderPassLabel(cmd);
 #endif // !DEBUG
 }
 
-void vk::SSAO::CreateFramebuffer()
+void vk::SSR::CreateFramebuffer()
 {
 	std::vector<VkImageView> attachments = { m_RenderTarget.imageView };
 
@@ -155,14 +176,14 @@ void vk::SSAO::CreateFramebuffer()
 		.layers = 1
 	};
 
-	VK_CHECK(vkCreateFramebuffer(context.device, &fbcInfo, nullptr, &m_Framebuffer), "Failed to create SSAO framebuffer.");
+	VK_CHECK(vkCreateFramebuffer(context.device, &fbcInfo, nullptr, &m_Framebuffer), "Failed to create SSR framebuffer.");
 }
 
-void vk::SSAO::CreatePipeline()
+void vk::SSR::CreatePipeline()
 {
     auto pipelineResult = vk::PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::NONE, 0)
 	.AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "fs_tri.vert.spv", ShaderType::VERTEX)
-	.AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "SSAO.frag.spv", ShaderType::FRAGMENT)
+	.AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "SSR.frag.spv", ShaderType::FRAGMENT)
 	.SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
 	.SetDynamicState({ {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR} })
 	.SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE)
@@ -178,7 +199,7 @@ void vk::SSAO::CreatePipeline()
 
 }
 
-void vk::SSAO::CreateRenderPass()
+void vk::SSR::CreateRenderPass()
 {
     RenderPass builder(context.device, 1);
 
@@ -193,10 +214,10 @@ void vk::SSAO::CreateRenderPass()
 		.AddDependency(0, VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT, VK_DEPENDENCY_BY_REGION_BIT)
 		.Build();
 
-	context.SetObjectName(context.device, (uint64_t)m_RenderPass, VK_OBJECT_TYPE_RENDER_PASS, "SSAORenderPass");
+	context.SetObjectName(context.device, (uint64_t)m_RenderPass, VK_OBJECT_TYPE_RENDER_PASS, "SSRRenderPass");
 }
 
-void vk::SSAO::BuildDescriptors()
+void vk::SSR::BuildDescriptors()
 {
     m_descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
 	{
@@ -204,7 +225,8 @@ void vk::SSAO::BuildDescriptors()
             CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT),
 			CreateDescriptorBinding(1, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
 			CreateDescriptorBinding(2, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT),
-			CreateDescriptorBinding(3, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+			CreateDescriptorBinding(3, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
+			CreateDescriptorBinding(4, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
 		};
 
 		m_DescriptorSetLayout = CreateDescriptorSetLayout(context, bindings);
@@ -235,9 +257,9 @@ void vk::SSAO::BuildDescriptors()
 	for (size_t i = 0; i < (size_t)MAX_FRAMES_IN_FLIGHT; i++)
 	{
 		VkDescriptorBufferInfo bufferInfo{};
-		bufferInfo.buffer = m_SSAOUniform[i].buffer;
+		bufferInfo.buffer = m_SSRUniform[i].buffer;
 		bufferInfo.offset = 0;
-		bufferInfo.range = sizeof(SSAOSettings);
+		bufferInfo.range = sizeof(SSRSettings);
 		UpdateDescriptorSet(context, 2, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 	}
 
@@ -250,6 +272,17 @@ void vk::SSAO::BuildDescriptors()
 		};
 
 		UpdateDescriptorSet(context, 3, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+	}
+
+	for (size_t i = 0; i < (size_t)MAX_FRAMES_IN_FLIGHT; i++)
+	{
+		VkDescriptorImageInfo imageInfo = {
+			.sampler = clampToEdgeSamplerAniso,
+			.imageView = metallicRoughness.imageView,
+			.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+		};
+
+		UpdateDescriptorSet(context, 4, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 	}
 }
 

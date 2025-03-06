@@ -26,6 +26,7 @@ layout(set = 0, binding = 2) uniform SSAOSettings
 }ssao;
 
 layout (set = 0, binding = 1) uniform sampler2D depthBuffer;
+layout (set = 0, binding = 3) uniform sampler2D renderedScene;
 
 vec4 DepthToPosition(vec2 uv)
 {
@@ -47,6 +48,52 @@ vec4 DepthToNormal(vec2 uv)
 	n *= -1;
 
 	return vec4(n, 1.0);
+}
+
+float IGN(vec2 p)
+{
+    vec3 magic = vec3(0.06711056, 0.00583715, 52.9829189);
+    return fract( magic.z * fract(dot(p,magic.xy)) );
+}
+
+vec3 NaiveScreenSpaceReflections()
+{
+	const vec2 texSize = textureSize(depthBuffer, 0);
+	const vec2 uv = gl_FragCoord.xy / texSize;
+	int MAX_DISTANCE = 1;
+	int STEPS = 341;
+	float stepSize = 0.1;
+
+	vec4 WorldPos = inverse(ubo.view) * DepthToPosition(uv);
+	vec4 WorldNormal = normalize(inverse(ubo.view) * vec4(DepthToNormal(uv).xyz, 0.0));
+
+	vec3 camDir = normalize(WorldPos.xyz - ubo.cameraPosition.xyz);
+	vec3 worldReflectionDir = normalize(reflect(camDir, WorldNormal.xyz));
+
+	vec3 RayPos = WorldPos.xyz;
+	vec3 RayStep = worldReflectionDir * stepSize * IGN(gl_FragCoord.xy);
+
+	RayPos += RayStep;
+	for(int i = 0; i < STEPS; i++)
+	{
+		// Get the position of the ray in screen-space
+		vec4 projectedCoords = ubo.projection * ubo.view * vec4(RayPos.xyz, 1.0);
+		projectedCoords.xyz /= projectedCoords.w;
+		projectedCoords.xy = projectedCoords.xy * 0.5 + 0.5;
+
+		float rayDepth = projectedCoords.z;
+		float depth = texture(depthBuffer, projectedCoords.xy).x;
+
+		if((rayDepth - depth) > 0.0 && (rayDepth - depth) < 0.1)
+		{
+			// We hit geometry
+			return texture(renderedScene, (projectedCoords.xy)).rgb;
+		}
+
+		RayPos += RayStep;
+	}
+
+	return vec3(0.0, 0.0, 0.0);
 }
 
 #define PI 3.14159265359
@@ -148,7 +195,6 @@ float SSAO()
 
 void main()
 {
-
 	vec4 position = DepthToPosition(uv);
 	vec4 normals = DepthToNormal(uv);
 

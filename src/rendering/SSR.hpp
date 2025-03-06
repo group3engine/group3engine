@@ -4,19 +4,15 @@
 #include "Buffer.hpp"
 #include "Camera.hpp"
 
-/* SSAO needs to be blurred
-    currently the composite pass is taking a non-blurred version which may appear a bit noisy
-    in the final image
-*/
 namespace vk {
 
     class Context;
 
-    class SSAO {
+    class SSR {
       public:
 
-        explicit SSAO(Context &context, Image& depthBuffer, Image& renderedScene, std::shared_ptr<Camera> camera);
-        ~SSAO();
+        explicit SSR(Context &context, Image& depthBuffer, Image& renderedScene, Image& metallicRoughness, std::shared_ptr<Camera> camera);
+        ~SSR();
         void Execute(VkCommandBuffer cmd);
         void Update();
         void Resize();
@@ -34,7 +30,8 @@ namespace vk {
         uint32_t m_height;
         Image m_RenderTarget;
         Image& depthBuffer;
-        Image &renderedScene;
+        Image& renderedScene;
+        Image& metallicRoughness;
         std::shared_ptr<Camera> camera;
 
         VkPipeline m_Pipeline;
@@ -43,7 +40,7 @@ namespace vk {
         std::vector<VkDescriptorSet> m_descriptorSets;
         VkRenderPass m_RenderPass;
         VkFramebuffer m_Framebuffer;
-        std::vector<Buffer> m_SSAOUniform;
+        std::vector<Buffer> m_SSRUniform;
     };
 
 }; // namespace vk

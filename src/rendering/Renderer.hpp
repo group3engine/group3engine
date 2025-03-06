@@ -15,6 +15,8 @@
 #include "ForwardPass.hpp"
 #include "ImGuiRenderer.hpp"
 #include "SSAO.hpp"
+#include "SSR.hpp"
+#include "GBuffer.hpp"
 
 namespace vk
 {
@@ -53,7 +55,9 @@ namespace vk
 
 		std::unique_ptr<DepthPrepass>     m_DepthPrepass;
 		std::unique_ptr<ForwardPass>	  m_ForwardPass;
+        std::unique_ptr<GBuffer>	      m_GBuffer;
         std::unique_ptr<SSAO>			  m_SSAO;
+		std::unique_ptr<SSR>		      m_SSR;
 		std::unique_ptr<ShadowMap>		  m_ShadowMap;
 		std::unique_ptr<Bloom>			  m_BloomPass;
 		std::unique_ptr<Composite>        m_CompositePass;

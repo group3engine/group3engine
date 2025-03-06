@@ -6,11 +6,12 @@
 #include "Utils.hpp"
 #include "Buffer.hpp"
 
-vk::Composite::Composite(Context& context, Image& LightingPass, Image& BloomPass, Image& SSAO) :
+vk::Composite::Composite(Context& context, Image& LightingPass, Image& BloomPass, Image& SSAO, Image& SSRImage) :
 	context{ context },
 	LightingPass{ LightingPass },
 	BloomPass{ BloomPass },
 	SSAO{SSAO},
+	SSRImage{SSRImage},
 	m_Pipeline{ VK_NULL_HANDLE },
 	m_PipelineLayout{ VK_NULL_HANDLE },
 	m_descriptorSetLayout{ VK_NULL_HANDLE },
@@ -107,6 +108,17 @@ void vk::Composite::Resize()
 		};
 
 		UpdateDescriptorSet(context, 2, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+	}
+
+	for (size_t i = 0; i < (size_t)MAX_FRAMES_IN_FLIGHT; i++)
+	{
+		VkDescriptorImageInfo imageInfo = {
+			.sampler = repeatSamplerAniso,
+			.imageView = SSRImage.imageView,
+			.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+		};
+
+		UpdateDescriptorSet(context, 3, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 	}
 }
 
@@ -226,6 +238,7 @@ void vk::Composite::BuildDescriptors()
 			CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
 			CreateDescriptorBinding(1, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
 			CreateDescriptorBinding(2, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
+			CreateDescriptorBinding(3, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
 		};
 
 		m_descriptorSetLayout = CreateDescriptorSetLayout(context, bindings);
@@ -266,5 +279,17 @@ void vk::Composite::BuildDescriptors()
 		};
 
 		UpdateDescriptorSet(context, 2, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+	}
+
+
+	for (size_t i = 0; i < (size_t)MAX_FRAMES_IN_FLIGHT; i++)
+	{
+		VkDescriptorImageInfo imageInfo = {
+			.sampler = repeatSamplerAniso,
+			.imageView = SSRImage.imageView,
+			.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+		};
+
+		UpdateDescriptorSet(context, 3, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 	}
 }
