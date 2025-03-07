@@ -53,6 +53,12 @@ class Entity {
     void SetName(std::string aName) { mName = std::move(aName); }
     [[nodiscard]] const std::string &GetName() const { return mName; }
 
+    [[nodiscard]] glm::vec3 GetPosition() const { return mPosition; }
+    void SetPosition(glm::vec3 aPosition) { mPosition = aPosition; }
+    void SetPosition(float x, float y, float z) {
+        mPosition = glm::vec3(x, y, z);
+    }
+
     void SetParent(Entity *aParent);
 
     [[nodiscard]] Entity *GetParent() const { return mParent; }
@@ -101,6 +107,15 @@ class Entity {
                            VkPipelineLayout aPipeLayout);
 
     virtual void Update(double deltaTime);
+
+    Transform GetTransform();
+
+    bool IsCharacter() const { return mName.find("Character") != std::string::npos; }
+
+    bool HasAnimator() const { return static_cast<bool>(mAnimator); }
+
+  protected:
+    virtual void Update() {}
     virtual void LateUpdate() {}
     virtual void Awake() {}
     virtual void OnCollisionStart(Entity *aOther) {SPDLOG_INFO("I am {} and I collided with {}", mName, aOther->mName);}

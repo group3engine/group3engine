@@ -10,7 +10,7 @@ void Scene::AddLightSource(Light &LightSource) {
 
 void Scene::Update(double aDeltaTime) {
     for(auto &entity : m_Entities) {
-        entity.Update(aDeltaTime);
+        entity->Update(aDeltaTime);
     }
 
 	for (auto& light : m_Lights)
@@ -79,26 +79,26 @@ Scene::Scene(Context &context)
 void Scene::DrawOpaque(VkCommandBuffer cmd,
                        VkPipelineLayout pipelineLayout) {
     for (auto &entity : m_Entities) {
-        entity.RecordDrawOpaque(cmd, pipelineLayout);
+        entity->RecordDrawOpaque(cmd, pipelineLayout);
     }
 }
 
 void Scene::DrawAlphaMasked(VkCommandBuffer cmd,
                             VkPipelineLayout pipelineLayout) {
     for (auto &entity : m_Entities) {
-        entity.RecordDrawCutout(cmd, pipelineLayout);
+        entity->RecordDrawCutout(cmd, pipelineLayout);
     }
 }
 void Scene::DrawShadowMap(VkCommandBuffer cmd,
                           VkPipelineLayout pipelineLayout) {
     for (auto& entity : m_Entities) {
-        entity.RecordDrawShadow(cmd, pipelineLayout);
+        entity->RecordDrawShadow(cmd, pipelineLayout);
     }
 }
 
 void Scene::DrawSkinned(VkCommandBuffer cmd,
                         VkPipelineLayout pipelineLayout) {
     for (auto &entity : m_Entities) {
-        entity.RecordDrawSkinned(cmd, pipelineLayout);
+        entity->RecordDrawSkinned(cmd, pipelineLayout);
     }
 }

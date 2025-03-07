@@ -31,6 +31,8 @@ void CharacterBaseTest::Initialize()
 	case EType::Box:
 		mStandingShape = RotatedTranslatedShapeSettings(Vec3(0, 0/* this is the offset from the characters origin to its center*/, 0), Quat::sIdentity(), new BoxShape(Vec3(cCharacterRadiusStanding, cCharacterRadiusStanding, cCharacterRadiusStanding))).Create().Get();
 		break;
+        default:
+            assert(false);
 	}
 
 	// Create CharacterVirtual

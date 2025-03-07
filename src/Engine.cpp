@@ -38,7 +38,7 @@ Engine::Engine() {
 void Engine::InitScene() {
     // Current path is the current working directory, i.e., where the root CMakeLists.txt is
     std::filesystem::path basePath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets";
-    std::filesystem::path gltfPath = basePath / Sample::Dust2;
+    std::filesystem::path gltfPath = basePath / Sample::Dust2Laugh;
 
     // Define Light sources
     Light directionalLight;
@@ -110,93 +110,105 @@ bool Engine::Initialize() {
 
     // --- Mesh shape for each entity ----------------------------------------
 
-#if !TEMP_DISABLE_PHYSICS
     // Shapes are refcounted and can be shared between bodies
     JPH::Ref<Shape> shape;
 
     for (auto it = mScene->GetEntities().begin(); it != mScene->GetEntities().end(); ++it) {
         const auto &entity = *it;
 
-        if (entity.mName == "Cube") {
-            SPDLOG_INFO("Skipping cube");
-            continue;
-        }
+        if (!entity->IsCharacter()) {
 
-        const auto *mesh = entity.GetMesh();
-
-        if (!mesh) {
-            SPDLOG_WARN("Entity {} does not have mesh", entity.mName);
-            continue;
-        }
-
-        // if (entity.mName != "Object_25") {
-        //     continue;
-        // } else {
-        //     SPDLOG_INFO("Processing floor");
-        // }
-
-        size_t totalVertices = 0;
-        size_t totalTriangles = 0;
-
-        for (const auto &primitive : mesh->meshPrimitives) {
-            // Create an array of vertices
-            VertexList vertices;
-            for (const auto &vertex : primitive.vertices) {
-                auto worldPos = entity.getWorldTransform() * glm::vec4(vertex.pos, 1.0f);
-                vertices.emplace_back(worldPos.x, worldPos.y, worldPos.z);
-                ++totalVertices;
+            if (entity->HasAnimator()) {
+                SPDLOG_INFO("Skipping entity {}, as it has an animator", entity->mName);
+                continue;
             }
 
-            IndexedTriangleList indexedTriangles;
-            for (size_t i = 0; i < primitive.indices.size(); i += 3) {
-                indexedTriangles.push_back(IndexedTriangle(
-                    primitive.indices[i], primitive.indices[i + 1], primitive.indices[i + 2]));
-                ++totalTriangles;
+            const auto *mesh = entity->GetMesh();
+
+            if (!mesh) {
+                SPDLOG_WARN("Entity {} does not have mesh", entity->mName);
+                continue;
             }
 
-            assert(!vertices.empty());
+            size_t totalVertices = 0;
+            size_t totalTriangles = 0;
 
-            // Create the settings object for a mesh shape
-            JPH::MeshShapeSettings settings(vertices, indexedTriangles);
+            for (const auto &primitive : mesh->meshPrimitives) {
+                // Create an array of vertices
+                VertexList vertices;
+                for (const auto &vertex : primitive.vertices) {
+                    auto worldPos = entity->getWorldTransform() * glm::vec4(vertex.pos, 1.0f);
+                    vertices.emplace_back(worldPos.x, worldPos.y, worldPos.z);
+                    ++totalVertices;
+                }
 
-            // Create shape
-            JPH::Shape::ShapeResult result = settings.Create();
-            if (result.IsValid())
-                shape = result.Get();
-            else
-                SPDLOG_ERROR("Shape result is invalid.");
+                IndexedTriangleList indexedTriangles;
+                for (size_t i = 0; i < primitive.indices.size(); i += 3) {
+                    indexedTriangles.push_back(IndexedTriangle(
+                        primitive.indices[i], primitive.indices[i + 1], primitive.indices[i + 2]));
+                    ++totalTriangles;
+                }
 
-            BodyCreationSettings bodyCreationSettings = {result.Get(), RVec3(0.0_r, 0.0_r, 0.0_r),
-                                                         Quat::sIdentity(), EMotionType::Static,
-                                                         Layers::NON_MOVING};
+                assert(!vertices.empty());
+                assert(!indexedTriangles.empty());
 
-            auto bodyID = PhysicsManager::get().mPhysicsSystem.GetBodyInterface().CreateAndAddBody(
-                bodyCreationSettings, EActivation::DontActivate);
+                // Create the settings object for a mesh shape
+                JPH::MeshShapeSettings settings(vertices, indexedTriangles);
 
-            assert(!bodyID.IsInvalid());
+                // Create shape
+                JPH::Shape::ShapeResult result = settings.Create();
+                if (result.IsValid()) {
+                    shape = result.Get();
+                } else {
+                    SPDLOG_ERROR("Shape result is invalid. {}", result.GetError());
+                }
 
-            PhysicsManager::get().mBodyIds.push_back(bodyID);
+                BodyCreationSettings bodyCreationSettings = {
+                    result.Get(), RVec3(0.0_r, 0.0_r, 0.0_r), Quat::sIdentity(),
+                    EMotionType::Static, Layers::NON_MOVING};
+
+                auto bodyID =
+                    PhysicsManager::get().mPhysicsSystem.GetBodyInterface().CreateAndAddBody(
+                        bodyCreationSettings, EActivation::DontActivate);
+
+                assert(!bodyID.IsInvalid());
+
+                PhysicsManager::get().mBodyIds.push_back(bodyID);
+            }
+
+            SPDLOG_INFO("total vertices {}", totalVertices);
+            SPDLOG_INFO("total triangles {}", totalTriangles);
+        } else {
+            SPDLOG_INFO("Skipping character");
         }
-
-        SPDLOG_INFO("total vertices {}", totalVertices);
-        SPDLOG_INFO("total triangles {}", totalTriangles);
     }
 
 
-    auto &cube = mScene->GetEntities().back();
+    // Find character
+    auto &entities = mScene->GetEntities();
+    auto it = std::find_if(entities.begin(), entities.end(),
+                           [](const auto &entity) { return entity->IsCharacter(); });
 
-    assert(cube.mName == "Cube");
+    // If the scene has a character (find character by name == "Character")
+    if (it != entities.end()) {
+        auto &characterEntity = *it;
 
-    cube.mHasCharacter = true;
+        characterEntity->mHasCharacter = true;
 
-    mCharacterVirtualTest.SetPhysicsSystem(&PhysicsManager::get().mPhysicsSystem);
-    mCharacterVirtualTest.SetJobSystem(PhysicsManager::get().mJobSystem.get());
-    mCharacterVirtualTest.SetTempAllocator(PhysicsManager::get().mTempAllocator.get());
-    mCharacterVirtualTest.Initialize();
-    glm::vec3 cubePos = glm::vec3(-21.538, 5.0f, -29.02);
-    mCharacterVirtualTest.SetCharacterPosition(RVec3(cubePos.x, cubePos.y, cubePos.z));
+        auto characterVirtual = std::make_unique<CharacterVirtualTest>();
+        characterVirtual->SetPhysicsSystem(&PhysicsManager::get().mPhysicsSystem);
+        characterVirtual->SetJobSystem(PhysicsManager::get().mJobSystem.get());
+        characterVirtual->SetTempAllocator(PhysicsManager::get().mTempAllocator.get());
+        characterVirtual->Initialize();
+
+        glm::vec3 pos = glm::vec3(-21.538, 5.0f, -29.02);
+        characterVirtual->SetCharacterPosition(RVec3(pos.x, pos.y, pos.z));
+
+        mScene->CreateCharacter(characterEntity, std::move(characterVirtual));
+        mScene->SetHasCharacter(true);
+    }
+
     // ---END OF PHYSICS TEST INITIALISATION---
-#endif // !TEMP_DISABLE_PHYSICS
 
     SPDLOG_DEBUG("Engine initialised.");
 
@@ -229,32 +241,32 @@ void Engine::Run() {
         auto cameraForward = camera->GetDirection();
         processInputParams.mCameraState.mForward = {cameraForward.x, cameraForward.y, cameraForward.z};
 
-#if !TEMP_DISABLE_PHYSICS
-        mCharacterVirtualTest.ProcessInput(processInputParams);
-#endif // !TEMP_DISABLE_PHYSICS
+        if (mScene->HasCharacter()) {
+            mScene->GetCharacter().ProcessInput(processInputParams);
+        }
 
         PreUpdateParams preUpdateParams{};
         preUpdateParams.mDeltaTime = 1.f / 60.0f;
 
-#if !TEMP_DISABLE_PHYSICS
-        mCharacterVirtualTest.PrePhysicsUpdate(preUpdateParams);
-#endif // !TEMP_DISABLE_PHYSICS
+        if (mScene->HasCharacter()) {
+            mScene->GetCharacter().PrePhysicsUpdate(preUpdateParams);
+        }
 
         PhysicsManager::get().UpdatePhysics(1.f / 60.f);
 
-#if !TEMP_DISABLE_PHYSICS
-        auto &cube = mScene->GetEntities().back();
-        auto characterVirtualPos = mCharacterVirtualTest.GetCharacterPosition();
-        cube.mPosition = glm::vec3(characterVirtualPos.GetX(), characterVirtualPos.GetY(), characterVirtualPos.GetZ());
+        if (mScene->HasCharacter()) {
+            auto characterVirtualPos = mScene->GetCharacter().GetCharacterPosition();
+            mScene->GetCharacter().SetPosition(
+                characterVirtualPos.GetX(), characterVirtualPos.GetY(), characterVirtualPos.GetZ());
 
-        Update(GlobalUtil::deltaTime, cube.mPosition);
-#else // !TEMP_DISABLE_PHYSICS
-        Update(GlobalUtil::deltaTime, glm::vec3(0.0f));
-#endif // !TEMP_DISABLE_PHYSICS
+            Update(GlobalUtil::deltaTime, mScene->GetCharacter().GetPosition());
+        } else {
+            Update(GlobalUtil::deltaTime, glm::vec3(0.0f));
+        }
 
-#if !TEMP_DISABLE_PHYSICS
-//        SPDLOG_INFO("cube.mPosition {}", glm::to_string(cube.mPosition));
-#endif // !TEMP_DISABLE_PHYSICS
+        if (mScene->HasCharacter()) {
+            SPDLOG_INFO("cube.mPosition {}", glm::to_string(mScene->GetCharacter().GetPosition()));
+        }
 
         Render();
     }

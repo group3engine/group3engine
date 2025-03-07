@@ -11,12 +11,15 @@
 #define CGLTF_WRITE_IMPLEMENTATION
 
 #include "Entity.hpp"
+#include "CharacterEntity.hpp"
 #include "animation/Animation.hpp"
 #include "animation/Skin.hpp"
 #include "cgltf_write.h"
 #include "glm/gtc/type_ptr.hpp"
 
 #include <glm/gtx/io.hpp>
+
+#include <spdlog/spdlog.h>
 
 Material LoadMaterialDefault() {
     PBRMetallicRoughnessMaterial pbrMetallicRoughness{
@@ -44,7 +47,7 @@ std::string DecodeURI(std::string_view uri, std::string_view gltfPath) {
 
 int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
              MaterialManager &aMaterialManager, TextureManager &aTextureManager,
-             std::vector<Entity> &aEntities, bool aIsDebug,
+             std::vector<Entity*> &aEntities, bool aIsDebug,
              std::vector<Animation> &aAnimations, std::vector<Skin> &aSkins) {
     // Convert directory separators to preferred directory separator
     // Slight try at cross-platform for Windows
@@ -309,14 +312,96 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         aMeshManager.addMesh(mesh);
     }
 
+    // enum of entity types - default, character
+        enum class EntityType {
+                DEFAULT,
+                CHARACTER
+        };
+
     // set up entities
     // for each node
     for (size_t ni = 0; ni < data->nodes_count; ni++) {
         const auto &gltfNode = data->nodes[ni];
+        EntityType entityType = EntityType::DEFAULT;
+        if (gltfNode.extras.data) {
+            // Our existing cgltf_options does not include a memory allocator
+            // If we want to use cgltf_parse_json_string then we need to pass an options with one
+            cgltf_options fixed_options = options;
+            if (fixed_options.memory.alloc_func == NULL) {
+                fixed_options.memory.alloc_func = &cgltf_default_alloc;
+            }
+            if (fixed_options.memory.free_func == NULL) {
+                fixed_options.memory.free_func = &cgltf_default_free;
+            }
 
-        // add an entity
-        aEntities.emplace_back();
-        Entity &entity = aEntities.back();
+            spdlog::info("extras data {}", gltfNode.extras.data);
+
+            jsmn_parser parser;
+
+            jsmn_init(&parser);
+            jsmntok_t tokens[256];
+
+            int r;
+            r = jsmn_parse(&parser, gltfNode.extras.data, strlen(gltfNode.extras.data), tokens, 256);
+
+            spdlog::info("jsmn_parse ret_tok_num: {}", r);
+
+            // Cast to match cgltf functionality
+            const uint8_t *json_chunk = reinterpret_cast<const uint8_t *>(gltfNode.extras.data);
+
+            // Current token index
+            int i = 0;
+
+            // i = 0, token should be an object
+            CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+
+            int size = tokens[i].size;
+            ++i;
+
+            // IDEA: Store parse data in this struct and use C-style char * so
+            // we can use cgltf_parse_json_string. Then, we can store info
+            // in actual entities and construct std::string or enum values
+            // based on the char * string.
+            struct group3_extras {
+                char *entity_type = nullptr;
+            } group3_extras;
+
+            for (int j = 0; j < size; ++j) {
+                // i = 1 now, token should be a string
+                CGLTF_CHECK_KEY(tokens[i]);
+
+                if (cgltf_json_strcmp(tokens + i, json_chunk, "entity_type") == 0) {
+                    // Parse token i + 1, e.g., token 2 (the value of the entity_type key)
+                    // Update i to i + 1, so we can continue parsing
+                    i = cgltf_parse_json_string(&fixed_options, tokens, i + 1, json_chunk, &group3_extras.entity_type);
+                    spdlog::info("entity_type : {}", std::string(group3_extras.entity_type));
+                }
+            }
+
+            if (std::string(group3_extras.entity_type) == "character") {
+                entityType = EntityType::CHARACTER;
+            }
+
+            // TODO: Convert char * info into std::string or enum value and store in actual entity
+
+            // Free temp parse data
+            // Ignore the user data param
+            fixed_options.memory.free_func(fixed_options.memory.user_data, group3_extras.entity_type);
+        }
+
+        // select the entity type based on the
+        Entity* entityPtr = nullptr;
+        switch(entityType) {
+            case EntityType::DEFAULT:
+                entityPtr = new Entity();
+                break;
+            case EntityType::CHARACTER:
+                entityPtr = new CharacterEntity();
+                break;
+        }
+        aEntities.emplace_back(entityPtr);
+        Entity &entity = *entityPtr;
+
         // set the name
         if (gltfNode.name) {
             entity.SetName(gltfNode.name);
@@ -400,7 +485,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         if (gltfNode.parent) {
             int parentIndex = static_cast<int>(gltfNode.parent - data->nodes);
             assert(parentIndex < (int)data->nodes_count);
-            aEntities[ni].SetParent(&aEntities[parentIndex]);
+            aEntities[ni]->SetParent(aEntities[parentIndex]);
         }
     }
     // add skins
@@ -410,7 +495,10 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         skin.SetName(gltfSkin.name);
         skin.ResizeJoints(gltfSkin.joints_count);
         // get the "skeleton" node
-        auto *skeleton = &aEntities[gltfSkin.skeleton - data->nodes];
+        Entity *skeleton = nullptr;
+        if(gltfSkin.skeleton != nullptr) {
+            skeleton = aEntities[gltfSkin.skeleton - data->nodes];
+        }
         skin.SetRoot(skeleton);
         // get the inverse bind matrices
         std::vector<glm::mat4> inverseBindMatrices;
@@ -431,7 +519,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         std::vector<Entity *> joint_nodes;
         joint_nodes.resize(gltfSkin.joints_count);
         for (size_t j = 0; j < gltfSkin.joints_count; j++) {
-            joint_nodes[j] = &aEntities[gltfSkin.joints[j] - data->nodes];
+            joint_nodes[j] = aEntities[gltfSkin.joints[j] - data->nodes];
         }
         // add the joints
         for (size_t j = 0; j < gltfSkin.joints_count; j++) {
@@ -440,8 +528,6 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             joint.inverseBindMatrix = inverseBindMatrices[j];
             skin.AddJoint(joint);
         }
-        // get the root
-        skin.SetRoot(&aEntities[gltfSkin.skeleton - data->nodes]);
         aSkins.push_back(skin);
     }
 
@@ -508,7 +594,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         for (size_t j = 0; j < gltfAnimation.channels_count; j++) {
             const auto &gltfChannel = gltfAnimation.channels[j];
             Channel channel = {};
-            channel.target = &aEntities[gltfChannel.target_node - data->nodes];
+            channel.target = aEntities[gltfChannel.target_node - data->nodes];
             entitiesInAnimation.push_back(channel.target);
             channel.targetIndex = -1;
             channel.sampler = static_cast<size_t>(gltfChannel.sampler -
@@ -550,7 +636,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             int skinIndex = static_cast<int>(gltfNode.skin - data->skins);
             auto *animator =
                 new Animator(&aMeshManager.mContext, &aSkins[skinIndex]);
-            aEntities[i].SetAnimator(animator);
+            aEntities[i]->SetAnimator(animator);
             animator->SetAnimations(animationPointers);
         }
     }
