@@ -193,12 +193,8 @@ bool Engine::Initialize() {
     auto it = std::find_if(entities.begin(), entities.end(),
                            [](const auto &entity) { return entity->IsCharacter(); });
 
-    // If the scene has a character (find character by name == "Character")
     if (it != entities.end()) {
         CharacterEntity* characterEntity = dynamic_cast<CharacterEntity*>(*it);
-
-        characterEntity->mHasCharacter = true;
-
 
         auto characterVirtual = std::make_unique<CharacterVirtualTest>();
         characterVirtual->SetPhysicsSystem(&PhysicsManager::get().mPhysicsSystem);

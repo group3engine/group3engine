@@ -124,6 +124,10 @@ class Entity {
 
     virtual void OnCollisionStay(Entity *aOther) {SPDLOG_INFO("I am {} and I am colliding with {}", mName, aOther->mName);}
 
+    void AddTag(String aTag) { mTags.emplace_back(aTag); }
+    [[nodiscard]] bool CompareTag(String aTag);
+
+
   protected:
     virtual void Update() {}
     virtual void LateUpdate() {}
@@ -136,6 +140,8 @@ class Entity {
 
     glm::vec3 mDeltaPosition = glm::vec3(0.0f);
     bool mIsCharacter = false;
+
+    vector<String> mTags;
 
   public:
     std::unique_ptr<RigidBody> mRigidBody;

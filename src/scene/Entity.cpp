@@ -230,3 +230,16 @@ glm::mat4 Entity::getSkinnedWorldTransform(Entity const *aRoot) const {
 }
 
 Transform Entity::GetTransform() { return mLocalTransform; }
+
+bool Entity::CompareTag(String aTag)
+{
+    for(auto tag : mTags)
+    {
+        if(tag == aTag)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
