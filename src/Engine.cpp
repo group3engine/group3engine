@@ -196,6 +196,7 @@ bool Engine::Initialize() {
     if (it != entities.end()) {
         CharacterEntity* characterEntity = dynamic_cast<CharacterEntity*>(*it);
 
+
         auto characterVirtual = std::make_unique<CharacterVirtualTest>();
         characterVirtual->SetPhysicsSystem(&PhysicsManager::get().mPhysicsSystem);
         characterVirtual->SetJobSystem(PhysicsManager::get().mJobSystem.get());

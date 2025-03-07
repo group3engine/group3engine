@@ -243,3 +243,5 @@ bool Entity::CompareTag(String aTag)
 
     return false;
 }
+
+bool Entity::IsCharacter() const {return mHasCharacter;}

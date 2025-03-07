@@ -113,7 +113,7 @@ class Entity {
 
     Transform GetTransform();
 
-    bool IsCharacter() const { return mIsCharacter; }
+    bool IsCharacter() const;
 
     bool HasAnimator() const { return static_cast<bool>(mAnimator); }
 
@@ -139,7 +139,6 @@ class Entity {
     std::vector<Entity *> mChildren;
 
     glm::vec3 mDeltaPosition = glm::vec3(0.0f);
-    bool mIsCharacter = false;
 
     vector<String> mTags;
 
