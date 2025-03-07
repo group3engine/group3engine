@@ -71,3 +71,16 @@ void CharacterEntity::Update(double deltaTime) {
 CharacterEntity::CharacterEntity() {
     mHasCharacter = true;
 }
+void CharacterEntity::OnCollisionStart(Entity *aOther) {
+
+    //        SPDLOG_INFO("I am {} and I collided with {}", mName, aOther->mName);
+    if(aOther->CompareTag("deathzone")) {
+        SPDLOG_INFO("I am {} and I collided with a death zone", mName);
+        Reset();
+    }
+    // if its a checkpoint, set the checkpoint
+    if(aOther->CompareTag("checkpoint")) {
+        SetCheckpoint(glm::vec3(mCharacterVirtual->GetCharacterPosition().GetX(), mCharacterVirtual->GetCharacterPosition().GetY(), mCharacterVirtual->GetCharacterPosition().GetZ()) + glm::vec3 (0, 2, 0));
+    }
+
+}

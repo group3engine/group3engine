@@ -231,17 +231,11 @@ glm::mat4 Entity::getSkinnedWorldTransform(Entity const *aRoot) const {
 
 Transform Entity::GetTransform() { return mLocalTransform; }
 
-bool Entity::CompareTag(String aTag)
+bool Entity::CompareTag(const std::string& aTag)
 {
-    for(auto tag : mTags)
-    {
-        if(tag == aTag)
-        {
-            return true;
-        }
-    }
-
-    return false;
+    return std::ranges::any_of(mTags, [&aTag](const auto& tag) {
+        return tag == aTag;
+    });
 }
 
 bool Entity::IsCharacter() const {return mHasCharacter;}

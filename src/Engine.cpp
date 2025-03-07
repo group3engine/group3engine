@@ -204,11 +204,12 @@ bool Engine::Initialize() {
         characterVirtual->SetCustomContactListener(&PhysicsManager::get().mContactListener);
         characterVirtual->Initialize();
         PhysicsManager::get().RegisterEntity(characterEntity, characterVirtual->GetCharacter()->GetInnerBodyID());
-        glm::vec3 pos = glm::vec3(-21.538, 5.0f, -29.02);
-        characterVirtual->SetCharacterPosition(RVec3(pos.x, pos.y, pos.z));
 
         mScene->CreateCharacter(characterEntity, std::move(characterVirtual));
         mScene->SetHasCharacter(true);
+        glm::vec3 pos = glm::vec3(-21.538, 5.0f, -29.02);
+        characterEntity->SetCheckpoint(pos);
+        characterEntity->Reset();
     }
 
     // ---END OF PHYSICS TEST INITIALISATION---

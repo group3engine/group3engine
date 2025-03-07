@@ -323,6 +323,16 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
     for (size_t ni = 0; ni < data->nodes_count; ni++) {
         const auto &gltfNode = data->nodes[ni];
         EntityType entityType = EntityType::DEFAULT;
+
+        // IDEA: Store parse data in this struct and use C-style char * so
+        // we can use cgltf_parse_json_string. Then, we can store info
+        // in actual entities and construct std::string or enum values
+        // based on the char * string.
+        struct group3_extras {
+            char *entity_type = nullptr;
+            std::vector<std::string> tags;
+        } group3_extras;
+
         if (gltfNode.extras.data) {
             // Our existing cgltf_options does not include a memory allocator
             // If we want to use cgltf_parse_json_string then we need to pass an options with one
@@ -334,7 +344,6 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 fixed_options.memory.free_func = &cgltf_default_free;
             }
 
-            spdlog::info("extras data {}", gltfNode.extras.data);
 
             jsmn_parser parser;
 
@@ -344,7 +353,6 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             int r;
             r = jsmn_parse(&parser, gltfNode.extras.data, strlen(gltfNode.extras.data), tokens, 256);
 
-            spdlog::info("jsmn_parse ret_tok_num: {}", r);
 
             // Cast to match cgltf functionality
             const uint8_t *json_chunk = reinterpret_cast<const uint8_t *>(gltfNode.extras.data);
@@ -358,35 +366,49 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             int size = tokens[i].size;
             ++i;
 
-            // IDEA: Store parse data in this struct and use C-style char * so
-            // we can use cgltf_parse_json_string. Then, we can store info
-            // in actual entities and construct std::string or enum values
-            // based on the char * string.
-            struct group3_extras {
-                char *entity_type = nullptr;
-            } group3_extras;
-
             for (int j = 0; j < size; ++j) {
                 // i = 1 now, token should be a string
                 CGLTF_CHECK_KEY(tokens[i]);
 
+                // check the entity type
                 if (cgltf_json_strcmp(tokens + i, json_chunk, "entity_type") == 0) {
                     // Parse token i + 1, e.g., token 2 (the value of the entity_type key)
                     // Update i to i + 1, so we can continue parsing
                     i = cgltf_parse_json_string(&fixed_options, tokens, i + 1, json_chunk, &group3_extras.entity_type);
-                    spdlog::info("entity_type : {}", std::string(group3_extras.entity_type));
                 }
+
+                // check the tags
+                if (cgltf_json_strcmp(tokens + i, json_chunk, "tags") == 0) {
+                    // Parse token i + 1, e.g., token 2 (the value of the tags key)
+                    // Update i to i + 1, so we can continue parsing
+                    char* tags_cstr = nullptr;
+                    i = cgltf_parse_json_string(&fixed_options, tokens, i + 1, json_chunk, &tags_cstr);
+                    // cast to std::string
+                    if(tags_cstr != nullptr) {
+                        std::string tags = std::string(tags_cstr);
+                        // split on pipes
+                        std::istringstream tokenStream(tags);
+                        std::string token;
+                        while (std::getline(tokenStream, token, '|')) {
+                            group3_extras.tags.push_back(token);
+                            spdlog::info("tag : {}", token);
+                        }
+                        fixed_options.memory.free_func(fixed_options.memory.user_data, tags_cstr);
+                    }
+                }
+
+
             }
 
-            if (std::string(group3_extras.entity_type) == "character") {
-                entityType = EntityType::CHARACTER;
+            if(group3_extras.entity_type != nullptr) {
+                if (std::string(group3_extras.entity_type) == "character") {
+                    entityType = EntityType::CHARACTER;
+                }
+                fixed_options.memory.free_func(fixed_options.memory.user_data, group3_extras.entity_type);
+
             }
+            
 
-            // TODO: Convert char * info into std::string or enum value and store in actual entity
-
-            // Free temp parse data
-            // Ignore the user data param
-            fixed_options.memory.free_func(fixed_options.memory.user_data, group3_extras.entity_type);
         }
 
         // select the entity type based on the
@@ -405,6 +427,10 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         // set the name
         if (gltfNode.name) {
             entity.SetName(gltfNode.name);
+        }
+        // add the tags
+        for (const auto &tag : group3_extras.tags) {
+            entity.AddTag(tag);
         }
         // get the transform
         if (gltfNode.has_matrix) {

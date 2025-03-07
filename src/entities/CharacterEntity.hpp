@@ -28,15 +28,27 @@ class CharacterEntity : public Entity {
     // update override
     void Update(double deltaTime) override;
 
-    void OnCollisionStart(Entity *aOther) override {SPDLOG_INFO("I am {} and I collided with {}", mName, aOther->mName);} 
+    void OnCollisionStart(Entity *aOther) override ;
 
-    void OnCollisionStay(Entity *aOther) override {SPDLOG_INFO("I am {} and I am colliding with {}", mName, aOther->mName);}
+    void OnCollisionStay(Entity *aOther) override {
+//        SPDLOG_INFO("I am {} and I am colliding with {}", mName, aOther->mName);
+    }
 
+    // set the checkpoint
+    void SetCheckpoint(glm::vec3 checkpoint) { mLastCheckpoint = checkpoint; }
+    // reset the character to the last checkpoint
+    void Reset() {
+        mCharacterVirtual->SetCharacterPosition(RVec3(mLastCheckpoint.x,
+                                                mLastCheckpoint.y,
+                                                mLastCheckpoint.z));
+    }
 
   private:
     bool mHasFirstFrameHappened = false;
     Transform mInitialTransform = {};
     std::unique_ptr<CharacterVirtualTest> mCharacterVirtual;
+
+    glm::vec3 mLastCheckpoint = {};
 };
 
 #endif // GROUP3ENGINE_CHARACTERENTITY_HPP

@@ -120,12 +120,12 @@ class Entity {
     // get a reference to the animator
   [[nodiscard]] Animator & GetAnimator(){return *mAnimator;}
 
-    virtual void OnCollisionStart(Entity *aOther) {SPDLOG_INFO("I am {} and I collided with {}", mName, aOther->mName);}
+    virtual void OnCollisionStart(Entity *aOther) {}
 
-    virtual void OnCollisionStay(Entity *aOther) {SPDLOG_INFO("I am {} and I am colliding with {}", mName, aOther->mName);}
+    virtual void OnCollisionStay(Entity *aOther) {}
 
-    void AddTag(String aTag) { mTags.emplace_back(aTag); }
-    [[nodiscard]] bool CompareTag(String aTag);
+    void AddTag(const std::string& aTag) { mTags.emplace_back(aTag); }
+    [[nodiscard]] bool CompareTag(const std::string& aTag);
 
 
   protected:
@@ -140,7 +140,7 @@ class Entity {
 
     glm::vec3 mDeltaPosition = glm::vec3(0.0f);
 
-    vector<String> mTags;
+    vector<std::string> mTags;
 
   public:
     std::unique_ptr<RigidBody> mRigidBody;
@@ -168,5 +168,6 @@ class Entity {
 
     uint32_t mEntityID = kEntityCount++;
 
+
 };
-#endif // VULKANTIME_ENTITY_HPP
+#endif // SCENE_ENTITY_HPP
