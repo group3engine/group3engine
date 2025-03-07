@@ -120,14 +120,15 @@ class Entity {
     // get a reference to the animator
   [[nodiscard]] Animator & GetAnimator(){return *mAnimator;}
 
+    virtual void OnCollisionStart(Entity *aOther) {SPDLOG_INFO("I am {} and I collided with {}", mName, aOther->mName);}
+
+    virtual void OnCollisionStay(Entity *aOther) {SPDLOG_INFO("I am {} and I am colliding with {}", mName, aOther->mName);}
+
   protected:
     virtual void Update() {}
     virtual void LateUpdate() {}
     virtual void Awake() {}
-    virtual void OnCollisionStart(Entity *aOther) {SPDLOG_INFO("I am {} and I collided with {}", mName, aOther->mName);}
-    virtual void OnCollisionStay(Entity *aOther) {SPDLOG_INFO("I am {} and I am colliding with {}", mName, aOther->mName);}
 
-    Transform GetTransform();
   protected:
 
 
