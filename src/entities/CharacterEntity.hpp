@@ -10,7 +10,7 @@
 
 class CharacterEntity : public Entity {
   public:
-    CharacterEntity() = default;
+    CharacterEntity();
     ~CharacterEntity() override;
 
     void SetCharacterVirtual(unique_ptr<CharacterVirtualTest> &&uniquePtr);

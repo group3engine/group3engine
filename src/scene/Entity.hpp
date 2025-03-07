@@ -111,7 +111,7 @@ class Entity {
 
     Transform GetTransform();
 
-    bool IsCharacter() const { return mName.find("Character") != std::string::npos; }
+    bool IsCharacter() const { return mIsCharacter; }
 
     bool HasAnimator() const { return static_cast<bool>(mAnimator); }
 
@@ -126,6 +126,7 @@ class Entity {
     std::vector<Entity *> mChildren;
 
     glm::vec3 mDeltaPosition = glm::vec3(0.0f);
+    bool mIsCharacter = false;
 
   public:
     std::unique_ptr<RigidBody> mRigidBody;
@@ -152,5 +153,6 @@ class Entity {
     bool mHasRigidBody = false;
 
     uint32_t mEntityID = kEntityCount++;
+
 };
 #endif // VULKANTIME_ENTITY_HPP

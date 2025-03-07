@@ -47,3 +47,6 @@ void CharacterEntity::Update(double deltaTime) {
             }
     }
 }
+CharacterEntity::CharacterEntity() {
+    mIsCharacter = true;
+}
