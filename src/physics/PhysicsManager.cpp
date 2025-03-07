@@ -55,7 +55,7 @@ void PhysicsManager::StartUp() {
     mPhysicsSystem.OptimizeBroadPhase();
 }
 
-void PhysicsManager::UpdatePhysics(double delta_time = 1 / 60.f) {
+void PhysicsManager::UpdatePhysics(double delta_time) {
     // Next step
     cDeltaTime = delta_time;
 
