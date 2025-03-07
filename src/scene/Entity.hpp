@@ -127,6 +127,12 @@ class Entity {
     void AddTag(const std::string& aTag) { mTags.emplace_back(aTag); }
     [[nodiscard]] bool CompareTag(const std::string& aTag);
 
+    void SetAsSensor() { mIsSensor = true; }
+    [[nodiscard]] bool IsSensor() const { return mIsSensor; }
+
+    void SetAsSolid() { mIsSolid = true; }
+    [[nodiscard]] bool IsSolid() const { return mIsSolid; }
+
 
   protected:
     virtual void Update() {}
@@ -167,6 +173,10 @@ class Entity {
     bool mHasRigidBody = false;
 
     uint32_t mEntityID = kEntityCount++;
+
+    bool mIsSensor = false;
+
+    bool mIsSolid = true;
 
 
 };

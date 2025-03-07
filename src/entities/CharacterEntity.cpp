@@ -4,6 +4,9 @@
 
 #include "CharacterEntity.hpp"
 #include <spdlog/spdlog.h>
+#include <filesystem>
+#include <fstream>
+#include <cstdlib>
 
 void CharacterEntity::SetCharacterVirtual(unique_ptr<CharacterVirtualTest> &&uniquePtr) {
     mCharacterVirtual = std::move(uniquePtr);
@@ -70,6 +73,7 @@ void CharacterEntity::Update(double deltaTime) {
 }
 CharacterEntity::CharacterEntity() {
     mHasCharacter = true;
+    Load();
 }
 void CharacterEntity::OnCollisionStart(Entity *aOther) {
 
@@ -83,4 +87,99 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
         SetCheckpoint(glm::vec3(mCharacterVirtual->GetCharacterPosition().GetX(), mCharacterVirtual->GetCharacterPosition().GetY(), mCharacterVirtual->GetCharacterPosition().GetZ()) + glm::vec3 (0, 2, 0));
     }
 
+}
+void CharacterEntity::Save() {
+    // Get the user's home directory
+    std::filesystem::path homePath;
+
+#ifdef _WIN32
+    homePath = std::getenv("USERPROFILE");
+#else
+    homePath = std::getenv("HOME");
+#endif
+
+    // Create path to documents folder/group3engine
+    std::filesystem::path savePath = homePath / "Documents" / "group3enginesaves";
+
+    // Create directories if they don't exist
+    std::error_code ec;
+    if (!std::filesystem::exists(savePath)) {
+        std::filesystem::create_directories(savePath, ec);
+        if (ec) {
+            SPDLOG_ERROR("Failed to create save directory: {}", ec.message());
+            return;
+        }
+    }
+
+    // Create the full file path
+    std::filesystem::path saveFile = savePath / "save.txt";
+
+    // Open file for writing
+    std::ofstream file(saveFile);
+    if (!file.is_open()) {
+        SPDLOG_ERROR("Failed to open save file for writing: {}", saveFile.string());
+        return;
+    }
+
+    // Write character data
+    file << "LastCheckpoint=" << mLastCheckpoint.x << "," << mLastCheckpoint.y << "," << mLastCheckpoint.z << std::endl;
+
+    SPDLOG_INFO("Game saved to {}", saveFile.string());
+}
+
+void CharacterEntity::Load() {
+    // Get the user's home directory
+    std::filesystem::path homePath;
+
+#ifdef _WIN32
+    homePath = std::getenv("USERPROFILE");
+#else
+    homePath = std::getenv("HOME");
+#endif
+
+    // Path to save file
+    std::filesystem::path savePath = homePath / "Documents" / "group3enginesaves";
+    std::filesystem::path saveFile = savePath / "save.txt";
+
+    // Check if file exists
+    if (!std::filesystem::exists(saveFile)) {
+        SPDLOG_INFO("No save file found at {}, using default checkpoint", saveFile.string());
+        return;
+    }
+
+    // Open file for reading
+    std::ifstream file(saveFile);
+    if (!file.is_open()) {
+        SPDLOG_ERROR("Failed to open save file for reading: {}", saveFile.string());
+        return;
+    }
+
+    // Read and parse the save data
+    std::string line;
+    while (std::getline(file, line)) {
+        if (line.find("LastCheckpoint=") == 0) {
+            std::string values = line.substr(std::string("LastCheckpoint=").length());
+
+            // Parse the comma-separated values
+            std::stringstream ss(values);
+            std::string xStr, yStr, zStr;
+
+            if (std::getline(ss, xStr, ',') &&
+                std::getline(ss, yStr, ',') &&
+                std::getline(ss, zStr, ',')) {
+
+                try {
+                    float x = std::stof(xStr);
+                    float y = std::stof(yStr);
+                    float z = std::stof(zStr);
+
+                    mLastCheckpoint = glm::vec3(x, y, z);
+                    SPDLOG_INFO("Loaded checkpoint: ({}, {}, {})", x, y, z);
+                } catch (const std::exception& e) {
+                    SPDLOG_ERROR("Failed to parse checkpoint coordinates: {}", e.what());
+                }
+            }
+            break;
+        }
+    }
 }

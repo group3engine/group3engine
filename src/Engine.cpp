@@ -118,6 +118,7 @@ bool Engine::Initialize() {
     for (auto it = mScene->GetEntities().begin(); it != mScene->GetEntities().end(); ++it) {
         const auto &entity = *it;
 
+
         if (!entity->IsCharacter()) {
 
             if (entity->HasAnimator()) {
@@ -134,50 +135,57 @@ bool Engine::Initialize() {
 
             size_t totalVertices = 0;
             size_t totalTriangles = 0;
+            // no physics to add if it isn't a sesnor or solid
+            if(entity->IsSensor() || entity->IsSolid()) {
+                for (const auto &primitive : mesh->meshPrimitives) {
+                    // Create an array of vertices
+                    VertexList vertices;
+                    for (const auto &vertex : primitive.vertices) {
+                        auto worldPos = entity->getWorldTransform() * glm::vec4(vertex.pos, 1.0f);
+                        vertices.emplace_back(worldPos.x, worldPos.y, worldPos.z);
+                        ++totalVertices;
+                    }
 
-            for (const auto &primitive : mesh->meshPrimitives) {
-                // Create an array of vertices
-                VertexList vertices;
-                for (const auto &vertex : primitive.vertices) {
-                    auto worldPos = entity->getWorldTransform() * glm::vec4(vertex.pos, 1.0f);
-                    vertices.emplace_back(worldPos.x, worldPos.y, worldPos.z);
-                    ++totalVertices;
+                    IndexedTriangleList indexedTriangles;
+                    for (size_t i = 0; i < primitive.indices.size(); i += 3) {
+                        indexedTriangles.push_back(IndexedTriangle(primitive.indices[i],
+                                                                   primitive.indices[i + 1],
+                                                                   primitive.indices[i + 2]));
+                        ++totalTriangles;
+                    }
+
+                    assert(!vertices.empty());
+                    assert(!indexedTriangles.empty());
+
+                    // Create the settings object for a mesh shape
+                    JPH::MeshShapeSettings settings(vertices, indexedTriangles);
+
+                    // Create shape
+                    JPH::Shape::ShapeResult result = settings.Create();
+                    if (result.IsValid()) {
+                        shape = result.Get();
+                    } else {
+                        SPDLOG_ERROR("Shape result is invalid. {}", result.GetError());
+                    }
+
+                    BodyCreationSettings bodyCreationSettings = {
+                        result.Get(), RVec3(0.0_r, 0.0_r, 0.0_r), Quat::sIdentity(),
+                        EMotionType::Static, Layers::NON_MOVING};
+                    bodyCreationSettings.mIsSensor = entity->IsSensor();
+
+                    auto bodyID =
+                        PhysicsManager::get().mPhysicsSystem.GetBodyInterface().CreateAndAddBody(
+                            bodyCreationSettings, EActivation::DontActivate);
+
+                    assert(!bodyID.IsInvalid());
+
+
+
+                    PhysicsManager::get().mBodyIds.push_back(bodyID);
+                    // only do this part if its supposed to DO something when collided with (i.e. sensors)
+                    PhysicsManager::get().RegisterEntity(entity, bodyID);
+
                 }
-
-                IndexedTriangleList indexedTriangles;
-                for (size_t i = 0; i < primitive.indices.size(); i += 3) {
-                    indexedTriangles.push_back(IndexedTriangle(
-                        primitive.indices[i], primitive.indices[i + 1], primitive.indices[i + 2]));
-                    ++totalTriangles;
-                }
-
-                assert(!vertices.empty());
-                assert(!indexedTriangles.empty());
-
-                // Create the settings object for a mesh shape
-                JPH::MeshShapeSettings settings(vertices, indexedTriangles);
-
-                // Create shape
-                JPH::Shape::ShapeResult result = settings.Create();
-                if (result.IsValid()) {
-                    shape = result.Get();
-                } else {
-                    SPDLOG_ERROR("Shape result is invalid. {}", result.GetError());
-                }
-
-                BodyCreationSettings bodyCreationSettings = {
-                    result.Get(), RVec3(0.0_r, 0.0_r, 0.0_r), Quat::sIdentity(),
-                    EMotionType::Static, Layers::NON_MOVING};
-
-                auto bodyID =
-                    PhysicsManager::get().mPhysicsSystem.GetBodyInterface().CreateAndAddBody(
-                        bodyCreationSettings, EActivation::DontActivate);
-
-                assert(!bodyID.IsInvalid());
-
-                PhysicsManager::get().mBodyIds.push_back(bodyID);
-                // only do this part if its supposed to DO something when collided with (i.e. sensors)
-                PhysicsManager::get().RegisterEntity(entity, bodyID);
             }
 
             SPDLOG_INFO("total vertices {}", totalVertices);
@@ -207,8 +215,6 @@ bool Engine::Initialize() {
 
         mScene->CreateCharacter(characterEntity, std::move(characterVirtual));
         mScene->SetHasCharacter(true);
-        glm::vec3 pos = glm::vec3(-21.538, 5.0f, -29.02);
-        characterEntity->SetCheckpoint(pos);
         characterEntity->Reset();
     }
 

@@ -331,6 +331,8 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         struct group3_extras {
             char *entity_type = nullptr;
             std::vector<std::string> tags;
+            bool is_sensor = false;
+            bool is_solid = true;
         } group3_extras;
 
         if (gltfNode.extras.data) {
@@ -397,6 +399,22 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                     }
                 }
 
+                // check for sensor
+                if (cgltf_json_strcmp(tokens + i, json_chunk, "is_sensor") == 0) {
+                    // Parse token i + 1, e.g., token 2 (the value of the is_sensor key)
+                    // Update i to i + 1, so we can continue parsing
+                    bool is_sensor = cgltf_json_to_bool(tokens + i + 1, json_chunk);
+                    group3_extras.is_sensor = is_sensor;
+                }
+
+                // check for solid
+                if (cgltf_json_strcmp(tokens + i, json_chunk, "is_solid") == 0) {
+                    // Parse token i + 1, e.g., token 2 (the value of the is_solid key)
+                    // Update i to i + 1, so we can continue parsing
+                    bool is_solid = cgltf_json_to_bool(tokens + i + 1, json_chunk);
+                    group3_extras.is_solid = is_solid;
+                }
+
 
             }
 
@@ -407,7 +425,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 fixed_options.memory.free_func(fixed_options.memory.user_data, group3_extras.entity_type);
 
             }
-            
+
 
         }
 
@@ -431,6 +449,14 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         // add the tags
         for (const auto &tag : group3_extras.tags) {
             entity.AddTag(tag);
+        }
+        // set the sensor
+        if (group3_extras.is_sensor) {
+            entity.SetAsSensor();
+        }
+        // set the solid
+        if (!group3_extras.is_solid) {
+            entity.SetAsSolid();
         }
         // get the transform
         if (gltfNode.has_matrix) {
