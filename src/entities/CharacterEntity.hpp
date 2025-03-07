@@ -31,6 +31,8 @@ class CharacterEntity : public Entity {
 
 
   private:
+    bool mHasFirstFrameHappened = false;
+    Transform mInitialTransform = {};
     std::unique_ptr<CharacterVirtualTest> mCharacterVirtual;
 };
 

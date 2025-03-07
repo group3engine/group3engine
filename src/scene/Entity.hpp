@@ -53,8 +53,11 @@ class Entity {
     [[nodiscard]] const std::string &GetName() const { return mName; }
 
     [[nodiscard]] glm::vec3 GetPosition() const { return mPosition; }
-    void SetPosition(glm::vec3 aPosition) { mPosition = aPosition; }
+    void SetPosition(glm::vec3 aPosition) {
+        mDeltaPosition = mPosition - aPosition;
+        mPosition = aPosition; }
     void SetPosition(float x, float y, float z) {
+        mDeltaPosition = glm::vec3(x, y, z) - mPosition;
         mPosition = glm::vec3(x, y, z);
     }
 
@@ -121,6 +124,8 @@ class Entity {
     virtual void Awake() {}
 
     std::vector<Entity *> mChildren;
+
+    glm::vec3 mDeltaPosition = glm::vec3(0.0f);
 
   public:
     std::unique_ptr<RigidBody> mRigidBody;
