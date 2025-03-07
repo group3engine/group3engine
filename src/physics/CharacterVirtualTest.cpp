@@ -125,7 +125,10 @@ void CharacterVirtualTest::HandleInput(Vec3Arg inMovementDirection, bool inJump,
 	}
 	else {
             new_velocity = current_vertical_velocity;
-            mJumpState = EJumpState::Falling;
+            if(new_velocity.GetY() > 0.2f)
+            {
+                mJumpState = EJumpState::Falling;
+            }
         }
 
 	// Gravity

@@ -6,6 +6,7 @@
 #include <spdlog/spdlog.h>
 
 #include "Camera.hpp"
+#include "CharacterEntity.hpp"
 #include "GLFW.hpp"
 #include "Image.hpp"
 #include "Input.hpp"
@@ -194,7 +195,7 @@ bool Engine::Initialize() {
 
     // If the scene has a character (find character by name == "Character")
     if (it != entities.end()) {
-        auto &characterEntity = *it;
+        CharacterEntity* characterEntity = dynamic_cast<CharacterEntity*>(*it);
 
         characterEntity->mHasCharacter = true;
 
@@ -251,13 +252,13 @@ void Engine::Run() {
         }
 
         PreUpdateParams preUpdateParams{};
-        preUpdateParams.mDeltaTime = 1.f / 60.0f;
+        preUpdateParams.mDeltaTime = GlobalUtil::deltaTime;
 
         if (mScene->HasCharacter()) {
             mScene->GetCharacter().PrePhysicsUpdate(preUpdateParams);
         }
 
-        PhysicsManager::get().UpdatePhysics(1.f / 60.f);
+        PhysicsManager::get().UpdatePhysics(GlobalUtil::deltaTime);
 
         if (mScene->HasCharacter()) {
             auto characterVirtualPos = mScene->GetCharacter().GetCharacterPosition();

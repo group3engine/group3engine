@@ -40,7 +40,7 @@ void CharacterEntity::Update(double deltaTime) {
     bool playWholeAnimation = false;
     if(glm::length(deltaVelocity) > 0.1f) {
         activeAnimation = "running";
-        timeScale = glm::length(deltaVelocity) / 7.f;
+        timeScale = min(glm::length(deltaVelocity) / 5.5f, 2.f);
     }
     // spdlog the current jump state
     switch (mCharacterVirtual->GetJumpState()) {
