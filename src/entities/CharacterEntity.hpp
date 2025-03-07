@@ -10,7 +10,7 @@
 
 class CharacterEntity : public Entity {
   public:
-    CharacterEntity() = default;
+    CharacterEntity();
     ~CharacterEntity() override;
 
     void SetCharacterVirtual(unique_ptr<CharacterVirtualTest> &&uniquePtr);
@@ -25,8 +25,14 @@ class CharacterEntity : public Entity {
         return mCharacterVirtual->GetCharacterPosition();
     }
 
+    // update override
+    void Update(double deltaTime) override;
+
+
 
   private:
+    bool mHasFirstFrameHappened = false;
+    Transform mInitialTransform = {};
     std::unique_ptr<CharacterVirtualTest> mCharacterVirtual;
 };
 
