@@ -197,7 +197,7 @@ bool Engine::Initialize() {
         auto &characterEntity = *it;
 
         characterEntity->mHasCharacter = true;
-        
+
 
         auto characterVirtual = std::make_unique<CharacterVirtualTest>();
         characterVirtual->SetPhysicsSystem(&PhysicsManager::get().mPhysicsSystem);

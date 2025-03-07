@@ -313,10 +313,10 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
     }
 
     // enum of entity types - default, character
-        enum class EntityType {
-                DEFAULT,
-                CHARACTER
-        };
+    enum class EntityType {
+            DEFAULT,
+            CHARACTER
+    };
 
     // set up entities
     // for each node

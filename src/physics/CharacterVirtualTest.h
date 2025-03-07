@@ -7,6 +7,15 @@
 #include "CharacterBaseTest.h"
 #include "CustomContactListener.hpp"
 
+// enum of jump states - start, falling, end, none
+enum class EJumpState
+{
+        Start,
+        Falling,
+        End,
+        None
+};
+
 // Simple test that test the CharacterVirtual class. Allows the user to move around with the arrow keys and jump with the J button.
 class CharacterVirtualTest : public CharacterBaseTest, public CharacterContactListener
 {
@@ -37,6 +46,9 @@ public:
     // Set the custom contact listener
 	void SetCustomContactListener(CustomContactListener *inCustomContactListener) { mCustomContactListener = inCustomContactListener; }
     Ref<CharacterVirtual>	GetCharacter() {return mCharacter; }
+
+        // get the jump state
+        [[nodiscard]] EJumpState GetJumpState() { return mJumpState; }
 
 protected:
 	// Common function to be called when contacts are added/persisted
@@ -76,4 +88,9 @@ private:
 	ContactSet				mActiveContacts;
 
     CustomContactListener* mCustomContactListener;
+
+        // current jump state
+        EJumpState              mJumpState = EJumpState::None;
+
+
 };
