@@ -30,12 +30,20 @@ void CharacterEntity::Update(double deltaTime) {
         newTransform.rotation = glm::quatLookAt(glm::normalize(deltaVelocity), glm::vec3(0, 1, 0)) * mInitialTransform.rotation;
         SetTransform(newTransform);
     }
+    // work out the active animation, and the time scale
+    float timeScale = 1.0f;
+    std::string activeAnimation = "idle";
+    float blend = 0.1f;
+    if(glm::length(deltaVelocity) > 0.1f) {
+        activeAnimation = "running";
+        timeScale = glm::length(deltaVelocity) / 7.f;
+    }
 
     // for each child, if there is an animator, call set animation
     for (auto &child : mChildren) {
             if (child->HasAnimator()) {
-                child->GetAnimator().SetActiveAnimation("running", 0.1f);
-                child->GetAnimator().SetTimeScale(glm::length(deltaVelocity) / 7.f);
+                child->GetAnimator().SetActiveAnimation(activeAnimation, blend);
+                child->GetAnimator().SetTimeScale(timeScale);
             }
     }
 }
