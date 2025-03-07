@@ -11,6 +11,8 @@
 
 #include "PhysicsHelpers.hpp"
 
+#include "Entity.hpp"
+
 void CharacterVirtualTest::Initialize()
 {
 	CharacterBaseTest::Initialize();
@@ -159,6 +161,14 @@ void CharacterVirtualTest::OnContactAdded(const CharacterVirtual *inCharacter, c
 		}
 		mActiveContacts.push_back(c);
 	}
+
+    if(mCustomContactListener->GetMap().find(inBodyID2) != mCustomContactListener->GetMap().end()) {
+        mCustomContactListener->GetMap()[inBodyID2]->OnCollisionStart(mCustomContactListener->GetMap()[inCharacter->GetInnerBodyID()]);
+    }
+
+    if(mCustomContactListener->GetMap().find(inCharacter->GetInnerBodyID()) != mCustomContactListener->GetMap().end()) {
+        mCustomContactListener->GetMap()[inCharacter->GetInnerBodyID()]->OnCollisionStart(mCustomContactListener->GetMap()[inBodyID2]);
+    }
 }
 
 void CharacterVirtualTest::OnContactPersisted(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings)

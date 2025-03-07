@@ -9,6 +9,7 @@
 #include "GLFW.hpp"
 #include "Image.hpp"
 #include "Input.hpp"
+#include "PhysicsManager.hpp"
 #include "SampleGLTFFilePaths.hpp"
 #include "Scene.hpp"
 #include "Utils.hpp"
@@ -174,6 +175,8 @@ bool Engine::Initialize() {
                 assert(!bodyID.IsInvalid());
 
                 PhysicsManager::get().mBodyIds.push_back(bodyID);
+                // only do this part if its supposed to DO something when collided with (i.e. sensors)
+                PhysicsManager::get().RegisterEntity(entity, bodyID);
             }
 
             SPDLOG_INFO("total vertices {}", totalVertices);
@@ -194,13 +197,15 @@ bool Engine::Initialize() {
         auto &characterEntity = *it;
 
         characterEntity->mHasCharacter = true;
+        
 
         auto characterVirtual = std::make_unique<CharacterVirtualTest>();
         characterVirtual->SetPhysicsSystem(&PhysicsManager::get().mPhysicsSystem);
         characterVirtual->SetJobSystem(PhysicsManager::get().mJobSystem.get());
         characterVirtual->SetTempAllocator(PhysicsManager::get().mTempAllocator.get());
+        characterVirtual->SetCustomContactListener(&PhysicsManager::get().mContactListener);
         characterVirtual->Initialize();
-
+        PhysicsManager::get().RegisterEntity(characterEntity, characterVirtual->GetCharacter()->GetInnerBodyID());
         glm::vec3 pos = glm::vec3(-21.538, 5.0f, -29.02);
         characterVirtual->SetCharacterPosition(RVec3(pos.x, pos.y, pos.z));
 
@@ -262,10 +267,6 @@ void Engine::Run() {
             Update(GlobalUtil::deltaTime, mScene->GetCharacter().GetPosition());
         } else {
             Update(GlobalUtil::deltaTime, glm::vec3(0.0f));
-        }
-
-        if (mScene->HasCharacter()) {
-            SPDLOG_INFO("cube.mPosition {}", glm::to_string(mScene->GetCharacter().GetPosition()));
         }
 
         Render();

@@ -28,6 +28,9 @@ class CharacterEntity : public Entity {
     // update override
     void Update(double deltaTime) override;
 
+    void OnCollisionStart(Entity *aOther) override {SPDLOG_INFO("I am {} and I collided with {}", mName, aOther->mName);} 
+
+    void OnCollisionStay(Entity *aOther) override {SPDLOG_INFO("I am {} and I am colliding with {}", mName, aOther->mName);}
 
 
   private:

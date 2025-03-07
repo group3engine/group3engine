@@ -5,6 +5,7 @@
 #pragma once
 
 #include "CharacterBaseTest.h"
+#include "CustomContactListener.hpp"
 
 // Simple test that test the CharacterVirtual class. Allows the user to move around with the arrow keys and jump with the J button.
 class CharacterVirtualTest : public CharacterBaseTest, public CharacterContactListener
@@ -32,6 +33,10 @@ public:
 	virtual RVec3			GetCharacterPosition() const override				{ return mCharacter->GetPosition(); }
 
 	void SetCharacterPosition(RVec3 pos) { mCharacter->SetPosition(pos); }
+
+    // Set the custom contact listener
+	void SetCustomContactListener(CustomContactListener *inCustomContactListener) { mCustomContactListener = inCustomContactListener; }
+    Ref<CharacterVirtual>	GetCharacter() {return mCharacter; }
 
 protected:
 	// Common function to be called when contacts are added/persisted
@@ -69,4 +74,6 @@ private:
 	// Track active contacts for debugging purposes
 	using ContactSet = Array<CharacterVirtual::ContactKey>;
 	ContactSet				mActiveContacts;
+
+    CustomContactListener* mCustomContactListener;
 };

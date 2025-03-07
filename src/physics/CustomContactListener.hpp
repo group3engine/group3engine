@@ -18,6 +18,8 @@ class CustomContactListener : public JPH::ContactListener {
         mBodyEntityMap[bodyId] = entity;
     }
 
+    std::unordered_map<JPH::BodyID, Entity *> GetMap() {return mBodyEntityMap; };
+
     // See: ContactListener
     virtual JPH::ValidateResult OnContactValidate(const JPH::Body &inBody1, const JPH::Body &inBody2, JPH::RVec3Arg inBaseOffset, const JPH::CollideShapeResult &inCollisionResult) override {
         // at the moment we don't care about the contact validation
