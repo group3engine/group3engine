@@ -3,6 +3,8 @@
 //
 
 #include "CharacterEntity.hpp"
+#include <spdlog/spdlog.h>
+
 void CharacterEntity::SetCharacterVirtual(unique_ptr<CharacterVirtualTest> &&uniquePtr) {
     mCharacterVirtual = std::move(uniquePtr);
 
@@ -18,6 +20,7 @@ void CharacterEntity::Update(double deltaTime) {
         mInitialTransform = GetTransform();
         mHasFirstFrameHappened = true;
     }
+
     Entity::Update(deltaTime);
     // get the character state
     // calculate the delta velocity
@@ -34,15 +37,34 @@ void CharacterEntity::Update(double deltaTime) {
     float timeScale = 1.0f;
     std::string activeAnimation = "idle";
     float blend = 0.1f;
+    bool playWholeAnimation = false;
     if(glm::length(deltaVelocity) > 0.1f) {
         activeAnimation = "running";
         timeScale = glm::length(deltaVelocity) / 7.f;
     }
-
+    // spdlog the current jump state
+    switch (mCharacterVirtual->GetJumpState()) {
+    case EJumpState::Start:
+        activeAnimation = "jump up";
+        playWholeAnimation = false;
+        timeScale = 1.0f;
+        break;
+    case EJumpState::Falling:
+        activeAnimation = "falling";
+        timeScale = 1.0f;
+        blend = 0.5f;
+        playWholeAnimation = false;
+        break;
+    case EJumpState::End:
+        break;
+    case EJumpState::None:
+        SPDLOG_INFO("Jump None");
+        break;
+    }
     // for each child, if there is an animator, call set animation
     for (auto &child : mChildren) {
             if (child->HasAnimator()) {
-                child->GetAnimator().SetActiveAnimation(activeAnimation, blend);
+                child->GetAnimator().SetActiveAnimation(activeAnimation, blend, playWholeAnimation);
                 child->GetAnimator().SetTimeScale(timeScale);
             }
     }

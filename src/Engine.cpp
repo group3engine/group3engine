@@ -264,9 +264,6 @@ void Engine::Run() {
             Update(GlobalUtil::deltaTime, glm::vec3(0.0f));
         }
 
-        if (mScene->HasCharacter()) {
-            SPDLOG_INFO("cube.mPosition {}", glm::to_string(mScene->GetCharacter().GetPosition()));
-        }
 
         Render();
     }

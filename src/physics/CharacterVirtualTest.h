@@ -6,6 +6,15 @@
 
 #include "CharacterBaseTest.h"
 
+// enum of jump states - start, falling, end, none
+enum class EJumpState
+{
+        Start,
+        Falling,
+        End,
+        None
+};
+
 // Simple test that test the CharacterVirtual class. Allows the user to move around with the arrow keys and jump with the J button.
 class CharacterVirtualTest : public CharacterBaseTest, public CharacterContactListener
 {
@@ -32,6 +41,9 @@ public:
 	virtual RVec3			GetCharacterPosition() const override				{ return mCharacter->GetPosition(); }
 
 	void SetCharacterPosition(RVec3 pos) { mCharacter->SetPosition(pos); }
+
+        // get the jump state
+        [[nodiscard]] EJumpState GetJumpState() { return mJumpState; }
 
 protected:
 	// Common function to be called when contacts are added/persisted
@@ -69,4 +81,9 @@ private:
 	// Track active contacts for debugging purposes
 	using ContactSet = Array<CharacterVirtual::ContactKey>;
 	ContactSet				mActiveContacts;
+
+        // current jump state
+        EJumpState              mJumpState = EJumpState::None;
+
+
 };

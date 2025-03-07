@@ -109,11 +109,22 @@ void CharacterVirtualTest::HandleInput(Vec3Arg inMovementDirection, bool inJump,
 		new_velocity = ground_velocity;
 
 		// Jump
-		if (inJump && moving_towards_ground)
-			new_velocity += sJumpSpeed * mCharacter->GetUp();
+		if (inJump && moving_towards_ground) {
+                    new_velocity += sJumpSpeed * mCharacter->GetUp();
+                        mJumpState = EJumpState::Start;
+                }
+                else if (mJumpState != EJumpState::None && mJumpState != EJumpState::End) {
+                    mJumpState = EJumpState::End;
+                }
+                else
+                {
+                        mJumpState = EJumpState::None;
+                }
 	}
-	else
-		new_velocity = current_vertical_velocity;
+	else {
+            new_velocity = current_vertical_velocity;
+            mJumpState = EJumpState::Falling;
+        }
 
 	// Gravity
 	new_velocity += (character_up_rotation * mPhysicsSystem->GetGravity()) * inDeltaTime;
