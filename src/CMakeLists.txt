@@ -10,5 +10,6 @@ add_subdirectory(rendering)
 add_subdirectory(scene)
 add_subdirectory(vkutil)
 add_subdirectory(animation)
+add_subdirectory(entities)
 
 target_include_directories(src PRIVATE ${CMAKE_CURRENT_LIST_DIR})

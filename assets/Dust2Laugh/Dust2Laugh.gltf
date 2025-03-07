@@ -1579,6 +1579,9 @@
 				104,
 				101
 			],
+			"extras":{
+				"entity_type":"character"
+			},
 			"name":"Character",
 			"rotation":[
 				0.7071068286895752,

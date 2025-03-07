@@ -52,6 +52,12 @@ class Entity {
     void SetName(std::string aName) { mName = std::move(aName); }
     [[nodiscard]] const std::string &GetName() const { return mName; }
 
+    [[nodiscard]] glm::vec3 GetPosition() const { return mPosition; }
+    void SetPosition(glm::vec3 aPosition) { mPosition = aPosition; }
+    void SetPosition(float x, float y, float z) {
+        mPosition = glm::vec3(x, y, z);
+    }
+
     void SetParent(Entity *aParent);
 
     [[nodiscard]] Entity *GetParent() const { return mParent; }

@@ -20,6 +20,6 @@
 // returns 0 if failed
 int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
              MaterialManager &aMaterialManager, TextureManager &aTextureManager,
-             std::vector<Entity> &aEntities, bool aIsDebug,
+             std::vector<Entity *> &aEntities, bool aIsDebug,
              std::vector<Animation> &aAnimations, std::vector<Skin> &aSkins);
 #endif // GROUP3ENGINE_RESOURCEMANAGER_HPP

@@ -17,16 +17,9 @@
 #include "Utils.hpp"
 
 #include "CharacterVirtualTest.h"
+#include "CharacterEntity.hpp"
 
-struct CharacterEntity {
-    Entity *mEntity = nullptr;
-    std::unique_ptr<CharacterVirtualTest> mCharacterVirtual;
 
-    CharacterEntity() = default;
-    CharacterEntity(Entity *entity,
-                    std::unique_ptr<CharacterVirtualTest> characterVirtual)
-        : mEntity(entity), mCharacterVirtual(std::move(characterVirtual)) {}
-};
 
 class Scene {
   public:
@@ -46,15 +39,16 @@ class Scene {
 
     std::vector<Buffer> &GetLightsUBO() { return m_LightUBO; }
 
-    std::vector<Entity>& GetEntities() { return m_Entities; }
+    std::vector<Entity *>& GetEntities() { return m_Entities; }
 
     void SetHasCharacter(bool hasCharacter) { mHasCharacter = hasCharacter; }
-    bool HasCharacter() const { return mHasCharacter; }
+    [[nodiscard]] bool HasCharacter() const { return mHasCharacter; }
 
-    CharacterEntity &GetCharacter() { return mCharacter; }
+    CharacterEntity &GetCharacter() { return *mCharacter; }
 
     void CreateCharacter(Entity *entity, std::unique_ptr<CharacterVirtualTest> characterVirtual) {
-        mCharacter = {entity, std::move(characterVirtual)};
+        mCharacter = dynamic_cast<CharacterEntity*>(entity);
+        mCharacter->SetCharacterVirtual(std::move(characterVirtual));
     }
 
   private:
@@ -68,11 +62,11 @@ class Scene {
     std::vector<Light>  m_Lights;
     vkutil::LightBuffer m_LightBuffer;
     std::vector<Buffer> m_LightUBO;
-    std::vector<Entity> m_Entities;
+    std::vector<Entity *> m_Entities;
     std::vector<Animation> m_Animations;
     std::vector<Skin> m_Skins;
 
     bool mHasCharacter = false;
-    CharacterEntity mCharacter;
+    CharacterEntity *mCharacter;
 };
 
