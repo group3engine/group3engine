@@ -176,9 +176,6 @@ void Entity::Update(double deltaTime) {
     frameNumber++;
     if (mAnimator) {
         mAnimator->Update(deltaTime, this);
-        // TMP FOR VISUALISATION
-        mAnimator->SetActiveAnimation("running", 1.f);
-        //END TMP
     }
 }
 Entity::~Entity() {

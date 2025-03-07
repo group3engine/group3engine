@@ -112,10 +112,15 @@ class Entity {
 
     bool HasAnimator() const { return static_cast<bool>(mAnimator); }
 
+    // get a reference to the animator
+  [[nodiscard]] Animator & GetAnimator(){return *mAnimator;}
+
   protected:
     virtual void Update() {}
     virtual void LateUpdate() {}
     virtual void Awake() {}
+
+    std::vector<Entity *> mChildren;
 
   public:
     std::unique_ptr<RigidBody> mRigidBody;
@@ -128,7 +133,6 @@ class Entity {
     
 
     Entity *mParent = nullptr;
-    std::vector<Entity *> mChildren;
 
     Mesh *mMesh = nullptr;
 

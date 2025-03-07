@@ -25,6 +25,10 @@ class CharacterEntity : public Entity {
         return mCharacterVirtual->GetCharacterPosition();
     }
 
+    // update override
+    void Update(double deltaTime) override;
+
+
 
   private:
     std::unique_ptr<CharacterVirtualTest> mCharacterVirtual;
