@@ -177,14 +177,7 @@ void Entity::Update(double deltaTime) {
     if (mAnimator) {
         mAnimator->Update(deltaTime, this);
         // TMP FOR VISUALISATION
-        if ((frameNumber / 300) % 3 == 0) {
-            mAnimator->SetActiveAnimation("laugh", 1.f);
-        }
-        else if ((frameNumber / 300) % 3 == 1) {
-            mAnimator->SetActiveAnimation("rumba", 0.5f);
-        } else {
-            mAnimator->SetActiveAnimation("idle", 0.5f);
-        }
+        mAnimator->SetActiveAnimation("running", 1.f);
         //END TMP
     }
 }
