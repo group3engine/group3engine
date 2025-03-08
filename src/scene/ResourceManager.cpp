@@ -298,6 +298,9 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             int materialIndex =
                 static_cast<int>(gltfPrimitive.material - data->materials) +
                 static_cast<int>(defaultMaterialsCount);
+            if(gltfPrimitive.material == nullptr) {
+                materialIndex = 0;
+            }
             meshPrimitive.material =
                 aMaterialManager.GetMaterial(materialIndex);
             // if the material doesn't have pbrMetallicRoughness, skip the mesh

@@ -25,6 +25,8 @@ void CharacterEntity::Update(double deltaTime) {
     }
 
     Entity::Update(deltaTime);
+
+
     // get the character state
     // calculate the delta velocity
     glm::vec3 deltaVelocity = -1.f * mDeltaPosition / deltaTime;
@@ -86,6 +88,7 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
     if(aOther->CompareTag("checkpoint")) {
         SetCheckpoint(glm::vec3(mCharacterVirtual->GetCharacterPosition().GetX(), mCharacterVirtual->GetCharacterPosition().GetY(), mCharacterVirtual->GetCharacterPosition().GetZ()) + glm::vec3 (0, 2, 0));
     }
+    SPDLOG_INFO("I am {} and I collided with {}", mName, aOther->mName);
 
 }
 void CharacterEntity::Save() {
