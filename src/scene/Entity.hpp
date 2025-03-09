@@ -10,6 +10,7 @@
 #include "Animator.hpp"
 #include "GLTFImportStructs.hpp"
 #include "RigidBody.hpp"
+#include "spdlog/spdlog.h"
 
 #include <atomic>
 
@@ -52,6 +53,15 @@ class Entity {
     void SetName(std::string aName) { mName = std::move(aName); }
     [[nodiscard]] const std::string &GetName() const { return mName; }
 
+    [[nodiscard]] glm::vec3 GetPosition() const { return mPosition; }
+    void SetPosition(glm::vec3 aPosition) {
+        mDeltaPosition = mPosition - aPosition;
+        mPosition = aPosition; }
+    void SetPosition(float x, float y, float z) {
+        mDeltaPosition = glm::vec3(x, y, z) - mPosition;
+        mPosition = glm::vec3(x, y, z);
+    }
+
     void SetParent(Entity *aParent);
 
     [[nodiscard]] Entity *GetParent() const { return mParent; }
@@ -65,6 +75,7 @@ class Entity {
 
     void AddRigidBody(std::unique_ptr<RigidBody> rigidBody) {
         mRigidBody = std::move(rigidBody);
+        PhysicsManager::get().RegisterEntity(this, mRigidBody->mBodyId);
         mHasRigidBody = true;
     }
 
@@ -102,10 +113,40 @@ class Entity {
 
     Transform GetTransform();
 
+    bool IsCharacter() const;
+
+    bool HasAnimator() const { return static_cast<bool>(mAnimator); }
+
+    // get a reference to the animator
+  [[nodiscard]] Animator & GetAnimator(){return *mAnimator;}
+
+    virtual void OnCollisionStart(Entity *aOther) {}
+
+    virtual void OnCollisionStay(Entity *aOther) {}
+
+    void AddTag(const std::string& aTag) { mTags.emplace_back(aTag); }
+    [[nodiscard]] bool CompareTag(const std::string& aTag);
+
+    void SetAsSensor() { mIsSensor = true; }
+    [[nodiscard]] bool IsSensor() const { return mIsSensor; }
+
+    void SetAsSolid() { mIsSolid = true; }
+    [[nodiscard]] bool IsSolid() const { return mIsSolid; }
+
+
   protected:
     virtual void Update() {}
     virtual void LateUpdate() {}
     virtual void Awake() {}
+
+  protected:
+
+
+    std::vector<Entity *> mChildren;
+
+    glm::vec3 mDeltaPosition = glm::vec3(0.0f);
+
+    vector<std::string> mTags;
 
   public:
     std::unique_ptr<RigidBody> mRigidBody;
@@ -118,7 +159,6 @@ class Entity {
     
 
     Entity *mParent = nullptr;
-    std::vector<Entity *> mChildren;
 
     Mesh *mMesh = nullptr;
 
@@ -133,5 +173,11 @@ class Entity {
     bool mHasRigidBody = false;
 
     uint32_t mEntityID = kEntityCount++;
+
+    bool mIsSensor = false;
+
+    bool mIsSolid = true;
+
+
 };
-#endif // VULKANTIME_ENTITY_HPP
+#endif // SCENE_ENTITY_HPP

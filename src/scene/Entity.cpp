@@ -36,11 +36,7 @@ glm::mat4 Entity::getWorldTransform() const {
     }
 
     if (mHasCharacter) {
-        auto mat = glm::identity<glm::mat4>();
-        mat[0][3] = mPosition.x;
-        mat[1][3] = mPosition.y;
-        mat[2][3] = mPosition.z;
-        return glm::transpose(mat);
+        return glm::translate(mPosition) * return_matrix;
     }
     else if (mHasRigidBody) {
         // also apply physics transformations
@@ -180,16 +176,6 @@ void Entity::Update(double deltaTime) {
     frameNumber++;
     if (mAnimator) {
         mAnimator->Update(deltaTime, this);
-        // TMP FOR VISUALISATION
-        if ((frameNumber / 300) % 3 == 0) {
-            mAnimator->SetActiveAnimation("laugh", 1.f);
-        }
-        else if ((frameNumber / 300) % 3 == 1) {
-            mAnimator->SetActiveAnimation("rumba", 0.5f);
-        } else {
-            mAnimator->SetActiveAnimation("idle", 0.5f);
-        }
-        //END TMP
     }
 }
 Entity::~Entity() {
@@ -244,3 +230,12 @@ glm::mat4 Entity::getSkinnedWorldTransform(Entity const *aRoot) const {
 }
 
 Transform Entity::GetTransform() { return mLocalTransform; }
+
+bool Entity::CompareTag(const std::string& aTag)
+{
+    return std::ranges::any_of(mTags, [&aTag](const auto& tag) {
+        return tag == aTag;
+    });
+}
+
+bool Entity::IsCharacter() const {return mHasCharacter;}

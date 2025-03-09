@@ -10,8 +10,7 @@ std::vector<glm::mat4> Skin::GetJointMatrices(Entity *aMesh) const {
     std::vector<glm::mat4> jointMatrices;
     jointMatrices.reserve(mJoints.size());
     for (const auto &joint : mJoints) {
-        jointMatrices.push_back(glm::inverse(aMesh->getWorldTransform()) *
-                                joint.entity->getWorldTransform() * joint.inverseBindMatrix);
+        jointMatrices.push_back(joint.entity->getWorldTransform() * joint.inverseBindMatrix);
     }
     return jointMatrices;
 }
