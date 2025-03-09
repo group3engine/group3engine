@@ -25,6 +25,7 @@ class ForwardPass {
     void Resize();
     Image &GetRenderTarget() { return m_RenderTarget; }
     Image &GetBrightnessTarget() { return m_BrightnessTexture; }
+    Image &GetDepthTarget() { return m_DepthTarget; }
 
   private:
     void CreatePipeline();

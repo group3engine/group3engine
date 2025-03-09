@@ -26,7 +26,7 @@ enum class RenderType {
     MESH_DENSITY
 };
 
-inline int MAX_FRAMES_IN_FLIGHT;
+inline size_t MAX_FRAMES_IN_FLIGHT;
 inline int currentFrame;
 
 inline VkSampler repeatSamplerAniso;
@@ -62,7 +62,24 @@ struct GuassianWeightsBuffer {
     float offsets[22];
 };
 
+struct SSAOSettings
+{
+    int NumDirections;
+    int NumSteps;
+    float Radius;
+    float StepSize;
+    float intensity;
+};
+
+struct SSRSettings
+{
+    int MaxSteps;
+    int MaxDistance;
+};
+
 inline PostProcessing postProcessSettings = {};
+inline SSAOSettings ssaoSettings = {6, 6, 1.4f, 0.001f, 3.8f};
+inline SSRSettings ssrSettings = {20, 100};
 inline uint32_t setRenderingPipeline = 1;
 inline uint32_t setAlphaMakingPipeline = 2;
 

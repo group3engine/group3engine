@@ -43,12 +43,16 @@ void Renderer::CreateRenderPasses() {
     m_ShadowMap = std::make_unique<ShadowMap>(context, m_scene);
     m_DepthPrepass = std::make_unique<DepthPrepass>(context, m_scene, m_camera);
     m_ForwardPass = std::make_unique<ForwardPass>(context, m_ShadowMap->GetRenderTarget(), m_DepthPrepass->GetRenderTarget(), m_scene, m_camera);
+    m_GBuffer = std::make_unique<GBuffer>(context, m_scene, m_camera);
+    m_SSAO = std::make_unique<SSAO>(context, m_ForwardPass->GetDepthTarget(), m_ForwardPass->GetRenderTarget(), m_camera);
+    m_SSR = std::make_unique<SSR>(context, m_ForwardPass->GetDepthTarget(), m_ForwardPass->GetRenderTarget(), m_GBuffer->GetMetallicRoughnessTarget(), m_camera);
     m_BloomPass = std::make_unique<Bloom>(context, m_ForwardPass->GetBrightnessTarget());
-    m_CompositePass = std::make_unique<Composite>(context, m_ForwardPass->GetRenderTarget(), m_BloomPass->GetRenderTarget());
+    m_CompositePass = std::make_unique<Composite>(context, m_ForwardPass->GetRenderTarget(), m_BloomPass->GetRenderTarget(), m_SSAO->GetRenderTarget(), m_SSR->GetRenderTarget());
     m_PresentPass = std::make_unique<PresentPass>(context, m_CompositePass->GetRenderTarget());
 
     // ImGui
     ImGuiRenderer::Initialize(context);
+    // TODO: This will cause a validation error if you re-size the window. Just needs to be updated when re-sized
     ImGuiRenderer::AddTexture(vkutil::clampToEdgeSamplerAniso, m_ShadowMap->GetRenderTarget().imageView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL);
 }
 
@@ -59,9 +63,12 @@ void Renderer::Destroy() {
 
     m_DepthPrepass.reset();
     m_ForwardPass.reset();
+    m_GBuffer.reset();
     m_ShadowMap.reset();
     m_BloomPass.reset();
     m_CompositePass.reset();
+    m_SSAO.reset();
+    m_SSR.reset();
     m_PresentPass.reset();
     m_camera.reset();
 
@@ -172,6 +179,9 @@ void Renderer::Render() {
         m_DepthPrepass->Resize();
         m_ShadowMap->Resize();
         m_ForwardPass->Resize();
+        m_GBuffer->Resize();
+        m_SSAO->Resize();
+        m_SSR->Resize();
         m_BloomPass->Resize();
         m_CompositePass->Resize();
         m_PresentPass->Resize();
@@ -194,6 +204,9 @@ void Renderer::Render() {
         m_ShadowMap->Execute(cmd);
         m_DepthPrepass->Execute(cmd);
         m_ForwardPass->Execute(cmd);
+        m_GBuffer->Execute(cmd);
+        m_SSAO->Execute(cmd);
+        m_SSR->Execute(cmd);
         m_BloomPass->Execute(cmd);
         m_CompositePass->Execute(cmd);
         m_PresentPass->Execute(cmd, index);
@@ -245,6 +258,9 @@ void Renderer::Present(uint32_t imageIndex) {
         m_DepthPrepass->Resize();
         m_ShadowMap->Resize();
         m_ForwardPass->Resize();
+        m_GBuffer->Resize();
+        m_SSAO->Resize();
+        m_SSR->Resize();
         m_BloomPass->Resize();
         m_CompositePass->Resize();
         m_PresentPass->Resize();
@@ -256,6 +272,8 @@ void Renderer::Update(double deltaTime, glm::vec3 character_position) {
 
     ImGuiRenderer::Update(m_scene, m_camera);
 
+    m_SSAO->Update();
+    m_SSR->Update();
     // Update passes
     m_ShadowMap->Update();
     m_ForwardPass->Update();

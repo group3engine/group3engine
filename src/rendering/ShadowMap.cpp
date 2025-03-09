@@ -174,7 +174,7 @@ void ShadowMap::BuildDescriptors() {
     }
 
     // Camera Transform UBO
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorBufferInfo bufferInfo{};
         bufferInfo.buffer = scene->GetLightsUBO()[i].buffer;
         bufferInfo.offset = 0;

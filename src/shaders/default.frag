@@ -171,7 +171,7 @@ void main()
 
     // == Metal and Roughness ==
 	float roughness = texture(uTextureMetallicRoughness, uv).g * uNumbers.roughness;
-	float metallic = texture(uTextureMetallicRoughness, uv).g * uNumbers.metallness;
+	float metallic = texture(uTextureMetallicRoughness, uv).b * uNumbers.metallness;
 
     vec3 outLight = vec3(0.0);
 

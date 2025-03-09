@@ -86,6 +86,23 @@ void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::share
         }
     }
 
+    // SSAO settings
+    if (ImGui::CollapsingHeader("SSAO"))
+    {
+        ImGui::SliderInt("Directions: ", &vkutil::ssaoSettings.NumDirections, 1, 64);
+        ImGui::SliderInt("Steps: ", &vkutil::ssaoSettings.NumSteps, 1, 64);
+        ImGui::SliderFloat("Radius: ", &vkutil::ssaoSettings.Radius, 0.1f, 10.0f);
+        ImGui::SliderFloat("StepSize: ", &vkutil::ssaoSettings.StepSize, 0.0f, 0.1f);
+        ImGui::SliderFloat("Intensity: ", &vkutil::ssaoSettings.intensity, 0.0f, 10.0f);
+    }
+
+    // SSR settings
+    if (ImGui::CollapsingHeader("SSR"))
+    {
+        ImGui::SliderInt("MaxSteps: ", &vkutil::ssrSettings.MaxSteps, 1, 300);
+        ImGui::SliderInt("MaxDistance: ", &vkutil::ssrSettings.MaxDistance, 1, 300);
+    }
+
     static bool enableTextureDebug = false;
     ImGui::Checkbox("Debug Textures", &enableTextureDebug);
     if (enableTextureDebug)
