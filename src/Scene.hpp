@@ -46,8 +46,8 @@ class Scene {
 
     CharacterEntity &GetCharacter() { return *mCharacter; }
 
-    void CreateCharacter(Entity *entity, std::unique_ptr<CharacterVirtualTest> characterVirtual) {
-        mCharacter = dynamic_cast<CharacterEntity*>(entity);
+    void CreateCharacter(CharacterEntity *entity, std::unique_ptr<CharacterVirtualTest> characterVirtual) {
+        mCharacter = entity;
         mCharacter->SetCharacterVirtual(std::move(characterVirtual));
     }
 
