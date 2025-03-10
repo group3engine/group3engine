@@ -124,7 +124,7 @@ class Entity {
 
     virtual void OnCollisionStay(Entity *aOther) {}
 
-    void AddTag(const std::string& aTag) { mTags.emplace_back(aTag); }
+    void AddTag(const std::string& aTag) { mTags.emplace_back(aTag); if(aTag == "invisible") mIsDrawn = false; }
     [[nodiscard]] bool CompareTag(const std::string& aTag);
 
     void SetAsSensor() { mIsSensor = true; }
@@ -177,6 +177,8 @@ class Entity {
     bool mIsSensor = false;
 
     bool mIsSolid = true;
+
+    bool mIsDrawn = true;
 
 
 };

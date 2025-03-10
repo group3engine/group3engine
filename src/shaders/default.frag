@@ -159,14 +159,12 @@ float Shadows(vec3 WorldPos)
 	fragPositionInLightSpace.xy = fragPositionInLightSpace.xy * 0.5 + 0.5;
 	fragPositionInLightSpace.z = fragPositionInLightSpace.z - 0.01;
 	float shadow = PCF(fragPositionInLightSpace);
-	return shadow;
+	return 0.0;
 }
 
 void main()
 {
 	vec3 color = texture(uTextureColour, uv).rgb * uNumbers.baseColour.rgb;
-    fragColor = vec4(color, 1.0);
-    return;
 	vec3 emissive = vec3(0.0);
 
     // == Metal and Roughness ==

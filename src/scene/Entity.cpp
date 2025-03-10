@@ -73,7 +73,7 @@ void Entity::SetTransform(glm::mat4 aTransform) {
 }
 void Entity::RecordDrawOpaque(VkCommandBuffer aCmdBuff,
                               VkPipelineLayout aPipelineLayout) {
-    if (mHasMesh && mAnimator == nullptr) {
+    if (mHasMesh && mAnimator == nullptr && mIsDrawn) {
         // push the model matrix
         glm::mat4 mModelMatrix = getWorldTransform();
         vkCmdPushConstants(aCmdBuff, aPipelineLayout,
@@ -108,7 +108,7 @@ void Entity::RecordDrawOpaque(VkCommandBuffer aCmdBuff,
 }
 
 void Entity::RecordDrawShadow(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout) const {
-    if (mHasMesh) {
+    if (mHasMesh && mIsDrawn) {
         // push the model matrix
         glm::mat4 mModelMatrix = getWorldTransform();
         vkCmdPushConstants(aCmdBuff, aPipelineLayout,
@@ -138,7 +138,7 @@ void Entity::RecordDrawShadow(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipeli
 }
 void Entity::RecordDrawCutout(VkCommandBuffer aCmdBuff,
                               VkPipelineLayout aPipelineLayout) {
-    if (mHasMesh && mAnimator == nullptr) {
+    if (mHasMesh && mAnimator == nullptr && mIsDrawn) {
         // push the model matrix
         glm::mat4 mModelMatrix = getWorldTransform();
         vkCmdPushConstants(aCmdBuff, aPipelineLayout,
@@ -185,7 +185,7 @@ Entity::~Entity() {
 void Entity::RecordDrawSkinned(VkCommandBuffer aCmdBuff,
                                VkPipelineLayout aPipeLayout) {
     // we only need to render if we have a skinned mesh
-    if (mHasMesh && mAnimator != nullptr) {
+    if (mHasMesh && mAnimator != nullptr && mIsDrawn) {
         // push the model matrix
         glm::mat4 mModelMatrix = getWorldTransform();
         vkCmdPushConstants(aCmdBuff, aPipeLayout,
