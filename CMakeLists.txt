@@ -74,7 +74,10 @@ add_subdirectory(extern/spdlog)
 add_subdirectory(extern/imgui)
 add_subdirectory(extern/volk)
 
+# Turn off rtti for Jolt
 set(INTERPROCEDURAL_OPTIMIZATION OFF CACHE BOOL "" FORCE)
+# Turn off all warnings in Jolt to stop -Werror build error in Release mode
+set(ENABLE_ALL_WARNINGS OFF CACHE BOOL "" FORCE)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   # Use static version of the MSVC runtime library with Jolt to match our use
   set(USE_STATIC_MSVC_RUNTIME_LIBRARY OFF CACHE BOOL "" FORCE)
