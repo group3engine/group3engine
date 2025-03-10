@@ -15,8 +15,6 @@ void CharacterEntity::SetCharacterVirtual(unique_ptr<CharacterVirtualTest> &&uni
 
 
 CharacterEntity::~CharacterEntity() {
-    // call the destructor of the parent class
-    Entity::~Entity();
 }
 void CharacterEntity::Update(double deltaTime) {
     if(!mHasFirstFrameHappened) {

@@ -50,6 +50,9 @@ void Scene::Destroy()
         delete mTextureManager;
 
         // delete the entities
+        for (auto &entity : m_Entities) {
+            delete entity;
+        }
         m_Entities.clear();
 }
 
