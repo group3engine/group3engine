@@ -85,7 +85,10 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
     }
     // if its a checkpoint, set the checkpoint
     if(aOther->CompareTag("checkpoint")) {
-        SetCheckpoint(glm::vec3(mCharacterVirtual->GetCharacterPosition().GetX(), mCharacterVirtual->GetCharacterPosition().GetY(), mCharacterVirtual->GetCharacterPosition().GetZ()) + glm::vec3 (0, 2, 0));
+        // set the checkpoint to the position of the checkpoint, plus a bit in the y direction
+        glm::vec3 checkpointPosition = aOther->getWorldTransformComponents().translation + glm::vec3(0, 2.5f, 0);
+        SetCheckpoint(checkpointPosition);
+
     }
     SPDLOG_INFO("I am {} and I collided with {}", mName, aOther->mName);
 

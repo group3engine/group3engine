@@ -34,7 +34,7 @@ glm::mat4 Entity::getWorldTransform() const {
     }
 
     if (mHasCharacter) {
-        return glm::translate(mPosition) * parent_matrix * mLocalTransform.getMatrix();
+        return glm::translate(mCharacterPositionOffset) * parent_matrix * mLocalTransform.getMatrix();
     }
     else if (mHasRigidBody) {
         // also apply physics transformations

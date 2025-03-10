@@ -286,10 +286,10 @@ void Engine::Run() {
 
         if (mScene->HasCharacter()) {
             auto characterVirtualPos = mScene->GetCharacter().GetCharacterPosition();
-            mScene->GetCharacter().SetPosition(
+            mScene->GetCharacter().SetCharacterPositionOffset(
                 characterVirtualPos.GetX(), characterVirtualPos.GetY(), characterVirtualPos.GetZ());
 
-            Update(GlobalUtil::deltaTime, mScene->GetCharacter().GetPosition());
+            Update(GlobalUtil::deltaTime, mScene->GetCharacter().GetCharacterPositionOffset());
         } else {
             Update(GlobalUtil::deltaTime, glm::vec3(0.0f));
         }
