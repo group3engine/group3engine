@@ -27,13 +27,14 @@ void CharacterEntity::Update(double deltaTime) {
 
     // get the character state
     // calculate the delta velocity
-    glm::vec3 deltaVelocity = -1.f * mDeltaPosition / deltaTime;
+    Vec3 characterVelocityJolt = mCharacterVirtual->GetCharacterVelocity();
+    glm::vec3 characterVelocity = glm::vec3(characterVelocityJolt.GetX(), characterVelocityJolt.GetY(), characterVelocityJolt.GetZ());
     // set the character to face the direction of the velocity without the y component
-    deltaVelocity.y = 0;
-    if (glm::length(deltaVelocity) > 0.1f) {
+    characterVelocity.y = 0;
+    if (glm::length(characterVelocity) > 0.1f) {
         // set the transform rotation to the direction of the velocity, on top of the initial transform rotation
         Transform newTransform = GetTransform();
-        newTransform.rotation = glm::quatLookAt(glm::normalize(deltaVelocity), glm::vec3(0, 1, 0)) * mInitialTransform.rotation;
+        newTransform.rotation = glm::quatLookAt(glm::normalize(characterVelocity * -1.f), glm::vec3(0, 1, 0)) * mInitialTransform.rotation;
         SetTransform(newTransform);
     }
     // work out the active animation, and the time scale
@@ -41,9 +42,9 @@ void CharacterEntity::Update(double deltaTime) {
     std::string activeAnimation = "idle";
     float blend = 0.1f;
     bool playWholeAnimation = false;
-    if(glm::length(deltaVelocity) > 0.1f) {
+    if(glm::length(characterVelocity) > 0.4f) {
         activeAnimation = "running";
-        timeScale = min(glm::length(deltaVelocity) / 5.5f, 2.f);
+        timeScale = min(glm::length(characterVelocity) / 5.5f, 2.f);
     }
     // spdlog the current jump state
     switch (mCharacterVirtual->GetJumpState()) {

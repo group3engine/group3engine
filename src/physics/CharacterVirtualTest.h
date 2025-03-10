@@ -41,6 +41,9 @@ public:
 	// Get position of the character
 	virtual RVec3			GetCharacterPosition() const override				{ return mCharacter->GetPosition(); }
 
+        // Get velocity of the character (used for animation, don't include ground velocity)
+        virtual Vec3			GetCharacterVelocity() const				{ return mCharacter->GetLinearVelocity() - mCharacter->GetGroundVelocity(); }
+
 	void SetCharacterPosition(RVec3 pos) { mCharacter->SetPosition(pos); }
 
     // Set the custom contact listener
