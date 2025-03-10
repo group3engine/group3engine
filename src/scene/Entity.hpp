@@ -93,6 +93,8 @@ class Entity {
 
     [[nodiscard]] glm::mat4 getWorldTransform() const;
 
+    [[nodiscard]] Transform getWorldTransformComponents() const;
+
     [[nodiscard]] glm::mat4 getSkinnedWorldTransform(Entity const *aRoot) const;
 
     glm::mat4 getLocalTransform();

@@ -3,6 +3,7 @@
 #include <glm/ext.hpp>
 #include <glm/glm.hpp>
 
+#include <memory>
 #include <spdlog/spdlog.h>
 
 #include "Camera.hpp"
@@ -10,7 +11,9 @@
 #include "GLFW.hpp"
 #include "Image.hpp"
 #include "Input.hpp"
+#include "PhysicsHelpers.hpp"
 #include "PhysicsManager.hpp"
+#include "RigidBody.hpp"
 #include "SampleGLTFFilePaths.hpp"
 #include "Scene.hpp"
 #include "Utils.hpp"
@@ -102,7 +105,6 @@ bool Engine::Initialize() {
 
     // ---PHYSICS TEST INITIALISATION---
 
-    RigidBody floor(RigidBody::Floor, glm::vec3(0.f, 0.f, 0.f), glm::quat(glm::angleAxis(glm::radians(45.0f), glm::vec3(0.0f, 0.f, 1.f))));
     // Add rigid body to the physics system
     // NOTE: Doing this outside of the constructor gives us a bit more flexibility
     // floor.Init(PhysicsManager::get());
@@ -141,7 +143,7 @@ bool Engine::Initialize() {
                     // Create an array of vertices
                     VertexList vertices;
                     for (const auto &vertex : primitive.vertices) {
-                        auto worldPos = entity->getWorldTransform() * glm::vec4(vertex.pos, 1.0f);
+                        auto worldPos = glm::vec4(vertex.pos, 1.0f);
                         vertices.emplace_back(worldPos.x, worldPos.y, worldPos.z);
                         ++totalVertices;
                     }
@@ -169,21 +171,18 @@ bool Engine::Initialize() {
                     }
 
                     BodyCreationSettings bodyCreationSettings = {
-                        result.Get(), RVec3(0.0_r, 0.0_r, 0.0_r), Quat::sIdentity(),
-                        EMotionType::Static, Layers::NON_MOVING};
+                        result.Get(), RVec3(0.f, 0.f, 0.f), Quat::sIdentity(),
+                        EMotionType::Static, Layers::MOVING};
                     bodyCreationSettings.mIsSensor = entity->IsSensor();
 
-                    auto bodyID =
-                        PhysicsManager::get().mPhysicsSystem.GetBodyInterface().CreateAndAddBody(
-                            bodyCreationSettings, EActivation::DontActivate);
-
-                    assert(!bodyID.IsInvalid());
+                    RigidBody entity_rigid_body = RigidBody(bodyCreationSettings);
 
 
-
-                    PhysicsManager::get().mBodyIds.push_back(bodyID);
+                    entity_rigid_body.Init(PhysicsManager::get());
                     // only do this part if its supposed to DO something when collided with (i.e. sensors)
-                    PhysicsManager::get().RegisterEntity(entity, bodyID);
+                    PhysicsManager::get().RegisterEntity(entity, entity_rigid_body.mBodyId);
+                    PhysicsManager::get().mPhysicsSystem.OptimizeBroadPhase();
+                    entity->AddRigidBody(std::make_unique<RigidBody>(entity_rigid_body));
 
                 }
             }

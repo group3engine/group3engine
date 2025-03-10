@@ -16,7 +16,7 @@ class MovingEntity : public Entity{
   private:
     glm::vec3 start_position {};
     glm::vec3 end_position {};
-    float timeToMove = 10.f;
+    float timeToMove = 100.f;
     float timeElapsed = 0.f;
     bool mHasFirstFrameHappened = false;
 

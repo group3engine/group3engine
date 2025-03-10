@@ -47,6 +47,22 @@ glm::mat4 Entity::getWorldTransform() const {
 
     return return_matrix;
 }
+Transform Entity::getWorldTransformComponents() const
+{
+    glm::mat4 worldTransform = getWorldTransform();
+    glm::vec3 translation, scale;
+    glm::quat rotation;
+    glm::vec3 skew;
+    glm::vec4 perspective;
+    glm::decompose(worldTransform, scale, rotation, translation, skew, perspective);
+    //    assert(perspective.w == 1.0f && perspective.x == 0.0f &&
+    //           perspective.y == 0.0f && perspective.z == 0.0f);
+    //    assert(skew.x == 0.0f && skew.y == 0.0f && skew.z == 0.0f);
+    return {
+        .translation = translation, .rotation = rotation, .scale = scale};
+
+
+}
 
 glm::mat4 Entity::getLocalTransform() {
     glm::mat4 return_matrix = mLocalTransform.getMatrix();

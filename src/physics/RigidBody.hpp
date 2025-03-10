@@ -14,7 +14,6 @@ class RigidBody {
     // Enumerations for default test objects
     enum Shape { Ball, Floor };
 
-    RigidBody(Shape shape, glm::vec3 glm_position, glm::quat glm_rotation);
     RigidBody(JPH::BodyCreationSettings joltCreationSettings)
         : mJoltCreationSettings(joltCreationSettings) {}
 
