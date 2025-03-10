@@ -319,6 +319,8 @@ void Engine::UpdateLogic() {
     camera->SetInput(EInputState::FAST, IsKeyDown(KEY::eLEFT_SHIFT));
     camera->SetInput(EInputState::SLOW, IsKeyDown(KEY::eLEFT_CONTROL));
 
+    camera->SetInput(EInputState::SWITCHVIEW, IsKeyPressed(KEY::eV));
+
     if (IsKeyPressed(KEY::e5)) {
         vkutil::postProcessSettings.Enable = vkutil::postProcessSettings.Enable == true ? false : true;
 

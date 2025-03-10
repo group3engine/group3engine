@@ -37,10 +37,18 @@ enum class EInputState {
     FAST,
     SLOW,
     MOUSING,
-    MAX
+    MAX,
+    SWITCHVIEW
 };
-
+enum class InputType {
+    FollowCharacter,
+    FreeCamera
+};
 class Camera {
+  public:
+    static Camera* GetMainCamera() { return kMainCamera; }
+  private:
+    static Camera* kMainCamera;
   public:
     Camera(Context &context, const glm::vec3 position, glm::vec3 direction, glm::vec3 up, float aspect);
     ~Camera();
@@ -81,6 +89,11 @@ class Camera {
     bool inputMap[std::size_t(EInputState::MAX)] = {};
     bool wasMousing = false;
 
+    void SetInputType(InputType inputType) { m_inputType = inputType; }
+
+    [[nodiscard]] bool isInFreeCameraMode() const { return m_inputType == InputType::FreeCamera; }
+    [[nodiscard]] bool isInFollowCharacterMode() const { return m_inputType == InputType::FollowCharacter; }
+
     
 
   private:
@@ -99,4 +112,7 @@ class Camera {
     double pitch = 0.0f;
     
     const PhysicsManager* m_physics_reference;
+
+
+    InputType m_inputType = InputType::FollowCharacter;
 };
