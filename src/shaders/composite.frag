@@ -16,7 +16,7 @@ void main()
 	vec4 ssao = texture(SSAO, uv);
 	vec4 ssr = texture(SSR, uv);
 
-	vec3 hdrColor = (lighting.rgb + ssr.rgb) * ssao.r;
+	vec3 hdrColor = (lighting.rgb) * ssao.r;
 	vec3 ldrColor = hdrColor / (hdrColor + vec3(1.0));
 
 	vec3 result = ldrColor;

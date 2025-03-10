@@ -51,7 +51,7 @@ class CharacterEntity : public Entity {
     Transform mInitialTransform = {};
     std::unique_ptr<CharacterVirtualTest> mCharacterVirtual;
 
-    glm::vec3 mLastCheckpoint = glm::vec3(5, 10.0f, 0);
+    glm::vec3 mLastCheckpoint = glm::vec3(0, 10.0f, 0);
 };
 
 #endif // GROUP3ENGINE_CHARACTERENTITY_HPP

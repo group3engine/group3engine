@@ -130,7 +130,7 @@ class Entity {
     void SetAsSensor() { mIsSensor = true; }
     [[nodiscard]] bool IsSensor() const { return mIsSensor; }
 
-    void SetAsSolid() { mIsSolid = true; }
+    void SetAsNotSolid() { mIsSolid = false; }
     [[nodiscard]] bool IsSolid() const { return mIsSolid; }
 
 

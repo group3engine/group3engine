@@ -383,7 +383,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 }
 
                 // check the tags
-                if (cgltf_json_strcmp(tokens + i, json_chunk, "tags") == 0) {
+                else if (cgltf_json_strcmp(tokens + i, json_chunk, "tags") == 0) {
                     // Parse token i + 1, e.g., token 2 (the value of the tags key)
                     // Update i to i + 1, so we can continue parsing
                     char* tags_cstr = nullptr;
@@ -403,18 +403,22 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 }
 
                 // check for sensor
-                if (cgltf_json_strcmp(tokens + i, json_chunk, "is_sensor") == 0) {
+                else if (cgltf_json_strcmp(tokens + i, json_chunk, "is_sensor") == 0) {
                     // Parse token i + 1, e.g., token 2 (the value of the is_sensor key)
                     // Update i to i + 1, so we can continue parsing
-                    bool is_sensor = cgltf_json_to_bool(tokens + i + 1, json_chunk);
+                    ++i;
+                    bool is_sensor = cgltf_json_to_bool(tokens + i, json_chunk);
+                    ++i;
                     group3_extras.is_sensor = is_sensor;
                 }
 
                 // check for solid
-                if (cgltf_json_strcmp(tokens + i, json_chunk, "is_solid") == 0) {
+                else if (cgltf_json_strcmp(tokens + i, json_chunk, "is_solid") == 0) {
                     // Parse token i + 1, e.g., token 2 (the value of the is_solid key)
                     // Update i to i + 1, so we can continue parsing
-                    bool is_solid = cgltf_json_to_bool(tokens + i + 1, json_chunk);
+                    ++i;
+                    bool is_solid = cgltf_json_to_bool(tokens + i, json_chunk);
+                    ++i;
                     group3_extras.is_solid = is_solid;
                 }
 
@@ -459,7 +463,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         }
         // set the solid
         if (!group3_extras.is_solid) {
-            entity.SetAsSolid();
+            entity.SetAsNotSolid();
         }
         // get the transform
         if (gltfNode.has_matrix) {
