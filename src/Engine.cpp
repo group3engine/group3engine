@@ -170,8 +170,9 @@ bool Engine::Initialize() {
                         SPDLOG_ERROR("Shape result is invalid. {}", result.GetError());
                     }
 
+                    Transform entity_transform = entity->getWorldTransformComponents();
                     BodyCreationSettings bodyCreationSettings = {
-                        result.Get(), RVec3(0.f, 0.f, 0.f), Quat::sIdentity(),
+                        result.Get(), RVec3(entity_transform.translation.x, entity_transform.translation.y, entity_transform.translation.z), Quat(entity_transform.rotation.x, entity_transform.rotation.y, entity_transform.rotation.z, entity_transform.rotation.w),
                         EMotionType::Static, Layers::MOVING};
                     bodyCreationSettings.mIsSensor = entity->IsSensor();
 

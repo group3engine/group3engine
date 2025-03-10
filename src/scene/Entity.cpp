@@ -258,12 +258,18 @@ bool Entity::CompareTag(const std::string& aTag)
 bool Entity::IsCharacter() const {return mHasCharacter;}
 void Entity::SetPhysicsTransform() {
     if (mHasRigidBody) {
+        glm::mat4 worldTransform ;
+        mLocalTransform.scale = glm::vec3(1.0f);
+        if (mParent) {
+            worldTransform = mParent->getWorldTransform() * mLocalTransform.getMatrix();
+        } else {
+            worldTransform = mLocalTransform.getMatrix();
+        }
         // get the world transform, decompose it, and set the position and rotation of the rigid body
         glm::vec3 translation, scale;
         glm::quat rotation;
         glm::vec3 skew;
         glm::vec4 perspective;
-        glm::mat4 worldTransform = getWorldTransform();
         glm::decompose(worldTransform, scale, rotation, translation, skew, perspective);
         mRigidBody->SetPosition(translation);
         mRigidBody->SetRotation(rotation);
