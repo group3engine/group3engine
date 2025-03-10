@@ -7,15 +7,16 @@ void MovingEntity::Update(double deltaTime) {
     if(!mHasFirstFrameHappened)
     {
         start_position = GetTransform().translation;
-        end_position = start_position + glm::vec3(0, 0, 5);
         mHasFirstFrameHappened = true;
     }
     Entity::Update(deltaTime);
     timeElapsed += deltaTime;
-    timeElapsed = fmod(timeElapsed, timeToMove);
-    float t = timeElapsed / timeToMove;
-    // update the local transform
-    Transform newTransform = GetTransform();
-    newTransform.translation = glm::mix(start_position, end_position, t);
-    SetTransform(newTransform);
+    if(timeElapsed > timeToMove)
+    {
+        timeElapsed = 0.f;
+        velocity = -velocity;
+    }
+    // set the velocity in the rigid body
+    mRigidBody->SetLinearVelocity(velocity);
+
 }

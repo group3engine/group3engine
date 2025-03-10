@@ -25,6 +25,11 @@ class RigidBody {
     glm::vec4 GetVelocity() const;
     glm::mat4 GetWorldTransform() const;
 
+    void SetLinearVelocity(glm::vec3 glm_velocity) const {
+        Vec3 velocity(glm_velocity.x, glm_velocity.y, glm_velocity.z);
+        PhysicsManager::get().mPhysicsSystem.GetBodyInterface().SetLinearVelocity(mBodyId, velocity);
+    }
+
   public:
     Shape mShape{};
 
