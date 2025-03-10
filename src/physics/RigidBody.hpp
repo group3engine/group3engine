@@ -29,6 +29,10 @@ class RigidBody {
         Vec3 velocity(glm_velocity.x, glm_velocity.y, glm_velocity.z);
         PhysicsManager::get().mPhysicsSystem.GetBodyInterface().SetLinearVelocity(mBodyId, velocity);
     }
+    void SetAngularVelocity(glm::vec3 glm_velocity) const {
+        Vec3 velocity(glm_velocity.x, glm_velocity.y, glm_velocity.z);
+        PhysicsManager::get().mPhysicsSystem.GetBodyInterface().SetAngularVelocity(mBodyId, velocity);
+    }
 
   public:
     Shape mShape{};
