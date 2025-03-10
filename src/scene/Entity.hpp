@@ -79,11 +79,13 @@ class Entity {
         mHasRigidBody = true;
     }
 
-    void SetTransform(Transform aTransform) { mLocalTransform = aTransform; }
+    void SetTransform(Transform aTransform) { mLocalTransform = aTransform; SetPhysicsTransform();}
     void SetTransform(glm::mat4 aTransform);
     void SetJointTransform(glm::mat4 aJointTransform) {
         SetTransform(aJointTransform);
     }
+
+    void SetPhysicsTransform();
 
     void SetInverseBindMatrix(glm::mat4 aInverseBindMatrix) {
         mInverseBindMatrix = aInverseBindMatrix;

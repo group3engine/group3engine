@@ -11,7 +11,7 @@
 #define CGLTF_WRITE_IMPLEMENTATION
 
 #include "Entity.hpp"
-#include "CharacterEntity.hpp"
+#include "EntitySorter.hpp"
 #include "animation/Animation.hpp"
 #include "animation/Skin.hpp"
 #include "cgltf_write.h"
@@ -314,18 +314,11 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
 
         aMeshManager.addMesh(mesh);
     }
-
-    // enum of entity types - default, character
-    enum class EntityType {
-            DEFAULT,
-            CHARACTER
-    };
-
     // set up entities
     // for each node
     for (size_t ni = 0; ni < data->nodes_count; ni++) {
         const auto &gltfNode = data->nodes[ni];
-        EntityType entityType = EntityType::DEFAULT;
+        std::string entityTypeName = "default";
 
         // IDEA: Store parse data in this struct and use C-style char * so
         // we can use cgltf_parse_json_string. Then, we can store info
@@ -426,9 +419,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             }
 
             if(group3_extras.entity_type != nullptr) {
-                if (std::string(group3_extras.entity_type) == "character") {
-                    entityType = EntityType::CHARACTER;
-                }
+                entityTypeName = group3_extras.entity_type;
                 fixed_options.memory.free_func(fixed_options.memory.user_data, group3_extras.entity_type);
 
             }
@@ -437,15 +428,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         }
 
         // select the entity type based on the
-        Entity* entityPtr = nullptr;
-        switch(entityType) {
-            case EntityType::DEFAULT:
-                entityPtr = new Entity();
-                break;
-            case EntityType::CHARACTER:
-                entityPtr = new CharacterEntity();
-                break;
-        }
+        Entity* entityPtr = CreateNewEntity(entityTypeName);
         aEntities.emplace_back(entityPtr);
         Entity &entity = *entityPtr;
 

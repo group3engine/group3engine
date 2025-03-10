@@ -70,6 +70,7 @@ void Entity::SetTransform(glm::mat4 aTransform) {
     //    assert(skew.x == 0.0f && skew.y == 0.0f && skew.z == 0.0f);
     mLocalTransform = {
         .translation = translation, .rotation = rotation, .scale = scale};
+    SetPhysicsTransform();
 }
 void Entity::RecordDrawOpaque(VkCommandBuffer aCmdBuff,
                               VkPipelineLayout aPipelineLayout) {
@@ -239,3 +240,16 @@ bool Entity::CompareTag(const std::string& aTag)
 }
 
 bool Entity::IsCharacter() const {return mHasCharacter;}
+void Entity::SetPhysicsTransform() {
+    if (mHasRigidBody) {
+        // get the world transform, decompose it, and set the position and rotation of the rigid body
+        glm::vec3 translation, scale;
+        glm::quat rotation;
+        glm::vec3 skew;
+        glm::vec4 perspective;
+        glm::mat4 worldTransform = getWorldTransform();
+        glm::decompose(worldTransform, scale, rotation, translation, skew, perspective);
+        mRigidBody->SetPosition(translation);
+        mRigidBody->SetRotation(rotation);
+    }
+}
