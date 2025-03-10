@@ -171,14 +171,21 @@ bool Engine::Initialize() {
                     }
 
                     Transform entity_transform = entity->getWorldTransformComponents();
+                    EMotionType motionType = EMotionType::Static;
+                    if(entity->IsKinematic()) {
+                        motionType = EMotionType::Kinematic;
+                    }
                     BodyCreationSettings bodyCreationSettings = {
                         result.Get(), RVec3(entity_transform.translation.x, entity_transform.translation.y, entity_transform.translation.z), Quat(entity_transform.rotation.x, entity_transform.rotation.y, entity_transform.rotation.z, entity_transform.rotation.w),
-                        EMotionType::Kinematic, Layers::MOVING};
+                        motionType, Layers::MOVING};
                     bodyCreationSettings.mIsSensor = entity->IsSensor();
-                    bodyCreationSettings.mMassPropertiesOverride.mMass = 1.0f;
-                    bodyCreationSettings.mMassPropertiesOverride.mInertia = JPH::Mat44::sIdentity();
-                    bodyCreationSettings.mOverrideMassProperties = EOverrideMassProperties::MassAndInertiaProvided;
-
+                    if(entity->IsKinematic()) {
+                        bodyCreationSettings.mMassPropertiesOverride.mMass = 1.0f;
+                        bodyCreationSettings.mMassPropertiesOverride.mInertia =
+                            JPH::Mat44::sIdentity();
+                        bodyCreationSettings.mOverrideMassProperties =
+                            EOverrideMassProperties::MassAndInertiaProvided;
+                    }
                     RigidBody entity_rigid_body = RigidBody(bodyCreationSettings);
 
 

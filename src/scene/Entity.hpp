@@ -137,6 +137,9 @@ class Entity {
     void SetAsNotSolid() { mIsSolid = false; }
     [[nodiscard]] bool IsSolid() const { return mIsSolid; }
 
+    void SetAsKinematic() { mIsKinematic = true; }
+    [[nodiscard]] bool IsKinematic() const { return mIsKinematic; }
+
 
   protected:
     virtual void Update() {}
@@ -183,6 +186,8 @@ class Entity {
     bool mIsSolid = true;
 
     bool mIsDrawn = true;
+
+    bool mIsKinematic = false;
 
 
 };
