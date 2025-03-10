@@ -28,24 +28,34 @@ void Entity::SetParent(Entity *aParent) {
 }
 
 glm::mat4 Entity::getWorldTransform() const {
-    glm::mat4 return_matrix;
+    glm::mat4 parent_matrix = glm::mat4(1.0f);
     if (mParent) {
-        return_matrix = mParent->getWorldTransform() * mLocalTransform.getMatrix();
-    } else {
-        return_matrix = mLocalTransform.getMatrix();
+        parent_matrix = mParent->getWorldTransform();
     }
 
     if (mHasCharacter) {
-        return glm::translate(mPosition) * return_matrix;
+        return glm::translate(mPosition) * parent_matrix * mLocalTransform.getMatrix();
     }
     else if (mHasRigidBody) {
         // also apply physics transformations
-        auto mat = glm::transpose(mRigidBody->GetWorldTransform());
-        return mat;
-        //return_matrix = mat * return_matrix;
-    }
+        auto physicsTransform = glm::transpose(mRigidBody->GetWorldTransform());
+        // get the physicsTransform in the same space as the local transform
+        glm::mat4 physicsTransformInLocalSpace = glm::inverse(parent_matrix) * physicsTransform;
+        // decompose the physics transform - only the translation and rotation are needed
+        glm::vec3 translation, scale;
+        glm::quat rotation;
+        glm::vec3 skew;
+        glm::vec4 perspective;
+        glm::decompose(physicsTransformInLocalSpace, scale, rotation, translation, skew, perspective);
+        // create a new transform with the physics transform
+        Transform physicsTransformLocalSpace = {.translation = translation, .rotation = rotation, .scale = mLocalTransform.scale};
 
-    return return_matrix;
+        return parent_matrix * physicsTransformLocalSpace.getMatrix();
+    }
+    else
+    {
+        return parent_matrix * mLocalTransform.getMatrix();
+    }
 }
 Transform Entity::getWorldTransformComponents() const
 {
