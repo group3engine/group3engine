@@ -139,11 +139,21 @@ bool Engine::Initialize() {
             size_t totalTriangles = 0;
             // no physics to add if it isn't a sesnor or solid
             if(entity->IsSensor() || entity->IsSolid()) {
+                // calculate the scaling matrix to apply to the vertices
+                glm::mat4 entityWorldTransform = entity->getWorldTransform();
+                // decompose the world transform to get the scale
+                glm::vec3 position, scale;
+                glm::quat rotation;
+                glm::vec3 skew;
+                glm::vec4 perspective;
+                glm::decompose(entityWorldTransform, scale, rotation, position, skew, perspective);
+                // create a scaling matrix
+                glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f), scale);
                 for (const auto &primitive : mesh->meshPrimitives) {
                     // Create an array of vertices
                     VertexList vertices;
                     for (const auto &vertex : primitive.vertices) {
-                        auto worldPos = glm::vec4(vertex.pos, 1.0f);
+                        auto worldPos = scalingMatrix * glm::vec4(vertex.pos, 1.0f);
                         vertices.emplace_back(worldPos.x, worldPos.y, worldPos.z);
                         ++totalVertices;
                     }
