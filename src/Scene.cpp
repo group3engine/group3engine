@@ -66,9 +66,14 @@ void Scene::Load(const std::filesystem::path &aFilepath) {
     // Load the GLTF file
     LoadGLTF(aFilepath, *mMeshManager, *mMaterialManager, *mTextureManager,
              m_Entities, false, m_Animations, m_Skins);
+
+}
+
+void Scene::Awake()
+{
     // call the awake function on all entities
     for (auto &entity : m_Entities) {
-            entity->Awake();
+        entity->Awake();
     }
 }
 

@@ -17,11 +17,6 @@ void CharacterEntity::SetCharacterVirtual(unique_ptr<CharacterVirtualTest> &&uni
 CharacterEntity::~CharacterEntity() {
 }
 void CharacterEntity::Update(double deltaTime) {
-    if(!mHasFirstFrameHappened) {
-        mInitialTransform = GetTransform();
-        mHasFirstFrameHappened = true;
-    }
-
     Entity::Update(deltaTime);
 
 
@@ -188,4 +183,7 @@ void CharacterEntity::Load() {
             break;
         }
     }
+}
+void CharacterEntity::Awake() {
+    mInitialTransform = GetTransform();
 }

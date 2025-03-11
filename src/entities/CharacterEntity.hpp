@@ -28,6 +28,8 @@ class CharacterEntity : public Entity {
     // update override
     void Update(double deltaTime) override;
 
+    void Awake() override ;
+
     void OnCollisionStart(Entity *aOther) override ;
 
     void OnCollisionStay(Entity *aOther) override {
@@ -53,7 +55,6 @@ class CharacterEntity : public Entity {
     void Save();
     void Load();
   private:
-    bool mHasFirstFrameHappened = false;
     Transform mInitialTransform = {};
     std::unique_ptr<CharacterVirtualTest> mCharacterVirtual;
 

@@ -11,6 +11,8 @@ class MovingEntity : public Entity{
   public:
     MovingEntity() = default;
 
+    void Awake() override;
+
     void Update(double deltaTime) override;
 
   private:
@@ -18,7 +20,6 @@ class MovingEntity : public Entity{
     glm::vec3 velocity = glm::vec3(-1.f, 0, 0.f);
     float timeToMove = 22.f;
     float timeElapsed = 0.f;
-    bool mHasFirstFrameHappened = false;
 
 };
 

@@ -238,9 +238,14 @@ bool Engine::Initialize() {
         characterEntity->Reset();
     }
 
+    // call the scene awake function
+    mScene->Awake();
+
     // ---END OF PHYSICS TEST INITIALISATION---
 
     SPDLOG_DEBUG("Engine initialised.");
+
+
 
     return m_isRunning;
 }

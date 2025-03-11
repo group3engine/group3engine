@@ -7,7 +7,8 @@
 #include "Entity.hpp"
 class RotateOnX : public Entity{
   public:
-    void Update(double deltaTime) override;
+    RotateOnX(float aAngularVelocity);
+    void Awake() override;
   private:
     // the angular velocity of the entity
     float mAngularVelocity = 10.3f;
