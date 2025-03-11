@@ -21,13 +21,17 @@ class Entity {
 
   public:
     // functions the user can call
+
+    // constructor with a name, parent (nullptr if none), mesh, and local transform as a Transform
     Entity(std::string aName, Entity *aParent, Mesh *aMesh,
            Transform aLocalTransform)
         : mName(std::move(aName)), mParent(aParent), mMesh(aMesh),
           mLocalTransform(aLocalTransform), mHasMesh(true) {}
+    // constructor with a name, parent (nullptr if none), mesh, and local transform as a mat4
     Entity(std::string aName, Entity *aParent, Mesh *aMesh,
            glm::mat4 aLocalTransform);
 
+    // default constructor
     Entity() = default;
     // Delete copy constructors because of unique pointer to rigid body
     Entity(const Entity &) = delete;
@@ -35,6 +39,7 @@ class Entity {
     Entity(Entity &&) = default;
     Entity &operator=(Entity &&) = default;
 
+    // destructor
     virtual ~Entity();
 
     // equality operator
@@ -52,81 +57,102 @@ class Entity {
         return mEntityID < aOther.mEntityID;
     }
 
+    // getters and setters for the name
     void SetName(std::string aName) { mName = std::move(aName); }
     [[nodiscard]] const std::string &GetName() const { return mName; }
 
+    // getters and setters for the parent. The parent will automatically add this entity as a child
     void SetParent(Entity *aParent);
-
     [[nodiscard]] Entity *GetParent() const { return mParent; }
+
+    // getter for the children
     [[nodiscard]] std::vector<Entity *> const &GetChildren() { return mChildren; }
 
 
+    // setters for the transform, either as a Transform or a mat4. These also pass through the updated transform to the rigidbody
     void SetTransform(Transform aTransform) { mLocalTransform = aTransform; SetPhysicsTransform();}
     void SetTransform(glm::mat4 aTransform);
 
-    [[nodiscard]] glm::mat4 GetWorldTransform() const;
+    // get the local transform as a Transform
+    [[nodiscard]] Transform GetLocalTransform() const;
 
+    // get the world transform as a mat4
+    [[nodiscard]] glm::mat4 GetWorldTransform() const;
+    // get the world transform as a Transform (more expensive than the mat4 version, this calls GetWorldTransform and decomposes it)
     [[nodiscard]] Transform GetWorldTransformComponents() const;
 
-
-
-
+    // get the Mesh of the entity
     [[nodiscard]] const Mesh *GetMesh() const { return mMesh; }
 
-
-
-    void RecordDrawSkinned(VkCommandBuffer aCmdBuff,
-                           VkPipelineLayout aPipeLayout);
-
-    [[nodiscard]] Transform GetTransform();
-
+    // query if this entity is a character
     [[nodiscard]] bool IsCharacter() const;
 
+    // query if this entity has an animator
     [[nodiscard]] bool HasAnimator() const { return static_cast<bool>(mAnimator); }
 
     // get a reference to the animator
-    [[nodiscard]] Animator & GetAnimator(){return *mAnimator;}
+    [[nodiscard]] Animator &GetAnimator(){return *mAnimator;}
 
-    // get a reference to the rigidbody, if it exists
-    [[nodiscard]] RigidBody &GetRigidBody() { return *mRigidBody; }
+    // get a reference to the rigidbody
+    [[nodiscard]] RigidBody &GetRigidBody(){ return *mRigidBody; }
 
 
 
+    // add a tag to the entity
     void AddTag(const std::string& aTag) { mTags.emplace_back(aTag); }
-    [[nodiscard]] bool CompareTag(const std::string& aTag);
+    // query if the entity has a tag
+    [[nodiscard]] bool CompareTag (const std::string& aTag) const;
 
-    void SetAsSensor() { mIsSensor = true; }
+    // query if the entity is a sensor
     [[nodiscard]] bool IsSensor() const { return mIsSensor; }
 
-    void SetAsNotSolid() { mIsSolid = false; }
+    // query if the entity is solid
     [[nodiscard]] bool IsSolid() const { return mIsSolid; }
 
-    void SetAsKinematic() { mIsKinematic = true; }
+    // query if the entity is kinematic
     [[nodiscard]] bool IsKinematic() const { return mIsKinematic; }
 
+    // query if the entity is invisible
+    [[nodiscard]] bool IsVisible() const { return mIsVisible; }
+    // set the entity as invisible
     void SetAsInvisible() { mIsVisible = false; }
+    // set the entity as visible
     void SetAsVisible() { mIsVisible = true; }
+
+    // get the number of frames that have passed since the entity was created
+    [[nodiscard]] size_t GetFrameNumber() const {return mFrameNumber;}
+
+    // get the total time that has passed since the entity was created
+    [[nodiscard]] double GetTotalTime() const {return mTotalTime;}
 
   public:
     // the following functions are overridable by the user
+    // called on the first frame of a collision
     virtual void OnCollisionStart(Entity *aOther) {}
 
+    // called on any frame except the first frame of a collision - note there is no function provided for the last frame of a collision
     virtual void OnCollisionStay(Entity *aOther) {}
 
+    // called for each entity after update has been called on all entities
     virtual void LateUpdate(double deltaTime) {}
 
+    // called after the entire scene has been loaded, once only
     virtual void Awake() {}
 
+    // called every frame, after physics has been updated
     virtual void Update(double deltaTime) {}
 
   public:
     // functions used by the engine, the user should not call these
     void BaseUpdate(double deltaTime);
-    void RecordDrawOpaque(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout);
+    void RecordDrawOpaque(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout) const;
 
     void RecordDrawShadow(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout) const;
 
-    void RecordDrawCutout(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout);
+    void RecordDrawCutout(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout) const;
+
+
+    void RecordDrawSkinned(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipeLayout) const;
     // move an animator to the entity
     void SetAnimator(Animator *aAnimator);
 
@@ -146,6 +172,13 @@ class Entity {
     }
 
     [[nodiscard]] glm::mat4 getSkinnedWorldTransform(Entity const *aRoot) const;
+
+    // set the entity as not solid
+    void SetAsNotSolid() { mIsSolid = false; }
+    // set the entity as a sensor
+    void SetAsSensor() { mIsSensor = true; }
+    // set the entity as kinematic
+    void SetAsKinematic() { mIsKinematic = true; }
 
 
 
@@ -177,7 +210,7 @@ class Entity {
     bool mHasCharacter = false;
 
     Animator *mAnimator = nullptr;
-    size_t frameNumber = 0;
+    size_t mFrameNumber = 0;
     glm::mat4 mAnimationTransform = glm::mat4(1.0f);
 
     bool mHasRigidBody = false;
@@ -191,6 +224,8 @@ class Entity {
     bool mIsVisible = true;
 
     bool mIsKinematic = false;
+
+    float mTotalTime = 0.0f;
 
 };
 #endif // SCENE_ENTITY_HPP

@@ -92,7 +92,7 @@ void Entity::SetTransform(glm::mat4 aTransform) {
     SetPhysicsTransform();
 }
 void Entity::RecordDrawOpaque(VkCommandBuffer aCmdBuff,
-                              VkPipelineLayout aPipelineLayout) {
+                              VkPipelineLayout aPipelineLayout) const {
     if (mHasMesh && mAnimator == nullptr && mIsVisible) {
         // push the model matrix
         glm::mat4 mModelMatrix = GetWorldTransform();
@@ -157,7 +157,7 @@ void Entity::RecordDrawShadow(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipeli
     }
 }
 void Entity::RecordDrawCutout(VkCommandBuffer aCmdBuff,
-                              VkPipelineLayout aPipelineLayout) {
+                              VkPipelineLayout aPipelineLayout) const{
     if (mHasMesh && mAnimator == nullptr && mIsVisible) {
         // push the model matrix
         glm::mat4 mModelMatrix = GetWorldTransform();
@@ -197,7 +197,7 @@ Entity::~Entity() {
     delete mAnimator;
 }
 void Entity::RecordDrawSkinned(VkCommandBuffer aCmdBuff,
-                               VkPipelineLayout aPipeLayout) {
+                               VkPipelineLayout aPipeLayout) const{
     // we only need to render if we have a skinned mesh
     if (mHasMesh && mAnimator != nullptr && mIsVisible) {
         // push the model matrix
@@ -243,9 +243,9 @@ glm::mat4 Entity::getSkinnedWorldTransform(Entity const *aRoot) const {
     }
 }
 
-Transform Entity::GetTransform() { return mLocalTransform; }
+Transform Entity::GetLocalTransform() const { return mLocalTransform; }
 
-bool Entity::CompareTag(const std::string& aTag)
+bool Entity::CompareTag(const std::string& aTag) const
 {
     return std::ranges::any_of(mTags, [&aTag](const auto& tag) {
         return tag == aTag;
@@ -279,7 +279,8 @@ void Entity::RemoveChild(Entity *aChild) {
     }
 }
 void Entity::BaseUpdate(double deltaTime) {
-    frameNumber++;
+    mFrameNumber++;
+    mTotalTime += deltaTime;
     if (mAnimator) {
         mAnimator->Update(deltaTime, this);
     }

@@ -16,5 +16,5 @@ void MovingEntity::Update(double deltaTime) {
 
 }
 void MovingEntity::Awake() {
-    start_position = GetTransform().translation;
+    start_position = GetLocalTransform().translation;
 }

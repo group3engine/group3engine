@@ -28,7 +28,7 @@ void CharacterEntity::Update(double deltaTime) {
     characterVelocity.y = 0;
     if (glm::length(characterVelocity) > 0.1f) {
         // set the transform rotation to the direction of the velocity, on top of the initial transform rotation
-        Transform newTransform = GetTransform();
+        Transform newTransform = GetLocalTransform();
         newTransform.rotation = glm::quatLookAt(glm::normalize(characterVelocity * -1.f), glm::vec3(0, 1, 0)) * mInitialTransform.rotation;
         SetTransform(newTransform);
     }
@@ -184,5 +184,5 @@ void CharacterEntity::Load() {
     }
 }
 void CharacterEntity::Awake() {
-    mInitialTransform = GetTransform();
+    mInitialTransform = GetLocalTransform();
 }
