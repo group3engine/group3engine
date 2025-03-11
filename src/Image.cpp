@@ -11,8 +11,16 @@
 #include "Utils.hpp"
 #include "Buffer.hpp"
 
-Image::Image(const std::string name, VmaAllocator allocator, VkImage image, VkImageView imageView, VmaAllocation allocation) noexcept
-    : name{name}, allocation{allocation}, image{image}, imageView{imageView}, allocator{allocator} {
+Image::Image(const std::string name, VmaAllocator allocator, VkImage image, VkImageView imageView,
+             VmaAllocation allocation, uint32_t width, uint32_t height) noexcept
+    : name{name},
+    allocation{allocation},
+    image{image},
+    imageView{imageView},
+    allocator{allocator},
+    mWidth{width},
+    mHeight{height}
+{
 }
 
 Image::Image(Image &&other) noexcept
@@ -20,7 +28,10 @@ Image::Image(Image &&other) noexcept
       allocation(std::exchange(other.allocation, VK_NULL_HANDLE)),
       image(std::exchange(other.image, VK_NULL_HANDLE)),
       imageView(std::exchange(other.imageView, VK_NULL_HANDLE)),
-      allocator(std::exchange(other.allocator, VK_NULL_HANDLE)) {
+      allocator(std::exchange(other.allocator, VK_NULL_HANDLE)),
+      mWidth(std::move(other.mWidth)),
+      mHeight(std::move(other.mHeight))
+{
 
     // std::cout << "Move Constructing Image\n";
 }
@@ -31,6 +42,8 @@ Image &Image::operator=(Image &&other) noexcept {
     std::swap(image, other.image);
     std::swap(imageView, other.imageView);
     std::swap(allocator, other.allocator);
+    std::swap(mWidth, other.mWidth);
+    std::swap(mHeight, other.mHeight);
 
     return *this;
 }
@@ -250,5 +263,5 @@ Image CreateImageTexture2D(const std::string name, Context &context, uint32_t wi
 
     context.SetObjectName(context.device, (uint64_t)imageView, VK_OBJECT_TYPE_IMAGE_VIEW, name.c_str());
 
-    return Image(name, context.allocator, image, imageView, allocation);
+    return Image(name, context.allocator, image, imageView, allocation, width, height);
 }

@@ -8,6 +8,8 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
 
+#include "TextureManager.hpp"
+
 namespace {
     auto PushBackStyleVar = [](size_t i, std::function<void()> f) {
         f();
@@ -17,7 +19,7 @@ namespace {
     bool enableTextWindowBorder = true;
 }
 
-void ImGuiRenderer::Initialize(const Context &context) {
+void ImGuiRenderer::Initialize(const Context &context, TextureManager *textureManager) {
     VkDescriptorPoolCreateInfo pool_info = {};
     pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
@@ -51,6 +53,63 @@ void ImGuiRenderer::Initialize(const Context &context) {
     ImGui_ImplVulkan_Init(&info);
 
     io.Fonts->AddFontDefault();
+
+    // Load texture
+    // TODO: Cleanup
+    {
+        std::filesystem::path path = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets" / "heart.png";
+        std::string textureName = "heart";
+
+        // TODO: Return a pointer to the newly created texture?
+        textureManager->addTexture(path, textureName);
+
+        Texture *texture = textureManager->GetTexture(textureName);
+
+        // Create Descriptor Set using ImGUI's implementation
+        myTexData.DS =
+            ImGui_ImplVulkan_AddTexture(vkutil::clampToEdgeSamplerAniso, texture->image.imageView,
+                                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+        myTexData.Width = texture->image.mWidth;
+        myTexData.Height = texture->image.mHeight;
+        SPDLOG_INFO("ImGui loaded {} with, width {} height {}", textureName, texture->image.mWidth, texture->image.mHeight);
+    }
+}
+
+void ImGuiRenderer::NewHeartSprite(const ImVec2 &offset) {
+    ImVec2 imageSize = ImVec2(myTexData.Width * 0.02f, myTexData.Height * 0.02f);
+
+    size_t sv = 0;
+
+    float windowBorderSize = 0.0f;
+    if (enableTextWindowBorder) {
+        // Display a window border for debug purposes
+        windowBorderSize = ImGui::GetStyle().WindowBorderSize;
+    } else {
+        // No window border
+        sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); });
+    }
+
+    // Make the window fit the heart exactly
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(0, 0)); });
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0)); });
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); });
+
+    ImGui::SetNextWindowSize(imageSize);
+    ImGui::SetNextWindowPos(ImVec2(offset.x - windowBorderSize - imageSize.x, offset.y - windowBorderSize - imageSize.y));
+    ImGui::SetNextWindowBgAlpha(0.0f);
+
+    // Flags to get a non-interactable blank window to draw on
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                             ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+                             ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
+
+    ImGui::Begin("Heart", nullptr, flags);
+    ImGui::Image((ImTextureID)myTexData.DS, imageSize);
+
+    ImGui::PopStyleVar(sv);
+
+    ImGui::End();
 }
 
 void ImGuiRenderer::NewDeathCounter() {
@@ -100,7 +159,9 @@ void ImGuiRenderer::NewDeathCounter() {
     // Text
     ImGui::Text("%s", output.c_str());
 
-    // TODO: Heart texture
+    // Heart
+    ImVec2 offset = {pos.x - textSize.x, pos.y};
+    NewHeartSprite(offset);
 
     ImGui::PopStyleVar(sv);
 
@@ -196,6 +257,8 @@ void ImGuiRenderer::Render(VkCommandBuffer cmd, const Context &context, uint32_t
 
 void ImGuiRenderer::Shutdown(const Context& context)
 {
+    ImGui_ImplVulkan_RemoveTexture(myTexData.DS);
+
     ImGui_ImplVulkan_Shutdown();
     vkDestroyDescriptorPool(context.device, imGuiDescriptorPool, nullptr);
     vkDestroyRenderPass(context.device, imGuiRenderPass, nullptr);

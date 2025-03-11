@@ -4,9 +4,19 @@
 #include <iostream>
 #include <memory>
 
+class ImVec2;
+
 class Context;
 class Scene;
 class Camera;
+class TextureManager;
+
+struct MyTextureData {
+    VkDescriptorSet DS{};         // Descriptor set: this is what you'll pass to Image()
+
+    int             Width;
+    int             Height;
+};
 
 namespace ImGuiRenderer
 {
@@ -41,13 +51,16 @@ namespace ImGuiRenderer
         {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000}
     };
 
+    void NewHeartSprite(const ImVec2 &offset);
     void NewDeathCounter();
 
-    void Initialize(const Context &context);
+    void Initialize(const Context &context, TextureManager *textureManager);
     void Shutdown(const Context &context);
     void Update(const std::shared_ptr<Scene>& scene, const std::shared_ptr<Camera>& camera);
     void Render(VkCommandBuffer cmd, const Context& context, uint32_t imageIndex);
 
     inline VkDescriptorPool imGuiDescriptorPool;
     inline VkRenderPass imGuiRenderPass;
+
+    inline MyTextureData myTexData;
 }

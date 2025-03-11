@@ -36,6 +36,8 @@ class Scene {
 
     void Destroy();
 
+    TextureManager *GetTextureManager() const { return mTextureManager; }
+
     std::vector<Light> &GetLights() { return m_Lights; }
 
     std::vector<Buffer> &GetLightsUBO() { return m_LightUBO; }
