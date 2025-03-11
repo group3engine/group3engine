@@ -6,7 +6,7 @@
 
 void RotatingPlatform::Awake() {
     // set the angular velocity of the platform (only around y axis)
-    mRigidBody->SetAngularVelocity(glm::vec3(0, mAngularVelocity, 0));
+    GetRigidBody().SetAngularVelocity(glm::vec3(0, mAngularVelocity, 0));
 }
 RotatingPlatform::RotatingPlatform(float aAngularVelocity) : mAngularVelocity(aAngularVelocity) {
 

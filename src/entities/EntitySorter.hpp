@@ -29,7 +29,7 @@ static const std::unordered_map<std::string, EntityType> entityTypeMap = {
     {"SpinningOnX", EntityType::SPINNINGONX},
 };
 // a function to convert a string to an entity type
-const EntityType GetEntityTypeFromString(const std::string& aTypeName) {
+EntityType GetEntityTypeFromString(const std::string& aTypeName) {
     auto it = entityTypeMap.find(aTypeName);
     if (it != entityTypeMap.end()) {
         return it->second;

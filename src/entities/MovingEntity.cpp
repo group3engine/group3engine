@@ -12,7 +12,7 @@ void MovingEntity::Update(double deltaTime) {
         velocity = -velocity;
     }
     // set the velocity in the rigid body
-    mRigidBody->SetLinearVelocity(velocity);
+    GetRigidBody().SetLinearVelocity(velocity);
 
 }
 void MovingEntity::Awake() {

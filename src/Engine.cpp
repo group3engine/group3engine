@@ -124,14 +124,14 @@ bool Engine::Initialize() {
         if (!entity->IsCharacter()) {
 
             if (entity->HasAnimator()) {
-                SPDLOG_INFO("Skipping entity {}, as it has an animator", entity->mName);
+                SPDLOG_INFO("Skipping entity {}, as it has an animator", entity->GetName());
                 continue;
             }
 
             const auto *mesh = entity->GetMesh();
 
             if (!mesh) {
-                SPDLOG_WARN("Entity {} does not have mesh", entity->mName);
+                SPDLOG_WARN("Entity {} does not have mesh", entity->GetName());
                 continue;
             }
 

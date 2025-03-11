@@ -5,6 +5,6 @@
 #include "RotateOnX.hpp"
 void RotateOnX::Awake(){
     // set the angular velocity of the platform (only around y axis)
-    mRigidBody->SetAngularVelocity(glm::vec3(mAngularVelocity, 0, 0));
+    GetRigidBody().SetAngularVelocity(glm::vec3(mAngularVelocity, 0, 0));
 }
 RotateOnX::RotateOnX(float aAngularVelocity) : mAngularVelocity(aAngularVelocity) { }

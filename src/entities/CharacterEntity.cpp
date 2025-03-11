@@ -60,7 +60,7 @@ void CharacterEntity::Update(double deltaTime) {
         break;
     }
     // for each child, if there is an animator, call set animation
-    for (auto &child : mChildren) {
+    for (auto &child : GetChildren()) {
             if (child->HasAnimator()) {
                 child->GetAnimator().SetActiveAnimation(activeAnimation, blend, playWholeAnimation);
                 child->GetAnimator().SetTimeScale(timeScale);
@@ -68,14 +68,13 @@ void CharacterEntity::Update(double deltaTime) {
     }
 }
 CharacterEntity::CharacterEntity() {
-    mHasCharacter = true;
+    SetAsCharacter();
     Load();
 }
 void CharacterEntity::OnCollisionStart(Entity *aOther) {
 
-    //        SPDLOG_INFO("I am {} and I collided with {}", mName, aOther->mName);
     if(aOther->CompareTag("deathzone")) {
-        SPDLOG_INFO("I am {} and I collided with a death zone", mName);
+        SPDLOG_INFO("I am {} and I collided with a death zone", GetName());
         Reset();
     }
     // if its a checkpoint, set the checkpoint
@@ -86,7 +85,7 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
         SetCheckpoint(checkpointPosition);
 
     }
-    SPDLOG_INFO("I am {} and I collided with {}", mName, aOther->mName);
+    SPDLOG_INFO("I am {} and I collided with {}", GetName(), aOther->GetName());
 
 }
 void CharacterEntity::Save() {

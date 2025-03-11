@@ -87,6 +87,10 @@ class Entity {
     // get a reference to the animator
     [[nodiscard]] Animator & GetAnimator(){return *mAnimator;}
 
+    // get a reference to the rigidbody, if it exists
+    [[nodiscard]] RigidBody &GetRigidBody() { return *mRigidBody; }
+
+
 
     void AddTag(const std::string& aTag) { mTags.emplace_back(aTag); }
     [[nodiscard]] bool CompareTag(const std::string& aTag);
@@ -128,6 +132,8 @@ class Entity {
 
     void AddChild(Entity *aChild) { mChildren.push_back(aChild); }
 
+    void SetAsCharacter() {mHasCharacter = true;}
+
     void AddMesh(Mesh *mesh) {
         mMesh = mesh;
         mHasMesh = true;
@@ -147,23 +153,12 @@ class Entity {
     void SetPhysicsTransform();
     void RemoveChild(Entity *aChild);
 
+
   protected:
-
-
-    std::vector<Entity *> mChildren;
-
-
-    vector<std::string> mTags;
-
-  public:
-    std::unique_ptr<RigidBody> mRigidBody;
-
     glm::vec3 mCharacterPositionOffset{};
-    bool mHasCharacter = false;
-
-    std::string mName{};
   private:
     
+    std::string mName{};
 
     Entity *mParent = nullptr;
 
@@ -171,7 +166,16 @@ class Entity {
 
     Transform mLocalTransform{};
 
+    std::vector<Entity *> mChildren;
+
+    std::unique_ptr<RigidBody> mRigidBody;
+
+    vector<std::string> mTags;
+
+
     bool mHasMesh = false;
+    bool mHasCharacter = false;
+
     Animator *mAnimator = nullptr;
     size_t frameNumber = 0;
     glm::mat4 mAnimationTransform = glm::mat4(1.0f);
