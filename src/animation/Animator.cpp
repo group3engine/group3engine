@@ -152,7 +152,7 @@ void Animator::UpdateJointsTransform() {
         for (auto &data : animationData) {
             auto entity = data.target;
             auto transform = data.transform;
-            entity->SetJointTransform(transform.getMatrix());
+            entity->SetTransform(transform);
         }
     }
 }

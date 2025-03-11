@@ -350,8 +350,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             jsmn_init(&parser);
             jsmntok_t tokens[256];
 
-            int r;
-            r = jsmn_parse(&parser, gltfNode.extras.data, strlen(gltfNode.extras.data), tokens, 256);
+            jsmn_parse(&parser, gltfNode.extras.data, strlen(gltfNode.extras.data), tokens, 256);
 
 
             // Cast to match cgltf functionality
