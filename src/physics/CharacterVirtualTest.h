@@ -46,6 +46,13 @@ public:
 
 	void SetCharacterPosition(RVec3 pos) { mCharacter->SetPosition(pos); }
 
+        // Sets the character to ragdoll mode
+        void SetRagdollMode(bool inRagdollMode) { mIsRagdolling = inRagdollMode; }
+
+        // Get the ragdoll mode
+        [[nodiscard]] bool GetRagdollMode() { return mIsRagdolling; }
+
+
     // Set the custom contact listener
 	void SetCustomContactListener(CustomContactListener *inCustomContactListener) { mCustomContactListener = inCustomContactListener; }
     Ref<CharacterVirtual>	GetCharacter() {return mCharacter; }
@@ -85,6 +92,9 @@ private:
 
 	// True when the player is pressing movement controls
 	bool					mAllowSliding = false;
+
+        // True when the player is out of control
+        bool mIsRagdolling = false;
 
 	// Track active contacts for debugging purposes
 	using ContactSet = Array<CharacterVirtual::ContactKey>;

@@ -138,6 +138,7 @@ void Camera::UpdateCameraMovement() {
         }
         if (inputMap[std::size_t(EInputState::TELEPORT)]) {
             m_scene_pointer->GetCharacter().SetCheckpoint(m_position);
+            SPDLOG_INFO("camera position: {}", glm::to_string(m_position));
             m_scene_pointer->GetCharacter().Reset();
         }
     }

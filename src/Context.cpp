@@ -487,6 +487,8 @@ void Context::CreateSwapchain() {
     if (presentModes.count(VK_PRESENT_MODE_FIFO_RELAXED_KHR)) {
         presentMode = VK_PRESENT_MODE_FIFO_RELAXED_KHR;
     }
+    // turn off vsync
+    presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
 
     VkSurfaceCapabilitiesKHR caps = {};
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(pDevice, surface, &caps);

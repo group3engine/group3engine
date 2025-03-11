@@ -19,6 +19,21 @@ CharacterEntity::~CharacterEntity() {
 void CharacterEntity::Update(double deltaTime) {
     Entity::Update(deltaTime);
 
+    // set the ragdoll mode to false if the ragdoll time has passed
+    if(GetTotalTime() - ragdollTime > totalRagdollTime) {
+        mCharacterVirtual->SetRagdollMode(false);
+    }
+    else if (mCharacterVirtual->GetRagdollMode())
+    {
+        // set animation to hit
+        for (auto &child : GetChildren()) {
+            if (child->HasAnimator()) {
+                child->GetAnimator().SetActiveAnimation("hit", 0.1f, false);
+            }
+        }
+        return;
+    }
+
 
     // get the character state
     // calculate the delta velocity
@@ -66,6 +81,8 @@ void CharacterEntity::Update(double deltaTime) {
                 child->GetAnimator().SetTimeScale(timeScale);
             }
     }
+
+
 }
 CharacterEntity::CharacterEntity() {
     SetAsCharacter();
@@ -83,9 +100,23 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
         glm::vec3 checkpointPosition =
             aOther->GetWorldTransformComponents().translation + glm::vec3(0, 2.5f, 0);
         SetCheckpoint(checkpointPosition);
-
     }
     SPDLOG_INFO("I am {} and I collided with {}", GetName(), aOther->GetName());
+
+    // if its a high impact object, set the charactervirtual to ragdoll
+    if(aOther->CompareTag("highimpact")) {
+            mCharacterVirtual->SetRagdollMode(true);
+            ragdollTime = GetTotalTime();
+    }
+
+    // if its a bounce object, set the velocity to 2.f magnitude in the direction between the character and the object
+        if(aOther->CompareTag("bounce")) {
+                glm::vec3 characterPosition = GetWorldTransformComponents().translation;
+                glm::vec3  otherPosition = aOther->GetWorldTransformComponents().translation;
+                glm::vec3  direction = otherPosition - characterPosition;
+                direction = glm::normalize(direction);
+                mCharacterVirtual->Set
+        }
 
 }
 void CharacterEntity::Save() {

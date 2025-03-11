@@ -73,7 +73,7 @@ void CharacterVirtualTest::PrePhysicsUpdate(const PreUpdateParams &inParams)
 
 void CharacterVirtualTest::HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime)
 {
-	bool player_controls_horizontal_velocity = sControlMovementDuringJump || mCharacter->IsSupported();
+	bool player_controls_horizontal_velocity = (sControlMovementDuringJump || mCharacter->IsSupported()) && !mIsRagdolling;
 	if (player_controls_horizontal_velocity)
 	{
 		// Smooth the player input
@@ -171,7 +171,6 @@ void CharacterVirtualTest::OnContactAdded(const CharacterVirtual *inCharacter, c
 		CharacterVirtual::ContactKey c(inBodyID2, inSubShapeID2);
 		if (std::find(mActiveContacts.begin(), mActiveContacts.end(), c) != mActiveContacts.end()) {
 			SPDLOG_ERROR("Got an add contact that should have been a persisted contact");
-			exit(EXIT_FAILURE);
 		}
 		mActiveContacts.push_back(c);
 	}
@@ -196,7 +195,6 @@ void CharacterVirtualTest::OnContactPersisted(const CharacterVirtual *inCharacte
 	#endif
 		if (std::find(mActiveContacts.begin(), mActiveContacts.end(), CharacterVirtual::ContactKey(inBodyID2, inSubShapeID2)) == mActiveContacts.end()) {
 			SPDLOG_ERROR("Got a persisted contact that should have been an add contact");
-			exit(EXIT_FAILURE);
 		}
 	}
 }
@@ -211,7 +209,6 @@ void CharacterVirtualTest::OnContactRemoved(const CharacterVirtual *inCharacter,
 		ContactSet::iterator it = std::find(mActiveContacts.begin(), mActiveContacts.end(), CharacterVirtual::ContactKey(inBodyID2, inSubShapeID2));
 		if (it == mActiveContacts.end()) {
 			SPDLOG_ERROR("Got a remove contact that has not been added");
-			exit(EXIT_FAILURE);
 		}
 		mActiveContacts.erase(it);
 	}

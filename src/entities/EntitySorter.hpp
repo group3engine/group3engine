@@ -18,6 +18,7 @@ enum class EntityType {
     MOVING,
     ROTATING,
     SPINNINGONX,
+    SPINNINGSLOW
     // Add more entity types here
 };
 // a map of strings to entity types
@@ -27,6 +28,7 @@ static const std::unordered_map<std::string, EntityType> entityTypeMap = {
     {"movingTest", EntityType::MOVING},
     {"rotatingPlatform", EntityType::ROTATING},
     {"SpinningOnX", EntityType::SPINNINGONX},
+    {"SpinningSlow", EntityType::SPINNINGSLOW},
 };
 // a function to convert a string to an entity type
 EntityType GetEntityTypeFromString(const std::string& aTypeName) {
@@ -50,9 +52,11 @@ Entity* CreateNewEntity(const std::string& aEntityType)
     case EntityType::MOVING:
         return new MovingEntity();
     case EntityType::ROTATING:
-        return new RotatingPlatform(0.3f);
+        return new RotatingPlatform(1.3f);
     case EntityType::SPINNINGONX:
         return new RotateOnX(10.f);
+    case EntityType::SPINNINGSLOW:
+        return new RotateOnX(1.f);
 
     // Add more cases here
     default:

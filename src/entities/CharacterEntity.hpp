@@ -37,7 +37,7 @@ class CharacterEntity : public Entity {
     }
 
     // set the checkpoint
-    void SetCheckpoint(glm::vec3 checkpoint) { mLastCheckpoint = checkpoint; Save();}
+    void SetCheckpoint(glm::vec3 checkpoint) { mLastCheckpoint = checkpoint; SPDLOG_INFO("checkpoint position: {}", glm::to_string(mLastCheckpoint)); Save();}
     // reset the character to the last checkpoint
     void Reset() {
         mCharacterVirtual->SetCharacterPosition(RVec3(mLastCheckpoint.x,
@@ -59,6 +59,8 @@ class CharacterEntity : public Entity {
     std::unique_ptr<CharacterVirtualTest> mCharacterVirtual;
 
     glm::vec3 mLastCheckpoint = glm::vec3(0, 10.0f, 0);
+    float ragdollTime = -10000.0f;
+    float totalRagdollTime = 2.0f;
 };
 
 #endif // GROUP3ENGINE_CHARACTERENTITY_HPP

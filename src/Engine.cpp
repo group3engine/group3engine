@@ -43,7 +43,7 @@ Engine::Engine() {
 void Engine::InitScene() {
     // Current path is the current working directory, i.e., where the root CMakeLists.txt is
     std::filesystem::path basePath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets";
-    std::filesystem::path gltfPath = basePath / Sample::SampleObby;
+    std::filesystem::path gltfPath = basePath / Sample::FallGuys;
 
     // Define Light sources
     Light directionalLight;
@@ -177,7 +177,7 @@ bool Engine::Initialize() {
                     if (result.IsValid()) {
                         shape = result.Get();
                     } else {
-                        SPDLOG_ERROR("Shape result is invalid. {}", result.GetError());
+                        SPDLOG_ERROR("Shape result from entity {} is invalid. Please fix the mesh or mark it as not solid. {}", entity->GetName(), result.GetError());
                     }
 
                     Transform entity_transform = entity->GetWorldTransformComponents();
