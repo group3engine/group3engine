@@ -141,19 +141,23 @@ struct Image_STB {
 };
 
 enum class AlphaMode { eOpaque, eMask, eBlend };
-
+/// A transformation, stored as a translation, rotation, and scale
 struct Transform {
+    /// The translation of the transform
     glm::vec3 translation;
+    /// The rotation of the transform, stored as a quaternion (x, y, z, w)
     glm::quat rotation;
+    /// The scale of the transform
     glm::vec3 scale;
 
-    // function to get the matrix
+    /// Get the transform as a glm::mat4
     [[nodiscard]] glm::mat4 getMatrix() const {
         glm::mat4 translationMatrix = glm::translate(translation);
         glm::mat4 rotationMatrix = glm::toMat4(glm::normalize(rotation));
         glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), scale);
         return translationMatrix * rotationMatrix * scaleMatrix;
     }
+    /// Interpolate between this transform and another
     Transform Interpolate(Transform other, float t)
     {
         Transform result{};
