@@ -330,6 +330,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             bool is_sensor = false;
             bool is_solid = true;
             bool is_kinematic = false;
+            bool is_invisible = false;
         } group3_extras;
 
         if (gltfNode.extras.data) {
@@ -426,6 +427,17 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                     group3_extras.is_kinematic = is_kinematic;
                 }
 
+                // check for invisible
+                else if  (cgltf_json_strcmp(tokens + i, json_chunk, "is_invisible") == 0)
+                {
+                    // Parse token i + 1, e.g., token 2 (the value of the is_kinematic key)
+                    // Update i to i + 1, so we can continue parsing
+                    ++i;
+                    bool is_invisible = cgltf_json_to_bool(tokens + i, json_chunk);
+                    ++i;
+                    group3_extras.is_invisible = is_invisible;
+                }
+
 
             }
 
@@ -462,6 +474,10 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         // set the kinematic
         if (group3_extras.is_kinematic) {
             entity.SetAsKinematic();
+        }
+        // set the invisible
+        if (group3_extras.is_invisible) {
+            entity.SetAsInvisible();
         }
         // get the transform
         if (gltfNode.has_matrix) {

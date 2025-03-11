@@ -125,7 +125,7 @@ class Entity {
 
     virtual void OnCollisionStay(Entity *aOther) {}
 
-    void AddTag(const std::string& aTag) { mTags.emplace_back(aTag); if(aTag == "invisible") mIsDrawn = false; }
+    void AddTag(const std::string& aTag) { mTags.emplace_back(aTag); }
     [[nodiscard]] bool CompareTag(const std::string& aTag);
 
     void SetAsSensor() { mIsSensor = true; }
@@ -136,6 +136,9 @@ class Entity {
 
     void SetAsKinematic() { mIsKinematic = true; }
     [[nodiscard]] bool IsKinematic() const { return mIsKinematic; }
+
+    void SetAsInvisible() { mIsVisible = false; }
+    void SetAsVisible() { mIsVisible = true; }
 
 
   protected:
@@ -181,7 +184,7 @@ class Entity {
 
     bool mIsSolid = true;
 
-    bool mIsDrawn = true;
+    bool mIsVisible = true;
 
     bool mIsKinematic = false;
 

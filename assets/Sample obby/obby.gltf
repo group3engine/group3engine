@@ -11,13 +11,15 @@
 		{
 			"extras":{
 				"dropdown_items":"default, movingTest, character, rotatingPlatform",
-				"dropdown_selection":3,
+				"dropdown_selection":0,
 				"sensor_checkbox":0,
 				"solid_checkbox":1,
 				"new_tag":"",
 				"tags":[],
 				"new_dropdown_item":"",
-				"kinematic_checkbox":1
+				"kinematic_checkbox":0,
+				"invisible_checkbox":0,
+				"export_file_path":"//obby.gltf"
 			},
 			"name":"Scene",
 			"nodes":[
@@ -56,7 +58,21 @@
 				"entity_type":"default",
 				"is_sensor":false,
 				"is_solid":true,
-				"tags":"checkpoint"
+				"tags":"checkpoint",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":0,
 			"name":"checkpoint1",
@@ -68,7 +84,12 @@
 		},
 		{
 			"extras":{
-				"tags":"checkpoint"
+				"tags":"checkpoint",
+				"_RNA_UI":{
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":1,
 			"name":"checkpoint10",
@@ -84,7 +105,24 @@
 				"entity_type":"default",
 				"is_sensor":false,
 				"is_solid":true,
-				"is_kinematic":false
+				"is_kinematic":false,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"is_kinematic":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":2,
 			"name":"checkpoint11",
@@ -99,7 +137,21 @@
 				"tags":"checkpoint",
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":3,
 			"name":"checkpoint12",
@@ -111,7 +163,12 @@
 		},
 		{
 			"extras":{
-				"tags":"checkpoint"
+				"tags":"checkpoint",
+				"_RNA_UI":{
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":4,
 			"name":"checkpoint13",
@@ -123,7 +180,12 @@
 		},
 		{
 			"extras":{
-				"tags":"checkpoint"
+				"tags":"checkpoint",
+				"_RNA_UI":{
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":5,
 			"name":"checkpoint14",
@@ -135,7 +197,12 @@
 		},
 		{
 			"extras":{
-				"tags":"checkpoint"
+				"tags":"checkpoint",
+				"_RNA_UI":{
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":6,
 			"name":"checkpoint15",
@@ -147,7 +214,12 @@
 		},
 		{
 			"extras":{
-				"tags":"checkpoint"
+				"tags":"checkpoint",
+				"_RNA_UI":{
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":7,
 			"name":"checkpoint16",
@@ -159,7 +231,12 @@
 		},
 		{
 			"extras":{
-				"tags":"checkpoint"
+				"tags":"checkpoint",
+				"_RNA_UI":{
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":8,
 			"name":"checkpoint17",
@@ -171,7 +248,12 @@
 		},
 		{
 			"extras":{
-				"tags":"checkpoint"
+				"tags":"checkpoint",
+				"_RNA_UI":{
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":9,
 			"name":"checkpoint18",
@@ -183,7 +265,12 @@
 		},
 		{
 			"extras":{
-				"tags":"checkpoint"
+				"tags":"checkpoint",
+				"_RNA_UI":{
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":10,
 			"name":"checkpoint19",
@@ -198,7 +285,21 @@
 				"tags":"checkpoint",
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":11,
 			"name":"checkpoint2",
@@ -210,7 +311,12 @@
 		},
 		{
 			"extras":{
-				"tags":"checkpoint"
+				"tags":"checkpoint",
+				"_RNA_UI":{
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":12,
 			"name":"checkpoint20",
@@ -222,7 +328,12 @@
 		},
 		{
 			"extras":{
-				"tags":"checkpoint"
+				"tags":"checkpoint",
+				"_RNA_UI":{
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":13,
 			"name":"checkpoint21",
@@ -234,7 +345,12 @@
 		},
 		{
 			"extras":{
-				"tags":"checkpoint"
+				"tags":"checkpoint",
+				"_RNA_UI":{
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":14,
 			"name":"checkpoint22",
@@ -246,7 +362,12 @@
 		},
 		{
 			"extras":{
-				"tags":"checkpoint"
+				"tags":"checkpoint",
+				"_RNA_UI":{
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":15,
 			"name":"checkpoint23",
@@ -261,7 +382,21 @@
 				"tags":"checkpoint",
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":16,
 			"name":"checkpoint24",
@@ -276,7 +411,21 @@
 				"entity_type":"default",
 				"is_sensor":false,
 				"is_solid":true,
-				"tags":"checkpoint"
+				"tags":"checkpoint",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":17,
 			"name":"checkpoint25",
@@ -291,7 +440,21 @@
 				"entity_type":"default",
 				"is_sensor":false,
 				"is_solid":true,
-				"tags":"checkpoint"
+				"tags":"checkpoint",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":18,
 			"name":"checkpoint26",
@@ -306,7 +469,21 @@
 				"tags":"checkpoint",
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":19,
 			"name":"checkpoint27",
@@ -322,7 +499,24 @@
 				"entity_type":"movingTest",
 				"is_sensor":false,
 				"is_solid":true,
-				"is_kinematic":true
+				"is_kinematic":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"is_kinematic":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":20,
 			"name":"checkpoint28",
@@ -337,7 +531,21 @@
 				"tags":"checkpoint",
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":21,
 			"name":"checkpoint29",
@@ -352,7 +560,21 @@
 				"tags":"checkpoint",
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":22,
 			"name":"checkpoint3",
@@ -367,7 +589,21 @@
 				"tags":"checkpoint",
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":23,
 			"name":"checkpoint4",
@@ -379,7 +615,12 @@
 		},
 		{
 			"extras":{
-				"tags":"checkpoint"
+				"tags":"checkpoint",
+				"_RNA_UI":{
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":24,
 			"name":"checkpoint5",
@@ -394,7 +635,21 @@
 				"tags":"checkpoint",
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":25,
 			"name":"checkpoint6",
@@ -406,7 +661,12 @@
 		},
 		{
 			"extras":{
-				"tags":"checkpoint"
+				"tags":"checkpoint",
+				"_RNA_UI":{
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":26,
 			"name":"checkpoint7",
@@ -418,7 +678,12 @@
 		},
 		{
 			"extras":{
-				"tags":"checkpoint"
+				"tags":"checkpoint",
+				"_RNA_UI":{
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":27,
 			"name":"checkpoint8",
@@ -433,7 +698,21 @@
 				"entity_type":"default",
 				"is_sensor":false,
 				"is_solid":true,
-				"tags":"checkpoint"
+				"tags":"checkpoint",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":28,
 			"name":"checkpoint9",
@@ -478,7 +757,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"name":"checkpoints"
 		},
@@ -486,7 +776,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":29,
 			"name":"cube.007"
@@ -496,7 +797,21 @@
 				"entity_type":"default",
 				"is_sensor":false,
 				"is_solid":true,
-				"tags":""
+				"tags":"",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":30,
 			"name":"cube.008",
@@ -510,7 +825,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":31,
 			"name":"cube.009",
@@ -521,6 +847,30 @@
 			]
 		},
 		{
+			"extras":{
+				"entity_type":"default",
+				"is_sensor":false,
+				"is_solid":true,
+				"is_kinematic":false,
+				"is_invisible":false,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"is_kinematic":{
+						"use_export":true
+					},
+					"is_invisible":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
+			},
 			"mesh":32,
 			"name":"cube.010",
 			"translation":[
@@ -533,7 +883,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":33,
 			"name":"cube.011",
@@ -548,7 +909,21 @@
 				"entity_type":"rotatingPlatform",
 				"is_sensor":false,
 				"is_solid":true,
-				"is_kinematic":true
+				"is_kinematic":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"is_kinematic":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":34,
 			"name":"cube.012",
@@ -559,6 +934,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":35,
 			"name":"cube.013",
 			"translation":[
@@ -568,6 +946,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":36,
 			"name":"cube.014",
 			"translation":[
@@ -577,6 +958,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":37,
 			"name":"cube.015",
 			"translation":[
@@ -586,6 +970,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":38,
 			"name":"cube.016",
 			"translation":[
@@ -595,6 +982,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":39,
 			"name":"cube.017",
 			"translation":[
@@ -604,6 +994,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":40,
 			"name":"cube.018",
 			"translation":[
@@ -613,6 +1006,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":41,
 			"name":"cube.019",
 			"translation":[
@@ -622,6 +1018,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":42,
 			"name":"cube.020",
 			"translation":[
@@ -631,6 +1030,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":43,
 			"name":"cube.021",
 			"translation":[
@@ -640,6 +1042,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":44,
 			"name":"cube.022",
 			"translation":[
@@ -649,6 +1054,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":45,
 			"name":"cube.023",
 			"translation":[
@@ -658,6 +1066,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":46,
 			"name":"cube.024",
 			"translation":[
@@ -670,7 +1081,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":47,
 			"name":"cube.025",
@@ -681,6 +1103,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":48,
 			"name":"cube.026",
 			"translation":[
@@ -690,6 +1115,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":49,
 			"name":"cube.027",
 			"translation":[
@@ -699,6 +1127,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":50,
 			"name":"cube.028",
 			"translation":[
@@ -708,6 +1139,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":51,
 			"name":"cube.029",
 			"translation":[
@@ -717,6 +1151,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":52,
 			"name":"cube.030",
 			"translation":[
@@ -726,6 +1163,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":53,
 			"name":"cube.031",
 			"translation":[
@@ -735,6 +1175,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":54,
 			"name":"cube.032",
 			"translation":[
@@ -744,6 +1187,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":55,
 			"name":"cube.033",
 			"translation":[
@@ -753,6 +1199,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":56,
 			"name":"cube.034",
 			"rotation":[
@@ -768,6 +1217,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":57,
 			"name":"cube.035",
 			"rotation":[
@@ -783,6 +1235,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":58,
 			"name":"cube.036",
 			"rotation":[
@@ -798,6 +1253,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":59,
 			"name":"cube.037",
 			"translation":[
@@ -810,7 +1268,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":60,
 			"name":"cube.038",
@@ -824,7 +1293,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":61,
 			"name":"cube.039",
@@ -835,6 +1315,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":62,
 			"name":"cube.040",
 			"translation":[
@@ -844,6 +1327,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":63,
 			"name":"cube.041",
 			"translation":[
@@ -856,7 +1342,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":64,
 			"name":"cube.042",
@@ -867,6 +1364,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":65,
 			"name":"cube.043",
 			"translation":[
@@ -880,7 +1380,21 @@
 				"entity_type":"default",
 				"is_sensor":false,
 				"is_solid":true,
-				"tags":"deathzone"
+				"tags":"deathzone",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":66,
 			"name":"cube.044",
@@ -895,7 +1409,21 @@
 				"entity_type":"default",
 				"is_sensor":false,
 				"is_solid":true,
-				"tags":"deathzone"
+				"tags":"deathzone",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":67,
 			"name":"cube.045",
@@ -910,7 +1438,21 @@
 				"entity_type":"default",
 				"is_sensor":false,
 				"is_solid":true,
-				"tags":"deathzone"
+				"tags":"deathzone",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":68,
 			"name":"cube.046",
@@ -925,7 +1467,21 @@
 				"tags":"deathzone",
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":69,
 			"name":"cube.047",
@@ -940,7 +1496,21 @@
 				"tags":"deathzone",
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":70,
 			"name":"cube.048",
@@ -955,7 +1525,21 @@
 				"tags":"deathzone",
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":71,
 			"name":"cube.049",
@@ -967,7 +1551,12 @@
 		},
 		{
 			"extras":{
-				"tags":"deathzone"
+				"tags":"deathzone",
+				"_RNA_UI":{
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":72,
 			"name":"cube.050",
@@ -979,7 +1568,12 @@
 		},
 		{
 			"extras":{
-				"tags":"deathzone"
+				"tags":"deathzone",
+				"_RNA_UI":{
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":73,
 			"name":"cube.051",
@@ -991,7 +1585,12 @@
 		},
 		{
 			"extras":{
-				"tags":"deathzone"
+				"tags":"deathzone",
+				"_RNA_UI":{
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":74,
 			"name":"cube.052",
@@ -1002,6 +1601,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":75,
 			"name":"cube.053",
 			"translation":[
@@ -1011,6 +1613,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":76,
 			"name":"cube.054",
 			"translation":[
@@ -1020,6 +1625,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":77,
 			"name":"cube.055",
 			"translation":[
@@ -1032,7 +1640,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":78,
 			"name":"cube.056",
@@ -1046,7 +1665,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":79,
 			"name":"cube.057",
@@ -1057,6 +1687,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":80,
 			"name":"cube.058",
 			"translation":[
@@ -1066,6 +1699,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":81,
 			"name":"cube.059",
 			"translation":[
@@ -1075,6 +1711,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":82,
 			"name":"cube.060",
 			"translation":[
@@ -1087,7 +1726,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":83,
 			"name":"cube.061",
@@ -1104,6 +1754,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":84,
 			"name":"cube.062",
 			"rotation":[
@@ -1122,7 +1775,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":85,
 			"name":"cube.063",
@@ -1142,7 +1806,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":86,
 			"name":"cube.064",
@@ -1156,7 +1831,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":false
+				"is_solid":false,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":87,
 			"name":"cube.065",
@@ -1170,7 +1856,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":false
+				"is_solid":false,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":88,
 			"name":"cube.066",
@@ -1184,7 +1881,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":89,
 			"name":"cube.067",
@@ -1198,7 +1906,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":false
+				"is_solid":false,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":90,
 			"name":"cube.068",
@@ -1210,7 +1929,12 @@
 		},
 		{
 			"extras":{
-				"is_solid":false
+				"is_solid":false,
+				"_RNA_UI":{
+					"is_solid":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":91,
 			"name":"cube.069",
@@ -1221,6 +1945,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":92,
 			"name":"cube.070",
 			"translation":[
@@ -1230,6 +1957,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":93,
 			"name":"cube.071",
 			"translation":[
@@ -1240,7 +1970,12 @@
 		},
 		{
 			"extras":{
-				"is_solid":false
+				"is_solid":false,
+				"_RNA_UI":{
+					"is_solid":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":94,
 			"name":"cube.072",
@@ -1251,6 +1986,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":95,
 			"name":"cube.073",
 			"translation":[
@@ -1260,6 +1998,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":96,
 			"name":"cube.074",
 			"translation":[
@@ -1270,7 +2011,12 @@
 		},
 		{
 			"extras":{
-				"is_solid":false
+				"is_solid":false,
+				"_RNA_UI":{
+					"is_solid":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":97,
 			"name":"cube.075",
@@ -1282,7 +2028,12 @@
 		},
 		{
 			"extras":{
-				"is_solid":false
+				"is_solid":false,
+				"_RNA_UI":{
+					"is_solid":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":98,
 			"name":"cube.076",
@@ -1296,7 +2047,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":false
+				"is_solid":false,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":99,
 			"name":"cube.077",
@@ -1310,7 +2072,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":false
+				"is_solid":false,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":100,
 			"name":"cube.078",
@@ -1324,7 +2097,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":101,
 			"name":"cube.079",
@@ -1338,7 +2122,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":false
+				"is_solid":false,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":102,
 			"name":"cube.080",
@@ -1352,7 +2147,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":false
+				"is_solid":false,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":103,
 			"name":"cube.081",
@@ -1366,7 +2172,18 @@
 			"extras":{
 				"is_solid":true,
 				"entity_type":"default",
-				"is_sensor":false
+				"is_sensor":false,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":104,
 			"name":"cube.082",
@@ -1380,7 +2197,18 @@
 			"extras":{
 				"is_solid":false,
 				"entity_type":"default",
-				"is_sensor":false
+				"is_sensor":false,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":105,
 			"name":"cube.083",
@@ -1394,7 +2222,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":false
+				"is_solid":false,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":106,
 			"name":"cube.084",
@@ -1408,7 +2247,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":107,
 			"name":"cube.085",
@@ -1419,6 +2269,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":108,
 			"name":"cube.086",
 			"translation":[
@@ -1428,6 +2281,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":109,
 			"name":"cube.087",
 			"translation":[
@@ -1437,6 +2293,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":110,
 			"name":"cube.088",
 			"translation":[
@@ -1446,6 +2305,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":111,
 			"name":"cube.089",
 			"translation":[
@@ -1455,6 +2317,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":112,
 			"name":"cube.090",
 			"translation":[
@@ -1464,6 +2329,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":113,
 			"name":"cube.091",
 			"translation":[
@@ -1473,6 +2341,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":114,
 			"name":"cube.092",
 			"translation":[
@@ -1482,6 +2353,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":115,
 			"name":"cube.093",
 			"translation":[
@@ -1491,6 +2365,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":116,
 			"name":"cube.094",
 			"translation":[
@@ -1500,6 +2377,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":117,
 			"name":"cube.095",
 			"translation":[
@@ -1509,6 +2389,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":118,
 			"name":"cube.096",
 			"translation":[
@@ -1518,6 +2401,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":119,
 			"name":"cube.097",
 			"translation":[
@@ -1527,6 +2413,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":120,
 			"name":"cube.098",
 			"translation":[
@@ -1536,6 +2425,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":121,
 			"name":"cube.099",
 			"translation":[
@@ -1545,6 +2437,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":122,
 			"name":"cube.100",
 			"translation":[
@@ -1554,6 +2449,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":123,
 			"name":"cube.101",
 			"translation":[
@@ -1564,7 +2462,12 @@
 		},
 		{
 			"extras":{
-				"is_solid":false
+				"is_solid":false,
+				"_RNA_UI":{
+					"is_solid":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":124,
 			"name":"cube.102",
@@ -1578,7 +2481,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":false
+				"is_solid":false,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":125,
 			"name":"cube.103",
@@ -1589,6 +2503,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":126,
 			"name":"cube.104",
 			"translation":[
@@ -1598,6 +2515,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":127,
 			"name":"cube.105",
 			"translation":[
@@ -1607,6 +2527,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":128,
 			"name":"cube.106",
 			"translation":[
@@ -1619,7 +2542,18 @@
 			"extras":{
 				"is_solid":false,
 				"entity_type":"default",
-				"is_sensor":false
+				"is_sensor":false,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":129,
 			"name":"cube.107",
@@ -1633,7 +2567,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":false
+				"is_solid":false,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":130,
 			"name":"cube.108",
@@ -1647,7 +2592,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":131,
 			"name":"cube.109",
@@ -1658,6 +2614,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":132,
 			"name":"cube.110",
 			"translation":[
@@ -1667,6 +2626,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":133,
 			"name":"cube.111",
 			"translation":[
@@ -1676,6 +2638,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":134,
 			"name":"cube.112",
 			"translation":[
@@ -1688,7 +2653,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":false
+				"is_solid":false,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":135,
 			"name":"cube.113",
@@ -1700,7 +2676,12 @@
 		},
 		{
 			"extras":{
-				"is_solid":false
+				"is_solid":false,
+				"_RNA_UI":{
+					"is_solid":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":136,
 			"name":"cube.114",
@@ -1711,6 +2692,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":137,
 			"name":"cube.115",
 			"translation":[
@@ -1720,6 +2704,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":138,
 			"name":"cube.116",
 			"translation":[
@@ -1729,6 +2716,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":139,
 			"name":"cube.117",
 			"translation":[
@@ -1738,6 +2728,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":140,
 			"name":"cube.118",
 			"translation":[
@@ -1747,6 +2740,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":141,
 			"name":"cube.119",
 			"translation":[
@@ -1756,6 +2752,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":142,
 			"name":"cuboid",
 			"translation":[
@@ -1765,6 +2764,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":143,
 			"name":"cuboid.001",
 			"rotation":[
@@ -1780,6 +2782,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":144,
 			"name":"cuboid.002",
 			"rotation":[
@@ -1795,6 +2800,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":145,
 			"name":"cuboid.003",
 			"rotation":[
@@ -1810,6 +2818,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":146,
 			"name":"cuboid.004",
 			"rotation":[
@@ -1825,6 +2836,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":147,
 			"name":"cuboid.005",
 			"rotation":[
@@ -1840,6 +2854,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":148,
 			"name":"cuboid.006",
 			"rotation":[
@@ -1855,6 +2872,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":149,
 			"name":"cuboid.007",
 			"rotation":[
@@ -1870,6 +2890,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":150,
 			"name":"cuboid.008",
 			"translation":[
@@ -1879,6 +2902,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":151,
 			"name":"cuboid.009",
 			"translation":[
@@ -1888,6 +2914,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":152,
 			"name":"cuboid.010",
 			"translation":[
@@ -1897,6 +2926,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":153,
 			"name":"cuboid.011",
 			"translation":[
@@ -1906,6 +2938,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":154,
 			"name":"cuboid.012",
 			"translation":[
@@ -1915,6 +2950,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":155,
 			"name":"cuboid.013",
 			"translation":[
@@ -1924,6 +2962,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":156,
 			"name":"cuboid.014",
 			"translation":[
@@ -1933,6 +2974,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":157,
 			"name":"cuboid.015",
 			"translation":[
@@ -1942,6 +2986,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":158,
 			"name":"cuboid.016",
 			"translation":[
@@ -1951,6 +2998,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":159,
 			"name":"cuboid.017",
 			"translation":[
@@ -1960,6 +3010,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":160,
 			"name":"cuboid.018",
 			"translation":[
@@ -1969,6 +3022,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":161,
 			"name":"cuboid.019",
 			"translation":[
@@ -1978,6 +3034,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":162,
 			"name":"pyramid",
 			"rotation":[
@@ -1993,6 +3052,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":163,
 			"name":"pyramid.001",
 			"rotation":[
@@ -2008,6 +3070,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":164,
 			"name":"pyramid.002",
 			"rotation":[
@@ -2026,7 +3091,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":165,
 			"name":"pyramid.003",
@@ -2043,6 +3119,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":166,
 			"name":"pyramid.004",
 			"rotation":[
@@ -2058,6 +3137,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":167,
 			"name":"pyramid.005",
 			"rotation":[
@@ -2073,6 +3155,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":168,
 			"name":"pyramid.006",
 			"rotation":[
@@ -2088,6 +3173,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":169,
 			"name":"pyramid.007",
 			"rotation":[
@@ -2103,6 +3191,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":170,
 			"name":"sphere",
 			"translation":[
@@ -2112,6 +3203,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":171,
 			"name":"sphere.001",
 			"translation":[
@@ -2121,6 +3215,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":172,
 			"name":"sphere.002",
 			"translation":[
@@ -2130,6 +3227,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":173,
 			"name":"sphere.003",
 			"translation":[
@@ -2139,6 +3239,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":174,
 			"name":"sphere.004",
 			"translation":[
@@ -2148,6 +3251,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":175,
 			"name":"sphere.005",
 			"translation":[
@@ -2157,6 +3263,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":176,
 			"name":"torus",
 			"translation":[
@@ -2166,6 +3275,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":177,
 			"name":"torus.001",
 			"translation":[
@@ -2175,6 +3287,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":178,
 			"name":"torus.002",
 			"translation":[
@@ -2184,6 +3299,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":179,
 			"name":"torus.003",
 			"translation":[
@@ -2193,6 +3311,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":180,
 			"name":"torus.004",
 			"translation":[
@@ -2202,6 +3323,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":181,
 			"name":"torus.005",
 			"translation":[
@@ -2214,7 +3338,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":182,
 			"name":"torus.006",
@@ -2225,6 +3360,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":183,
 			"name":"torus.007",
 			"translation":[
@@ -2234,6 +3372,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":184,
 			"name":"torus.008",
 			"translation":[
@@ -2243,6 +3384,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":185,
 			"name":"torus.009",
 			"translation":[
@@ -2252,6 +3396,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":186,
 			"name":"torus.010",
 			"translation":[
@@ -2261,6 +3408,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":187,
 			"name":"torus.011",
 			"translation":[
@@ -2273,7 +3423,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":188,
 			"name":"tube",
@@ -2290,6 +3451,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":189,
 			"name":"tube.001",
 			"rotation":[
@@ -2305,6 +3469,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":190,
 			"name":"tube.002",
 			"rotation":[
@@ -2487,7 +3654,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"name":"percourse",
 			"translation":[
@@ -2500,7 +3678,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":191,
 			"name":"cube"
@@ -2509,7 +3698,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":192,
 			"name":"cube.001",
@@ -2520,6 +3720,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":193,
 			"name":"cube.002",
 			"translation":[
@@ -2532,7 +3735,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":194,
 			"name":"cube.003",
@@ -2549,6 +3763,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":195,
 			"name":"cube.004",
 			"rotation":[
@@ -2567,7 +3784,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":196,
 			"name":"cube.005",
@@ -2584,6 +3812,9 @@
 			]
 		},
 		{
+			"extras":{
+				"_RNA_UI":{}
+			},
 			"mesh":197,
 			"name":"cube.006",
 			"rotation":[
@@ -2611,7 +3842,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"name":"spawn"
 		},
@@ -2624,7 +3866,18 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":false
+				"is_solid":false,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"name":"Node_206",
 			"scale":[
@@ -4025,7 +5278,22 @@
 			"extras":{
 				"is_solid":false,
 				"entity_type":"default",
-				"is_sensor":false
+				"is_sensor":false,
+				"is_kinematic":false,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"is_kinematic":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":198,
 			"name":"Body",
@@ -4033,7 +5301,24 @@
 		},
 		{
 			"extras":{
-				"is_solid":false
+				"is_solid":false,
+				"entity_type":"default",
+				"is_sensor":false,
+				"is_kinematic":false,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"is_kinematic":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":199,
 			"name":"Head_Hands",
@@ -4043,7 +5328,22 @@
 			"extras":{
 				"is_solid":false,
 				"entity_type":"default",
-				"is_sensor":false
+				"is_sensor":false,
+				"is_kinematic":false,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"is_kinematic":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":200,
 			"name":"Lower_Armor",
@@ -4059,7 +5359,26 @@
 			"extras":{
 				"entity_type":"character",
 				"is_sensor":false,
-				"is_solid":false
+				"is_solid":false,
+				"is_kinematic":false,
+				"is_invisible":false,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"is_kinematic":{
+						"use_export":true
+					},
+					"is_invisible":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"name":"Character",
 			"rotation":[
@@ -5414,7 +6733,18 @@
 			"extras":{
 				"is_solid":false,
 				"entity_type":"default",
-				"is_sensor":false
+				"is_sensor":false,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"name":"Armature",
 			"rotation":[
@@ -5438,13 +6768,13 @@
 			"name":"mixamorig:HeadTop_End",
 			"rotation":[
 				0,
-				-2.730357765915034e-20,
-				-2.63650275168747e-19,
+				-1.3572379490770078e-19,
+				-1.998374268133437e-18,
 				1
 			],
 			"translation":[
 				0,
-				17.78297996520996,
+				17.7829647064209,
 				3.803598165512085
 			]
 		},
@@ -5452,13 +6782,13 @@
 			"name":"mixamorig:RightEye",
 			"rotation":[
 				0.7071067690849304,
-				8.89881812883221e-18,
-				6.986950615954722e-18,
+				8.745490276128155e-18,
+				6.986949788774109e-18,
 				0.7071067690849304
 			],
 			"translation":[
 				-3.29296875,
-				4.765908241271973,
+				4.765862464904785,
 				6.339298725128174
 			]
 		},
@@ -5470,13 +6800,13 @@
 			"name":"mixamorig:Head",
 			"rotation":[
 				0,
-				-2.730357765915034e-20,
-				1.0190555132594606e-14,
+				-1.3572379490770078e-19,
+				1.0187085685642652e-14,
 				1
 			],
 			"translation":[
 				-3.637978807091713e-12,
-				10.03723430633545,
+				10.037249565124512,
 				3.52949857711792
 			]
 		},
@@ -5486,34 +6816,29 @@
 			],
 			"name":"mixamorig:Neck",
 			"rotation":[
-				1.658690962358378e-10,
+				1.6581225281697698e-10,
 				-3.637978807091713e-12,
-				-1.408841359545887e-11,
+				-1.4088410993373657e-11,
 				1
 			],
 			"translation":[
 				-0.00585936987772584,
 				23.72314453125,
-				-1.4461992979049683
+				-1.4461994171142578
 			]
 		},
 		{
 			"name":"mixamorig:LeftHandThumb4",
 			"rotation":[
-				-1.3038516932795119e-08,
-				-7.7812012477807e-07,
-				-7.683411240577698e-09,
+				1.1175870895385742e-08,
+				-7.757917046546936e-07,
+				-6.28642737865448e-09,
 				1
 			],
-			"scale":[
-				0.9999999403953552,
-				1,
-				0.9999999403953552
-			],
 			"translation":[
-				0.0011205673217773438,
-				3.907078266143799,
-				-0.0010905861854553223
+				0.00014519691467285156,
+				3.9090468883514404,
+				-0.0006175637245178223
 			]
 		},
 		{
@@ -5522,20 +6847,20 @@
 			],
 			"name":"mixamorig:LeftHandThumb3",
 			"rotation":[
-				-9.313224857976365e-09,
-				3.287568404175545e-07,
-				1.2852251529693604e-07,
+				-2.421439049271612e-08,
+				3.338791714213585e-07,
+				1.4249236812702293e-07,
 				1
 			],
 			"scale":[
-				1.0000001192092896,
-				1,
-				1.0000001192092896
+				0.9999999403953552,
+				0.9999999403953552,
+				0.9999999403953552
 			],
 			"translation":[
-				-0.0007065534591674805,
-				3.637223958969116,
-				0.0003154873847961426
+				0.0002688169479370117,
+				3.635270833969116,
+				-0.00014218688011169434
 			]
 		},
 		{
@@ -5544,20 +6869,15 @@
 			],
 			"name":"mixamorig:LeftHandThumb2",
 			"rotation":[
-				8.381903171539307e-08,
-				1.4202669262886047e-07,
-				-3.59956146667173e-07,
-				1
-			],
-			"scale":[
-				1,
-				1.0000001192092896,
+				7.82310962677002e-08,
+				1.4668330550193787e-07,
+				-3.5855919122695923e-07,
 				1
 			],
 			"translation":[
-				0.0008858740329742432,
-				4.5244879722595215,
-				0.00011821091175079346
+				-8.925795555114746e-05,
+				4.522542476654053,
+				0.0006064921617507935
 			]
 		},
 		{
@@ -5567,38 +6887,33 @@
 			"name":"mixamorig:LeftHandThumb1",
 			"rotation":[
 				0.21863530576229095,
-				0.0716840997338295,
+				0.0716840848326683,
 				0.2547570466995239,
-				0.9392331838607788
+				0.939233124256134
 			],
 			"scale":[
 				0.9999999403953552,
-				0.9999999403953552,
-				0.9999999403953552
+				0.9999998807907104,
+				1
 			],
 			"translation":[
-				-2.6044063568115234,
-				4.345684051513672,
+				-2.6044058799743652,
+				4.343730926513672,
 				2.5668184757232666
 			]
 		},
 		{
 			"name":"mixamorig:LeftHandIndex4",
 			"rotation":[
-				3.614628399113001e-15,
+				5.3909513571953616e-15,
 				2.362570046283291e-13,
-				9.413155069868187e-15,
-				1
-			],
-			"scale":[
-				0.9999999403953552,
-				0.9999999403953552,
+				2.7518162868425374e-15,
 				1
 			],
 			"translation":[
-				-1.658918336033821e-07,
-				2.9804489612579346,
-				3.794312942773104e-05
+				-2.257293090224266e-07,
+				2.9824020862579346,
+				3.794312578975223e-05
 			]
 		},
 		{
@@ -5607,20 +6922,15 @@
 			],
 			"name":"mixamorig:LeftHandIndex3",
 			"rotation":[
-				-2.421911141688854e-15,
-				-4.842171802410533e-11,
-				-4.852377180619705e-11,
-				1
-			],
-			"scale":[
-				0.9999999403953552,
-				0.9999999403953552,
+				1.1308635234838493e-15,
+				-4.842171108521143e-11,
+				-4.852376486730314e-11,
 				1
 			],
 			"translation":[
-				-3.4889671951532364e-07,
+				-2.9033981263637543e-07,
 				2.9042770862579346,
-				7.425629064528039e-06
+				3.7943205825285986e-05
 			]
 		},
 		{
@@ -5629,20 +6939,20 @@
 			],
 			"name":"mixamorig:LeftHandIndex2",
 			"rotation":[
-				9.0330217264456e-13,
-				2.982484303970523e-08,
-				2.98364284390118e-08,
+				9.068549947435778e-13,
+				2.9824619218743464e-08,
+				2.983644264986651e-08,
 				1
 			],
 			"scale":[
-				1,
+				0.9999999403953552,
 				0.9999998807907104,
 				1
 			],
 			"translation":[
-				-4.2084138840436935e-07,
-				4.511699199676514,
-				3.792807547142729e-05
+				-3.025634214282036e-07,
+				4.509746074676514,
+				2.266928640892729e-05
 			]
 		},
 		{
@@ -5651,39 +6961,39 @@
 			],
 			"name":"mixamorig:LeftHandIndex1",
 			"rotation":[
-				5.538728113305136e-15,
-				-1.193300107615869e-07,
-				5.9473876490301336e-08,
+				5.538619693087887e-15,
+				-1.1932979759876616e-07,
+				5.947389070115605e-08,
 				1
 			],
 			"scale":[
-				1,
+				0.9999999403953552,
 				0.9999999403953552,
 				1
 			],
 			"translation":[
-				-3.402402877807617,
-				12.111308097839355,
+				-3.402402400970459,
+				12.109354972839355,
 				0.31597134470939636
 			]
 		},
 		{
 			"name":"mixamorig:LeftHandMiddle4",
 			"rotation":[
-				-2.7702517471812904e-15,
-				-2.131681468712024e-13,
-				-3.6376211084662192e-16,
+				-2.770190760809088e-15,
+				2.4157919046273457e-13,
+				1.3847095568970697e-14,
 				1
 			],
 			"scale":[
-				1,
+				0.9999999403953552,
 				0.9999999403953552,
 				1
 			],
 			"translation":[
-				-7.287599146366119e-07,
-				4.712871551513672,
-				-8.728411557967775e-06
+				-1.205364242196083e-06,
+				4.714824676513672,
+				-8.728415195946582e-06
 			]
 		},
 		{
@@ -5692,18 +7002,18 @@
 			],
 			"name":"mixamorig:LeftHandMiddle3",
 			"rotation":[
-				2.9065427365262964e-15,
-				2.2988899672782281e-10,
-				2.3003784987984943e-10,
+				-6.461640601315081e-16,
+				2.303437718342849e-10,
+				2.3004853577646145e-10,
 				1
 			],
 			"scale":[
-				1,
+				0.9999999403953552,
 				0.9999999403953552,
 				1
 			],
 			"translation":[
-				3.8440339267253876e-07,
+				-9.255018085241318e-08,
 				2.832012176513672,
 				-8.730288755032234e-06
 			]
@@ -5714,20 +7024,20 @@
 			],
 			"name":"mixamorig:LeftHandMiddle2",
 			"rotation":[
-				-5.78293110013034e-15,
-				-2.462314796503051e-10,
-				-2.4565274814314364e-10,
+				-5.782815903649513e-15,
+				-2.4577673229941865e-10,
+				-2.4563501233032525e-10,
 				1
 			],
 			"scale":[
-				1,
+				0.9999999403953552,
 				0.9999999403953552,
 				1
 			],
 			"translation":[
-				-3.505265340209007e-07,
+				-8.284114301204681e-07,
 				3.619121551513672,
-				-8.728300599614158e-06
+				-2.3987089662114158e-05
 			]
 		},
 		{
@@ -5736,39 +7046,39 @@
 			],
 			"name":"mixamorig:LeftHandMiddle1",
 			"rotation":[
-				-2.9963417814624083e-15,
-				-1.5901953365204946e-11,
-				-1.4477674267765472e-11,
+				-2.9963350051988302e-15,
+				-1.5674579689761714e-11,
+				-1.4452805272013869e-11,
 				1
 			],
 			"scale":[
-				1,
+				0.9999999403953552,
 				0.9999999403953552,
 				1
 			],
 			"translation":[
-				-2.8420472517609596e-06,
-				13.095684051513672,
-				-8.728179636818822e-06
+				-2.842978574335575e-06,
+				13.093730926513672,
+				6.5306094256811775e-06
 			]
 		},
 		{
 			"name":"mixamorig:LeftHandRing4",
 			"rotation":[
-				1.9908662392265075e-16,
-				-2.1315295448826044e-13,
-				-4.298117580164157e-14,
+				-3.3536744887228964e-15,
+				1.422069384991731e-14,
+				-1.4559437572117355e-14,
 				1
 			],
 			"scale":[
-				1,
+				0.9999999403953552,
 				0.9999999403953552,
 				1
 			],
 			"translation":[
-				-1.5953555703163147e-06,
-				3.119122266769409,
-				4.328326212998945e-06
+				-2.54996120929718e-06,
+				3.121075391769409,
+				-1.093045557354344e-05
 			]
 		},
 		{
@@ -5777,20 +7087,20 @@
 			],
 			"name":"mixamorig:LeftHandRing3",
 			"rotation":[
-				-6.264032261643626e-15,
-				-3.028475248356699e-10,
-				-3.022687933285084e-10,
+				-6.2639170651627996e-15,
+				-3.021654315649158e-10,
+				-3.0224395208833243e-10,
 				1
 			],
 			"scale":[
-				1,
+				0.9999999403953552,
 				0.9999999403953552,
 				1
 			],
 			"translation":[
-				-2.8962967917323112e-06,
+				-3.3740652725100517e-06,
 				3.435528516769409,
-				4.3328832362021785e-06
+				-1.0925912647508085e-05
 			]
 		},
 		{
@@ -5799,20 +7109,20 @@
 			],
 			"name":"mixamorig:LeftHandRing2",
 			"rotation":[
-				-2.8389698361261373e-15,
-				2.837765578078688e-10,
-				1.7326218584856612e-11,
+				-2.839071480079808e-15,
+				2.835491841324256e-10,
+				1.735108931533169e-11,
 				1
 			],
 			"scale":[
-				1,
+				0.9999999403953552,
 				0.9999999403953552,
 				1
 			],
 			"translation":[
-				-1.053675077855587e-06,
-				2.933575391769409,
-				4.3284535422571935e-06
+				-1.5312107279896736e-06,
+				2.935528516769409,
+				-1.0930328244285192e-05
 			]
 		},
 		{
@@ -5821,37 +7131,37 @@
 			],
 			"name":"mixamorig:LeftHandRing1",
 			"rotation":[
-				-2.8841742904552048e-15,
-				-2.680593524928554e-10,
-				-1.4560550573410047e-14,
+				-2.8843301445174996e-15,
+				-2.6760463289754455e-10,
+				3.2030199381748257e-15,
 				1
 			],
 			"scale":[
-				1,
+				0.9999999403953552,
 				0.9999999403953552,
 				1
 			],
 			"translation":[
 				3.523094654083252,
-				12.919903755187988,
+				12.917950630187988,
 				-0.01589532569050789
 			]
 		},
 		{
 			"name":"mixamorig:LeftHandPinky4",
 			"rotation":[
-				2.4253602598500734e-15,
-				-4.547473508864641e-13,
-				-3.583288180064592e-16,
+				-1.1274076290590518e-15,
+				2.2737367544323206e-13,
+				-3.583288709460184e-16,
 				1
 			],
 			"scale":[
-				1,
+				0.9999999403953552,
 				0.9999999403953552,
 				1
 			],
 			"translation":[
-				-9.373761713504791e-07,
+				-2.844724804162979e-06,
 				2.9784929752349854,
 				1.207052446261514e-05
 			]
@@ -5862,20 +7172,20 @@
 			],
 			"name":"mixamorig:LeftHandPinky3",
 			"rotation":[
-				2.4253602598500734e-15,
-				-4.547473508864641e-13,
-				-3.489346402862578e-16,
+				-1.1274076290590518e-15,
+				2.2737367544323206e-13,
+				-3.48934693225817e-16,
 				1
 			],
 			"scale":[
-				1,
+				0.9999999403953552,
 				0.9999999403953552,
 				1
 			],
 			"translation":[
-				1.618101919120818e-08,
-				2.0722429752349854,
-				2.7329306249157526e-05
+				-9.376096841151593e-07,
+				2.0741961002349854,
+				2.7329291697242297e-05
 			]
 		},
 		{
@@ -5884,20 +7194,20 @@
 			],
 			"name":"mixamorig:LeftHandPinky2",
 			"rotation":[
-				2.4046721645160085e-12,
-				-4.547367799152824e-13,
+				2.408224878194809e-12,
+				2.273842464144138e-13,
 				1.8265178258758397e-10,
 				1
 			],
 			"scale":[
-				1,
+				0.9999999403953552,
 				0.9999999403953552,
 				1
 			],
 			"translation":[
-				-2.0429069991223514e-07,
+				-1.1580805221456103e-06,
 				2.4745867252349854,
-				1.2161310223746113e-05
+				2.7420084734330885e-05
 			]
 		},
 		{
@@ -5907,18 +7217,18 @@
 			"name":"mixamorig:LeftHandPinky1",
 			"rotation":[
 				-5.885447158923349e-14,
-				2.3829717576973053e-07,
-				2.3811622895664186e-07,
+				2.382974173542607e-07,
+				2.381162573783513e-07,
 				1
 			],
 			"scale":[
-				1,
+				0.9999999403953552,
 				0.9999999403953552,
 				1
 			],
 			"translation":[
-				6.518393516540527,
-				11.480451583862305,
+				6.518393039703369,
+				11.478498458862305,
 				0.316153883934021
 			]
 		},
@@ -5932,20 +7242,20 @@
 			],
 			"name":"mixamorig:LeftHand",
 			"rotation":[
-				-2.3379159665073285e-15,
+				-2.337861756398704e-15,
 				-4.827850716537796e-06,
-				1.2515818936797984e-10,
+				1.2516884750901625e-10,
 				1
 			],
 			"scale":[
-				1,
+				0.9999999403953552,
 				0.9999999403953552,
 				1
 			],
 			"translation":[
-				-5.800000508315861e-06,
+				-6.276852218434215e-06,
 				26.714824676513672,
-				-4.42064629169181e-05
+				-2.89476738544181e-05
 			]
 		},
 		{
@@ -5954,18 +7264,18 @@
 			],
 			"name":"mixamorig:LeftForeArm",
 			"rotation":[
-				-1.7427059144717316e-15,
-				-3.101377765712954e-10,
-				-1.3377179364226777e-09,
+				-1.7426991382081536e-15,
+				-3.101520151815862e-10,
+				-1.337728594563714e-09,
 				1
 			],
 			"scale":[
-				1,
+				0.9999999403953552,
 				0.9999999403953552,
 				1
 			],
 			"translation":[
-				-1.8379570974502712e-05,
+				-1.8855498638004065e-05,
 				30.736309051513672,
 				1.683128903096076e-05
 			]
@@ -5976,20 +7286,20 @@
 			],
 			"name":"mixamorig:LeftArm",
 			"rotation":[
-				-0.23298290371894836,
-				-0.0024821236729621887,
+				-0.23298291862010956,
+				-0.002482123440131545,
 				0.010359197854995728,
 				0.9724224805831909
 			],
 			"scale":[
-				0.9999998807907104,
+				1,
 				0.9999998807907104,
 				1
 			],
 			"translation":[
-				-6.389617919921875e-05,
-				12.687275886535645,
-				-0.0006385200540535152
+				-6.330013275146484e-05,
+				12.687268257141113,
+				0.00033803857513703406
 			]
 		},
 		{
@@ -5998,39 +7308,34 @@
 			],
 			"name":"mixamorig:LeftShoulder",
 			"rotation":[
-				0.5987640619277954,
-				0.3761405050754547,
-				-0.6066413521766663,
-				0.36329928040504456
+				0.5987639427185059,
+				0.37614044547080994,
+				-0.606641411781311,
+				0.3632992208003998
 			],
 			"scale":[
 				0.9999997019767761,
 				0.9999997019767761,
-				0.9999999403953552
+				0.9999998807907104
 			],
 			"translation":[
 				11.306640625,
-				19.88551139831543,
+				19.885480880737305,
 				-3.9660022258758545
 			]
 		},
 		{
 			"name":"mixamorig:RightHandThumb4",
 			"rotation":[
-				-7.2158877628680784e-06,
-				-2.6402994990348816e-07,
-				-1.2784730643033981e-06,
-				1
-			],
-			"scale":[
-				1.0000001192092896,
-				0.9999999403953552,
+				-7.223337888717651e-06,
+				-2.635642886161804e-07,
+				-1.2835953384637833e-06,
 				1
 			],
 			"translation":[
-				0.0005917549133300781,
-				3.9075560569763184,
-				-0.00018984079360961914
+				0.0005943775177001953,
+				3.904618263244629,
+				-0.00017458200454711914
 			]
 		},
 		{
@@ -6039,20 +7344,20 @@
 			],
 			"name":"mixamorig:RightHandThumb3",
 			"rotation":[
-				-6.332993507385254e-08,
-				-2.13272898008654e-07,
-				-1.734588437329876e-07,
+				-5.774199962615967e-08,
+				-2.1001325478664512e-07,
+				-1.6577541828155518e-07,
 				1
 			],
 			"scale":[
 				0.9999999403953552,
 				1,
-				0.9999999403953552
+				1
 			],
 			"translation":[
-				0.00033295154571533203,
-				3.634636878967285,
-				-0.00027555227279663086
+				-0.0006433725357055664,
+				3.6346371173858643,
+				0.00019741058349609375
 			]
 		},
 		{
@@ -6062,19 +7367,19 @@
 			"name":"mixamorig:RightHandThumb2",
 			"rotation":[
 				7.1693216341373045e-06,
-				1.9278377294540405e-07,
-				1.1844094842672348e-06,
+				1.8486753106117249e-07,
+				1.1459924280643463e-06,
 				1
 			],
 			"scale":[
 				1,
-				0.9999998807907104,
+				0.9999999403953552,
 				1
 			],
 			"translation":[
-				0.001267939805984497,
-				4.52395486831665,
-				-0.0004315972328186035
+				0.00028946995735168457,
+				4.524939060211182,
+				-0.0004315897822380066
 			]
 		},
 		{
@@ -6083,39 +7388,29 @@
 			],
 			"name":"mixamorig:RightHandThumb1",
 			"rotation":[
-				0.21939201653003693,
+				0.21939198672771454,
 				-0.06885368376970291,
 				-0.25410130620002747,
 				0.9394460320472717
 			],
-			"scale":[
-				0.9999998807907104,
-				0.9999999403953552,
-				0.9999999403953552
-			],
 			"translation":[
-				2.7122268676757812,
-				6.800772190093994,
-				2.7897520065307617
+				2.7122275829315186,
+				6.798819065093994,
+				2.789736747741699
 			]
 		},
 		{
 			"name":"mixamorig:RightHandIndex4",
 			"rotation":[
-				1.3650717332896892e-15,
-				-5.330000560376837e-15,
-				5.756316477894662e-15,
+				1.3650376402135622e-15,
+				-6.217341772711896e-14,
+				5.7563173249276095e-15,
 				1
 			],
-			"scale":[
-				0.9999999403953552,
-				0.9999999403953552,
-				0.9999999403953552
-			],
 			"translation":[
-				2.8870999813079834e-08,
-				2.978506088256836,
-				1.2961164657099289e-06
+				-3.1694071367383e-08,
+				2.982412338256836,
+				1.2961166930836043e-06
 			]
 		},
 		{
@@ -6124,20 +7419,15 @@
 			],
 			"name":"mixamorig:RightHandIndex3",
 			"rotation":[
-				1.428057103247519e-15,
-				4.473044851183161e-11,
-				4.477706053163111e-11,
+				1.428036562698548e-15,
+				4.461675473521609e-11,
+				4.47699481653796e-11,
 				1
 			],
-			"scale":[
-				0.9999999403953552,
-				0.9999999403953552,
-				0.9999999403953552
-			],
 			"translation":[
-				-3.480818122625351e-08,
-				2.908193588256836,
-				1.296178083975974e-06
+				-1.5541445463895798e-07,
+				2.906240463256836,
+				1.2961781976628117e-06
 			]
 		},
 		{
@@ -6146,20 +7436,15 @@
 			],
 			"name":"mixamorig:RightHandIndex2",
 			"rotation":[
-				-5.890393831335314e-14,
-				-1.3420377656392368e-11,
-				-2.1246577414091306e-11,
+				-5.712757469768931e-14,
+				-1.3249845665086468e-11,
+				-2.1232364824652628e-11,
 				1
 			],
-			"scale":[
-				0.9999999403953552,
-				0.9999999403953552,
-				0.9999999403953552
-			],
 			"translation":[
-				-7.645576260983944e-08,
-				4.507802963256836,
-				1.2984064596821554e-06
+				-7.744529284536839e-08,
+				4.505849838256836,
+				1.2984065733689931e-06
 			]
 		},
 		{
@@ -6168,29 +7453,29 @@
 			],
 			"name":"mixamorig:RightHandIndex1",
 			"rotation":[
-				7.871274949718056e-16,
-				-7.251090006210603e-11,
-				-5.96693041643448e-08,
+				7.871138365655311e-16,
+				-7.256772960317903e-11,
+				-5.966931126977215e-08,
 				1
 			],
-			"scale":[
-				0.9999999403953552,
-				0.9999999403953552,
-				0.9999999403953552
-			],
 			"translation":[
-				3.5264012813568115,
-				14.498037338256836,
-				1.24899423122406
+				3.526402235031128,
+				14.496084213256836,
+				1.2489789724349976
 			]
 		},
 		{
 			"name":"mixamorig:RightHandMiddle4",
 			"rotation":[
-				5.539731000314685e-16,
-				-7.102832048650615e-15,
-				-1.3455681644044485e-15,
+				2.3303168104210365e-15,
+				2.1318880769885182e-14,
+				-1.5556425844221768e-14,
 				1
+			],
+			"scale":[
+				0.9999999403953552,
+				1,
+				0.9999999403953552
 			],
 			"translation":[
 				1.3514363672584295e-06,
@@ -6204,15 +7489,20 @@
 			],
 			"name":"mixamorig:RightHandMiddle3",
 			"rotation":[
-				1.0560196922644594e-15,
-				-2.341735694244562e-10,
-				-2.343099048118802e-10,
+				2.8323631908957906e-15,
+				-2.3423044059889264e-10,
+				-2.34324143422171e-10,
 				1
 			],
+			"scale":[
+				0.9999999403953552,
+				1,
+				0.9999999403953552
+			],
 			"translation":[
-				4.40224539488554e-07,
-				2.8300702571868896,
-				7.704119525442366e-06
+				9.170908015221357e-07,
+				2.8320233821868896,
+				2.2962907678447664e-05
 			]
 		},
 		{
@@ -6221,50 +7511,9 @@
 			],
 			"name":"mixamorig:RightHandMiddle2",
 			"rotation":[
-				9.75300946402032e-16,
-				2.4416382804481884e-10,
-				2.442335222951897e-10,
-				1
-			],
-			"scale":[
-				0.9999999403953552,
-				0.9999998807907104,
-				0.9999999403953552
-			],
-			"translation":[
-				9.829818736761808e-07,
-				3.6210858821868896,
-				2.2964981326367706e-05
-			]
-		},
-		{
-			"children":[
-				377
-			],
-			"name":"mixamorig:RightHandMiddle1",
-			"rotation":[
-				6.784599441026569e-16,
-				-1.6988367657067016e-10,
-				-1.698068630151539e-10,
-				1
-			],
-			"scale":[
-				0.9999999403953552,
-				0.9999999403953552,
-				0.9999999403953552
-			],
-			"translation":[
-				2.026674337685108e-06,
-				15.099601745605469,
-				-7.554030617029639e-06
-			]
-		},
-		{
-			"name":"mixamorig:RightHandRing4",
-			"rotation":[
-				7.893059578330253e-16,
-				-7.110374877045914e-15,
-				-8.458542162049013e-15,
+				9.753076167864916e-16,
+				2.4424906541753444e-10,
+				2.442193114404745e-10,
 				1
 			],
 			"scale":[
@@ -6273,9 +7522,45 @@
 				1
 			],
 			"translation":[
-				-9.739305824041367e-07,
+				9.82952769845724e-07,
+				3.6191327571868896,
+				7.70619408285711e-06
+			]
+		},
+		{
+			"children":[
+				377
+			],
+			"name":"mixamorig:RightHandMiddle1",
+			"rotation":[
+				6.784530619599605e-16,
+				-1.6988366269288235e-10,
+				-1.698210599920813e-10,
+				1
+			],
+			"translation":[
+				2.5025801733136177e-06,
+				15.097648620605469,
+				-7.554030617029639e-06
+			]
+		},
+		{
+			"name":"mixamorig:RightHandRing4",
+			"rotation":[
+				2.5657036665729807e-15,
+				1.0657647724413022e-13,
+				-8.458543856114907e-15,
+				1
+			],
+			"scale":[
+				0.9999999403953552,
+				0.9999999403953552,
+				0.9999999403953552
+			],
+			"translation":[
+				1.4102552086114883e-06,
 				3.1210875511169434,
-				-1.174982344309683e-06
+				2.934259464382194e-05
 			]
 		},
 		{
@@ -6284,15 +7569,20 @@
 			],
 			"name":"mixamorig:RightHandRing3",
 			"rotation":[
-				1.0153485582690969e-15,
-				3.0237146120271063e-10,
-				3.024624717351543e-10,
+				2.791732926240133e-15,
+				3.0251359750543827e-10,
+				3.024696049180875e-10,
 				1
 			],
+			"scale":[
+				0.9999999403953552,
+				1,
+				0.9999999403953552
+			],
 			"translation":[
-				1.5436671674251556e-07,
-				3.4335875511169434,
-				2.934728399850428e-05
+				6.321060936897993e-07,
+				3.4355406761169434,
+				4.460607306100428e-05
 			]
 		},
 		{
@@ -6301,15 +7591,20 @@
 			],
 			"name":"mixamorig:RightHandRing2",
 			"rotation":[
-				7.546995797400036e-16,
-				-2.8041569066772354e-10,
-				-2.0924907639940926e-10,
+				2.531056630898491e-15,
+				-2.8033045329500794e-10,
+				-2.0927751198662747e-10,
 				1
 			],
+			"scale":[
+				0.9999999403953552,
+				1,
+				0.9999999403953552
+			],
 			"translation":[
-				-6.273912731558084e-07,
-				2.9355406761169434,
-				-1.1746432164727594e-06
+				8.031493052840233e-07,
+				2.9335875511169434,
+				4.4601722038351e-05
 			]
 		},
 		{
@@ -6318,34 +7613,39 @@
 			],
 			"name":"mixamorig:RightHandRing1",
 			"rotation":[
-				8.212290414282637e-16,
-				7.118927669580444e-11,
-				-1.3524597303424279e-15,
+				8.211882779676771e-16,
+				7.113243327694363e-11,
+				-1.352459518584191e-15,
 				1
 			],
 			"scale":[
+				1,
 				0.9999999403953552,
-				0.9999998807907104,
-				0.9999999403953552
+				1
 			],
 			"translation":[
 				-3.5120999813079834,
 				15.621088027954102,
-				0.772993803024292
+				0.7729785442352295
 			]
 		},
 		{
 			"name":"mixamorig:RightHandPinky4",
 			"rotation":[
-				1.2155639594730824e-15,
-				-5.684341886080802e-14,
-				-8.52237633842933e-17,
+				-5.607929858062865e-16,
+				0,
+				-2.9709227329968905e-17,
 				1
 			],
+			"scale":[
+				0.9999999403953552,
+				1,
+				0.9999999403953552
+			],
 			"translation":[
-				-1.4592762909160228e-07,
+				1.7614501075513544e-06,
 				2.978505849838257,
-				-1.113300459110178e-05
+				4.1257844713982195e-06
 			]
 		},
 		{
@@ -6354,15 +7654,20 @@
 			],
 			"name":"mixamorig:RightHandPinky3",
 			"rotation":[
-				1.0981584167200583e-15,
-				-2.842170943040401e-14,
-				-7.146755789163434e-17,
+				-6.781985814988698e-16,
+				1.4210857425707435e-13,
+				-1.5954717557565677e-17,
 				1
+			],
+			"scale":[
+				0.9999999403953552,
+				1,
+				0.9999999403953552
 			],
 			"translation":[
 				-2.05327637559094e-06,
-				2.070302724838257,
-				-1.1132995496154763e-05
+				2.072255849838257,
+				4.12579493058729e-06
 			]
 		},
 		{
@@ -6372,19 +7677,19 @@
 			"name":"mixamorig:RightHandPinky2",
 			"rotation":[
 				-2.4112385265534497e-13,
-				-8.525486902815488e-14,
-				3.445846941119157e-10,
+				-5.6833149433355504e-14,
+				3.445848051342182e-10,
 				1
 			],
 			"scale":[
+				1,
 				0.9999999403953552,
-				0.9999998807907104,
-				0.9999999403953552
+				1
 			],
 			"translation":[
-				-6.190757630974986e-07,
+				-6.190448402776383e-07,
 				2.474599599838257,
-				-1.112402696890058e-05
+				-2.6382813302916475e-05
 			]
 		},
 		{
@@ -6393,20 +7698,15 @@
 			],
 			"name":"mixamorig:RightHandPinky1",
 			"rotation":[
-				7.875134772979576e-16,
-				-7.08624409151426e-11,
+				7.87526871006436e-16,
+				-7.09192704562156e-11,
 				-2.3883404765001615e-07,
 				1
-			],
-			"scale":[
-				0.9999999403953552,
-				0.9999999403953552,
-				0.9999999403953552
 			],
 			"translation":[
 				-6.433195114135742,
 				14.089838981628418,
-				1.0011943578720093
+				1.0011790990829468
 			]
 		},
 		{
@@ -6419,20 +7719,15 @@
 			],
 			"name":"mixamorig:RightHand",
 			"rotation":[
-				8.299721155098226e-16,
-				-1.0132140459973016e-06,
-				6.502752503134701e-11,
+				-9.463933000990188e-16,
+				-1.0132139323104639e-06,
+				6.504173588606221e-11,
 				1
 			],
-			"scale":[
-				0.9999999403953552,
-				0.9999999403953552,
-				0.9999999403953552
-			],
 			"translation":[
-				2.485699951648712e-06,
+				2.484779543010518e-06,
 				26.71288299560547,
-				-1.6156236597453244e-05
+				-8.974486718216212e-07
 			]
 		},
 		{
@@ -6442,19 +7737,14 @@
 			"name":"mixamorig:RightForeArm",
 			"rotation":[
 				1.4901160305669237e-08,
-				-2.5056934305212053e-10,
-				4.019098942542598e-10,
+				-2.505693152965449e-10,
+				4.019098387431086e-10,
 				1
 			],
-			"scale":[
-				0.9999999403953552,
-				0.9999999403953552,
-				0.9999999403953552
-			],
 			"translation":[
-				-1.4664121408713982e-05,
+				-1.5141882613534108e-05,
 				30.736324310302734,
-				-2.5038167223101482e-05
+				-9.779436368262395e-06
 			]
 		},
 		{
@@ -6470,13 +7760,13 @@
 			],
 			"scale":[
 				0.9999998807907104,
-				1,
-				1
+				0.9999999403953552,
+				0.9999998807907104
 			],
 			"translation":[
-				5.125999450683594e-05,
-				12.685277938842773,
-				0.00016917561879381537
+				5.137920379638672e-05,
+				12.687231063842773,
+				0.00018443440785631537
 			]
 		},
 		{
@@ -6497,7 +7787,7 @@
 			],
 			"translation":[
 				-11.27734375,
-				19.885740280151367,
+				19.885725021362305,
 				-3.96600079536438
 			]
 		},
@@ -6509,20 +7799,20 @@
 			],
 			"name":"mixamorig:Spine2",
 			"rotation":[
-				1.4210854715202004e-14,
-				-3.1415831472259015e-05,
+				1.509903313490213e-14,
+				-3.141582783428021e-05,
 				-0.00023998267715796828,
 				1
 			],
 			"scale":[
-				0.9999998807907104,
 				1,
-				0.9999999403953552
+				0.9999998807907104,
+				1
 			],
 			"translation":[
-				-0.001159422448836267,
-				11.062970161437988,
-				6.660411600023508e-08
+				0.0027468351181596518,
+				11.06298542022705,
+				1.8581340555101633e-07
 			]
 		},
 		{
@@ -6531,20 +7821,20 @@
 			],
 			"name":"mixamorig:Spine1",
 			"rotation":[
-				-3.4861002973229915e-14,
+				-4.796163466380676e-14,
 				-2.3561997295473702e-05,
-				-0.0001832595735322684,
+				-0.00018325960263609886,
 				1
 			],
 			"scale":[
+				0.9999999403953552,
 				1,
-				1.0000001192092896,
 				1
 			],
 			"translation":[
-				-0.0016082949005067348,
-				9.224002838134766,
-				-1.459629856981337e-07
+				-0.0035614273510873318,
+				9.224004745483398,
+				-1.4593388186767697e-07
 			]
 		},
 		{
@@ -6553,9 +7843,9 @@
 			],
 			"name":"mixamorig:Spine",
 			"rotation":[
-				3.5527141023169746e-15,
+				3.19744264973363e-14,
 				5.497783422470093e-05,
-				0.00042236963054165244,
+				0.000422369601437822,
 				0.9999999403953552
 			],
 			"scale":[
@@ -6565,27 +7855,27 @@
 			],
 			"translation":[
 				0.00023026284179650247,
-				13.214844703674316,
-				-8.881784197001252e-16
+				13.214837074279785,
+				7.275069435763726e-12
 			]
 		},
 		{
 			"name":"mixamorig:LeftToe_End",
 			"rotation":[
-				-6.33281072026648e-09,
-				2.704012791454602e-09,
-				-2.7348678877103794e-12,
+				-6.303821020736677e-09,
+				2.705917045986439e-09,
+				-3.728024999816171e-09,
 				1
 			],
 			"scale":[
 				1.0000001192092896,
-				1.0000001192092896,
+				1,
 				1.0000001192092896
 			],
 			"translation":[
-				-0.00022468349197879434,
-				12.65071964263916,
-				6.295368075370789e-05
+				-0.00022444507339969277,
+				12.650717735290527,
+				6.307289004325867e-05
 			]
 		},
 		{
@@ -6594,20 +7884,20 @@
 			],
 			"name":"mixamorig:LeftToeBase",
 			"rotation":[
-				0.35310301184654236,
-				-0.018740326166152954,
-				-0.00841776467859745,
-				0.9353588819503784
+				0.35310304164886475,
+				-0.018740328028798103,
+				-0.008417760021984577,
+				0.9353588223457336
 			],
 			"scale":[
-				0.9999999403953552,
 				1,
-				0.9999999403953552
+				0.9999999403953552,
+				0.9999998807907104
 			],
 			"translation":[
-				0.0033214185386896133,
-				21.399343490600586,
-				1.6629695892333984e-05
+				-0.0005849507870152593,
+				21.399341583251953,
+				1.5676021575927734e-05
 			]
 		},
 		{
@@ -6616,7 +7906,7 @@
 			],
 			"name":"mixamorig:LeftFoot",
 			"rotation":[
-				0.45922741293907166,
+				0.45922744274139404,
 				-0.02575177326798439,
 				0.03195181488990784,
 				0.8873703479766846
@@ -6624,12 +7914,12 @@
 			"scale":[
 				1,
 				1.0000001192092896,
-				1.0000001192092896
+				1
 			],
 			"translation":[
-				-1.5060599253047258e-05,
+				0.0019380643498152494,
 				51.58838653564453,
-				-6.11618161201477e-05
+				-6.081908941268921e-05
 			]
 		},
 		{
@@ -6639,14 +7929,19 @@
 			"name":"mixamorig:LeftLeg",
 			"rotation":[
 				-0.0794682577252388,
-				-2.70961641035683e-06,
-				2.1282055229221442e-07,
+				-2.709615955609479e-06,
+				2.128205380813597e-07,
 				0.9968373775482178
 			],
+			"scale":[
+				1,
+				0.9999999403953552,
+				1
+			],
 			"translation":[
-				-3.064524207729846e-07,
+				-0.0019534314051270485,
 				48.479007720947266,
-				-3.0442257411777973e-05
+				-3.0680675990879536e-05
 			]
 		},
 		{
@@ -6655,10 +7950,10 @@
 			],
 			"name":"mixamorig:LeftUpLeg",
 			"rotation":[
-				1.9214416724366856e-09,
-				0.02516508661210537,
+				1.9214398960798462e-09,
+				0.02516508474946022,
 				0.9996833205223083,
-				8.718724302525516e-07
+				8.718723734091327e-07
 			],
 			"scale":[
 				1,
@@ -6674,20 +7969,20 @@
 		{
 			"name":"mixamorig:RightToe_End",
 			"rotation":[
-				7.741153495999242e-08,
-				-4.275762244265735e-10,
-				5.7801541331059525e-12,
+				7.741141416772734e-08,
+				-4.2382450327060894e-10,
+				-1.8568672155439003e-09,
 				1
 			],
 			"scale":[
 				1,
 				0.9999999403953552,
-				0.9999999403953552
+				1.0000001192092896
 			],
 			"translation":[
-				0.00023118140234146267,
-				12.65077018737793,
-				-0.00021589547395706177
+				0.00023130061163101345,
+				12.650894165039062,
+				-0.00021577440202236176
 			]
 		},
 		{
@@ -6697,19 +7992,19 @@
 			"name":"mixamorig:RightToeBase",
 			"rotation":[
 				0.35310259461402893,
-				0.01874084584414959,
-				0.008420377969741821,
+				0.01874084398150444,
+				0.008420372381806374,
 				0.935359001159668
 			],
 			"scale":[
 				0.9999998807907104,
-				1,
-				0.9999999403953552
+				0.9999998807907104,
+				0.9999997615814209
 			],
 			"translation":[
-				0.0023998089600354433,
-				21.399885177612305,
-				0.00014540506526827812
+				0.0004469224368222058,
+				21.399883270263672,
+				0.00014349818229675293
 			]
 		},
 		{
@@ -6718,20 +8013,20 @@
 			],
 			"name":"mixamorig:RightFoot",
 			"rotation":[
-				0.45922693610191345,
-				0.02575777657330036,
+				0.45922690629959106,
+				0.02575777843594551,
 				-0.03195473551750183,
 				0.8873703479766846
 			],
 			"scale":[
 				0.9999999403953552,
-				0.9999999403953552,
+				1,
 				1
 			],
 			"translation":[
 				-0.001968185417354107,
 				51.58935546875,
-				-6.110221147537231e-05
+				-6.098300218582153e-05
 			]
 		},
 		{
@@ -6741,19 +8036,14 @@
 			"name":"mixamorig:RightLeg",
 			"rotation":[
 				-0.0794682651758194,
-				-2.7096089070255402e-06,
-				2.128205380813597e-07,
+				-2.709608679651865e-06,
+				2.1282055229221442e-07,
 				0.9968373775482178
 			],
-			"scale":[
-				1,
-				1.0000001192092896,
-				1
-			],
 			"translation":[
-				-0.0019534314051270485,
-				48.47900390625,
-				-2.916203811764717e-07
+				-3.064160409849137e-07,
+				48.47901916503906,
+				-5.300389602780342e-07
 			]
 		},
 		{
@@ -6762,7 +8052,7 @@
 			],
 			"name":"mixamorig:RightUpLeg",
 			"rotation":[
-				1.93235827339322e-09,
+				1.9323600497500593e-09,
 				0.02516508474946022,
 				0.9996833205223083,
 				8.718721460354573e-07
@@ -6774,8 +8064,8 @@
 			],
 			"translation":[
 				-9.417770385742188,
-				-4.875111103057861,
-				1.897700548171997
+				-4.875118732452393,
+				1.8977006673812866
 			]
 		},
 		{
@@ -6793,7 +8083,7 @@
 			],
 			"translation":[
 				0,
-				0,
+				7.275957614183426e-12,
 				-118.71610260009766
 			]
 		},
@@ -6802,7 +8092,12 @@
 				404
 			],
 			"extras":{
-				"is_solid":false
+				"is_solid":false,
+				"_RNA_UI":{
+					"is_solid":{
+						"use_export":true
+					}
+				}
 			},
 			"name":"Armature.001",
 			"rotation":[
@@ -6813,8 +8108,8 @@
 			],
 			"scale":[
 				0.005549999885261059,
-				0.005550005938857794,
-				0.005550005938857794
+				0.005550006870180368,
+				0.005550006870180368
 			],
 			"translation":[
 				104.24728393554688,
@@ -8227,7 +9522,18 @@
 			"extras":{
 				"is_solid":false,
 				"entity_type":"default",
-				"is_sensor":false
+				"is_sensor":false,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					}
+				}
 			},
 			"name":"Armature.002",
 			"rotation":[
@@ -8252,7 +9558,29 @@
 				"entity_type":"default",
 				"is_sensor":false,
 				"is_solid":true,
-				"tags":"deathzone"
+				"tags":"deathzone",
+				"is_kinematic":false,
+				"is_invisible":true,
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"is_kinematic":{
+						"use_export":true
+					},
+					"is_invisible":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":201,
 			"name":"deathfloor",
@@ -8272,7 +9600,21 @@
 				"entity_type":"default",
 				"is_sensor":true,
 				"is_solid":false,
-				"tags":"deathzone|invisible"
+				"tags":"deathzone|invisible",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":202,
 			"name":"Cube",
@@ -8292,7 +9634,21 @@
 				"entity_type":"default",
 				"is_sensor":true,
 				"is_solid":false,
-				"tags":"deathzone|invisible"
+				"tags":"deathzone|invisible",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":203,
 			"name":"Cube.002",
@@ -8312,7 +9668,21 @@
 				"entity_type":"default",
 				"is_sensor":true,
 				"is_solid":false,
-				"tags":"deathzone|invisible"
+				"tags":"deathzone|invisible",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":204,
 			"name":"Cube.003",
@@ -8332,7 +9702,21 @@
 				"entity_type":"default",
 				"is_sensor":true,
 				"is_solid":false,
-				"tags":"deathzone|invisible"
+				"tags":"deathzone|invisible",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":205,
 			"name":"Cube.004",
@@ -8352,7 +9736,21 @@
 				"entity_type":"default",
 				"is_sensor":true,
 				"is_solid":false,
-				"tags":"deathzone|invisible"
+				"tags":"deathzone|invisible",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":206,
 			"name":"Cube.005",
@@ -8372,7 +9770,21 @@
 				"entity_type":"default",
 				"is_sensor":true,
 				"is_solid":false,
-				"tags":"deathzone|invisible"
+				"tags":"deathzone|invisible",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":207,
 			"name":"Cube.006",
@@ -8392,7 +9804,21 @@
 				"entity_type":"default",
 				"is_sensor":true,
 				"is_solid":false,
-				"tags":"deathzone|invisible"
+				"tags":"deathzone|invisible",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":208,
 			"name":"Cube.007",
@@ -8412,7 +9838,21 @@
 				"entity_type":"default",
 				"is_sensor":true,
 				"is_solid":false,
-				"tags":"deathzone|invisible"
+				"tags":"deathzone|invisible",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":209,
 			"name":"Cube.001",
@@ -8438,7 +9878,21 @@
 				"entity_type":"default",
 				"is_sensor":true,
 				"is_solid":false,
-				"tags":"deathzone|invisible"
+				"tags":"deathzone|invisible",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":210,
 			"name":"Cube.008",
@@ -8464,7 +9918,21 @@
 				"entity_type":"default",
 				"is_sensor":true,
 				"is_solid":false,
-				"tags":"deathzone|invisible"
+				"tags":"deathzone|invisible",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":211,
 			"name":"Cube.009",
@@ -8490,7 +9958,21 @@
 				"entity_type":"default",
 				"is_sensor":true,
 				"is_solid":false,
-				"tags":"deathzone|invisible"
+				"tags":"deathzone|invisible",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":212,
 			"name":"Cube.010",
@@ -8516,7 +9998,21 @@
 				"entity_type":"default",
 				"is_sensor":true,
 				"is_solid":false,
-				"tags":"deathzone|invisible"
+				"tags":"deathzone|invisible",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":213,
 			"name":"Cube.011",
@@ -8542,7 +10038,21 @@
 				"entity_type":"default",
 				"is_sensor":true,
 				"is_solid":false,
-				"tags":"deathzone|invisible"
+				"tags":"deathzone|invisible",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":214,
 			"name":"Cube.012",
@@ -8568,7 +10078,21 @@
 				"entity_type":"default",
 				"is_sensor":true,
 				"is_solid":false,
-				"tags":"deathzone|invisible"
+				"tags":"deathzone|invisible",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":215,
 			"name":"Cube.013",
@@ -8594,7 +10118,21 @@
 				"entity_type":"default",
 				"is_sensor":true,
 				"is_solid":false,
-				"tags":"deathzone|invisible"
+				"tags":"deathzone|invisible",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":216,
 			"name":"Cube.014",
@@ -8620,7 +10158,21 @@
 				"entity_type":"default",
 				"is_sensor":true,
 				"is_solid":false,
-				"tags":"deathzone|invisible"
+				"tags":"deathzone|invisible",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":217,
 			"name":"Cube.015",
@@ -8646,7 +10198,21 @@
 				"entity_type":"default",
 				"is_sensor":true,
 				"is_solid":false,
-				"tags":"deathzone|invisible"
+				"tags":"deathzone|invisible",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":218,
 			"name":"Cube.016",
@@ -8672,7 +10238,21 @@
 				"entity_type":"default",
 				"is_sensor":true,
 				"is_solid":false,
-				"tags":"deathzone|invisible"
+				"tags":"deathzone|invisible",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":219,
 			"name":"Cube.017",
@@ -8698,7 +10278,21 @@
 				"entity_type":"default",
 				"is_sensor":true,
 				"is_solid":false,
-				"tags":"deathzone|invisible"
+				"tags":"deathzone|invisible",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":220,
 			"name":"Cube.018",
@@ -8724,7 +10318,21 @@
 				"entity_type":"default",
 				"is_sensor":true,
 				"is_solid":false,
-				"tags":"deathzone|invisible"
+				"tags":"deathzone|invisible",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":221,
 			"name":"Cube.019",
