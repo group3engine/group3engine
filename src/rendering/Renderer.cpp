@@ -267,8 +267,8 @@ void Renderer::Present(uint32_t imageIndex) {
     }
 }
 
-void Renderer::Update(double deltaTime, glm::vec3 character_position) {
-    m_camera->Update(context.extent.width, context.extent.height, deltaTime, character_position);
+void Renderer::Update(double deltaTime) {
+    m_camera->Update(context.extent.width, context.extent.height, deltaTime);
 
     ImGuiRenderer::Update(m_scene, m_camera);
 

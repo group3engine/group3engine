@@ -5,8 +5,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 
+#include "CharacterEntity.hpp"
 #include "Context.hpp"
 #include "PhysicsManager.hpp"
+#include "Scene.hpp"
 #include "Utils.hpp"
 #include "Buffer.hpp"
 
@@ -38,7 +40,8 @@ enum class EInputState {
     SLOW,
     MOUSING,
     MAX,
-    SWITCHVIEW
+    SWITCHVIEW,
+    TELEPORT
 };
 enum class InputType {
     FollowCharacter,
@@ -60,13 +63,14 @@ class Camera {
     void SetNearPlane(float nearPlane) { m_transform.nearPlane = nearPlane; }
     void SetFarPlane(float farPlane) { m_transform.farPlane = farPlane; }
     void SetPhysics(PhysicsManager* input_physics_reference) {m_physics_reference = input_physics_reference; }
+    void SetScene(Scene* input_scene_pointer) {m_scene_pointer = input_scene_pointer; }
 
     const CameraTransform &GetCameraTransform() const { return m_transform; }
     std::vector<Buffer> &GetBuffers() { return m_cameraUBO; }
 
-    void Update(uint32_t width, uint32_t height, double deltaTime, glm::vec3 character_postion);
+    void Update(uint32_t width, uint32_t height, double deltaTime);
     void UpdateTransforms(uint32_t width, uint32_t height);
-    void UpdateCameraMovement(glm::vec3 position);
+    void UpdateCameraMovement();
     void UpdateCameraRotation();
     void UpdateCameraAngles(const glm::vec2 &offset);
 
@@ -112,6 +116,7 @@ class Camera {
     double pitch = 0.0f;
     
     const PhysicsManager* m_physics_reference;
+    Scene* m_scene_pointer;
 
 
     InputType m_inputType = InputType::FollowCharacter;

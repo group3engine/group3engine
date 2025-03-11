@@ -257,6 +257,7 @@ void Engine::Shutdown() {
 void Engine::Run() {
     auto camera = static_cast<Camera *>(glfwGetWindowUserPointer(Platform::get().window));
     camera->SetPhysics(&PhysicsManager::get());
+    camera->SetScene(mScene.get());
 
     while (m_isRunning && !glfwWindowShouldClose(m_context.mWindow)) {
         double currentFrameTime = glfwGetTime();
@@ -289,9 +290,9 @@ void Engine::Run() {
             mScene->GetCharacter().SetCharacterPositionOffset(
                 characterVirtualPos.GetX(), characterVirtualPos.GetY(), characterVirtualPos.GetZ());
 
-            Update(GlobalUtil::deltaTime, mScene->GetCharacter().GetCharacterPositionOffset());
+            Update(GlobalUtil::deltaTime);
         } else {
-            Update(GlobalUtil::deltaTime, glm::vec3(0.0f));
+            Update(GlobalUtil::deltaTime);
         }
 
         Render();
@@ -321,6 +322,8 @@ void Engine::UpdateLogic() {
 
     camera->SetInput(EInputState::SWITCHVIEW, IsKeyPressed(KEY::eV));
 
+    camera->SetInput(EInputState::TELEPORT, IsKeyPressed(KEY::eT));
+
     if (IsKeyPressed(KEY::e5)) {
         vkutil::postProcessSettings.Enable = vkutil::postProcessSettings.Enable == true ? false : true;
 
@@ -346,10 +349,10 @@ void Engine::UpdateLogic() {
     }
 }
 
-void Engine::Update(double deltaTime, glm::vec3 character_position) {
+void Engine::Update(double deltaTime) {
     UpdateLogic();
     mScene->Update(deltaTime);
-    mRenderer->Update(deltaTime, character_position);
+    mRenderer->Update(deltaTime);
 }
 
 void Engine::Render() {

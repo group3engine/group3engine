@@ -29,7 +29,7 @@ class Renderer {
     void Destroy();
 
     void Render();
-    void Update(double deltaTime, glm::vec3 character_position);
+    void Update(double deltaTime);
     std::shared_ptr<Scene> m_scene;
 
   private:
