@@ -350,8 +350,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             jsmn_init(&parser);
             jsmntok_t tokens[256];
 
-            int r;
-            r = jsmn_parse(&parser, gltfNode.extras.data, strlen(gltfNode.extras.data), tokens, 256);
+            jsmn_parse(&parser, gltfNode.extras.data, strlen(gltfNode.extras.data), tokens, 256);
 
 
             // Cast to match cgltf functionality
@@ -506,6 +505,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             Transform transform = {.translation = translation,
                                    .rotation = rotation,
                                    .scale = scale};
+            transform.UpdateMatrix();
             entity.SetTransform(transform);
         }
         // add the mesh
@@ -552,6 +552,11 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         //            }
         //        }
     }
+    // last, create the root node
+    Entity *root = new Entity();
+    root->SetName("root");
+    root->SetTransform(glm::mat4(1.f));
+    aEntities.push_back(root);
     // go through each entity and add its parent
     for (size_t ni = 0; ni < data->nodes_count; ni++) {
         const auto &gltfNode = data->nodes[ni];
@@ -560,7 +565,13 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             assert(parentIndex < (int)data->nodes_count);
             aEntities[ni]->SetParent(aEntities[parentIndex]);
         }
+        else
+        {
+            aEntities[ni]->SetParent(aEntities.back());
+        }
     }
+    // update the children from the root node
+    root->SetTransform(glm::mat4(1.f));
     // add skins
     for (size_t i = 0; i < data->skins_count; i++) {
         const auto &gltfSkin = data->skins[i];
@@ -703,7 +714,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
     }
 
     // for each entity, if it has a skin, add an animator
-    for (size_t i = 0; i < aEntities.size(); i++) {
+    for (size_t i = 0; i < data->nodes_count; i++) {
         const auto &gltfNode = data->nodes[i];
         if (gltfNode.skin) {
             int skinIndex = static_cast<int>(gltfNode.skin - data->skins);

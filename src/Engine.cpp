@@ -124,14 +124,14 @@ bool Engine::Initialize() {
         if (!entity->IsCharacter()) {
 
             if (entity->HasAnimator()) {
-                SPDLOG_INFO("Skipping entity {}, as it has an animator", entity->mName);
+                SPDLOG_INFO("Skipping entity {}, as it has an animator", entity->GetName());
                 continue;
             }
 
             const auto *mesh = entity->GetMesh();
 
             if (!mesh) {
-                SPDLOG_WARN("Entity {} does not have mesh", entity->mName);
+                SPDLOG_WARN("Entity {} does not have mesh", entity->GetName());
                 continue;
             }
 
@@ -140,7 +140,7 @@ bool Engine::Initialize() {
             // no physics to add if it isn't a sesnor or solid
             if(entity->IsSensor() || entity->IsSolid()) {
                 // calculate the scaling matrix to apply to the vertices
-                glm::mat4 entityWorldTransform = entity->getWorldTransform();
+                glm::mat4 entityWorldTransform = entity->GetWorldTransform();
                 // decompose the world transform to get the scale
                 glm::vec3 position, scale;
                 glm::quat rotation;
@@ -180,7 +180,7 @@ bool Engine::Initialize() {
                         SPDLOG_ERROR("Shape result is invalid. {}", result.GetError());
                     }
 
-                    Transform entity_transform = entity->getWorldTransformComponents();
+                    Transform entity_transform = entity->GetWorldTransformComponents();
                     EMotionType motionType = EMotionType::Static;
                     if(entity->IsKinematic()) {
                         motionType = EMotionType::Kinematic;
@@ -238,9 +238,14 @@ bool Engine::Initialize() {
         characterEntity->Reset();
     }
 
+    // call the scene awake function
+    mScene->Awake();
+
     // ---END OF PHYSICS TEST INITIALISATION---
 
     SPDLOG_DEBUG("Engine initialised.");
+
+
 
     return m_isRunning;
 }

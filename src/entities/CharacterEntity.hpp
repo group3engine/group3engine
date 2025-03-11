@@ -28,6 +28,8 @@ class CharacterEntity : public Entity {
     // update override
     void Update(double deltaTime) override;
 
+    void Awake() override ;
+
     void OnCollisionStart(Entity *aOther) override ;
 
     void OnCollisionStay(Entity *aOther) override {
@@ -43,11 +45,16 @@ class CharacterEntity : public Entity {
                                                 mLastCheckpoint.z));
     }
 
+    [[nodiscard]] glm::vec3 GetCharacterPositionOffset() const { return mCharacterPositionOffset; }
+    void SetCharacterPositionOffset(glm::vec3 aPosition) { mCharacterPositionOffset = aPosition; }
+    void SetCharacterPositionOffset(float x, float y, float z) {
+        mCharacterPositionOffset = glm::vec3(x, y, z);
+    }
+
   private:
     void Save();
     void Load();
   private:
-    bool mHasFirstFrameHappened = false;
     Transform mInitialTransform = {};
     std::unique_ptr<CharacterVirtualTest> mCharacterVirtual;
 

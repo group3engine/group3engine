@@ -8,11 +8,11 @@
 
 class RotatingPlatform : public Entity{
   public:
-    void Update(double deltaTime) override;
+    explicit RotatingPlatform(float aAngularVelocity);
+    void Awake() override;
   private:
     // the angular velocity of the platform
     float mAngularVelocity = 0.3f;
-    bool mHasFirstFrameHappened = false;
 
 };
 

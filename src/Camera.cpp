@@ -73,7 +73,7 @@ void Camera::UpdateTransforms(uint32_t width, uint32_t height) {
 }
 
 void Camera::UpdateCameraMovement() {
-    Transform character_transform = m_scene_pointer->GetCharacter().getWorldTransformComponents();
+    Transform character_transform = m_scene_pointer->GetCharacter().GetWorldTransformComponents();
     glm::vec3 character_position = character_transform.translation;
 
     if(inputMap[std::size_t(EInputState::SWITCHVIEW)] == true)

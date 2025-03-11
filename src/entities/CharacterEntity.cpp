@@ -17,11 +17,6 @@ void CharacterEntity::SetCharacterVirtual(unique_ptr<CharacterVirtualTest> &&uni
 CharacterEntity::~CharacterEntity() {
 }
 void CharacterEntity::Update(double deltaTime) {
-    if(!mHasFirstFrameHappened) {
-        mInitialTransform = GetTransform();
-        mHasFirstFrameHappened = true;
-    }
-
     Entity::Update(deltaTime);
 
 
@@ -33,7 +28,7 @@ void CharacterEntity::Update(double deltaTime) {
     characterVelocity.y = 0;
     if (glm::length(characterVelocity) > 0.1f) {
         // set the transform rotation to the direction of the velocity, on top of the initial transform rotation
-        Transform newTransform = GetTransform();
+        Transform newTransform = GetLocalTransform();
         newTransform.rotation = glm::quatLookAt(glm::normalize(characterVelocity * -1.f), glm::vec3(0, 1, 0)) * mInitialTransform.rotation;
         SetTransform(newTransform);
     }
@@ -65,7 +60,7 @@ void CharacterEntity::Update(double deltaTime) {
         break;
     }
     // for each child, if there is an animator, call set animation
-    for (auto &child : mChildren) {
+    for (auto &child : GetChildren()) {
             if (child->HasAnimator()) {
                 child->GetAnimator().SetActiveAnimation(activeAnimation, blend, playWholeAnimation);
                 child->GetAnimator().SetTimeScale(timeScale);
@@ -73,24 +68,24 @@ void CharacterEntity::Update(double deltaTime) {
     }
 }
 CharacterEntity::CharacterEntity() {
-    mHasCharacter = true;
+    SetAsCharacter();
     Load();
 }
 void CharacterEntity::OnCollisionStart(Entity *aOther) {
 
-    //        SPDLOG_INFO("I am {} and I collided with {}", mName, aOther->mName);
     if(aOther->CompareTag("deathzone")) {
-        SPDLOG_INFO("I am {} and I collided with a death zone", mName);
+        SPDLOG_INFO("I am {} and I collided with a death zone", GetName());
         Reset();
     }
     // if its a checkpoint, set the checkpoint
     if(aOther->CompareTag("checkpoint")) {
         // set the checkpoint to the position of the checkpoint, plus a bit in the y direction
-        glm::vec3 checkpointPosition = aOther->getWorldTransformComponents().translation + glm::vec3(0, 2.5f, 0);
+        glm::vec3 checkpointPosition =
+            aOther->GetWorldTransformComponents().translation + glm::vec3(0, 2.5f, 0);
         SetCheckpoint(checkpointPosition);
 
     }
-    SPDLOG_INFO("I am {} and I collided with {}", mName, aOther->mName);
+    SPDLOG_INFO("I am {} and I collided with {}", GetName(), aOther->GetName());
 
 }
 void CharacterEntity::Save() {
@@ -187,4 +182,7 @@ void CharacterEntity::Load() {
             break;
         }
     }
+}
+void CharacterEntity::Awake() {
+    mInitialTransform = GetLocalTransform();
 }

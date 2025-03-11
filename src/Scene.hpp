@@ -32,6 +32,7 @@ class Scene {
     void DrawSkinned(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
     void AddLightSource(Light& LightSource);
     void Update(double aDeltaTime);
+    void Awake();
 
     void Destroy();
 
