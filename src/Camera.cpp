@@ -89,8 +89,15 @@ void Camera::UpdateCameraMovement() {
         glm::vec3 forward = glm::normalize(m_direction);
         glm::vec3 rightVector = glm::normalize(glm::cross(m_direction, m_up));
 
+        if (inputMap[std::size_t(EInputState::ZOOM_IN)]) {
+            zoom_level -= 0.1f;
+        }
+        if (inputMap[std::size_t(EInputState::ZOOM_OUT)]) {
+            zoom_level += 0.1f;
+        }
+
         glm::vec3 third_person_camera_offset =
-            (-2.f * forward) + (1.0f * m_up) + (0.5f * rightVector);
+            ((-2.f * forward) + (1.0f * m_up) + (0.5f * rightVector)) * zoom_level;
 
         RRayCast ray;
         ray.mOrigin = Vec3(character_position.x, character_position.y, character_position.z);

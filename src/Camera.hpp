@@ -39,9 +39,11 @@ enum class EInputState {
     FAST,
     SLOW,
     MOUSING,
-    MAX,
     SWITCHVIEW,
-    TELEPORT
+    TELEPORT,
+    ZOOM_IN,
+    ZOOM_OUT,
+    MAX
 };
 enum class InputType {
     FollowCharacter,
@@ -114,6 +116,7 @@ class Camera {
     float m_mouseSensitivity;
     double yaw = 90.0f;
     double pitch = 0.0f;
+    float zoom_level = 1.f;
     
     const PhysicsManager* m_physics_reference;
     Scene* m_scene_pointer;

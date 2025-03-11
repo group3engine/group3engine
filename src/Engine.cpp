@@ -324,6 +324,9 @@ void Engine::UpdateLogic() {
 
     camera->SetInput(EInputState::TELEPORT, IsKeyPressed(KEY::eT));
 
+    camera->SetInput(EInputState::ZOOM_IN, IsKeyPressed(KEY::eY));
+    camera->SetInput(EInputState::ZOOM_OUT, IsKeyPressed(KEY::eU));
+
     if (IsKeyPressed(KEY::e5)) {
         vkutil::postProcessSettings.Enable = vkutil::postProcessSettings.Enable == true ? false : true;
 
