@@ -49,12 +49,19 @@ void Engine::InitScene() {
     Light directionalLight;
     directionalLight.Type = LightType::Directional;
     directionalLight.position = glm::vec4(21.261806f, 4.575542f, -9.722689f, 1.0f); // -0.2972
-    directionalLight.colour = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    directionalLight.colour = glm::vec4(0.8,0.8,0.4,1.0);
+
+    // another light in a completely different direction
+    Light directionalLight2;
+    directionalLight2.Type = LightType::Directional;
+    directionalLight2.position = glm::vec4(-21.261806f, 4.575542f, 9.722689f, 1.0f); // -0.2972
+    directionalLight2.colour = glm::vec4(0.8,0.8,0.4,1.0);
+
 
     std::vector<glm::vec4> spotLightPositions;
 
     // Random spot light positions put side by side each other
-    for (size_t i = 0; i < 25; i++) {
+    for (size_t i = 0; i < 24; i++) {
         spotLightPositions.push_back(glm::vec4(-9.0 + i * 0.8, 0.7f, 0.5f, 1.0f));
     }
 
@@ -63,6 +70,7 @@ void Engine::InitScene() {
     // Add a directional light source defined earlier
     mScene->Load(gltfPath);
     mScene->AddLightSource(directionalLight);
+    mScene->AddLightSource(directionalLight2);
 
     // Loop through the positions and instantiate a light
     // and pass to the scene to add the lights to the scene
