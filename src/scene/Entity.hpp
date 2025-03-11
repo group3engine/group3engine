@@ -20,6 +20,7 @@ class Entity {
     static std::atomic<uint32_t> kEntityCount;
 
   public:
+    // functions the user can call
     Entity(std::string aName, Entity *aParent, Mesh *aMesh,
            Transform aLocalTransform)
         : mName(std::move(aName)), mParent(aParent), mMesh(aMesh),
@@ -33,6 +34,7 @@ class Entity {
     Entity &operator=(const Entity &) = delete;
     Entity(Entity &&) = default;
     Entity &operator=(Entity &&) = default;
+
     virtual ~Entity();
 
     // equality operator
@@ -53,77 +55,38 @@ class Entity {
     void SetName(std::string aName) { mName = std::move(aName); }
     [[nodiscard]] const std::string &GetName() const { return mName; }
 
-    [[nodiscard]] glm::vec3 GetCharacterPositionOffset() const { return mCharacterPositionOffset; }
-    void SetCharacterPositionOffset(glm::vec3 aPosition) { mCharacterPositionOffset = aPosition; }
-    void SetCharacterPositionOffset(float x, float y, float z) {
-        mCharacterPositionOffset = glm::vec3(x, y, z);
-    }
-
     void SetParent(Entity *aParent);
 
     [[nodiscard]] Entity *GetParent() const { return mParent; }
     [[nodiscard]] std::vector<Entity *> const &GetChildren() { return mChildren; }
-    void AddChild(Entity *aChild) { mChildren.push_back(aChild); }
 
-    void AddMesh(Mesh *mesh) {
-        mMesh = mesh;
-        mHasMesh = true;
-    }
-
-    void AddRigidBody(std::unique_ptr<RigidBody> rigidBody) {
-        mRigidBody = std::move(rigidBody);
-        PhysicsManager::get().RegisterEntity(this, mRigidBody->mBodyId);
-        mHasRigidBody = true;
-    }
 
     void SetTransform(Transform aTransform) { mLocalTransform = aTransform; SetPhysicsTransform();}
     void SetTransform(glm::mat4 aTransform);
-    void SetJointTransform(glm::mat4 aJointTransform) {
-        SetTransform(aJointTransform);
-    }
 
-    void SetPhysicsTransform();
+    [[nodiscard]] glm::mat4 GetWorldTransform() const;
 
-    void SetInverseBindMatrix(glm::mat4 aInverseBindMatrix) {
-        mInverseBindMatrix = aInverseBindMatrix;
-    }
+    [[nodiscard]] Transform GetWorldTransformComponents() const;
 
-    [[nodiscard]] glm::mat4 getWorldTransform() const;
 
-    [[nodiscard]] Transform getWorldTransformComponents() const;
 
-    [[nodiscard]] glm::mat4 getSkinnedWorldTransform(Entity const *aRoot) const;
 
-    glm::mat4 getLocalTransform();
+    [[nodiscard]] const Mesh *GetMesh() const { return mMesh; }
 
-    void RecordDrawOpaque(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout);
 
-    void RecordDrawShadow(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout) const;
-
-    void RecordDrawCutout(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout);
-
-    const Mesh *GetMesh() const { return mMesh; }
-
-    // move an animator to the entity
-    void SetAnimator(Animator *aAnimator);
 
     void RecordDrawSkinned(VkCommandBuffer aCmdBuff,
                            VkPipelineLayout aPipeLayout);
 
-    virtual void Update(double deltaTime);
+    [[nodiscard]] Transform GetTransform();
 
-    Transform GetTransform();
+    [[nodiscard]] bool IsCharacter() const;
 
-    bool IsCharacter() const;
-
-    bool HasAnimator() const { return static_cast<bool>(mAnimator); }
+    [[nodiscard]] bool HasAnimator() const { return static_cast<bool>(mAnimator); }
 
     // get a reference to the animator
-  [[nodiscard]] Animator & GetAnimator(){return *mAnimator;}
+    [[nodiscard]] Animator & GetAnimator(){return *mAnimator;}
 
-    virtual void OnCollisionStart(Entity *aOther) {}
-
-    virtual void OnCollisionStay(Entity *aOther) {}
 
     void AddTag(const std::string& aTag) { mTags.emplace_back(aTag); }
     [[nodiscard]] bool CompareTag(const std::string& aTag);
@@ -140,11 +103,49 @@ class Entity {
     void SetAsInvisible() { mIsVisible = false; }
     void SetAsVisible() { mIsVisible = true; }
 
+  public:
+    // the following functions are overridable by the user
+    virtual void OnCollisionStart(Entity *aOther) {}
 
-  protected:
-    virtual void Update() {}
-    virtual void LateUpdate() {}
+    virtual void OnCollisionStay(Entity *aOther) {}
+
+    virtual void LateUpdate(double deltaTime) {}
+
     virtual void Awake() {}
+
+    virtual void Update(double deltaTime) {}
+
+  public:
+    // functions used by the engine, the user should not call these
+    void BaseUpdate(double deltaTime);
+    void RecordDrawOpaque(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout);
+
+    void RecordDrawShadow(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout) const;
+
+    void RecordDrawCutout(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout);
+    // move an animator to the entity
+    void SetAnimator(Animator *aAnimator);
+
+    void AddChild(Entity *aChild) { mChildren.push_back(aChild); }
+
+    void AddMesh(Mesh *mesh) {
+        mMesh = mesh;
+        mHasMesh = true;
+    }
+
+    void AddRigidBody(std::unique_ptr<RigidBody> rigidBody) {
+        mRigidBody = std::move(rigidBody);
+        PhysicsManager::get().RegisterEntity(this, mRigidBody->mBodyId);
+        mHasRigidBody = true;
+    }
+
+    [[nodiscard]] glm::mat4 getSkinnedWorldTransform(Entity const *aRoot) const;
+
+
+
+  private:
+    void SetPhysicsTransform();
+    void RemoveChild(Entity *aChild);
 
   protected:
 
@@ -173,7 +174,6 @@ class Entity {
     bool mHasMesh = false;
     Animator *mAnimator = nullptr;
     size_t frameNumber = 0;
-    glm::mat4 mInverseBindMatrix = glm::mat4(1.0f);
     glm::mat4 mAnimationTransform = glm::mat4(1.0f);
 
     bool mHasRigidBody = false;
@@ -187,7 +187,6 @@ class Entity {
     bool mIsVisible = true;
 
     bool mIsKinematic = false;
-
 
 };
 #endif // SCENE_ENTITY_HPP

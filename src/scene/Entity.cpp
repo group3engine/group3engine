@@ -23,14 +23,17 @@ Entity::Entity(std::string aName, Entity *aParent, Mesh *aMesh, glm::mat4 aLocal
 }
 
 void Entity::SetParent(Entity *aParent) {
+    if(mParent) {
+        mParent->RemoveChild(this);
+    }
     mParent = aParent;
     mParent->AddChild(this);
 }
 
-glm::mat4 Entity::getWorldTransform() const {
+glm::mat4 Entity::GetWorldTransform() const {
     glm::mat4 parent_matrix = glm::mat4(1.0f);
     if (mParent) {
-        parent_matrix = mParent->getWorldTransform();
+        parent_matrix = mParent->GetWorldTransform();
     }
 
     if (mHasCharacter) {
@@ -57,9 +60,9 @@ glm::mat4 Entity::getWorldTransform() const {
         return parent_matrix * mLocalTransform.getMatrix();
     }
 }
-Transform Entity::getWorldTransformComponents() const
+Transform Entity::GetWorldTransformComponents() const
 {
-    glm::mat4 worldTransform = getWorldTransform();
+    glm::mat4 worldTransform = GetWorldTransform();
     glm::vec3 translation, scale;
     glm::quat rotation;
     glm::vec3 skew;
@@ -74,16 +77,6 @@ Transform Entity::getWorldTransformComponents() const
 
 }
 
-glm::mat4 Entity::getLocalTransform() {
-    glm::mat4 return_matrix = mLocalTransform.getMatrix();
-
-    if (mHasRigidBody) {
-        // also apply physics' transformations
-        return_matrix = return_matrix;
-    }
-
-    return return_matrix;
-}
 
 void Entity::SetTransform(glm::mat4 aTransform) {
     glm::vec3 translation, scale;
@@ -102,7 +95,7 @@ void Entity::RecordDrawOpaque(VkCommandBuffer aCmdBuff,
                               VkPipelineLayout aPipelineLayout) {
     if (mHasMesh && mAnimator == nullptr && mIsVisible) {
         // push the model matrix
-        glm::mat4 mModelMatrix = getWorldTransform();
+        glm::mat4 mModelMatrix = GetWorldTransform();
         vkCmdPushConstants(aCmdBuff, aPipelineLayout,
                            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
                            sizeof(glm::mat4), &mModelMatrix);
@@ -137,7 +130,7 @@ void Entity::RecordDrawOpaque(VkCommandBuffer aCmdBuff,
 void Entity::RecordDrawShadow(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout) const {
     if (mHasMesh && mIsVisible) {
         // push the model matrix
-        glm::mat4 mModelMatrix = getWorldTransform();
+        glm::mat4 mModelMatrix = GetWorldTransform();
         vkCmdPushConstants(aCmdBuff, aPipelineLayout,
                            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
                            sizeof(glm::mat4), &mModelMatrix);
@@ -167,7 +160,7 @@ void Entity::RecordDrawCutout(VkCommandBuffer aCmdBuff,
                               VkPipelineLayout aPipelineLayout) {
     if (mHasMesh && mAnimator == nullptr && mIsVisible) {
         // push the model matrix
-        glm::mat4 mModelMatrix = getWorldTransform();
+        glm::mat4 mModelMatrix = GetWorldTransform();
         vkCmdPushConstants(aCmdBuff, aPipelineLayout,
                            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
                            sizeof(glm::mat4), &mModelMatrix);
@@ -199,12 +192,6 @@ void Entity::RecordDrawCutout(VkCommandBuffer aCmdBuff,
     }
 }
 void Entity::SetAnimator(Animator *aAnimator) { mAnimator = aAnimator; }
-void Entity::Update(double deltaTime) {
-    frameNumber++;
-    if (mAnimator) {
-        mAnimator->Update(deltaTime, this);
-    }
-}
 Entity::~Entity() {
     // delete the animator if it exists
     delete mAnimator;
@@ -214,7 +201,7 @@ void Entity::RecordDrawSkinned(VkCommandBuffer aCmdBuff,
     // we only need to render if we have a skinned mesh
     if (mHasMesh && mAnimator != nullptr && mIsVisible) {
         // push the model matrix
-        glm::mat4 mModelMatrix = getWorldTransform();
+        glm::mat4 mModelMatrix = GetWorldTransform();
         vkCmdPushConstants(aCmdBuff, aPipeLayout,
                            VK_SHADER_STAGE_VERTEX_BIT |
                                VK_SHADER_STAGE_FRAGMENT_BIT,
@@ -271,7 +258,7 @@ void Entity::SetPhysicsTransform() {
         glm::mat4 worldTransform ;
         mLocalTransform.scale = glm::vec3(1.0f);
         if (mParent) {
-            worldTransform = mParent->getWorldTransform() * mLocalTransform.getMatrix();
+            worldTransform = mParent->GetWorldTransform() * mLocalTransform.getMatrix();
         } else {
             worldTransform = mLocalTransform.getMatrix();
         }
@@ -283,5 +270,17 @@ void Entity::SetPhysicsTransform() {
         glm::decompose(worldTransform, scale, rotation, translation, skew, perspective);
         mRigidBody->SetPosition(translation);
         mRigidBody->SetRotation(rotation);
+    }
+}
+void Entity::RemoveChild(Entity *aChild) {
+    auto it = std::find(mChildren.begin(), mChildren.end(), aChild);
+    if (it != mChildren.end()) {
+            mChildren.erase(it);
+    }
+}
+void Entity::BaseUpdate(double deltaTime) {
+    frameNumber++;
+    if (mAnimator) {
+        mAnimator->Update(deltaTime, this);
     }
 }

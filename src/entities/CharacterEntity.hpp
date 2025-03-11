@@ -43,6 +43,12 @@ class CharacterEntity : public Entity {
                                                 mLastCheckpoint.z));
     }
 
+    [[nodiscard]] glm::vec3 GetCharacterPositionOffset() const { return mCharacterPositionOffset; }
+    void SetCharacterPositionOffset(glm::vec3 aPosition) { mCharacterPositionOffset = aPosition; }
+    void SetCharacterPositionOffset(float x, float y, float z) {
+        mCharacterPositionOffset = glm::vec3(x, y, z);
+    }
+
   private:
     void Save();
     void Load();

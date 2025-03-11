@@ -140,7 +140,7 @@ bool Engine::Initialize() {
             // no physics to add if it isn't a sesnor or solid
             if(entity->IsSensor() || entity->IsSolid()) {
                 // calculate the scaling matrix to apply to the vertices
-                glm::mat4 entityWorldTransform = entity->getWorldTransform();
+                glm::mat4 entityWorldTransform = entity->GetWorldTransform();
                 // decompose the world transform to get the scale
                 glm::vec3 position, scale;
                 glm::quat rotation;
@@ -180,7 +180,7 @@ bool Engine::Initialize() {
                         SPDLOG_ERROR("Shape result is invalid. {}", result.GetError());
                     }
 
-                    Transform entity_transform = entity->getWorldTransformComponents();
+                    Transform entity_transform = entity->GetWorldTransformComponents();
                     EMotionType motionType = EMotionType::Static;
                     if(entity->IsKinematic()) {
                         motionType = EMotionType::Kinematic;
