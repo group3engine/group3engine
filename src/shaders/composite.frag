@@ -14,7 +14,7 @@ void main()
 	vec4 lighting = texture(renderedScene, uv);
 	vec4 bloom = texture(bloomPass, uv);
 	vec4 ssao = texture(SSAO, uv);
-	vec4 ssr = texture(SSR, uv);
+	//vec4 ssr = texture(SSR, uv);
 
 	vec3 hdrColor = (lighting.rgb) * ssao.r;
 	vec3 ldrColor = hdrColor / (hdrColor + vec3(1.0));
