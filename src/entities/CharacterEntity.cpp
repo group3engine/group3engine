@@ -110,13 +110,14 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
     }
 
     // if its a bounce object, set the velocity to 2.f magnitude in the direction between the character and the object
-        if(aOther->CompareTag("bounce")) {
-                glm::vec3 characterPosition = GetWorldTransformComponents().translation;
-                glm::vec3  otherPosition = aOther->GetWorldTransformComponents().translation;
-                glm::vec3  direction = otherPosition - characterPosition;
-                direction = glm::normalize(direction);
-                mCharacterVirtual->Set
-        }
+    if(aOther->CompareTag("bounce")) {
+            glm::vec3 characterPosition = GetWorldTransformComponents().translation;
+            glm::vec3  otherPosition = aOther->GetWorldTransformComponents().translation;
+            glm::vec3  direction = characterPosition - otherPosition;
+            direction = glm::normalize(direction);
+            direction *= 70.f;
+            mCharacterVirtual->SetCharacterImpulse(Vec3(direction.x, direction.y, direction.z));
+    }
 
 }
 void CharacterEntity::Save() {

@@ -44,6 +44,9 @@ public:
         // Get velocity of the character (used for animation, don't include ground velocity)
         virtual Vec3			GetCharacterVelocity() const				{ return mCharacter->GetLinearVelocity() - mCharacter->GetGroundVelocity(); }
 
+        // Set an impulse to the character
+        void SetCharacterImpulse(Vec3 impulse);
+
 	void SetCharacterPosition(RVec3 pos) { mCharacter->SetPosition(pos); }
 
         // Sets the character to ragdoll mode

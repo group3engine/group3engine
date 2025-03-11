@@ -224,3 +224,11 @@ void CharacterVirtualTest::OnContactSolve(const CharacterVirtual *inCharacter, c
 	if (!mAllowSliding && inContactVelocity.IsNearZero() && !inCharacter->IsSlopeTooSteep(inContactNormal))
 		ioNewCharacterVelocity = Vec3::sZero();
 }
+void CharacterVirtualTest::SetCharacterImpulse(Vec3 impulse) {
+    // get the current velocity
+    Vec3 current_velocity = mCharacter->GetLinearVelocity();
+    // add the impulse, divide by mass
+    current_velocity += impulse / mCharacter->GetMass();
+    // set the new velocity
+    mCharacter->SetLinearVelocity(current_velocity);
+}
