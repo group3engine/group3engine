@@ -104,6 +104,14 @@ target_compile_definitions(src PRIVATE CMAKE_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 
 target_link_libraries(src PRIVATE cgltf glfw glm::glm-header-only Jolt spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32> stb_image volk_headers vma)
 
+# Compiler warnings
+if ((CMAKE_CXX_COMPILER_ID STREQUAL "Clang") OR (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
+  # Disable rtti with -fno-rtti to be compatible with Jolt
+  target_compile_options(src PRIVATE -Wall -Wextra -Wnon-virtual-dtor -pedantic -Wno-missing-field-initializers)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+  # Disable rtti with /GR- to be compatible with Jolt
+  target_compile_options(src PRIVATE /permissive- /W4 /w14640)
+endif()
 
 file(GLOB_RECURSE GLSL_SOURCE_FILES "${CMAKE_SOURCE_DIR}/src/shaders/*.vert" "${CMAKE_SOURCE_DIR}/src/shaders/*.frag")
 file(GLOB_RECURSE GLSL_HEADER_FILES "${CMAKE_SOURCE_DIR}/src/shaders/*.glsl")
