@@ -20,6 +20,8 @@ Entity::Entity(std::string aName, Entity *aParent, Mesh *aMesh, glm::mat4 aLocal
     glm::vec4 perspective;
     glm::decompose(aLocalTransform, scale, rotation, translation, skew, perspective);
     mLocalTransform = {.translation = translation, .rotation = rotation, .scale = scale};
+    mLocalTransform.UpdateMatrix();
+    UpdateChildrenTransform();
 }
 
 void Entity::SetParent(Entity *aParent) {
@@ -31,19 +33,15 @@ void Entity::SetParent(Entity *aParent) {
 }
 
 glm::mat4 Entity::GetWorldTransform() const {
-    glm::mat4 parent_matrix = glm::mat4(1.0f);
-    if (mParent) {
-        parent_matrix = mParent->GetWorldTransform();
-    }
 
     if (mHasCharacter) {
-        return glm::translate(mCharacterPositionOffset) * parent_matrix * mLocalTransform.getMatrix();
+        return glm::translate(mCharacterPositionOffset) * mParentTransform * mLocalTransform.getMatrix();
     }
-    else if (mHasRigidBody) {
+    else if (mIsKinematic && mHasRigidBody) {
         // also apply physics transformations
         auto physicsTransform = glm::transpose(mRigidBody->GetWorldTransform());
         // get the physicsTransform in the same space as the local transform
-        glm::mat4 physicsTransformInLocalSpace = glm::inverse(parent_matrix) * physicsTransform;
+        glm::mat4 physicsTransformInLocalSpace = glm::inverse(mParentTransform) * physicsTransform;
         // decompose the physics transform - only the translation and rotation are needed
         glm::vec3 translation, scale;
         glm::quat rotation;
@@ -52,12 +50,13 @@ glm::mat4 Entity::GetWorldTransform() const {
         glm::decompose(physicsTransformInLocalSpace, scale, rotation, translation, skew, perspective);
         // create a new transform with the physics transform
         Transform physicsTransformLocalSpace = {.translation = translation, .rotation = rotation, .scale = mLocalTransform.scale};
+        physicsTransformLocalSpace.UpdateMatrix();
 
-        return parent_matrix * physicsTransformLocalSpace.getMatrix();
+        return mParentTransform * physicsTransformLocalSpace.getMatrix();
     }
     else
     {
-        return parent_matrix * mLocalTransform.getMatrix();
+        return mParentTransform * mLocalTransform.getMatrix();
     }
 }
 Transform Entity::GetWorldTransformComponents() const
@@ -71,10 +70,9 @@ Transform Entity::GetWorldTransformComponents() const
     //    assert(perspective.w == 1.0f && perspective.x == 0.0f &&
     //           perspective.y == 0.0f && perspective.z == 0.0f);
     //    assert(skew.x == 0.0f && skew.y == 0.0f && skew.z == 0.0f);
-    return {
-        .translation = translation, .rotation = rotation, .scale = scale};
-
-
+    Transform ret =  {.translation = translation, .rotation = rotation, .scale = scale};
+    ret.UpdateMatrix();
+    return ret;
 }
 
 
@@ -89,7 +87,9 @@ void Entity::SetTransform(glm::mat4 aTransform) {
     //    assert(skew.x == 0.0f && skew.y == 0.0f && skew.z == 0.0f);
     mLocalTransform = {
         .translation = translation, .rotation = rotation, .scale = scale};
+    mLocalTransform.UpdateMatrix();
     SetPhysicsTransform();
+    UpdateChildrenTransform();
 }
 void Entity::RecordDrawOpaque(VkCommandBuffer aCmdBuff,
                               VkPipelineLayout aPipelineLayout) const {
@@ -284,4 +284,19 @@ void Entity::BaseUpdate(double deltaTime) {
     if (mAnimator) {
         mAnimator->Update(deltaTime, this);
     }
+}
+void Entity::UpdateChildrenTransform() {
+    for (auto &child : mChildren) {
+        child->SetParentTransform(GetWorldTransform());
+    }
+}
+void Entity::SetTransform(Transform aTransform) {
+    mLocalTransform = aTransform;
+    mLocalTransform.UpdateMatrix();
+    SetPhysicsTransform();
+    UpdateChildrenTransform();
+}
+void Entity::SetParentTransform(glm::mat4 aParentTransform)  {
+    mParentTransform = aParentTransform;
+    UpdateChildrenTransform();
 }

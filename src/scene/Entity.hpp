@@ -27,7 +27,7 @@ class Entity {
     Entity(std::string aName, Entity *aParent, Mesh *aMesh,
            Transform aLocalTransform)
         : mName(std::move(aName)), mParent(aParent), mMesh(aMesh),
-          mLocalTransform(aLocalTransform), mHasMesh(true) {}
+          mLocalTransform(aLocalTransform), mHasMesh(true) {mLocalTransform.UpdateMatrix(); UpdateChildrenTransform();}
     /// Constructor with a name, parent (nullptr if none), mesh, and local transform as a mat4
     Entity(std::string aName, Entity *aParent, Mesh *aMesh,
            glm::mat4 aLocalTransform);
@@ -79,7 +79,7 @@ class Entity {
 
     // setters for the transform, either as a Transform or a mat4. These also pass through the updated transform to the rigidbody
     /// Set the local transform of the entity as a #Transform. This will also update the physics transform
-    void SetTransform(Transform aTransform) { mLocalTransform = aTransform; SetPhysicsTransform();}
+    void SetTransform(Transform aTransform);
     /// Set the local transform of the entity as a mat4. This will also update the physics transform
     void SetTransform(glm::mat4 aTransform);
 
@@ -189,11 +189,15 @@ class Entity {
     // set the entity as kinematic
     void SetAsKinematic() { mIsKinematic = true; }
 
+    // set the parent transform
+    void SetParentTransform(glm::mat4 aParentTransform);
+
 
 
   private:
     void SetPhysicsTransform();
     void RemoveChild(Entity *aChild);
+    void UpdateChildrenTransform();
 
 
   protected:
@@ -207,6 +211,8 @@ class Entity {
     Mesh *mMesh = nullptr;
 
     Transform mLocalTransform{};
+
+    glm::mat4 mParentTransform = glm::mat4(1.0f);
 
     std::vector<Entity *> mChildren;
 

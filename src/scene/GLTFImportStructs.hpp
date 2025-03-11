@@ -162,20 +162,29 @@ struct Transform {
     /// The scale of the transform
     glm::vec3 scale;
 
-    /// Get the transform as a glm::mat4
-    [[nodiscard]] glm::mat4 getMatrix() const {
+    glm::mat4 matrix{};
+
+    /// Update the matrix. If this function is not called since the last change, the matrix will be out of date
+    void UpdateMatrix() {
         glm::mat4 translationMatrix = glm::translate(translation);
         glm::mat4 rotationMatrix = glm::toMat4(glm::normalize(rotation));
         glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), scale);
-        return translationMatrix * rotationMatrix * scaleMatrix;
+        matrix = translationMatrix * rotationMatrix * scaleMatrix;
     }
-    /// Interpolate between this transform and another
-    Transform Interpolate(Transform other, float t)
+
+    /// Get the transform as a glm::mat4
+    [[nodiscard]] glm::mat4 getMatrix() const {
+        return matrix;
+    }
+
+    /// Interpolate between this transform and another. The matrix for the result is updated
+    [[nodiscard]] Transform Interpolate(Transform other, float t)
     {
         Transform result{};
         result.translation = translation * (1 - t) + other.translation * t;
         result.rotation = glm::normalize(glm::slerp(rotation, other.rotation, t));
         result.scale = scale * (1-t) + other.scale * t;
+        result.UpdateMatrix();
         return result;
     }
 };
