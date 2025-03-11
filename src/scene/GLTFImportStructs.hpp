@@ -19,11 +19,17 @@
 #include "glm/gtc/quaternion.hpp"
 #include "glm/gtx/transform.hpp"
 
+/// A vertex, stored on the CPU
 struct Vertex {
+    /// The position of the vertex
     glm::vec3 pos;
+    /// The texture coordinates of the vertex
     glm::vec2 tex;
+    /// The normal of the vertex
     glm::vec3 normal;
+    /// The joints of the vertex (integer indices)
     glm::vec4 joints;
+    /// The weights of the vertex
     glm::vec4 weights;
 
     static VkVertexInputBindingDescription GetBindingDescription() {
@@ -117,16 +123,22 @@ struct MeshPrimitiveGPU {
     std::uint32_t mIndexCount;
 };
 
+/// A primitive, stored as a list of vertices and indices
 struct MeshPrimitive {
+    /// The vertices that make up the primitive
     std::vector<Vertex> vertices;
-    // TODO: Bone weights
+    /// The indices that make up the primitive
     std::vector<std::uint32_t> indices;
     MeshPrimitiveGPU *meshGPU;
+    /// The material of the primitive
     Material *material;
 };
 
+/// A mesh, stored as a list of primitives
 struct Mesh {
+    /// The name of the mesh
     std::string name;
+    /// The primitives that make up the mesh
     std::vector<MeshPrimitive> meshPrimitives;
 };
 

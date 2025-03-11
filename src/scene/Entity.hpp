@@ -83,56 +83,55 @@ class Entity {
     /// Set the local transform of the entity as a mat4. This will also update the physics transform
     void SetTransform(glm::mat4 aTransform);
 
-    // get the local transform as a Transform
+    /// Get the local transform as a #Transform
     [[nodiscard]] Transform GetLocalTransform() const;
 
-    // get the world transform as a mat4
+    /// Get the world transform as a glm::mat4
     [[nodiscard]] glm::mat4 GetWorldTransform() const;
-    // get the world transform as a Transform (more expensive than the mat4 version, this calls GetWorldTransform and decomposes it)
+    /// Get the world transform as a #Transform (more expensive than the mat4 version, this calls #GetWorldTransform and decomposes it)
     [[nodiscard]] Transform GetWorldTransformComponents() const;
 
-    // get the Mesh of the entity
+    /// Get the #Mesh of the entity
     [[nodiscard]] const Mesh *GetMesh() const { return mMesh; }
 
-    // query if this entity is a character
+    /// Query if this entity is a character
     [[nodiscard]] bool IsCharacter() const;
 
-    // query if this entity has an animator
+    /// Query if this entity has an animator
     [[nodiscard]] bool HasAnimator() const { return static_cast<bool>(mAnimator); }
 
-    // get a reference to the animator
+    /// Get a reference to the animator
     [[nodiscard]] Animator &GetAnimator(){return *mAnimator;}
 
-    // get a reference to the rigidbody
+    /// Get a reference to the rigidbody
     [[nodiscard]] RigidBody &GetRigidBody(){ return *mRigidBody; }
 
 
-
-    // add a tag to the entity
+    /// Add a tag to the entity. Tags are also added from the GLTF file.
     void AddTag(const std::string& aTag) { mTags.emplace_back(aTag); }
-    // query if the entity has a tag
+    /// Query if the entity has a tag
     [[nodiscard]] bool CompareTag (const std::string& aTag) const;
 
-    // query if the entity is a sensor
+    /// Query if the entity is a sensor (has physics but does not collide with other entities)
     [[nodiscard]] bool IsSensor() const { return mIsSensor; }
 
-    // query if the entity is solid
+    /// Query if the entity is solid (collides with other entities)
     [[nodiscard]] bool IsSolid() const { return mIsSolid; }
 
-    // query if the entity is kinematic
+    /// Query if the entity is kinematic (uses physics but is not affected by forces)
     [[nodiscard]] bool IsKinematic() const { return mIsKinematic; }
 
-    // query if the entity is invisible
+    /// Query if the entity is invisible
     [[nodiscard]] bool IsVisible() const { return mIsVisible; }
-    // set the entity as invisible
+    /// Set the entity as invisible
     void SetAsInvisible() { mIsVisible = false; }
-    // set the entity as visible
+    /// Set the entity as visible
     void SetAsVisible() { mIsVisible = true; }
 
-    // get the number of frames that have passed since the entity was created
+    /// Get the number of frames that have passed since the entity was created
     [[nodiscard]] size_t GetFrameNumber() const {return mFrameNumber;}
 
-    // get the total time that has passed since the entity was created
+    /// Get the total time that has passed since the entity was created
     [[nodiscard]] double GetTotalTime() const {return mTotalTime;}
 
   public:
