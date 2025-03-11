@@ -27,6 +27,7 @@ layout(set = 0, binding = 2) uniform SSAOSettings
 
 layout (set = 0, binding = 1) uniform sampler2D depthBuffer;
 layout (set = 0, binding = 3) uniform sampler2D renderedScene;
+layout (set = 0, binding = 4) uniform sampler2D NoiseTexture;
 
 vec4 DepthToPosition(vec2 uv)
 {
@@ -125,6 +126,11 @@ vec2 RotateDirectionAngle(vec2 direction, vec2 noise)
     return direction * rotationMatrix;
 }
 
+vec4 GetJitter()
+{
+	return texture(NoiseTexture, (gl_FragCoord.xy / 4.0f));
+}
+
 float SSAO()
 {
 	const int SAMPLING_DIRECTIONS = ssao.NumDirections;
@@ -145,7 +151,9 @@ float SSAO()
 	vec3 view_position = unprojectedPosition.xyz /= unprojectedPosition.w;
 
 	float samplingDisk = 2 * PI / SAMPLING_DIRECTIONS;
-	vec4 Rand = generateNoise(gl_FragCoord.xy * 0.01); // This needs to change to some actual noise
+	//vec4 Rand = generateNoise(gl_FragCoord.xy * 0.01); // This needs to change to some actual noise
+
+	vec4 Rand = GetJitter();
 
 	for(int i = 0; i < SAMPLING_DIRECTIONS; i++)
 	{
@@ -199,5 +207,6 @@ void main()
 	vec4 normals = DepthToNormal(uv);
 
 	float ao = SSAO();
+
 	fragColour = vec4(vec3(ao), 1);
 }

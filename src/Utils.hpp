@@ -78,7 +78,7 @@ struct SSRSettings
 };
 
 inline PostProcessing postProcessSettings = {};
-inline SSAOSettings ssaoSettings = {6, 6, 1.4f, 0.001f, 3.8f};
+inline SSAOSettings ssaoSettings = {6, 6, 1.4f, 0.001f, 1.5f};
 inline SSRSettings ssrSettings = {20, 100};
 inline uint32_t setRenderingPipeline = 1;
 inline uint32_t setAlphaMakingPipeline = 2;

@@ -28,12 +28,15 @@ class SSAO {
     void CreateFramebuffer();
     void CreateRenderPass();
 
+    void GenerateNoiseTexture(uint32_t width, uint32_t height);
+
     Context &context;
     uint32_t m_width;
     uint32_t m_height;
     Image m_RenderTarget;
     Image& depthBuffer;
     Image &renderedScene;
+    Image m_NoiseTexture;
     std::shared_ptr<Camera> camera;
 
     VkPipeline m_Pipeline;
