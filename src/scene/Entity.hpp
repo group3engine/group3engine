@@ -198,6 +198,7 @@ class Entity {
     void SetPhysicsTransform();
     void RemoveChild(Entity *aChild);
     void UpdateChildrenTransform();
+    void UpdateWorldTransform();
 
 
   protected:
@@ -213,6 +214,8 @@ class Entity {
     Transform mLocalTransform{};
 
     glm::mat4 mParentTransform = glm::mat4(1.0f);
+
+    glm::mat4 mWorldTransform = glm::mat4(1.0f);
 
     std::vector<Entity *> mChildren;
 

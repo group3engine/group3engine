@@ -32,10 +32,10 @@ void Entity::SetParent(Entity *aParent) {
     mParent->AddChild(this);
 }
 
-glm::mat4 Entity::GetWorldTransform() const {
-
+void Entity::UpdateWorldTransform()
+{
     if (mHasCharacter) {
-        return glm::translate(mCharacterPositionOffset) * mParentTransform * mLocalTransform.getMatrix();
+        mWorldTransform = glm::translate(mCharacterPositionOffset) * mParentTransform * mLocalTransform.getMatrix();
     }
     else if (mIsKinematic && mHasRigidBody) {
         // also apply physics transformations
@@ -52,12 +52,16 @@ glm::mat4 Entity::GetWorldTransform() const {
         Transform physicsTransformLocalSpace = {.translation = translation, .rotation = rotation, .scale = mLocalTransform.scale};
         physicsTransformLocalSpace.UpdateMatrix();
 
-        return mParentTransform * physicsTransformLocalSpace.getMatrix();
+        mWorldTransform = mParentTransform * physicsTransformLocalSpace.getMatrix();
     }
     else
     {
-        return mParentTransform * mLocalTransform.getMatrix();
+        mWorldTransform = mParentTransform * mLocalTransform.getMatrix();
     }
+}
+
+glm::mat4 Entity::GetWorldTransform() const {
+    return mWorldTransform;
 }
 Transform Entity::GetWorldTransformComponents() const
 {
@@ -88,6 +92,7 @@ void Entity::SetTransform(glm::mat4 aTransform) {
     mLocalTransform = {
         .translation = translation, .rotation = rotation, .scale = scale};
     mLocalTransform.UpdateMatrix();
+    UpdateWorldTransform();
     SetPhysicsTransform();
     UpdateChildrenTransform();
 }
@@ -255,19 +260,12 @@ bool Entity::CompareTag(const std::string& aTag) const
 bool Entity::IsCharacter() const {return mHasCharacter;}
 void Entity::SetPhysicsTransform() {
     if (mHasRigidBody) {
-        glm::mat4 worldTransform ;
-        mLocalTransform.scale = glm::vec3(1.0f);
-        if (mParent) {
-            worldTransform = mParent->GetWorldTransform() * mLocalTransform.getMatrix();
-        } else {
-            worldTransform = mLocalTransform.getMatrix();
-        }
         // get the world transform, decompose it, and set the position and rotation of the rigid body
         glm::vec3 translation, scale;
         glm::quat rotation;
         glm::vec3 skew;
         glm::vec4 perspective;
-        glm::decompose(worldTransform, scale, rotation, translation, skew, perspective);
+        glm::decompose(mWorldTransform, scale, rotation, translation, skew, perspective);
         mRigidBody->SetPosition(translation);
         mRigidBody->SetRotation(rotation);
     }
@@ -284,6 +282,12 @@ void Entity::BaseUpdate(double deltaTime) {
     if (mAnimator) {
         mAnimator->Update(deltaTime, this);
     }
+    if(mIsKinematic || mHasCharacter)
+    {
+        UpdateWorldTransform();
+        SetPhysicsTransform();
+        UpdateChildrenTransform();
+    }
 }
 void Entity::UpdateChildrenTransform() {
     for (auto &child : mChildren) {
@@ -293,10 +297,12 @@ void Entity::UpdateChildrenTransform() {
 void Entity::SetTransform(Transform aTransform) {
     mLocalTransform = aTransform;
     mLocalTransform.UpdateMatrix();
+    UpdateWorldTransform();
     SetPhysicsTransform();
     UpdateChildrenTransform();
 }
 void Entity::SetParentTransform(glm::mat4 aParentTransform)  {
     mParentTransform = aParentTransform;
+    UpdateWorldTransform();
     UpdateChildrenTransform();
 }
