@@ -8,6 +8,15 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
 
+namespace {
+    auto PushBackStyleVar = [](size_t i, std::function<void()> f) {
+        f();
+        return ++i;
+    };
+
+    bool enableTextWindowBorder = true;
+}
+
 void ImGuiRenderer::Initialize(const Context &context) {
     VkDescriptorPoolCreateInfo pool_info = {};
     pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -42,6 +51,60 @@ void ImGuiRenderer::Initialize(const Context &context) {
     ImGui_ImplVulkan_Init(&info);
 
     io.Fonts->AddFontDefault();
+}
+
+void ImGuiRenderer::NewDeathCounter() {
+    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+
+    // Death counter, text + heart texture
+    size_t deathCount = 1;
+
+    // TODO: Can we use the formatter included with spdlog to do this?
+    // C++20 std::format doesn't have compiler support everywhere (lab machines)
+    const char *format = "Death Counter %d";
+    auto size = std::snprintf(nullptr, 0, format, deathCount);
+    std::string output(size + 1, '\0');
+    std::sprintf(&output[0], format, deathCount);
+
+    size_t sv = 0;
+
+    float windowBorderSize = 0.0f;
+    if (enableTextWindowBorder) {
+        // Display a window border for debug purposes
+        windowBorderSize = ImGui::GetStyle().WindowBorderSize;
+    } else {
+        // No window border
+        sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); });
+    }
+
+    // Bottom right of viewport
+    ImVec2 pos = ImVec2(viewport->WorkPos.x + viewport->WorkSize.x, viewport->WorkPos.y + viewport->WorkSize.y);
+    ImVec2 textSize = ImGui::CalcTextSize(output.c_str());
+
+    // Make the window fit the text exactly
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(0, 0)); });
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0)); });
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); });
+
+    ImGui::SetNextWindowSize(textSize);
+    ImGui::SetNextWindowPos(ImVec2(pos.x - textSize.x - windowBorderSize, pos.y - textSize.y - windowBorderSize));
+    ImGui::SetNextWindowBgAlpha(0.0f);
+
+    // Flags to get a non-interactable blank window to draw on
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                             ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+                             ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
+
+    ImGui::Begin("Death Counter Window", nullptr, flags);
+
+    // Text
+    ImGui::Text("%s", output.c_str());
+
+    // TODO: Heart texture
+
+    ImGui::PopStyleVar(sv);
+
+    ImGui::End();
 }
 
 void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::shared_ptr<Camera>& camera)
@@ -114,27 +177,14 @@ void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::share
         ImGui::End();
     }
 
-
-    // TODO: Entities doesn't have a GetPosition or SetPosition to make this simple
-    //if (ImGui::CollapsingHeader("Entities")) {
-    //    auto &entities = scene->GetEntities();
-    //    for (size_t i = 0; i < entities.size(); ++i) {
-    //        // Get current position
-    //        glm::vec3 pos = entities[i].GetPosition();
-    //        // Unique label for each entity
-    //        std::string label = "Entity " + std::to_string(i) + " Position";
-    //        // Slider to edit position
-    //        if (ImGui::SliderFloat3(label.c_str(), &pos.x, -10.0f, 10.0f,
-    //                                "%.2f")) {
-    //            // If the slider changes the value, update the entity
-    //            entities[i].SetPosition(pos);
-    //        }
-    //    }
-    //}
+    ImGui::Checkbox("Enable Text Window Border", &enableTextWindowBorder);
 
     ImGui::EndChild();
 
-    //ImGui::ShowDemoWindow();
+    // New death counter window
+    NewDeathCounter();
+
+    ImGui::EndFrame();
 }
 
 void ImGuiRenderer::Render(VkCommandBuffer cmd, const Context &context, uint32_t imageIndex)

@@ -41,6 +41,8 @@ namespace ImGuiRenderer
         {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000}
     };
 
+    void NewDeathCounter();
+
     void Initialize(const Context &context);
     void Shutdown(const Context &context);
     void Update(const std::shared_ptr<Scene>& scene, const std::shared_ptr<Camera>& camera);
