@@ -4,10 +4,23 @@
 
 #ifndef GROUP3ENGINE_CHARACTERENTITY_HPP
 #define GROUP3ENGINE_CHARACTERENTITY_HPP
+
+#include <stack>
+
 #include "Entity.hpp"
 #include "CharacterVirtualTest.h"
 
 #include "ImGuiRenderer.hpp"
+
+enum class InternalEvent {
+    eDeath,
+    eCount
+};
+
+enum class InternalUiEvent {
+    eDeathPopup,
+    eCount
+};
 
 class CharacterEntity : public Entity {
   public:
@@ -63,9 +76,14 @@ class CharacterEntity : public Entity {
 
     glm::vec3 mLastCheckpoint = glm::vec3(0, 10.0f, 0);
 
-    size_t deathCount = 0;
+    size_t mDeathCount = 0;
+    float mDeathVisibleTimer = 0.0f;
 
     gui::DeathCounterData mGuiDeathCounterData{};
+    gui::DeathPopupData mGuiDeathPopupData{};
+
+    std::stack<InternalEvent> mInternalEvents;
+    std::stack<InternalUiEvent> mInternalUiEvents;
 };
 
 #endif // GROUP3ENGINE_CHARACTERENTITY_HPP

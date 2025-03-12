@@ -17,6 +17,22 @@ void CharacterEntity::SetCharacterVirtual(unique_ptr<CharacterVirtualTest> &&uni
 CharacterEntity::~CharacterEntity() {
 }
 void CharacterEntity::Update(double deltaTime) {
+    while (!mInternalEvents.empty()) {
+        auto event = mInternalEvents.top();
+        mInternalEvents.pop();
+
+        switch (event) {
+        case InternalEvent::eDeath:
+            ++mDeathCount;
+            mInternalUiEvents.push(InternalUiEvent::eDeathPopup);
+            break;
+        default:
+            SPDLOG_ERROR("Unaccounted for switch case.");
+            exit(EXIT_FAILURE);
+            break;
+        }
+    }
+
     Entity::Update(deltaTime);
 
 
@@ -69,11 +85,31 @@ void CharacterEntity::Update(double deltaTime) {
 }
 
 void CharacterEntity::UpdateUi(double deltaTime) {
+    while (!mInternalUiEvents.empty()) {
+        auto &event = mInternalUiEvents.top();
+        mInternalUiEvents.pop();
+
+        switch (event) {
+        case InternalUiEvent::eDeathPopup:
+            // Reset death popup timer
+            mDeathVisibleTimer = 1.0f;
+            break;
+        default:
+            SPDLOG_ERROR("Unaccounted for switch case.");
+            exit(EXIT_FAILURE);
+            break;
+        }
+    }
+
     // NOTE: If copying the data into a struct gets annoying, we can just use
     // simple parameters to the gui functions. But using structs might help
     // bundle things more nicely in some cases. This is just an example.
-    mGuiDeathCounterData.deathCount = deathCount;
+    mGuiDeathCounterData.deathCount = mDeathCount;
     ImGuiRenderer::NewDeathCounter(mGuiDeathCounterData);
+
+    mDeathVisibleTimer = std::max(0.0f, mDeathVisibleTimer - static_cast<float>(deltaTime));
+    mGuiDeathPopupData.visibleTimer = mDeathVisibleTimer;
+    ImGuiRenderer::NewDeathPopup(mGuiDeathPopupData);
 }
 
 CharacterEntity::CharacterEntity() {
@@ -84,7 +120,7 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
 
     if(aOther->CompareTag("deathzone")) {
         SPDLOG_INFO("I am {} and I collided with a death zone", GetName());
-        ++deathCount;
+        mInternalEvents.push(InternalEvent::eDeath);
         Reset();
     }
     // if its a checkpoint, set the checkpoint

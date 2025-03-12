@@ -26,6 +26,10 @@ struct DeathCounterData {
     size_t deathCount;
 };
 
+struct DeathPopupData {
+    float visibleTimer;
+};
+
 struct TimerData {
     float time;
 };
@@ -66,6 +70,7 @@ namespace ImGuiRenderer
 
     void NewHeartSprite(const ImVec2 &offset);
     void NewDeathCounter(const gui::DeathCounterData &data);
+    void NewDeathPopup(const gui::DeathPopupData &data);
     void NewTimer(const gui::TimerData &data);
 
     void Initialize(const Context &context, TextureManager *textureManager);

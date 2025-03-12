@@ -168,6 +168,57 @@ void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data) {
     ImGui::End();
 }
 
+void ImGuiRenderer::NewDeathPopup(const gui::DeathPopupData &data) {
+    // If the visible timer has run out
+    if (data.visibleTimer <= 0.0f) {
+        // Early return
+        return;
+    }
+
+    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+
+    std::string str = fmt::format("DEATH POPUP");
+
+    size_t sv = 0;
+
+    float windowBorderSize = 0.0f;
+    if (enableTextWindowBorder) {
+        // Display a window border for debug purposes
+        windowBorderSize = ImGui::GetStyle().WindowBorderSize;
+    } else {
+        // No window border
+        sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); });
+    }
+
+    // Middle of viewport. NOTE: hardcoded middle of viewport positioning
+    ImVec2 pos = ImVec2(viewport->WorkPos.x + viewport->WorkSize.x / 2.0f, viewport->WorkPos.y + viewport->WorkSize.y / 2.0f);
+    ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
+
+    // Make the window fit the text exactly
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(0, 0)); });
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0)); });
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); });
+
+    ImGui::SetNextWindowSize(textSize);
+    // NOTE: hardcoded middle of viewport positioning
+    ImGui::SetNextWindowPos(ImVec2(pos.x - textSize.x - windowBorderSize, pos.y - textSize.y - windowBorderSize));
+    ImGui::SetNextWindowBgAlpha(0.0f);
+
+    // Flags to get a non-interactable blank window to draw on
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                             ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+                             ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
+
+    ImGui::Begin("Death Popup Window", nullptr, flags);
+
+    // Text
+    ImGui::Text("%s", str.c_str());
+
+    ImGui::PopStyleVar(sv);
+
+    ImGui::End();
+}
+
 void ImGuiRenderer::NewTimer(const gui::TimerData &data) {
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
 
