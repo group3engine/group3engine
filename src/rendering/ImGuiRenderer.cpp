@@ -8,6 +8,8 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
 
+#include <spdlog/fmt/fmt.h>
+
 #include "TextureManager.hpp"
 
 namespace {
@@ -118,12 +120,7 @@ void ImGuiRenderer::NewDeathCounter() {
     // Death counter, text + heart texture
     size_t deathCount = 1;
 
-    // TODO: Can we use the formatter included with spdlog to do this?
-    // C++20 std::format doesn't have compiler support everywhere (lab machines)
-    const char *format = "Death Counter %d";
-    auto size = std::snprintf(nullptr, 0, format, deathCount);
-    std::string output(size + 1, '\0');
-    std::sprintf(&output[0], format, deathCount);
+    std::string str = fmt::format("Death Counter {}", deathCount);
 
     size_t sv = 0;
 
@@ -138,7 +135,7 @@ void ImGuiRenderer::NewDeathCounter() {
 
     // Bottom right of viewport
     ImVec2 pos = ImVec2(viewport->WorkPos.x + viewport->WorkSize.x, viewport->WorkPos.y + viewport->WorkSize.y);
-    ImVec2 textSize = ImGui::CalcTextSize(output.c_str());
+    ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
 
     // Make the window fit the text exactly
     sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(0, 0)); });
@@ -157,7 +154,7 @@ void ImGuiRenderer::NewDeathCounter() {
     ImGui::Begin("Death Counter Window", nullptr, flags);
 
     // Text
-    ImGui::Text("%s", output.c_str());
+    ImGui::Text("%s", str.c_str());
 
     // Heart
     ImVec2 offset = {pos.x - textSize.x, pos.y};
