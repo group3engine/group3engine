@@ -9,7 +9,7 @@ layout(set = 0, binding = 1) uniform sampler2D bloomPass;
 layout(set = 0, binding = 2) uniform sampler2D SSAO;
 layout(set = 0, binding = 3) uniform sampler2D SSR;
 
-vec3 SpatialDenoisedSSAO()
+float SpatialDenoisedSSAO()
 {
     vec2 texelSize = 1.0 / textureSize(SSAO, 0);
     vec2 tex = clamp(uv - texelSize * 2.0, texelSize * 2.0, 1.0 - texelSize * 2.0);
@@ -25,21 +25,21 @@ vec3 SpatialDenoisedSSAO()
                     g3.r + g3.g + g3.b + g3.a +
                     g4.r + g4.g + g4.b + g4.a;
 
-    return vec3(totalao / 16.0);
+    return float(totalao / 16.0);
 }
 
 void main()
 {
 	vec4 lighting = texture(renderedScene, uv);
 	vec4 bloom = texture(bloomPass, uv);
-	vec3 ssao = SpatialDenoisedSSAO();
+	float ssao = SpatialDenoisedSSAO();
 	//vec4 ssr = texture(SSR, uv);
 
-	vec3 hdrColor = vec3(lighting.rgb) * ssao.r;
+	vec3 hdrColor = vec3(lighting.rgb) * ssao;
 	vec3 ldrColor = hdrColor / (hdrColor + vec3(1.0));
 
 	vec3 result = ldrColor;
 	vec3 gammaCorrectedColor = pow(result, vec3(1.0 / 2.2));
 
-	fragColor = vec4(vec3(hdrColor), 1.0);
+	fragColor = vec4(vec3(gammaCorrectedColor), 1.0);
 }
