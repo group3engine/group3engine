@@ -1,8 +1,10 @@
 #include "Context.hpp"
 #include "SSAO.hpp"
-#include <array>
 #include "Pipeline.hpp"
 #include "RenderPass.hpp"
+
+#include <array>
+#include <random>
 
 SSAO::SSAO(Context &context, Image &depthBuffer, Image& renderedScene, std::shared_ptr<Camera> camera) :
     context{context}, depthBuffer{depthBuffer}, renderedScene{renderedScene}, camera{camera} {
@@ -27,6 +29,8 @@ SSAO::SSAO(Context &context, Image &depthBuffer, Image& renderedScene, std::shar
         buffer = CreateBuffer("SSAOSettingsUBO", context, sizeof(vkutil::SSAOSettings), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
     }
 
+    GenerateNoiseTexture(4,4);
+
     BuildDescriptors();
     CreateRenderPass();
     CreateFramebuffer();
@@ -40,6 +44,7 @@ SSAO::~SSAO()
         buffer.Destroy();
     }
     m_RenderTarget.Destroy(context.device);
+    m_NoiseTexture.Destroy(context.device);
     vkDestroyPipeline(context.device, m_Pipeline, nullptr);
     vkDestroyPipelineLayout(context.device, m_PipelineLayout, nullptr);
     vkDestroyDescriptorSetLayout(context.device, m_DescriptorSetLayout, nullptr);
@@ -203,7 +208,8 @@ void SSAO::BuildDescriptors()
             vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT),
             vkutil::CreateDescriptorBinding(1, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
             vkutil::CreateDescriptorBinding(2, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT),
-            vkutil::CreateDescriptorBinding(3, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+            vkutil::CreateDescriptorBinding(3, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
+            vkutil::CreateDescriptorBinding(4, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
         };
 
         m_DescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
@@ -250,8 +256,91 @@ void SSAO::BuildDescriptors()
 
         vkutil::UpdateDescriptorSet(context, 3, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     }
+
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        VkDescriptorImageInfo imageInfo = {
+            .sampler = vkutil::repeatSamplerAniso,
+            .imageView = m_NoiseTexture.imageView,
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        };
+
+        vkutil::UpdateDescriptorSet(context, 4, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    }
 }
 
 
+void SSAO::GenerateNoiseTexture(uint32_t width, uint32_t height)
+{
+    m_NoiseTexture = CreateImageTexture2D(
+        "SSAO_Noise_Texture",
+        context,
+        4,
+        4,
+        VK_FORMAT_R32G32B32A32_SFLOAT,
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_IMAGE_ASPECT_COLOR_BIT,
+        1
+    );
 
+    VkDeviceSize imageSize = 4 * 4 * 4 * sizeof(float);
+
+    std::vector<glm::vec4> noise;
+    std::uniform_real_distribution<float> randomFloats(0.0f, 1.0f);
+    std::default_random_engine generator;
+
+    for (uint32_t i = 0; i < 16; i++)
+    {
+        glm::vec4 noiseSample(
+            randomFloats(generator) * 2.0 - 1.0,
+            randomFloats(generator) * 2.0 - 1.0,
+            0.0f, 1.0f);
+        noise.push_back(noiseSample);
+    }
+
+    // Transfer data to buffer, then transfer buffer contents to image
+    Buffer stagingBuffer = CreateBuffer("SSAO_Noise_Staging_Buffer", context, imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, VMA_MEMORY_USAGE_AUTO);
+    stagingBuffer.WriteToBuffer(noise.data(), imageSize);
+
+    // Debug check if Data is correct inside buffer
+    //void *mappedData;
+    //VkResult result = vmaMapMemory(context.allocator, stagingBuffer.allocation, &mappedData);
+    //if (result != VK_SUCCESS) {
+    //    std::cerr << "Failed to map staging buffer memory: " << result << std::endl;
+    //    stagingBuffer.Destroy();
+    //    return;
+    //}
+
+    //glm::vec4 *bufferData = static_cast<glm::vec4 *>(mappedData);
+    //std::cout << "Staging buffer contents:" << std::endl;
+    //for (uint32_t i = 0; i < 16; i++) {
+    //    std::cout << "Sample " << i << ": (" << bufferData[i].x << ", " << bufferData[i].y << ", "
+    //              << bufferData[i].z << ", " << bufferData[i].w << ")" << std::endl;
+    //}
+
+    //vmaUnmapMemory(context.allocator, stagingBuffer.allocation);
+
+
+    // Transiton image layout to TRANSFER_DST_OPTIMAL
+    vkutil::ExecuteSingleTimeCommands(context, [&](VkCommandBuffer cmd) {
+
+        // Transition image layout to TRANSFER_DST_OPTIMAL
+        ImageTransition(cmd, m_NoiseTexture.image, VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+
+        VkBufferImageCopy buffer_to_image_copy = {};
+        buffer_to_image_copy.bufferOffset = 0;
+        buffer_to_image_copy.bufferRowLength = 0;
+        buffer_to_image_copy.bufferImageHeight = 0;
+        buffer_to_image_copy.imageSubresource = VkImageSubresourceLayers{VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+        buffer_to_image_copy.imageOffset = VkOffset3D{0, 0, 0};
+        buffer_to_image_copy.imageExtent = VkExtent3D{(uint32_t)width, (uint32_t)height, 1};
+
+        vkCmdCopyBufferToImage(cmd, stagingBuffer.buffer, m_NoiseTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &buffer_to_image_copy);
+
+        // Transition image to SHADER_READ_ONLY_OPTIMAL
+        ImageTransition(cmd, m_NoiseTexture.image, VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+    });
+
+    stagingBuffer.Destroy();
+}
 

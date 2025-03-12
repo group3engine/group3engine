@@ -9,14 +9,33 @@ layout(set = 0, binding = 1) uniform sampler2D bloomPass;
 layout(set = 0, binding = 2) uniform sampler2D SSAO;
 layout(set = 0, binding = 3) uniform sampler2D SSR;
 
+float SpatialDenoisedSSAO()
+{
+    vec2 texelSize = 1.0 / textureSize(SSAO, 0);
+    vec2 tex = clamp(uv - texelSize * 2.0, texelSize * 2.0, 1.0 - texelSize * 2.0);
+
+    // textureGather will gather 4 looksups in a single call (r is ssao)
+    vec4 g1 = textureGather(SSAO, tex, 0);
+    vec4 g2 = textureGather(SSAO, tex + vec2(texelSize.x * 2.0, 0.0), 0);
+    vec4 g3 = textureGather(SSAO, tex + vec2(0.0, texelSize.y * 2.0), 0);
+    vec4 g4 = textureGather(SSAO, tex + vec2(texelSize.x * 2.0, texelSize.y * 2.0), 0);
+
+    float totalao = g1.r + g1.g + g1.b + g1.a +
+                    g2.r + g2.g + g2.b + g2.a +
+                    g3.r + g3.g + g3.b + g3.a +
+                    g4.r + g4.g + g4.b + g4.a;
+
+    return float(totalao / 16.0);
+}
+
 void main()
 {
 	vec4 lighting = texture(renderedScene, uv);
 	vec4 bloom = texture(bloomPass, uv);
-	vec4 ssao = texture(SSAO, uv);
-	vec4 ssr = texture(SSR, uv);
+	float ssao = SpatialDenoisedSSAO();
+	//vec4 ssr = texture(SSR, uv);
 
-	vec3 hdrColor = (lighting.rgb) * ssao.r;
+	vec3 hdrColor = vec3(lighting.rgb) * ssao;
 	vec3 ldrColor = hdrColor / (hdrColor + vec3(1.0));
 
 	vec3 result = ldrColor;
