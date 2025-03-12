@@ -235,8 +235,18 @@ bool Engine::Initialize() {
 
         mScene->CreateCharacter(characterEntity, std::move(characterVirtual));
         mScene->SetHasCharacter(true);
+
+        for(auto entity: entities)
+        {
+            if(entity->CompareTag("spawnpoint"))
+            {
+                characterEntity->SetCheckpoint(entity->GetWorldTransformComponents().translation + glm::vec3(0.f, 2.5f, 0.f));
+            }
+        }
         characterEntity->Reset();
     }
+
+    
 
     // call the scene awake function
     mScene->Awake();
