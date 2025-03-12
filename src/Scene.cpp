@@ -50,6 +50,10 @@ void Scene::UpdateUi(double aDeltaTime) {
     // New timer window
     mGuiTimerData.time += aDeltaTime;
     ImGuiRenderer::NewTimer(mGuiTimerData);
+
+    for (auto &entity : m_Entities) {
+        entity->UpdateUi(aDeltaTime);
+    }
 }
 
 void Scene::Destroy()

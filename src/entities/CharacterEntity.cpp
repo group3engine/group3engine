@@ -67,6 +67,15 @@ void CharacterEntity::Update(double deltaTime) {
             }
     }
 }
+
+void CharacterEntity::UpdateUi(double deltaTime) {
+    // NOTE: If copying the data into a struct gets annoying, we can just use
+    // simple parameters to the gui functions. But using structs might help
+    // bundle things more nicely in some cases. This is just an example.
+    mGuiDeathCounterData.deathCount = deathCount;
+    ImGuiRenderer::NewDeathCounter(mGuiDeathCounterData);
+}
+
 CharacterEntity::CharacterEntity() {
     SetAsCharacter();
     Load();
@@ -75,6 +84,7 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
 
     if(aOther->CompareTag("deathzone")) {
         SPDLOG_INFO("I am {} and I collided with a death zone", GetName());
+        ++deathCount;
         Reset();
     }
     // if its a checkpoint, set the checkpoint

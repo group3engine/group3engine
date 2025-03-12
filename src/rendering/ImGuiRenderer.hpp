@@ -22,6 +22,10 @@ struct MyTextureData {
 };
 
 namespace gui {
+struct DeathCounterData {
+    size_t deathCount;
+};
+
 struct TimerData {
     float time;
 };
@@ -61,7 +65,7 @@ namespace ImGuiRenderer
     };
 
     void NewHeartSprite(const ImVec2 &offset);
-    void NewDeathCounter();
+    void NewDeathCounter(const gui::DeathCounterData &data);
     void NewTimer(const gui::TimerData &data);
 
     void Initialize(const Context &context, TextureManager *textureManager);

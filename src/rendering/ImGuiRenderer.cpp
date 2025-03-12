@@ -115,13 +115,14 @@ void ImGuiRenderer::NewHeartSprite(const ImVec2 &offset) {
     ImGui::End();
 }
 
-void ImGuiRenderer::NewDeathCounter() {
+void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data) {
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
 
-    // Dummy death count
-    size_t deathCount = 1;
+    size_t deathCount = data.deathCount;
 
-    std::string str = fmt::format("Death Counter {}", deathCount);
+    // Format to a width of 4
+    // See https://hackingcpp.com/cpp/libs/fmt.html
+    std::string str = fmt::format("Death Counter {:4}", deathCount);
 
     size_t sv = 0;
 
@@ -295,9 +296,6 @@ void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::share
     ImGui::Checkbox("Enable Text Window Border", &enableTextWindowBorder);
 
     ImGui::EndChild();
-
-    // New death counter window
-    NewDeathCounter();
 }
 
 void ImGuiRenderer::Render(VkCommandBuffer cmd, const Context &context, uint32_t imageIndex)

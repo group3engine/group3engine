@@ -7,6 +7,7 @@
 #include "Entity.hpp"
 #include "CharacterVirtualTest.h"
 
+#include "ImGuiRenderer.hpp"
 
 class CharacterEntity : public Entity {
   public:
@@ -27,6 +28,8 @@ class CharacterEntity : public Entity {
 
     // update override
     void Update(double deltaTime) override;
+
+    void UpdateUi(double deltaTime) override;
 
     void Awake() override ;
 
@@ -59,6 +62,10 @@ class CharacterEntity : public Entity {
     std::unique_ptr<CharacterVirtualTest> mCharacterVirtual;
 
     glm::vec3 mLastCheckpoint = glm::vec3(0, 10.0f, 0);
+
+    size_t deathCount = 0;
+
+    gui::DeathCounterData mGuiDeathCounterData{};
 };
 
 #endif // GROUP3ENGINE_CHARACTERENTITY_HPP
