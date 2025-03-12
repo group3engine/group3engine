@@ -365,8 +365,9 @@ void Engine::Update(double deltaTime) {
     UpdateLogic();
     mScene->Update(deltaTime);
     mScene->UpdateUi(deltaTime);
-    mRenderer->Update(deltaTime);
     PhysicsManager::get().UpdatePhysics(deltaTime);
+    mRenderer->Update(deltaTime);
+    
 }
 
 void Engine::Render() {

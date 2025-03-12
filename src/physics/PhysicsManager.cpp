@@ -62,7 +62,7 @@ void PhysicsManager::UpdatePhysics(double delta_time) {
     // cout << "Step " << step << endl;
     // If you take larger steps than 1 / 60th of a second you need to do multiple collision steps in order to keep the simulation stable. Do 1 collision step per 1 / 60th of a second (round up).
     // Calculate number of collision steps needed (1 step per 1/60th second)
-    const int cCollisionSteps = 2;
+    const int cCollisionSteps = 1;
 
 
     // Step the world
