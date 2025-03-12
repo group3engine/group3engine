@@ -79,6 +79,7 @@ void ImGuiRenderer::Initialize(const Context &context, TextureManager *textureMa
 }
 
 void ImGuiRenderer::NewHeartSprite(const ImVec2 &offset) {
+    // TODO: Remove hardcoded image size
     ImVec2 imageSize = ImVec2(myTexData.Width * 0.02f, myTexData.Height * 0.02f);
 
     size_t sv = 0;
