@@ -292,8 +292,6 @@ void Engine::Run() {
             mScene->GetCharacter().PrePhysicsUpdate(preUpdateParams);
         }
 
-        PhysicsManager::get().UpdatePhysics(GlobalUtil::deltaTime);
-
         if (mScene->HasCharacter()) {
             auto characterVirtualPos = mScene->GetCharacter().GetCharacterPosition();
             mScene->GetCharacter().SetCharacterPositionOffset(
@@ -368,6 +366,7 @@ void Engine::Update(double deltaTime) {
     mScene->Update(deltaTime);
     mScene->UpdateUi(deltaTime);
     mRenderer->Update(deltaTime);
+    PhysicsManager::get().UpdatePhysics(deltaTime);
 }
 
 void Engine::Render() {
