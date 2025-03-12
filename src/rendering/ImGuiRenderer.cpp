@@ -117,7 +117,7 @@ void ImGuiRenderer::NewHeartSprite(const ImVec2 &offset) {
 void ImGuiRenderer::NewDeathCounter() {
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
 
-    // Death counter, text + heart texture
+    // Dummy death count
     size_t deathCount = 1;
 
     std::string str = fmt::format("Death Counter {}", deathCount);
@@ -133,7 +133,7 @@ void ImGuiRenderer::NewDeathCounter() {
         sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); });
     }
 
-    // Bottom right of viewport
+    // Bottom right of viewport. NOTE: hardcoded bottom right positioning
     ImVec2 pos = ImVec2(viewport->WorkPos.x + viewport->WorkSize.x, viewport->WorkPos.y + viewport->WorkSize.y);
     ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
 
@@ -143,6 +143,7 @@ void ImGuiRenderer::NewDeathCounter() {
     sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); });
 
     ImGui::SetNextWindowSize(textSize);
+    // NOTE: hardcoded bottom right positioning
     ImGui::SetNextWindowPos(ImVec2(pos.x - textSize.x - windowBorderSize, pos.y - textSize.y - windowBorderSize));
     ImGui::SetNextWindowBgAlpha(0.0f);
 
@@ -289,6 +290,9 @@ void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::share
 
     // New death counter window
     NewDeathCounter();
+
+    // New timer window
+    NewTimer();
 
     ImGui::EndFrame();
 }
