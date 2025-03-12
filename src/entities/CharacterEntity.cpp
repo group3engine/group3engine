@@ -18,7 +18,7 @@ CharacterEntity::~CharacterEntity() {
 }
 void CharacterEntity::Update(double deltaTime) {
     while (!mInternalEvents.empty()) {
-        auto event = mInternalEvents.top();
+        auto &event = mInternalEvents.top();
         mInternalEvents.pop();
 
         switch (event) {
