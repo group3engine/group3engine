@@ -1,3 +1,6 @@
+#ifndef RENDERING_IMGUIRENDERER_HPP
+#define RENDERING_IMGUIRENDERER_HPP
+
 #include <volk.h>
 #include <vector>
 #include <functional>
@@ -17,6 +20,12 @@ struct MyTextureData {
     int             Width;
     int             Height;
 };
+
+namespace gui {
+struct TimerData {
+    float time;
+};
+} // namespace gui
 
 namespace ImGuiRenderer
 {
@@ -53,11 +62,13 @@ namespace ImGuiRenderer
 
     void NewHeartSprite(const ImVec2 &offset);
     void NewDeathCounter();
-    void NewTimer();
+    void NewTimer(const gui::TimerData &data);
 
     void Initialize(const Context &context, TextureManager *textureManager);
     void Shutdown(const Context &context);
+    void NewFrame();
     void Update(const std::shared_ptr<Scene>& scene, const std::shared_ptr<Camera>& camera);
+    void EndFrame();
     void Render(VkCommandBuffer cmd, const Context& context, uint32_t imageIndex);
 
     inline VkDescriptorPool imGuiDescriptorPool;
@@ -65,3 +76,4 @@ namespace ImGuiRenderer
 
     inline MyTextureData myTexData;
 }
+#endif // RENDERING_IMGUIRENDERER_HPP

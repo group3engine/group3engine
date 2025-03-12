@@ -167,13 +167,14 @@ void ImGuiRenderer::NewDeathCounter() {
     ImGui::End();
 }
 
-void ImGuiRenderer::NewTimer() {
+void ImGuiRenderer::NewTimer(const gui::TimerData &data) {
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
 
-    // Dummy time
-    float time = 1.0f;
+    float time = data.time;
 
-    std::string str = fmt::format("Timer {}", time);
+    // Format to a width of 8 and to a precision of 3
+    // See https://hackingcpp.com/cpp/libs/fmt.html
+    std::string str = fmt::format("Timer {:8.3f}", time);
 
     size_t sv = 0;
 
@@ -215,12 +216,18 @@ void ImGuiRenderer::NewTimer() {
     ImGui::End();
 }
 
-void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::shared_ptr<Camera>& camera)
-{
+void ImGuiRenderer::NewFrame() {
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
+}
 
+void ImGuiRenderer::EndFrame() {
+    ImGui::EndFrame();
+}
+
+void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::shared_ptr<Camera>& camera)
+{
     ImGui::BeginChild("Settings");
     // Display FPS
     ImGui::TextColored(
@@ -291,11 +298,6 @@ void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::share
 
     // New death counter window
     NewDeathCounter();
-
-    // New timer window
-    NewTimer();
-
-    ImGui::EndFrame();
 }
 
 void ImGuiRenderer::Render(VkCommandBuffer cmd, const Context &context, uint32_t imageIndex)

@@ -269,6 +269,10 @@ void Engine::Run() {
         GlobalUtil::deltaTime = currentFrameTime - m_lastFrameTime;
         m_lastFrameTime = currentFrameTime;
 
+        // See imgui.cpp
+        // "(So you want to try calling NewFrame() as early as you can in your main loop to be able to use Dear ImGui everywhere)"
+        ImGuiRenderer::NewFrame();
+
         PollInputEvents();
 
         
@@ -299,6 +303,8 @@ void Engine::Run() {
         } else {
             Update(GlobalUtil::deltaTime);
         }
+
+        ImGuiRenderer::EndFrame();
 
         Render();
     }
@@ -360,6 +366,7 @@ void Engine::UpdateLogic() {
 void Engine::Update(double deltaTime) {
     UpdateLogic();
     mScene->Update(deltaTime);
+    mScene->UpdateUi(deltaTime);
     mRenderer->Update(deltaTime);
 }
 
