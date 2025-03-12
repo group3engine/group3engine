@@ -53,6 +53,7 @@ namespace ImGuiRenderer
 
     void NewHeartSprite(const ImVec2 &offset);
     void NewDeathCounter();
+    void NewTimer();
 
     void Initialize(const Context &context, TextureManager *textureManager);
     void Shutdown(const Context &context);
