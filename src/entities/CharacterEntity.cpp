@@ -96,6 +96,11 @@ void CharacterEntity::UpdateUi(double deltaTime) {
             // Reset death popup timer
             mDeathVisibleTimer = 1.0f;
             break;
+        case InternalUiEvent::eFinishPopup:
+            // Reset death popup timer
+            mFinishVisibleTimer = 1.0f;
+            SPDLOG_INFO("Finish popup called");
+            break;
         default:
             SPDLOG_ERROR("Unaccounted for switch case.");
             exit(EXIT_FAILURE);
@@ -112,6 +117,12 @@ void CharacterEntity::UpdateUi(double deltaTime) {
     mDeathVisibleTimer = std::max(0.0f, mDeathVisibleTimer - static_cast<float>(deltaTime));
     mGuiDeathPopupData.visibleTimer = mDeathVisibleTimer;
     ImGuiRenderer::NewDeathPopup(mGuiDeathPopupData);
+
+    mFinishVisibleTimer = std::max(0.0f, mFinishVisibleTimer - static_cast<float>(deltaTime));
+    SPDLOG_INFO("{}", mFinishVisibleTimer);
+    mGuiFinishPopupData.visibleTimer = mFinishVisibleTimer;
+
+    ImGuiRenderer::NewFinishPopup(mGuiFinishPopupData);
 }
 
 CharacterEntity::CharacterEntity() {
@@ -125,6 +136,7 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
         mInternalEvents.push(InternalEvent::eDeath);
         Reset();
     }
+
     // if its a checkpoint, set the checkpoint
     if(aOther->CompareTag("checkpoint")) {
         // set the checkpoint to the position of the checkpoint, plus a bit in the y direction
@@ -133,6 +145,13 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
         SetCheckpoint(checkpointPosition);
 
     }
+
+    if(aOther->CompareTag("finishzone")) 
+    {
+        // do finish zone things
+        mInternalUiEvents.push(InternalUiEvent::eFinishPopup);
+    }
+
     SPDLOG_INFO("I am {} and I collided with {}", GetName(), aOther->GetName());
 
 }

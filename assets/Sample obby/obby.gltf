@@ -1067,7 +1067,24 @@
 		},
 		{
 			"extras":{
-				"_RNA_UI":{}
+				"entity_type":"default",
+				"is_sensor":false,
+				"is_solid":true,
+				"tags":"finishzone",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":46,
 			"name":"cube.024",

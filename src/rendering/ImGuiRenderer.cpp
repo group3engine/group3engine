@@ -11,6 +11,7 @@
 #include <spdlog/fmt/fmt.h>
 
 #include "TextureManager.hpp"
+#include "spdlog/spdlog.h"
 
 namespace {
     auto PushBackStyleVar = [](size_t i, std::function<void()> f) {
@@ -19,7 +20,8 @@ namespace {
     };
 
     bool enableTextWindowBorder = true;
-    bool enableDeathPopup = false;
+    bool enableDeathPopup = true;
+    bool enableFinishPopup = true;
 }
 
 void ImGuiRenderer::Initialize(const Context &context, TextureManager *textureManager) {
@@ -216,6 +218,62 @@ void ImGuiRenderer::NewDeathPopup(const gui::DeathPopupData &data) {
                              ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
 
     ImGui::Begin("Death Popup Window", nullptr, flags);
+
+    // Text
+    ImGui::Text("%s", str.c_str());
+
+    ImGui::PopStyleVar(sv);
+
+    ImGui::End();
+}
+
+void ImGuiRenderer::NewFinishPopup(const gui::FinishPopupData &data) {
+    if (!enableFinishPopup) {
+        // Early return
+        return;
+    }
+
+    // If the visible timer has run out
+    if (data.visibleTimer <= 0.0f) {
+        // Early return
+        return;
+    }
+
+    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+
+    std::string str = fmt::format("FINISH POPUP");
+
+    size_t sv = 0;
+
+    float windowBorderSize = 0.0f;
+    if (enableTextWindowBorder) {
+        // Display a window border for debug purposes
+        windowBorderSize = ImGui::GetStyle().WindowBorderSize;
+    } else {
+        // No window border
+        sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); });
+    }
+
+    // Middle of viewport. NOTE: hardcoded middle of viewport positioning
+    ImVec2 pos = ImVec2(viewport->WorkPos.x + viewport->WorkSize.x / 2.0f, viewport->WorkPos.y + viewport->WorkSize.y / 2.0f);
+    ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
+
+    // Make the window fit the text exactly
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(0, 0)); });
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0)); });
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); });
+
+    ImGui::SetNextWindowSize(textSize);
+    // NOTE: hardcoded middle of viewport positioning
+    ImGui::SetNextWindowPos(ImVec2(pos.x - textSize.x - windowBorderSize, pos.y - textSize.y - windowBorderSize));
+    ImGui::SetNextWindowBgAlpha(0.0f);
+
+    // Flags to get a non-interactable blank window to draw on
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                             ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+                             ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
+
+    ImGui::Begin("Finish Popup Window", nullptr, flags);
 
     // Text
     ImGui::Text("%s", str.c_str());

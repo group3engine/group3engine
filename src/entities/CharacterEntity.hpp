@@ -19,6 +19,7 @@ enum class InternalEvent {
 
 enum class InternalUiEvent {
     eDeathPopup,
+    eFinishPopup,
     eCount
 };
 
@@ -84,9 +85,11 @@ class CharacterEntity : public Entity {
 
     size_t mDeathCount = 0;
     float mDeathVisibleTimer = 0.0f;
+    float mFinishVisibleTimer = 0.0f;
 
     gui::DeathCounterData mGuiDeathCounterData{};
     gui::DeathPopupData mGuiDeathPopupData{};
+    gui::FinishPopupData mGuiFinishPopupData{};
 
     std::stack<InternalEvent> mInternalEvents;
     std::stack<InternalUiEvent> mInternalUiEvents;
