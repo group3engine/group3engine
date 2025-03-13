@@ -99,7 +99,6 @@ void CharacterEntity::UpdateUi(double deltaTime) {
         case InternalUiEvent::eFinishPopup:
             // Reset death popup timer
             mFinishVisibleTimer = 1.0f;
-            SPDLOG_INFO("Finish popup called");
             break;
         default:
             SPDLOG_ERROR("Unaccounted for switch case.");
@@ -119,7 +118,6 @@ void CharacterEntity::UpdateUi(double deltaTime) {
     ImGuiRenderer::NewDeathPopup(mGuiDeathPopupData);
 
     mFinishVisibleTimer = std::max(0.0f, mFinishVisibleTimer - static_cast<float>(deltaTime));
-    SPDLOG_INFO("{}", mFinishVisibleTimer);
     mGuiFinishPopupData.visibleTimer = mFinishVisibleTimer;
 
     ImGuiRenderer::NewFinishPopup(mGuiFinishPopupData);
