@@ -55,9 +55,6 @@ class CharacterEntity : public Entity {
     // set the checkpoint
     void SetCheckpoint(glm::vec3 checkpoint) { mLastCheckpoint = checkpoint; Save();}
 
-    // set the spawnpoint
-    void SetSpawnpoint(glm::vec3 spawnpoint){ if(!m_has_save){SetCheckpoint(spawnpoint);}}
-
 
     // reset the character to the last checkpoint
     void Reset() {
@@ -71,6 +68,9 @@ class CharacterEntity : public Entity {
     void SetCharacterPositionOffset(float x, float y, float z) {
         mCharacterPositionOffset = glm::vec3(x, y, z);
     }
+
+    void SetScene(Scene* input_scene){mScene = input_scene;}
+    void MoveToSpawn();
 
   private:
     void Save();
@@ -91,6 +91,7 @@ class CharacterEntity : public Entity {
     std::stack<InternalEvent> mInternalEvents;
     std::stack<InternalUiEvent> mInternalUiEvents;
     bool m_has_save = false;
+    Scene* mScene;
 };
 
 #endif // GROUP3ENGINE_CHARACTERENTITY_HPP

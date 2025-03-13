@@ -8,6 +8,8 @@
 #include <fstream>
 #include <cstdlib>
 
+#include "Scene.hpp"
+
 void CharacterEntity::SetCharacterVirtual(unique_ptr<CharacterVirtualTest> &&uniquePtr) {
     mCharacterVirtual = std::move(uniquePtr);
 
@@ -235,4 +237,22 @@ void CharacterEntity::Load() {
 
 void CharacterEntity::Awake() {
     mInitialTransform = GetLocalTransform();
+
+    // if there is no save
+    if(!m_has_save)
+    {
+        MoveToSpawn();
+    }
+}
+
+void CharacterEntity::MoveToSpawn()
+{
+    for(auto &entity: mScene->GetEntities())
+    {
+        if(entity->CompareTag("spawnpoint"))
+        {
+            SetCheckpoint(entity->GetWorldTransformComponents().translation + glm::vec3(0.f, 2.5f, 0.f));
+            Reset();
+        }
+    }
 }
