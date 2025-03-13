@@ -240,7 +240,7 @@ bool Engine::Initialize() {
         {
             if(entity->CompareTag("spawnpoint"))
             {
-                characterEntity->SetCheckpoint(entity->GetWorldTransformComponents().translation + glm::vec3(0.f, 2.5f, 0.f));
+                characterEntity->SetSpawnpoint(entity->GetWorldTransformComponents().translation + glm::vec3(0.f, 2.5f, 0.f));
             }
         }
         characterEntity->Reset();

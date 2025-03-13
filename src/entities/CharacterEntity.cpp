@@ -171,6 +171,7 @@ void CharacterEntity::Save() {
     file << "LastCheckpoint=" << mLastCheckpoint.x << "," << mLastCheckpoint.y << "," << mLastCheckpoint.z << std::endl;
 
     SPDLOG_INFO("Game saved to {}", saveFile.string());
+    m_has_save = true;
 }
 
 void CharacterEntity::Load() {
@@ -221,6 +222,7 @@ void CharacterEntity::Load() {
 
                     mLastCheckpoint = glm::vec3(x, y, z);
                     SPDLOG_INFO("Loaded checkpoint: ({}, {}, {})", x, y, z);
+                    m_has_save = true;
                 } catch (const std::exception& e) {
                     SPDLOG_ERROR("Failed to parse checkpoint coordinates: {}", e.what());
                 }
@@ -228,7 +230,9 @@ void CharacterEntity::Load() {
             break;
         }
     }
+
 }
+
 void CharacterEntity::Awake() {
     mInitialTransform = GetLocalTransform();
 }
