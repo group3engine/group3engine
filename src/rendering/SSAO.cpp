@@ -29,6 +29,7 @@ SSAO::SSAO(Context &context, Image &depthBuffer, Image& renderedScene, std::shar
         buffer = CreateBuffer("SSAOSettingsUBO", context, sizeof(vkutil::SSAOSettings), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
     }
 
+    GenerateSSAOSamples();
     GenerateNoiseTexture(4,4);
 
     BuildDescriptors();
@@ -45,6 +46,7 @@ SSAO::~SSAO()
     }
     m_RenderTarget.Destroy(context.device);
     m_NoiseTexture.Destroy(context.device);
+    m_SSAOSamples.Destroy();
     vkDestroyPipeline(context.device, m_Pipeline, nullptr);
     vkDestroyPipelineLayout(context.device, m_PipelineLayout, nullptr);
     vkDestroyDescriptorSetLayout(context.device, m_DescriptorSetLayout, nullptr);
@@ -209,7 +211,8 @@ void SSAO::BuildDescriptors()
             vkutil::CreateDescriptorBinding(1, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
             vkutil::CreateDescriptorBinding(2, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT),
             vkutil::CreateDescriptorBinding(3, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
-            vkutil::CreateDescriptorBinding(4, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+            vkutil::CreateDescriptorBinding(4, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
+            vkutil::CreateDescriptorBinding(5, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT)
         };
 
         m_DescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
@@ -267,11 +270,62 @@ void SSAO::BuildDescriptors()
 
         vkutil::UpdateDescriptorSet(context, 4, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     }
+
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        VkDescriptorBufferInfo bufferInfo{};
+        bufferInfo.buffer = m_SSAOSamples.buffer;
+        bufferInfo.offset = 0;
+        bufferInfo.range = sizeof(SSAOSamples);
+        vkutil::UpdateDescriptorSet(context, 5, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+    }
 }
 
 
-void SSAO::GenerateNoiseTexture(uint32_t width, uint32_t height)
+void SSAO::GenerateSSAOSamples()
 {
+    std::uniform_real_distribution<float> randomFloats(0.0f, 1.0f);
+    std::default_random_engine generator;
+
+    for (uint32_t i = 0; i < 64; i++)
+    {
+        glm::vec3 sample(
+            randomFloats(generator) * 2.0 - 1.0f,
+            randomFloats(generator) * 2.0 - 1.0f,
+            randomFloats(generator)
+        );
+
+        sample = glm::normalize(sample);
+        sample *= randomFloats(generator);
+        float scale = float(i) / 64.0f;
+
+        scale = lerp(0.1f, 1.0f, scale * scale);
+        sample *= scale;
+        ssaoSamplesCPUtoGPU.samples[i] = sample;
+    }
+
+    // We have the samples, now upload to GPU
+    m_SSAOSamples = CreateBuffer("SSAOSamplesUBO", context, sizeof(SSAOSamples), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+    m_SSAOSamples.WriteToBuffer(ssaoSamplesCPUtoGPU, sizeof(SSAOSamples));
+
+     //void *mappedData;
+     //VkResult result = vmaMapMemory(context.allocator, m_SSAOSamples.allocation, &mappedData);
+     //if (result != VK_SUCCESS) {
+     //    std::cerr << "Failed to map staging buffer memory: " << result << std::endl;
+     //    return;
+     //}
+
+     //glm::vec3 *bufferData = static_cast<glm::vec3 *>(mappedData);
+     //std::cout << "Staging buffer contents:" << std::endl;
+     //for (uint32_t i = 0; i < 64; i++) {
+     //    std::cout << "Sample " << i << ": ("
+     //        << bufferData[i].x << ", " << bufferData[i].y << ", " << bufferData[i].z << ")" << std::endl;
+     //}
+
+     //vmaUnmapMemory(context.allocator, m_SSAOSamples.allocation);
+}
+
+void SSAO::GenerateNoiseTexture(uint32_t width, uint32_t height) {
     m_NoiseTexture = CreateImageTexture2D(
         "SSAO_Noise_Texture",
         context,

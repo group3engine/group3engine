@@ -48,7 +48,7 @@ void Engine::InitScene() {
     // Define Light sources
     Light directionalLight;
     directionalLight.Type = LightType::Directional;
-    directionalLight.position = glm::vec4(21.261806f, 4.575542f, -9.722689f, 1.0f); // -0.2972
+    directionalLight.position = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f); // -0.2972
     directionalLight.colour = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
     std::vector<glm::vec4> spotLightPositions;
@@ -271,7 +271,7 @@ void Engine::Run() {
 
         PollInputEvents();
 
-        
+
 
         ProcessInputParams processInputParams{};
         auto cameraForward = camera->GetDirection();
