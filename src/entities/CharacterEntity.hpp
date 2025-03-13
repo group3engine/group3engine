@@ -4,9 +4,23 @@
 
 #ifndef GROUP3ENGINE_CHARACTERENTITY_HPP
 #define GROUP3ENGINE_CHARACTERENTITY_HPP
+
+#include <stack>
+
 #include "Entity.hpp"
 #include "CharacterVirtualTest.h"
 
+#include "ImGuiRenderer.hpp"
+
+enum class InternalEvent {
+    eDeath,
+    eCount
+};
+
+enum class InternalUiEvent {
+    eDeathPopup,
+    eCount
+};
 
 class CharacterEntity : public Entity {
   public:
@@ -28,6 +42,8 @@ class CharacterEntity : public Entity {
     // update override
     void Update(double deltaTime) override;
 
+    void UpdateUi(double deltaTime) override;
+
     void Awake() override ;
 
     void OnCollisionStart(Entity *aOther) override ;
@@ -38,6 +54,8 @@ class CharacterEntity : public Entity {
 
     // set the checkpoint
     void SetCheckpoint(glm::vec3 checkpoint) { mLastCheckpoint = checkpoint; Save();}
+
+
     // reset the character to the last checkpoint
     void Reset() {
         mCharacterVirtual->SetCharacterPosition(RVec3(mLastCheckpoint.x,
@@ -51,14 +69,29 @@ class CharacterEntity : public Entity {
         mCharacterPositionOffset = glm::vec3(x, y, z);
     }
 
+    void SetScene(Scene* input_scene){mScene = input_scene;}
+    void MoveToSpawn();
+
   private:
     void Save();
     void Load();
+
   private:
     Transform mInitialTransform = {};
     std::unique_ptr<CharacterVirtualTest> mCharacterVirtual;
 
     glm::vec3 mLastCheckpoint = glm::vec3(0, 10.0f, 0);
+
+    size_t mDeathCount = 0;
+    float mDeathVisibleTimer = 0.0f;
+
+    gui::DeathCounterData mGuiDeathCounterData{};
+    gui::DeathPopupData mGuiDeathPopupData{};
+
+    std::stack<InternalEvent> mInternalEvents;
+    std::stack<InternalUiEvent> mInternalUiEvents;
+    bool m_has_save = false;
+    Scene* mScene;
 };
 
 #endif // GROUP3ENGINE_CHARACTERENTITY_HPP

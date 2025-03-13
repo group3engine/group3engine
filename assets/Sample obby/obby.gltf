@@ -1200,7 +1200,24 @@
 		},
 		{
 			"extras":{
-				"_RNA_UI":{}
+				"entity_type":"default",
+				"is_sensor":false,
+				"is_solid":true,
+				"tags":"spawnpoint",
+				"_RNA_UI":{
+					"is_sensor":{
+						"use_export":true
+					},
+					"is_solid":{
+						"use_export":true
+					},
+					"entity_type":{
+						"use_export":true
+					},
+					"tags":{
+						"use_export":true
+					}
+				}
 			},
 			"mesh":56,
 			"name":"cube.034",

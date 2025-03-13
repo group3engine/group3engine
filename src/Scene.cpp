@@ -4,6 +4,8 @@
 
 #include "ResourceManager.hpp"
 
+#include "ImGuiRenderer.hpp"
+
 void Scene::AddLightSource(Light &LightSource) {
     m_Lights.push_back(std::move(LightSource));
 }
@@ -42,6 +44,16 @@ void Scene::Update(double aDeltaTime) {
 
     // Pass the light data to the GPU to update all light properties
     m_LightUBO[vkutil::currentFrame].WriteToBuffer(m_LightBuffer, sizeof(vkutil::LightBuffer));
+}
+
+void Scene::UpdateUi(double aDeltaTime) {
+    // New timer window
+    mGuiTimerData.time += aDeltaTime;
+    ImGuiRenderer::NewTimer(mGuiTimerData);
+
+    for (auto &entity : m_Entities) {
+        entity->UpdateUi(aDeltaTime);
+    }
 }
 
 void Scene::Destroy()

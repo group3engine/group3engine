@@ -223,7 +223,7 @@ bool Engine::Initialize() {
 
     if (it != entities.end()) {
         CharacterEntity* characterEntity = dynamic_cast<CharacterEntity*>(*it);
-
+        characterEntity->SetScene(mScene.get());
 
         auto characterVirtual = std::make_unique<CharacterVirtualTest>();
         characterVirtual->SetPhysicsSystem(&PhysicsManager::get().mPhysicsSystem);
@@ -235,8 +235,11 @@ bool Engine::Initialize() {
 
         mScene->CreateCharacter(characterEntity, std::move(characterVirtual));
         mScene->SetHasCharacter(true);
+        
         characterEntity->Reset();
     }
+
+    
 
     // call the scene awake function
     mScene->Awake();
@@ -269,6 +272,10 @@ void Engine::Run() {
         GlobalUtil::deltaTime = currentFrameTime - m_lastFrameTime;
         m_lastFrameTime = currentFrameTime;
 
+        // See imgui.cpp
+        // "(So you want to try calling NewFrame() as early as you can in your main loop to be able to use Dear ImGui everywhere)"
+        ImGuiRenderer::NewFrame();
+
         PollInputEvents();
 
         
@@ -288,8 +295,6 @@ void Engine::Run() {
             mScene->GetCharacter().PrePhysicsUpdate(preUpdateParams);
         }
 
-        PhysicsManager::get().UpdatePhysics(GlobalUtil::deltaTime);
-
         if (mScene->HasCharacter()) {
             auto characterVirtualPos = mScene->GetCharacter().GetCharacterPosition();
             mScene->GetCharacter().SetCharacterPositionOffset(
@@ -299,6 +304,8 @@ void Engine::Run() {
         } else {
             Update(GlobalUtil::deltaTime);
         }
+
+        ImGuiRenderer::EndFrame();
 
         Render();
     }
@@ -360,7 +367,10 @@ void Engine::UpdateLogic() {
 void Engine::Update(double deltaTime) {
     UpdateLogic();
     mScene->Update(deltaTime);
+    mScene->UpdateUi(deltaTime);
+    PhysicsManager::get().UpdatePhysics(deltaTime);
     mRenderer->Update(deltaTime);
+    
 }
 
 void Engine::Render() {
