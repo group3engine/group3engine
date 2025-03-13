@@ -19,6 +19,7 @@ namespace {
     };
 
     bool enableTextWindowBorder = true;
+    bool enableDeathPopup = false;
 }
 
 void ImGuiRenderer::Initialize(const Context &context, TextureManager *textureManager) {
@@ -169,6 +170,11 @@ void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data) {
 }
 
 void ImGuiRenderer::NewDeathPopup(const gui::DeathPopupData &data) {
+    if (!enableDeathPopup) {
+        // Early return
+        return;
+    }
+
     // If the visible timer has run out
     if (data.visibleTimer <= 0.0f) {
         // Early return
@@ -345,6 +351,8 @@ void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::share
     }
 
     ImGui::Checkbox("Enable Text Window Border", &enableTextWindowBorder);
+
+    ImGui::Checkbox("Enable Death Popup", &enableDeathPopup);
 
     ImGui::EndChild();
 }
