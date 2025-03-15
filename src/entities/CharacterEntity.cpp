@@ -8,6 +8,8 @@
 #include <fstream>
 #include <cstdlib>
 
+#include "Scene.hpp"
+
 void CharacterEntity::SetCharacterVirtual(unique_ptr<CharacterVirtualTest> &&uniquePtr) {
     mCharacterVirtual = std::move(uniquePtr);
 
@@ -17,6 +19,22 @@ void CharacterEntity::SetCharacterVirtual(unique_ptr<CharacterVirtualTest> &&uni
 CharacterEntity::~CharacterEntity() {
 }
 void CharacterEntity::Update(double deltaTime) {
+    while (!mInternalEvents.empty()) {
+        auto &event = mInternalEvents.top();
+        mInternalEvents.pop();
+
+        switch (event) {
+        case InternalEvent::eDeath:
+            ++mDeathCount;
+            mInternalUiEvents.push(InternalUiEvent::eDeathPopup);
+            break;
+        default:
+            SPDLOG_ERROR("Unaccounted for switch case.");
+            exit(EXIT_FAILURE);
+            break;
+        }
+    }
+
     Entity::Update(deltaTime);
 
     // set the ragdoll mode to false if the ragdoll time has passed
@@ -84,6 +102,44 @@ void CharacterEntity::Update(double deltaTime) {
 
 
 }
+
+void CharacterEntity::UpdateUi(double deltaTime) {
+    while (!mInternalUiEvents.empty()) {
+        auto &event = mInternalUiEvents.top();
+        mInternalUiEvents.pop();
+
+        switch (event) {
+        case InternalUiEvent::eDeathPopup:
+            // Reset death popup timer
+            mDeathVisibleTimer = 1.0f;
+            break;
+        case InternalUiEvent::eFinishPopup:
+            // Reset death popup timer
+            mFinishVisibleTimer = 1.0f;
+            break;
+        default:
+            SPDLOG_ERROR("Unaccounted for switch case.");
+            exit(EXIT_FAILURE);
+            break;
+        }
+    }
+
+    // NOTE: If copying the data into a struct gets annoying, we can just use
+    // simple parameters to the gui functions. But using structs might help
+    // bundle things more nicely in some cases. This is just an example.
+    mGuiDeathCounterData.deathCount = mDeathCount;
+    ImGuiRenderer::NewDeathCounter(mGuiDeathCounterData);
+
+    mDeathVisibleTimer = std::max(0.0f, mDeathVisibleTimer - static_cast<float>(deltaTime));
+    mGuiDeathPopupData.visibleTimer = mDeathVisibleTimer;
+    ImGuiRenderer::NewDeathPopup(mGuiDeathPopupData);
+
+    mFinishVisibleTimer = std::max(0.0f, mFinishVisibleTimer - static_cast<float>(deltaTime));
+    mGuiFinishPopupData.visibleTimer = mFinishVisibleTimer;
+
+    ImGuiRenderer::NewFinishPopup(mGuiFinishPopupData);
+}
+
 CharacterEntity::CharacterEntity() {
     SetAsCharacter();
     Load();
@@ -92,8 +148,10 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
 
     if(aOther->CompareTag("deathzone")) {
         SPDLOG_INFO("I am {} and I collided with a death zone", GetName());
+        mInternalEvents.push(InternalEvent::eDeath);
         Reset();
     }
+
     // if its a checkpoint, set the checkpoint
     if(aOther->CompareTag("checkpoint")) {
         // set the checkpoint to the position of the checkpoint, plus a bit in the y direction
@@ -101,6 +159,13 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
             aOther->GetWorldTransformComponents().translation + glm::vec3(0, 2.5f, 0);
         SetCheckpoint(checkpointPosition);
     }
+
+    if(aOther->CompareTag("finishzone")) 
+    {
+        // do finish zone things
+        mInternalUiEvents.push(InternalUiEvent::eFinishPopup);
+    }
+
     SPDLOG_INFO("I am {} and I collided with {}", GetName(), aOther->GetName());
 
     // if its a high impact object, set the charactervirtual to ragdoll
@@ -157,6 +222,7 @@ void CharacterEntity::Save() {
     file << "LastCheckpoint=" << mLastCheckpoint.x << "," << mLastCheckpoint.y << "," << mLastCheckpoint.z << std::endl;
 
     SPDLOG_INFO("Game saved to {}", saveFile.string());
+    m_has_save = true;
 }
 
 void CharacterEntity::Load() {
@@ -207,6 +273,7 @@ void CharacterEntity::Load() {
 
                     mLastCheckpoint = glm::vec3(x, y, z);
                     SPDLOG_INFO("Loaded checkpoint: ({}, {}, {})", x, y, z);
+                    m_has_save = true;
                 } catch (const std::exception& e) {
                     SPDLOG_ERROR("Failed to parse checkpoint coordinates: {}", e.what());
                 }
@@ -214,7 +281,27 @@ void CharacterEntity::Load() {
             break;
         }
     }
+
 }
+
 void CharacterEntity::Awake() {
     mInitialTransform = GetLocalTransform();
+
+    // if there is no save
+    if(!m_has_save)
+    {
+        MoveToSpawn();
+    }
+}
+
+void CharacterEntity::MoveToSpawn()
+{
+    for(auto &entity: mScene->GetEntities())
+    {
+        if(entity->CompareTag("spawnpoint"))
+        {
+            SetCheckpoint(entity->GetWorldTransformComponents().translation + glm::vec3(0.f, 2.5f, 0.f));
+            Reset();
+        }
+    }
 }

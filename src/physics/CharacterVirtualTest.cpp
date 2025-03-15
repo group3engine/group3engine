@@ -172,16 +172,43 @@ void CharacterVirtualTest::OnContactAdded(const CharacterVirtual *inCharacter, c
 		if (std::find(mActiveContacts.begin(), mActiveContacts.end(), c) != mActiveContacts.end()) {
 			SPDLOG_ERROR("Got an add contact that should have been a persisted contact");
 		}
-		mActiveContacts.push_back(c);
+        
+
+        // assume the thing isnt already an active contact
+        bool is_already_in_contact = false;
+
+        // for all contacts
+        for(auto contact: mActiveContacts)
+        {
+            // if the new contact has the same body as one that already exists
+            if(c.IsSameBody(contact))
+            {
+                // then its already in contact
+                is_already_in_contact = true;
+            }
+        }
+        
+        // we push this contact into the list of active contacts
+        mActiveContacts.push_back(c);
+
+        // if its not already in contact
+        if(!is_already_in_contact)
+        {
+            // handle the contact
+            if(mCustomContactListener->GetMap().find(inBodyID2) != mCustomContactListener->GetMap().end()) {
+                mCustomContactListener->GetMap()[inBodyID2]->OnCollisionStart(mCustomContactListener->GetMap()[inCharacter->GetInnerBodyID()]);
+            }
+
+            if(mCustomContactListener->GetMap().find(inCharacter->GetInnerBodyID()) != mCustomContactListener->GetMap().end()) {
+                mCustomContactListener->GetMap()[inCharacter->GetInnerBodyID()]->OnCollisionStart(mCustomContactListener->GetMap()[inBodyID2]);
+            }
+        }
+
+        
 	}
 
-    if(mCustomContactListener->GetMap().find(inBodyID2) != mCustomContactListener->GetMap().end()) {
-        mCustomContactListener->GetMap()[inBodyID2]->OnCollisionStart(mCustomContactListener->GetMap()[inCharacter->GetInnerBodyID()]);
-    }
-
-    if(mCustomContactListener->GetMap().find(inCharacter->GetInnerBodyID()) != mCustomContactListener->GetMap().end()) {
-        mCustomContactListener->GetMap()[inCharacter->GetInnerBodyID()]->OnCollisionStart(mCustomContactListener->GetMap()[inBodyID2]);
-    }
+    
+    
 }
 
 void CharacterVirtualTest::OnContactPersisted(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings)
@@ -212,6 +239,7 @@ void CharacterVirtualTest::OnContactRemoved(const CharacterVirtual *inCharacter,
 		}
 		mActiveContacts.erase(it);
 	}
+
 }
 
 void CharacterVirtualTest::OnContactSolve(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, Vec3Arg inContactVelocity, const PhysicsMaterial *inContactMaterial, Vec3Arg inCharacterVelocity, Vec3 &ioNewCharacterVelocity)
