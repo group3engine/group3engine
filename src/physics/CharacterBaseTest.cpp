@@ -61,6 +61,10 @@ void CharacterBaseTest::ProcessInput(const ProcessInputParams &inParams)
                 mControlInput.SetX(-1);
             if (mControlInput != Vec3::sZero())
                 mControlInput = mControlInput.Normalized();
+            if (abs(GetGamepadAxis(GAMEPAD_AXIS::eLEFT_Y)) > 0.1f)
+                mControlInput.SetX(-GetGamepadAxis(GAMEPAD_AXIS::eLEFT_Y));
+            if (abs(GetGamepadAxis(GAMEPAD_AXIS::eLEFT_X)) > 0.1f)
+                mControlInput.SetZ(GetGamepadAxis(GAMEPAD_AXIS::eLEFT_X));
 
             // Rotate controls to align with the camera
             Vec3 cam_fwd = inParams.mCameraState.mForward;
@@ -70,7 +74,7 @@ void CharacterBaseTest::ProcessInput(const ProcessInputParams &inParams)
             mControlInput = rotation * mControlInput;
 
             // Check actions
-            mJump = IsKeyPressed(KEY::eSPACE);
+            mJump = IsKeyPressed(KEY::eSPACE) || IsGamepadButtonPressed(GAMEPAD_BUTTON::eA);
         }
 }
 

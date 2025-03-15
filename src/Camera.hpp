@@ -73,7 +73,7 @@ class Camera {
     void Update(uint32_t width, uint32_t height, double deltaTime);
     void UpdateTransforms(uint32_t width, uint32_t height);
     void UpdateCameraMovement();
-    void UpdateCameraRotation();
+    void UpdateCameraRotation(double deltaTime);
     void UpdateCameraAngles(const glm::vec2 &offset);
 
     // Compute the camera direction based on the cameras updated rotation
@@ -91,8 +91,21 @@ class Camera {
     void SetInput(EInputState inputState, bool state) {
         inputMap[static_cast<size_t>(inputState)] = state;
     }
+    void SetInput(EInputState inputState, float state)
+    {
+        if (state > 0.2f)
+        {
+            SetInput(inputState, true);
+        }
+        else
+        {
+            SetInput(inputState, false);
+        }
+
+    }
 
     bool inputMap[std::size_t(EInputState::MAX)] = {};
+    float inputMapFloat[std::size_t(EInputState::MAX)] = {};
     bool wasMousing = false;
 
     void SetInputType(InputType inputType) { m_inputType = inputType; }
@@ -114,6 +127,7 @@ class Camera {
     float m_cameraSpeed;
     float m_increaseSpeed;
     float m_mouseSensitivity;
+    float m_controllerSensitivity;
     double yaw = 90.0f;
     double pitch = 0.0f;
     float zoom_level = 1.f;

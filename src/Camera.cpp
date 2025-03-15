@@ -22,6 +22,7 @@ Camera* Camera::kMainCamera = nullptr;
 Camera::Camera(Context &context, const glm::vec3 position, glm::vec3 direction, glm::vec3 up, float aspect)
     : context{context}, m_position{position}, m_direction{direction}, m_up{up} {
     m_mouseSensitivity = 0.1f;
+    m_controllerSensitivity = 100.f;
     m_increaseSpeed = 0.0f;
     m_transform.view = glm::lookAt(position, position + direction, up);
     m_transform.projection = glm::perspective(m_transform.fov, aspect, m_transform.nearPlane, m_transform.farPlane);
@@ -49,7 +50,7 @@ Camera::~Camera() {
 }
 
 void Camera::Update(uint32_t width, uint32_t height, [[maybe_unused]] double deltaTime) {
-    UpdateCameraRotation();
+    UpdateCameraRotation(deltaTime);
     UpdateCameraMovement();
     UpdateTransforms(width, height);
 
@@ -147,18 +148,23 @@ void Camera::UpdateCameraMovement() {
     }
 }
 
-void Camera::UpdateCameraRotation() {
+void Camera::UpdateCameraRotation(double deltaTime) {
     // If we're using the mouse
-    if (inputMap[std::size_t(EInputState::MOUSING)]) {
         // check if this is the first time mouse is being used, if so skip updating
         // skip next frame so we have the correct lastx and lasty position for cursor
+        glm::vec2 delta {};
         if (wasMousing) {
-            glm::vec2 delta = m_mouseSensitivity * GetMouseDelta();
+            delta = m_mouseSensitivity * GetMouseDelta();
             delta.y = -delta.y; // Prevent inverted y
-            UpdateCameraAngles(delta);
-            UpdateCameraDirection();
         }
+        // Get the right joystick input
+        delta.x += GetGamepadAxis(GAMEPAD_AXIS::eRIGHT_X) * m_controllerSensitivity * deltaTime;
+        delta.y -= GetGamepadAxis(GAMEPAD_AXIS::eRIGHT_Y) * m_controllerSensitivity * deltaTime;
 
+        // Update the camera angles based on the mouse and controller movement
+        UpdateCameraAngles(delta);
+        UpdateCameraDirection();
+    if (inputMap[std::size_t(EInputState::MOUSING)]) {
         wasMousing = true;
     } else {
         wasMousing = false;

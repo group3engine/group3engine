@@ -25,6 +25,8 @@
 
 #include "Input.hpp"
 
+#include <cmath>
+
 InputData gInputData;
 
 // Using system from https://github.com/raysan5/raylib/blob/master/src/rcore.c
@@ -43,6 +45,25 @@ bool IsKeyDown(KEY key) {
 bool IsKeyReleased(KEY key) {
     return gInputData.keyboard.previousKeyState[static_cast<uint16_t>(key)] == 1 &&
            gInputData.keyboard.currentKeyState[static_cast<uint16_t>(key)] == 0;
+}
+
+// get an axis value from the gamepad
+float GetGamepadAxis(GAMEPAD_AXIS axis) {
+    // only return the axis value if it isn't almost zero
+    if (std::abs(gInputData.gamepadAxis.currentAxisState[static_cast<uint8_t>(axis)]) < 0.1f) {
+        return 0.0f;
+    }
+    return gInputData.gamepadAxis.currentAxisState[static_cast<uint8_t>(axis)];
+}
+
+// Check if a gamepad button has been pressed once
+bool IsGamepadButtonPressed(GAMEPAD_BUTTON button) {
+    return gInputData.gamepadButtons.currentButtonState[static_cast<uint8_t>(button)] == 1 &&
+           gInputData.gamepadButtons.previousButtonState[static_cast<uint8_t>(button)] == 0;
+}
+
+bool IsGamepadButtonDown(GAMEPAD_BUTTON button) {
+    return gInputData.gamepadButtons.currentButtonState[static_cast<uint8_t>(button)] == 1;
 }
 
 
