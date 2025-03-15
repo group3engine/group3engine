@@ -193,9 +193,9 @@ enum class GAMEPAD_AXIS
 {
     eLEFT_X             = 0,    // Left stick X axis
     eLEFT_Y             = 1,    // Left stick Y axis
-    eRIGHT_X            = 2,    // Right stick X axis
-    eRIGHT_Y            = 3,    // Right stick Y axis
-    eLEFT_TRIGGER       = 4,    // Left trigger
+    eLEFT_TRIGGER       = 2,    // Left trigger
+    eRIGHT_X            = 3,    // Right stick X axis
+    eRIGHT_Y            = 4,    // Right stick Y axis
     eRIGHT_TRIGGER      = 5,    // Right trigger
     eLAST               = 6
 };

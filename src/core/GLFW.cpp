@@ -104,6 +104,9 @@ static void PollGamepadJoysticks()
             break;
         }
     }
+    // print the right stick
+    SPDLOG_INFO("Right stick: ({}, {})", gInputData.gamepadAxis.currentAxisState[2], gInputData.gamepadAxis.currentAxisState[3]);
+    SPDLOG_INFO("All gamepad axis values: ({}, {}, {}, {}, {}, {})", gInputData.gamepadAxis.currentAxisState[0], gInputData.gamepadAxis.currentAxisState[1], gInputData.gamepadAxis.currentAxisState[2], gInputData.gamepadAxis.currentAxisState[3], gInputData.gamepadAxis.currentAxisState[4], gInputData.gamepadAxis.currentAxisState[5]);
 }
 
 

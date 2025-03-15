@@ -25,6 +25,8 @@
 
 #include "Input.hpp"
 
+#include <cmath>
+
 InputData gInputData;
 
 // Using system from https://github.com/raysan5/raylib/blob/master/src/rcore.c
@@ -47,6 +49,10 @@ bool IsKeyReleased(KEY key) {
 
 // get an axis value from the gamepad
 float GetGamepadAxis(GAMEPAD_AXIS axis) {
+    // only return the axis value if it isn't almost zero
+    if (std::abs(gInputData.gamepadAxis.currentAxisState[static_cast<uint8_t>(axis)]) < 0.1f) {
+        return 0.0f;
+    }
     return gInputData.gamepadAxis.currentAxisState[static_cast<uint8_t>(axis)];
 }
 
