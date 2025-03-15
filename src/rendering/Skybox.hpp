@@ -2,7 +2,7 @@
 #include "Buffer.hpp"
 #include "Camera.hpp"
 #include "Image.hpp"
-#include <volk/volk.h>
+#include "volk.h"
 
 // Skybox
 class Context;
