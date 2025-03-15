@@ -78,6 +78,7 @@ struct SSRSettings
     float MaxDistance;
     float thickness;
     float StepSize;
+    float time;
 };
 
 inline PostProcessing postProcessSettings = {};

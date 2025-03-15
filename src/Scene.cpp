@@ -23,9 +23,9 @@ void Scene::Update(double aDeltaTime) {
 
     for (auto& light : m_Lights)
     {
-            glm::mat4 ortho = glm::ortho(-light.view, light.view, -light.view, light.view, light.near, light.far);
-            glm::mat4 view = glm::lookAt(glm::vec3(light.position), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0));
-            light.LightSpaceMatrix = ortho * view;
+        glm::mat4 ortho = glm::ortho(-light.view, light.view, -light.view, light.view, light.near, light.far);
+        glm::mat4 view = glm::lookAt(glm::vec3(light.position), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0));
+        light.LightSpaceMatrix = ortho * view;
     }
 
     // Fill GPU Data with data defined for the scene
@@ -34,8 +34,7 @@ void Scene::Update(double aDeltaTime) {
 
         m_LightBuffer.lights[i].LightPosition = m_Lights[i].position;
         m_LightBuffer.lights[i].LightColour = m_Lights[i].colour;
-        m_LightBuffer.lights[i].LightSpaceMatrix =
-        m_Lights[i].LightSpaceMatrix;
+        m_LightBuffer.lights[i].LightSpaceMatrix = m_Lights[i].LightSpaceMatrix;
     }
 
     // Pass the light data to the GPU to update all light properties

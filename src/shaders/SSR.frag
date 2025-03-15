@@ -23,6 +23,7 @@ layout(set = 0, binding = 2) uniform SSRSettings
     float MaxDistance;
     float thickness;
 	float StepSize;
+	float time;
 }ssr;
 
 layout (set = 0, binding = 1) uniform sampler2D depthBuffer;
@@ -97,58 +98,6 @@ vec3 worldToScreen(vec3 world)
 	return vec3(projected.xyz);
 }
 
-vec3 NaiveScreenSpaceReflections()
-{
-	int STEPS = ssr.MaxSteps;
-	float MAX_DISTANCE = ssr.MaxDistance;
-	float stepSize = ssr.StepSize;
-
-	vec4 WorldPos = inverse(ubo.view) * DepthToPosition(uv);
-	vec4 WorldNormal = normalize(inverse(ubo.view) * vec4(DepthToNormal(uv).xyz, 0.0));
-
-	vec3 camDir = normalize(WorldPos.xyz - ubo.cameraPosition.xyz);
-	vec3 worldReflectionDir = normalize(reflect(camDir, WorldNormal.xyz));
-
-	vec3 RayPos = WorldPos.xyz;
-	float noise = IGN(gl_FragCoord.xy); // [0, 1]
-	float jitter = (noise - 0.5) * 0.5; // [-0.25, 0.25], adjust scale as needed
-	vec3 RayStep = worldReflectionDir * stepSize;
-
-	RayPos += RayStep;
-	vec4 color = vec4(0,0,0,0);
-	for(int i = 0; i < STEPS; i++)
-	{
-		// Get the position of the ray in screen-space
-		vec4 projectedCoords = ubo.projection * ubo.view * vec4(RayPos.xyz, 1.0);
-		projectedCoords.xyz /= projectedCoords.w;
-		projectedCoords.xy = projectedCoords.xy * 0.5 + 0.5;
-
-		// check if outside view-frustum
-		if(projectedCoords.x < 0.0 || projectedCoords.x > 1.0 || projectedCoords.y < 0.0 || projectedCoords.y > 1.0)
-		{
-			// fade out based on how far along the ray we are
-			float fade = smoothstep(0.0, 1.0, float(i) * stepSize / MAX_DISTANCE);
-			return vec3(0.0, 0.0, 0.0) * fade;
-		}
-
-		float rayDepth = projectedCoords.z;
-		float depth = texture(depthBuffer, projectedCoords.xy).x;
-
-		if((rayDepth - depth) > 0.0 && (rayDepth - depth) < ssr.thickness)
-		{
-			// We hit geometry
-			vec3 raypos =  worldToScreen(BSWorld(RayPos, RayStep));
-			float NdotR = max(dot(camDir, worldReflectionDir), 0.0);
-			color.rgb = texture(renderedScene, raypos.xy).rgb;
-			return mix(color.rgb, vec3(0,0,0), NdotR); // if its closer to 1, we get less reflection since its aligned with camera
-		}
-
-		RayPos += RayStep;
-	}
-
-	return vec3(0.0, 0.0, 0.0);
-}
-
 vec3 BinarySearch(vec3 raypos, vec3 raydir)
 {
 	for(int i = 0; i < ssr.BinarySearchIterations; i++)
@@ -164,7 +113,6 @@ vec3 BinarySearch(vec3 raypos, vec3 raydir)
 	}
 
 	return raypos;
-
 }
 
 vec3 ViewToScreen(vec3 view)
@@ -186,45 +134,98 @@ bool inScreenSpace(vec2 ssPos)
 	return false;
 }
 
-vec3 SSR()
+vec4 NaiveScreenSpaceReflections()
 {
-	float stepSize = ssr.MaxDistance / float(ssr.MaxSteps);
+	int STEPS = ssr.MaxSteps;
+	float MAX_DISTANCE = ssr.MaxDistance;
+	float stepSize = MAX_DISTANCE / float(STEPS);
 
-	vec4 viewPos = DepthToPosition(uv);
-	vec4 viewNormal = DepthToNormal(uv);
-	vec3 viewSpaceCamPos = vec4(ubo.view * vec4(ubo.cameraPosition.xyz, 1.0)).xyz;
-	vec3 viewDir = normalize(viewPos.xyz - viewSpaceCamPos.xyz);
-	vec3 refl_dir_world = normalize(reflect(viewDir, viewNormal.xyz));
+	vec4 WorldPos = inverse(ubo.view) * vec4(DepthToPosition(uv).xyz, 1.0);
+	vec4 WorldNormal = inverse(ubo.view) * vec4(DepthToNormal(uv).rgb, 0.0);
 
-	// Screen-space
-	vec3 screenPos =  ViewToScreen(viewPos.xyz);
-	vec3 reflectionDirectionScreen = normalize(ViewToScreen(viewPos.xyz + refl_dir_world) - screenPos) * (stepSize);
+	vec3 camDir = normalize(WorldPos.xyz - ubo.cameraPosition.xyz);
+	//vec3 reflectionDirection = sampleGGXVNDF(WorldNormal, ssr.thickness, getRandomXi(gl_FragCoord.xy));
 
-	// Init ray
-	float noise = IGN(uv.xy); // [0, 1]
-	vec3 rayPos = screenPos + reflectionDirectionScreen;
+	vec3 worldReflectionDir = normalize(reflect(camDir, WorldNormal.xyz));
 
-	for(uint i = 0; i < ssr.MaxSteps; i++)
+	vec3 RayPos = WorldPos.xyz;
+	vec3 RayStep = worldReflectionDir * stepSize;
+
+
+	vec4 color = vec4(0,0,0,0);
+	for(int i = 1; i < STEPS; i++)
 	{
-		rayPos += reflectionDirectionScreen;
+		RayPos += ( i + noise(uv + ssr.time)) * RayStep;
 
-		if(inScreenSpace(rayPos.xy) == false)
+		// Get the position of the ray in screen-space
+		vec4 projectedCoords = ubo.projection * ubo.view * vec4(RayPos.xyz, 1.0);
+		projectedCoords.xyz /= projectedCoords.w;
+		projectedCoords.xy = projectedCoords.xy * 0.5 + 0.5;
+
+		// check if outside view-frustum
+		if(projectedCoords.x < 0.0 || projectedCoords.x > 1.0 || projectedCoords.y < 0.0 || projectedCoords.y > 1.0)
 		{
-			break;
+			// fade out based on how far along the ray we are
+			float fade = smoothstep(0.0, 1.0, float(i) * stepSize / MAX_DISTANCE);
+			return vec4(0.0, 0.0, 0.0, 1.0);
 		}
 
-		// compare depth
-		float currentDepth = (texture(depthBuffer, rayPos.xy).x);
-		float rayDepth = (rayPos.z);
+		float rayDepth = projectedCoords.z;
+		float depth = texture(depthBuffer, projectedCoords.xy).x;
 
-		if((rayDepth - currentDepth) > 0 && (rayDepth - currentDepth < ssr.thickness))
+		if((rayDepth - depth) > 0.0 && (rayDepth - depth) < ssr.thickness)
 		{
-			rayPos = BinarySearch(rayPos, reflectionDirectionScreen);
-			return texture(renderedScene, rayPos.xy).rgb;
+			// We hit geometry
+
+			vec3 hitPos = RayPos;
+			vec3 prevPos = RayPos - RayStep;
+			for (int j = 0; j < ssr.BinarySearchIterations; j++) { // 4 iterations for refinement
+				vec3 midPos = (hitPos + prevPos) * 0.5;
+				vec4 midCoords = ubo.projection * ubo.view * vec4(midPos, 1.0);
+				midCoords.xyz /= midCoords.w;
+				midCoords.xy = midCoords.xy * 0.5 + 0.5;
+				float midDepth = texture(depthBuffer, midCoords.xy).x;
+				if (midDepth < midCoords.z) {
+					hitPos = midPos;
+				} else {
+					prevPos = midPos;
+				}
+			}
+			projectedCoords = ubo.projection * ubo.view * vec4(hitPos, 1.0);
+			projectedCoords.xyz /= projectedCoords.w;
+			projectedCoords.xy = projectedCoords.xy * 0.5 + 0.5;
+
+			float NdotR = max(dot(-camDir, worldReflectionDir), 0.0);
+			color = texture(renderedScene, projectedCoords.xy);
+
+			vec2 center = vec2(0.5, 0.5);
+			float fadeStart = 0.3;
+			float fadeEnd = 0.5;
+
+			float dist = length(projectedCoords.xy - center);
+
+			//float fadeFactor = smoothstep(fadeEnd, fadeStart, dist);
+
+			// Convert to NDC (-1 to 1 range)
+			vec2 hitPixelNDC = projectedCoords.xy * 2.0 - 1.0;
+			const float blendScreenEdgeFade = 5.0f;
+
+			// Compute edge vignette (similar to CalculateEdgeVignette)
+			vec2 vignette = clamp(abs(hitPixelNDC) * blendScreenEdgeFade - (blendScreenEdgeFade - 1.0), 0.0, 1.0);
+			float fadeFactor = clamp(1.0 - dot(vignette, vignette), 0.0, 1.0);
+
+			color = color * fadeFactor;
+			return mix(color, vec4(0), NdotR);
+
+			//return mix(color.rgb, vec3(0,0,0), NdotR); // if its closer to 1, we get less reflection since its aligned with camera
 		}
+
+		RayPos += RayStep;
 	}
 
-	return vec3(0.0);
+	// TODO: Read from cube map
+
+	return vec4(0.0, 0.0, 0.0, 1.0);
 }
 
 void main()
@@ -236,7 +237,7 @@ void main()
 	float roughness = texture(MetallicRoughness, uv).g;
 
 
-	fragColour = vec4(mix(vec3(0), NaiveScreenSpaceReflections().rgb, 0.6), 1.0);
+	fragColour = vec4(mix(vec3(0), NaiveScreenSpaceReflections().rgb, metallic), 1.0);
 
 	//fragColour = vec4(vec3(NaiveScreenSpaceReflections().xyz), clamp(metallic, 0.0, 1.0));
 }

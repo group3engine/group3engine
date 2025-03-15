@@ -113,7 +113,7 @@ class Camera {
     [[nodiscard]] bool isInFreeCameraMode() const { return m_inputType == InputType::FreeCamera; }
     [[nodiscard]] bool isInFollowCharacterMode() const { return m_inputType == InputType::FollowCharacter; }
 
-    
+
 
   private:
     Context &context;
@@ -131,7 +131,7 @@ class Camera {
     double yaw = 90.0f;
     double pitch = 0.0f;
     float zoom_level = 1.f;
-    
+
     const PhysicsManager* m_physics_reference;
     Scene* m_scene_pointer;
 

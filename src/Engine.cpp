@@ -48,7 +48,7 @@ void Engine::InitScene() {
     // Define Light sources
     Light directionalLight;
     directionalLight.Type = LightType::Directional;
-    directionalLight.position = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f); // -0.2972
+    directionalLight.position = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
     directionalLight.colour = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
     std::vector<glm::vec4> spotLightPositions;

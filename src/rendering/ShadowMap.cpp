@@ -8,7 +8,7 @@
 #include "Utils.hpp"
 #include "Buffer.hpp"
 
-#define RESOLUTION 1024
+#define RESOLUTION 2048
 
 ShadowMap::ShadowMap(Context &context, std::shared_ptr<Scene> &scene)
     : context{context}, scene{scene} {
