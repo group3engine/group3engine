@@ -377,3 +377,4 @@ imgui.ini
 
 # don't ignore assets/dust2laugh
 !assets/Dust2Laugh/
+/assets/Sample obby/obby.blend
