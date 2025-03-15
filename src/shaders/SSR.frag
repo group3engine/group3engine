@@ -18,8 +18,11 @@ layout(set = 0, binding = 0) uniform SceneUniform
 
 layout(set = 0, binding = 2) uniform SSRSettings
 {
-	int MaxSteps;
-	int MaxDistance;
+    int MaxSteps;
+    int BinarySearchIterations;
+    float MaxDistance;
+    float thickness;
+	float StepSize;
 }ssr;
 
 layout (set = 0, binding = 1) uniform sampler2D depthBuffer;
@@ -59,13 +62,46 @@ float noise(vec2 seed)
     return fract(sin(dot(seed.xy, vec2(12.9898, 78.233))) * 43758.5453);
 }
 
+vec3 BSWorld(vec3 worldRayPos, vec3 worldRayDir)
+{
+	for(int i = 0; i < ssr.BinarySearchIterations; i++)
+	{
+		// to screen-space
+		vec4 projectedCoords = ubo.projection * ubo.view * vec4(worldRayPos, 1.0);
+		projectedCoords.xyz /= projectedCoords.w;
+		projectedCoords.xy = projectedCoords.xy * 0.5 + 0.5;
+
+		float rayDepth = (projectedCoords.z);
+		float depth = (texture(depthBuffer, projectedCoords.xy).x);
+
+		float delta = rayDepth - depth;
+
+		if(delta > 0.0)
+			worldRayPos -= worldRayDir;
+		else
+			worldRayPos += worldRayDir;
+
+		worldRayDir *= 0.5;
+	}
+
+	return worldRayPos;
+}
+
+
+vec3 worldToScreen(vec3 world)
+{
+	vec4 projected = ubo.projection * ubo.view * vec4(world, 1.0);
+	projected = projected / projected.w; // perspective divide
+	projected.xy = projected.xy * 0.5 + 0.5;
+
+	return vec3(projected.xyz);
+}
+
 vec3 NaiveScreenSpaceReflections()
 {
-	const vec2 texSize = textureSize(depthBuffer, 0);
-	const vec2 uv = gl_FragCoord.xy / texSize;
 	int STEPS = ssr.MaxSteps;
-	int MAX_DISTANCE = ssr.MaxDistance;
-	float stepSize = float(MAX_DISTANCE) / STEPS;
+	float MAX_DISTANCE = ssr.MaxDistance;
+	float stepSize = ssr.StepSize;
 
 	vec4 WorldPos = inverse(ubo.view) * DepthToPosition(uv);
 	vec4 WorldNormal = normalize(inverse(ubo.view) * vec4(DepthToNormal(uv).xyz, 0.0));
@@ -74,7 +110,9 @@ vec3 NaiveScreenSpaceReflections()
 	vec3 worldReflectionDir = normalize(reflect(camDir, WorldNormal.xyz));
 
 	vec3 RayPos = WorldPos.xyz;
-	vec3 RayStep = worldReflectionDir * stepSize * IGN(gl_FragCoord.xy);
+	float noise = IGN(gl_FragCoord.xy); // [0, 1]
+	float jitter = (noise - 0.5) * 0.5; // [-0.25, 0.25], adjust scale as needed
+	vec3 RayStep = worldReflectionDir * stepSize;
 
 	RayPos += RayStep;
 	vec4 color = vec4(0,0,0,0);
@@ -96,11 +134,12 @@ vec3 NaiveScreenSpaceReflections()
 		float rayDepth = projectedCoords.z;
 		float depth = texture(depthBuffer, projectedCoords.xy).x;
 
-		if((rayDepth - depth) > 0.0 && (rayDepth - depth) < 0.1)
+		if((rayDepth - depth) > 0.0 && (rayDepth - depth) < ssr.thickness)
 		{
 			// We hit geometry
-			float NdotR = max(dot(-camDir, worldReflectionDir), 0.0);
-			color.rgb = texture(renderedScene, projectedCoords.xy).rgb;
+			vec3 raypos =  worldToScreen(BSWorld(RayPos, RayStep));
+			float NdotR = max(dot(camDir, worldReflectionDir), 0.0);
+			color.rgb = texture(renderedScene, raypos.xy).rgb;
 			return mix(color.rgb, vec3(0,0,0), NdotR); // if its closer to 1, we get less reflection since its aligned with camera
 		}
 
@@ -108,6 +147,84 @@ vec3 NaiveScreenSpaceReflections()
 	}
 
 	return vec3(0.0, 0.0, 0.0);
+}
+
+vec3 BinarySearch(vec3 raypos, vec3 raydir)
+{
+	for(int i = 0; i < ssr.BinarySearchIterations; i++)
+	{
+		float depth = texture(depthBuffer, raypos.xy).r;
+		float depthDelta = depth - raypos.z;
+
+		if(depthDelta > 0.0) raypos += raydir;
+		else raypos -= raydir;
+
+
+		raydir *= 0.5;
+	}
+
+	return raypos;
+
+}
+
+vec3 ViewToScreen(vec3 view)
+{
+	vec4 projected = ubo.projection * vec4(view, 1.0);
+	projected = projected / projected.w; // perspective divide
+	projected.xy = projected.xy * 0.5 + 0.5;
+
+	return vec3(projected.xyz);
+}
+
+bool inScreenSpace(vec2 ssPos)
+{
+	if((ssPos.x >= 0.0 && ssPos.x <= 1.0 && ssPos.y >= 0.0 && ssPos.y <= 1.0))
+	{
+		return true;
+	}
+
+	return false;
+}
+
+vec3 SSR()
+{
+	float stepSize = ssr.MaxDistance / float(ssr.MaxSteps);
+
+	vec4 viewPos = DepthToPosition(uv);
+	vec4 viewNormal = DepthToNormal(uv);
+	vec3 viewSpaceCamPos = vec4(ubo.view * vec4(ubo.cameraPosition.xyz, 1.0)).xyz;
+	vec3 viewDir = normalize(viewPos.xyz - viewSpaceCamPos.xyz);
+	vec3 refl_dir_world = normalize(reflect(viewDir, viewNormal.xyz));
+
+	// Screen-space
+	vec3 screenPos =  ViewToScreen(viewPos.xyz);
+	vec3 reflectionDirectionScreen = normalize(ViewToScreen(viewPos.xyz + refl_dir_world) - screenPos) * (stepSize);
+
+	// Init ray
+	float noise = IGN(uv.xy); // [0, 1]
+	vec3 rayPos = screenPos + reflectionDirectionScreen;
+
+	for(uint i = 0; i < ssr.MaxSteps; i++)
+	{
+		rayPos += reflectionDirectionScreen;
+
+		if(inScreenSpace(rayPos.xy) == false)
+		{
+			break;
+		}
+
+		// compare depth
+		float currentDepth = (texture(depthBuffer, rayPos.xy).x);
+		float rayDepth = (rayPos.z);
+
+		if((rayDepth - currentDepth) > 0 && (rayDepth - currentDepth < ssr.thickness))
+		{
+			rayPos = BinarySearch(rayPos, reflectionDirectionScreen);
+			return texture(renderedScene, rayPos.xy).rgb;
+		}
+	}
+
+	return vec3(0.0);
 }
 
 void main()
@@ -119,7 +236,7 @@ void main()
 	float roughness = texture(MetallicRoughness, uv).g;
 
 
-	fragColour = vec4(mix(vec3(0), NaiveScreenSpaceReflections().rgb, metallic), 1.0);
+	fragColour = vec4(mix(vec3(0), NaiveScreenSpaceReflections().rgb, 0.6), 1.0);
 
 	//fragColour = vec4(vec3(NaiveScreenSpaceReflections().xyz), clamp(metallic, 0.0, 1.0));
 }

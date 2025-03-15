@@ -54,6 +54,8 @@ void Renderer::CreateRenderPasses() {
     ImGuiRenderer::Initialize(context);
     // TODO: This will cause a validation error if you re-size the window. Just needs to be updated when re-sized
     ImGuiRenderer::AddTexture(vkutil::clampToEdgeSamplerAniso, m_ShadowMap->GetRenderTarget().imageView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL);
+    ImGuiRenderer::AddTexture(vkutil::clampToEdgeSamplerAniso, m_SSAO->GetRenderTarget().imageView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL);
+
 }
 
 void Renderer::Destroy() {
@@ -185,7 +187,7 @@ void Renderer::Render() {
         m_BloomPass->Resize();
         m_CompositePass->Resize();
         m_PresentPass->Resize();
-        return;
+
     } else if (getImageIndex != VK_SUCCESS && getImageIndex != VK_SUBOPTIMAL_KHR) {
         throw std::runtime_error("Failed to aquire swapchain image");
     }

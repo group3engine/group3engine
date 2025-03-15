@@ -63,17 +63,40 @@ void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::share
         camera->GetPosition().z
     );
 
+   ImGui::Text("Directional Light: (%.2f, %.2f, %.2f)",
+        scene->GetLights()[0].position.x,
+        scene->GetLights()[0].position.y,
+        scene->GetLights()[0].position.z
+    );
+
+   static float SunElevation = 0.0f;
+   static float SunAzimuthal = 0.0f;
+   static const float distance = 1.0f;
 
     if (ImGui::CollapsingHeader("Directional Light"))
     {
         auto &lights = scene->GetLights();
         float* SunPosition[3] = { & lights[0].position.x, & lights[0].position.y, & lights[0].position.z };
-        ImGui::SliderFloat("X: ", SunPosition[0], -300.0f, 300.0f);
-        ImGui::SliderFloat("Y: ", SunPosition[1], -10.0f, 2000.0f);
-        ImGui::SliderFloat("Z: ", SunPosition[2], -300.0f, 300.0f);
-        ImGui::SliderFloat("View: ", &lights[0].view, -20.0f, 100.0f, "%.2f");
-        ImGui::SliderFloat("Near: ", &lights[0].near, 0.1f, 100.0f);
-        ImGui::SliderFloat("Far: ", &lights[0].far, 0.1f, 1000.0f);
+
+        // Phis is elevation
+        // Theta is azimuthal
+        const float ElevationPhi = glm::radians(SunElevation);
+        const float AzimuthalTheta = glm::radians(SunAzimuthal);
+
+        const float x = cosf(ElevationPhi) * cosf(AzimuthalTheta) * distance;
+        const float z = cosf(ElevationPhi) * sinf(AzimuthalTheta) * distance;
+        const float y = sinf(ElevationPhi) * distance;
+
+        lights[0].position.x = x;
+        lights[0].position.y = y;
+        lights[0].position.z = z;
+        lights[0].position = glm::normalize(lights[0].position);
+
+        ImGui::SliderFloat("Elevation - Phi: ", &SunElevation, -90.0f, 90.0f);
+        ImGui::SliderFloat("Azimuthal - Theta: ", &SunAzimuthal, -90.0f, 90.0f);
+        ImGui::SliderFloat("View: ", &lights[0].view, -200.0f, 200.0f, "%.2f");
+        ImGui::SliderFloat("Near: ", &lights[0].near, -300.1f, 100.0f);
+        ImGui::SliderFloat("Far: ", &lights[0].far, -300.0f, 1000.0f);
     }
 
     if (ImGui::CollapsingHeader("Lights")) {
@@ -97,10 +120,17 @@ void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::share
     }
 
     // SSR settings
+    //int MaxSteps;
+    //int BinarySearchIterations;
+    //float MaxDistance;
+    //float thickness;
     if (ImGui::CollapsingHeader("SSR"))
     {
-        ImGui::SliderInt("MaxSteps: ", &vkutil::ssrSettings.MaxSteps, 1, 300);
-        ImGui::SliderInt("MaxDistance: ", &vkutil::ssrSettings.MaxDistance, 1, 300);
+        ImGui::SliderInt("MaxSteps: ", &vkutil::ssrSettings.MaxSteps, 1, 500);
+        ImGui::SliderFloat("MaxDistance: ", &vkutil::ssrSettings.MaxDistance, 0.0f, 1.0f);
+        ImGui::SliderInt("BSIterations: ", &vkutil::ssrSettings.BinarySearchIterations, 0, 100);
+        ImGui::SliderFloat("Thickness: ", &vkutil::ssrSettings.thickness, 0, 1.0f);
+        ImGui::SliderFloat("StepSize: ", &vkutil::ssrSettings.StepSize, 0.0f, 0.5f);
     }
 
     static bool enableTextureDebug = false;

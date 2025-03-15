@@ -162,6 +162,17 @@ float Shadows(vec3 WorldPos)
 	return 0.0;
 }
 
+float Shadow(vec3 WorldPos)
+{
+	vec4 fragPositionInLightSpace = lightData.lights[0].LightSpaceMatrix * vec4(WorldPos, 1.0);
+	fragPositionInLightSpace.xyz /= fragPositionInLightSpace.w;
+	fragPositionInLightSpace.xy = fragPositionInLightSpace.xy * 0.5 + 0.5;
+	fragPositionInLightSpace.z -= 0.005;
+
+	float shadow = textureProj(shadowMap, fragPositionInLightSpace);
+	return shadow;
+}
+
 void main()
 {
 	// if the alpha value is less than the alpha cutoff value, discard the fragment
@@ -177,41 +188,45 @@ void main()
 
 	vec3 outLight = vec3(0.0);
 
-	for(int i = 0; i < NUM_LIGHTS; i++)
+	for(int i = 0; i < 1; i++)
 	{
-		vec3 lightDir = normalize(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
+		vec3 lightDir = normalize(lightData.lights[i].LightPosition.xyz);
 		vec3 viewDir = normalize(ubo.cameraPosition.xyz - WorldPos.xyz);
 		vec3 halfVector = normalize(viewDir + lightDir);
 
+		float diff = max(dot(WorldNormal, -lightDir), 0.0);
+		outLight += ((0.5) + diff * color) * lightData.lights[i].LightColour.rgb;
+
 		// is it a spot light?
-		vec3 LightColour = vec3(0.0);
-		bool isDirectional = lightData.lights[i].Type == 1 ? false : true;
-
-		if(!isDirectional)
-		{
-			float dist = length(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
-			float att = 1.0 / (dist * dist);
-			LightColour = lightData.lights[i].LightColour.xyz * att;
-		}
-		else {
-			LightColour = lightData.lights[i].LightColour.rgb;
-		}
-
-		if(isDirectional) {
-			float shadowTerm = 1.0 - Shadows(WorldPos.xyz);
-			outLight += shadowTerm * CookTorranceBRDF(WorldNormal, halfVector, viewDir, -lightData.lights[i].LightPosition.xyz, metallic, roughness, color, LightColour);
-
-		}
-		else {
-			outLight += CookTorranceBRDF(WorldNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour);
-		}
+//		vec3 LightColour = vec3(0.0);
+//		bool isDirectional = lightData.lights[i].Type == 1 ? false : true;
+//
+//		if(!isDirectional)
+//		{
+//			float dist = length(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
+//			float att = 1.0 / (dist * dist);
+//			LightColour = lightData.lights[i].LightColour.xyz * att;
+//		}
+//		else {
+//			lightDir = normalize(lightData.lights[i].LightPosition.xyz);
+//			LightColour = lightData.lights[i].LightColour.rgb;
+//		}
+//
+//		if(isDirectional) {
+//			float shadowTerm = 1.0 - Shadows(WorldPos.xyz);
+//			outLight += CookTorranceBRDF(WorldNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour);
+//
+//		}
+//		else {
+//			//outLight += CookTorranceBRDF(WorldNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour);
+//		}
 	}
 
-	float shadowTerm = 1.0 - Shadows(WorldPos.xyz);
+	float shadowTerm = Shadow(WorldPos.xyz);
 
 	vec3 ambient = vec3(0.02) * color * shadowTerm;
 	outLight += ambient;
-	fragColor = vec4(vec3(outLight), 1.0);
+	fragColor = vec4(vec3(ambient + outLight), 1.0);
 
 	float brightness = dot(fragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
 	if(brightness > 1.0)

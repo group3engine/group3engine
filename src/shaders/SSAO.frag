@@ -25,8 +25,15 @@ layout(set = 0, binding = 2) uniform SSAOSettings
 	float intensity;
 }ssao;
 
+
+layout(set = 0, binding = 5) uniform SSAOSamples
+{
+	vec3 samples[64];
+}ssaoSamples;
+
 layout (set = 0, binding = 1) uniform sampler2D depthBuffer;
 layout (set = 0, binding = 3) uniform sampler2D renderedScene;
+layout (set = 0, binding = 4) uniform sampler2D NoiseTexture;
 
 vec4 DepthToPosition(vec2 uv)
 {
@@ -54,46 +61,6 @@ float IGN(vec2 p)
 {
     vec3 magic = vec3(0.06711056, 0.00583715, 52.9829189);
     return fract( magic.z * fract(dot(p,magic.xy)) );
-}
-
-vec3 NaiveScreenSpaceReflections()
-{
-	const vec2 texSize = textureSize(depthBuffer, 0);
-	const vec2 uv = gl_FragCoord.xy / texSize;
-	int MAX_DISTANCE = 1;
-	int STEPS = 341;
-	float stepSize = 0.1;
-
-	vec4 WorldPos = inverse(ubo.view) * DepthToPosition(uv);
-	vec4 WorldNormal = normalize(inverse(ubo.view) * vec4(DepthToNormal(uv).xyz, 0.0));
-
-	vec3 camDir = normalize(WorldPos.xyz - ubo.cameraPosition.xyz);
-	vec3 worldReflectionDir = normalize(reflect(camDir, WorldNormal.xyz));
-
-	vec3 RayPos = WorldPos.xyz;
-	vec3 RayStep = worldReflectionDir * stepSize * IGN(gl_FragCoord.xy);
-
-	RayPos += RayStep;
-	for(int i = 0; i < STEPS; i++)
-	{
-		// Get the position of the ray in screen-space
-		vec4 projectedCoords = ubo.projection * ubo.view * vec4(RayPos.xyz, 1.0);
-		projectedCoords.xyz /= projectedCoords.w;
-		projectedCoords.xy = projectedCoords.xy * 0.5 + 0.5;
-
-		float rayDepth = projectedCoords.z;
-		float depth = texture(depthBuffer, projectedCoords.xy).x;
-
-		if((rayDepth - depth) > 0.0 && (rayDepth - depth) < 0.1)
-		{
-			// We hit geometry
-			return texture(renderedScene, (projectedCoords.xy)).rgb;
-		}
-
-		RayPos += RayStep;
-	}
-
-	return vec3(0.0, 0.0, 0.0);
 }
 
 #define PI 3.14159265359
@@ -125,6 +92,11 @@ vec2 RotateDirectionAngle(vec2 direction, vec2 noise)
     return direction * rotationMatrix;
 }
 
+vec4 GetJitter()
+{
+	return texture(NoiseTexture, (gl_FragCoord.xy / 4.0f));
+}
+
 float SSAO()
 {
 	const int SAMPLING_DIRECTIONS = ssao.NumDirections;
@@ -145,7 +117,9 @@ float SSAO()
 	vec3 view_position = unprojectedPosition.xyz /= unprojectedPosition.w;
 
 	float samplingDisk = 2 * PI / SAMPLING_DIRECTIONS;
-	vec4 Rand = generateNoise(gl_FragCoord.xy * 0.01); // This needs to change to some actual noise
+	//vec4 Rand = generateNoise(gl_FragCoord.xy * 0.01); // This needs to change to some actual noise
+
+	vec4 Rand = GetJitter();
 
 	for(int i = 0; i < SAMPLING_DIRECTIONS; i++)
 	{
@@ -193,11 +167,44 @@ float SSAO()
 	return 1.0 - ao * ssao.intensity;
 }
 
+
+float BasicSSAO(vec3 position, vec3 normal)
+{
+	float RADIUS = ssao.Radius;
+
+	vec3 randomVec = texture(NoiseTexture, uv * vec2(1280.0/4.0, 720.0/4.0)).rgb;
+	vec3 tangent = normalize(randomVec - normal * dot(randomVec, normal));
+	vec3 bitangent = cross(normal, tangent);
+	mat3 TBN = mat3(tangent, bitangent, normal);
+
+	float occlusion = 0.0;
+
+	for(int i = 0; i < ssao.NumDirections; i++)
+	{
+		vec3 samplePos = TBN * ssaoSamples.samples[i];
+		samplePos = position + samplePos * RADIUS;
+
+		vec4 offset = vec4(samplePos, 1.0);
+		offset = ubo.projection * offset;
+		offset.xyz /= offset.w;
+		offset.xy = offset.xy * 0.5 + 0.5;
+
+		float sampleDepth = DepthToPosition(offset.xy).z;
+		float rangeCeck = smoothstep(0.0, 1.0, RADIUS / abs(position.z - sampleDepth));
+		occlusion += (sampleDepth >= samplePos.z + 0.025 ? 1.0 : 0.0) * rangeCeck;
+	}
+
+	occlusion = 1.0 - (occlusion / float(ssao.NumDirections)) * ssao.intensity;
+	return occlusion;
+}
+
 void main()
 {
 	vec4 position = DepthToPosition(uv);
 	vec4 normals = DepthToNormal(uv);
 
 	float ao = SSAO();
+
+	//float ao = BasicSSAO(position.xyz, normals.xyz);
 	fragColour = vec4(vec3(ao), 1);
 }
