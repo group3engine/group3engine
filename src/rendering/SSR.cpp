@@ -3,6 +3,7 @@
 #include <array>
 #include "Pipeline.hpp"
 #include "RenderPass.hpp"
+#include "Utils.hpp"
 
 SSR::SSR(Context &context, Image &depthBuffer, Image& renderedScene, Image& metallicRoughness, std::shared_ptr<Camera> camera) :
 
@@ -50,6 +51,7 @@ SSR::~SSR()
 
 void SSR::Update()
 {
+    vkutil::ssrSettings.time = glfwGetTime();
     m_SSRUniform[vkutil::currentFrame].WriteToBuffer(vkutil::ssrSettings, sizeof(vkutil::SSRSettings));
 }
 
@@ -265,7 +267,7 @@ void SSR::BuildDescriptors()
     for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
     {
         VkDescriptorImageInfo imageInfo = {
-            .sampler = vkutil::clampToEdgeSamplerAniso,
+            .sampler = vkutil::repeatSampler,
             .imageView = renderedScene.imageView,
             .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         };

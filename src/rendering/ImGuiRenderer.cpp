@@ -69,34 +69,50 @@ void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::share
         scene->GetLights()[0].position.z
     );
 
-   static float SunElevation = 0.0f;
-   static float SunAzimuthal = 0.0f;
-   static const float distance = 1.0f;
+    static bool initialized = false;
+    static float SunElevation = 0.0f;
+    static float SunAzimuthal = 0.0f;
+    static const float distance = 1.0f;
+
+    auto &lights = scene->GetLights();
+    if (lights.empty())
+        return;
+
+    auto &sunLight = lights[0];
+
+    if (!initialized) {
+        SunElevation = 0.60f; // default elevation // -21
+        SunAzimuthal = 0.0f; // default azimuth // 45
+        sunLight.view = -24.0f;
+        sunLight.far = 50.0f;
+        sunLight.near = -125.0f;
+        initialized = true;
+    }
+
+    // Phis is elevation
+    // Theta is azimuthal
+    const float ElevationPhi = (SunElevation);
+    const float AzimuthalTheta = (SunAzimuthal);
+
+    const float x = cosf(ElevationPhi) * cosf(AzimuthalTheta) * distance;
+    const float y = sinf(ElevationPhi) * distance;
+    const float z = cosf(ElevationPhi) * sinf(AzimuthalTheta) * distance;
+
+    sunLight.position.x = x;
+    sunLight.position.y = y;
+    sunLight.position.z = z;
+    sunLight.position = sunLight.position;
 
     if (ImGui::CollapsingHeader("Directional Light"))
     {
-        auto &lights = scene->GetLights();
-        float* SunPosition[3] = { & lights[0].position.x, & lights[0].position.y, & lights[0].position.z };
+        ImGui::Text("Sun Angles");
+        ImGui::SliderFloat("Elevation - Phi", &SunElevation, 0.0f, 1.5708f, "%.2f");
+        ImGui::SliderFloat("Azimuthal - Theta", &SunAzimuthal, -3.141f, 3.141f, "%.2f");
 
-        // Phis is elevation
-        // Theta is azimuthal
-        const float ElevationPhi = glm::radians(SunElevation);
-        const float AzimuthalTheta = glm::radians(SunAzimuthal);
-
-        const float x = cosf(ElevationPhi) * cosf(AzimuthalTheta) * distance;
-        const float z = cosf(ElevationPhi) * sinf(AzimuthalTheta) * distance;
-        const float y = sinf(ElevationPhi) * distance;
-
-        lights[0].position.x = x;
-        lights[0].position.y = y;
-        lights[0].position.z = z;
-        lights[0].position = glm::normalize(lights[0].position);
-
-        ImGui::SliderFloat("Elevation - Phi: ", &SunElevation, -90.0f, 90.0f);
-        ImGui::SliderFloat("Azimuthal - Theta: ", &SunAzimuthal, -90.0f, 90.0f);
-        ImGui::SliderFloat("View: ", &lights[0].view, -200.0f, 200.0f, "%.2f");
-        ImGui::SliderFloat("Near: ", &lights[0].near, -300.1f, 100.0f);
-        ImGui::SliderFloat("Far: ", &lights[0].far, -300.0f, 1000.0f);
+        ImGui::Text("Light Camera Settings");
+        ImGui::SliderFloat("View", &sunLight.view, -200.0f, 200.0f, "%.2f");
+        ImGui::SliderFloat("Near", &sunLight.near, -200.0f, 1.0f, "%.2f");
+        ImGui::SliderFloat("Far", &sunLight.far, 0.0f, 50.0f, "%.2f");
     }
 
     if (ImGui::CollapsingHeader("Lights")) {
@@ -127,7 +143,7 @@ void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::share
     if (ImGui::CollapsingHeader("SSR"))
     {
         ImGui::SliderInt("MaxSteps: ", &vkutil::ssrSettings.MaxSteps, 1, 500);
-        ImGui::SliderFloat("MaxDistance: ", &vkutil::ssrSettings.MaxDistance, 0.0f, 1.0f);
+        ImGui::SliderFloat("MaxDistance: ", &vkutil::ssrSettings.MaxDistance, 0.0f, 20.0f);
         ImGui::SliderInt("BSIterations: ", &vkutil::ssrSettings.BinarySearchIterations, 0, 100);
         ImGui::SliderFloat("Thickness: ", &vkutil::ssrSettings.thickness, 0, 1.0f);
         ImGui::SliderFloat("StepSize: ", &vkutil::ssrSettings.StepSize, 0.0f, 0.5f);

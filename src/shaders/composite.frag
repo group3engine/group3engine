@@ -28,16 +28,27 @@ float SpatialDenoisedSSAO()
     return float(totalao / 16.0);
 }
 
+// https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/
+vec3 ACESToneMappingFilm(vec3 x) {
+  const float a = 2.51;
+  const float b = 0.03;
+  const float c = 2.43;
+  const float d = 0.59;
+  const float e = 0.14;
+  return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
+}
+
 void main()
 {
 	vec4 lighting = texture(renderedScene, uv);
 	vec4 bloom = texture(bloomPass, uv);
 	float ssao = SpatialDenoisedSSAO();
-	//vec4 ssr = texture(SSR, uv);
+	vec4 ssr = texture(SSR, uv);
 
-	vec3 hdrColor = vec3(lighting.rgb) * ssao;
-	vec3 ldrColor = hdrColor / (hdrColor + vec3(1.0));
+	vec3 hdrColor = (lighting.rgb) * ssao;
+	//vec3 ldrColor = hdrColor / (hdrColor + vec3(1.0));
 
+    vec3 ldrColor = ACESToneMappingFilm(hdrColor);
 	vec3 result = ldrColor;
 	vec3 gammaCorrectedColor = pow(result, vec3(1.0 / 2.2));
 
