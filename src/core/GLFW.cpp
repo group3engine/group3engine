@@ -31,28 +31,6 @@
 #include <spdlog/spdlog.h>
 
 // Using system from https://github.com/raysan5/raylib/blob/master/src/platforms/rcore_desktop_glfw.c
-
-void PollInputEvents() {
-    // TODO: More polling handling
-
-    // Register previous key states
-    for (uint16_t i = 0; i < static_cast<uint16_t>(KEY::eLAST); ++i) {
-        gInputData.keyboard.previousKeyState[i] =
-            gInputData.keyboard.currentKeyState[i];
-    }
-
-    // Register previous mouse states
-    for (uint8_t i = 0; i < static_cast<uint8_t>(MOUSE_BUTTON::eLAST); ++i) {
-        gInputData.mouse.previousButtonState[i] =
-            gInputData.mouse.currentButtonState[i];
-    }
-
-    // Register previous mouse position
-    gInputData.mouse.previousPosition = gInputData.mouse.currentPosition;
-
-    glfwPollEvents();
-}
-
 static void KeyCallback([[maybe_unused]] GLFWwindow *window,
                         int key,
                         [[maybe_unused]] int scancode,
@@ -84,6 +62,52 @@ static void MouseCursorPosCallback([[maybe_unused]] GLFWwindow *window, double x
     gInputData.mouse.currentPosition = {x, y};
 }
 
+static void PollGamepadJoysticks()
+{
+    // Register previous gamepad button and axis states
+    for (uint8_t i = 0; i < static_cast<uint8_t>(GAMEPAD_BUTTON::eLAST); ++i) {
+        gInputData.gamepadButtons.previousButtonState[i] =
+            gInputData.gamepadButtons.currentButtonState[i];
+    }
+
+    for (uint8_t i = 0; i < static_cast<uint8_t>(GAMEPAD_AXIS::eLAST); ++i) {
+        gInputData.gamepadAxis.previousAxisState[i] =
+            gInputData.gamepadAxis.currentAxisState[i];
+    }
+
+    // Check all possible gamepad connections (GLFW supports up to 16 gamepads)
+    for (int gamepad = GLFW_JOYSTICK_1; gamepad <= GLFW_JOYSTICK_LAST; gamepad++) {
+        if (glfwJoystickPresent(gamepad)) {
+            // Poll button states
+            int buttonCount;
+            const unsigned char* buttons = glfwGetJoystickButtons(gamepad, &buttonCount);
+
+            int count = (buttonCount < static_cast<int>(GAMEPAD_BUTTON::eLAST)) ?
+                         buttonCount : static_cast<int>(GAMEPAD_BUTTON::eLAST);
+
+            for (int i = 0; i < count; i++) {
+                gInputData.gamepadButtons.currentButtonState[i] = buttons[i];
+            }
+
+            // Poll axes (focused on analog sticks)
+            int axisCount;
+            const float* axes = glfwGetJoystickAxes(gamepad, &axisCount);
+
+            int axesCount = (axisCount < static_cast<int>(GAMEPAD_AXIS::eLAST)) ?
+                             axisCount : static_cast<int>(GAMEPAD_AXIS::eLAST);
+
+            for (int i = 0; i < axesCount; i++) {
+                gInputData.gamepadAxis.currentAxisState[i] = axes[i];
+            }
+
+            // Only process the first connected gamepad
+            break;
+        }
+    }
+}
+
+
+
 void Platform::StartUp(int windowWidth, int windowHeight) {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -104,3 +128,30 @@ void Platform::ShutDown() {
     glfwDestroyWindow(Platform::get().window);
     glfwTerminate();
 }
+
+
+void PollInputEvents() {
+    // TODO: More polling handling
+
+    // Register previous key states
+    for (uint16_t i = 0; i < static_cast<uint16_t>(KEY::eLAST); ++i) {
+        gInputData.keyboard.previousKeyState[i] =
+            gInputData.keyboard.currentKeyState[i];
+    }
+
+    // Register previous mouse states
+    for (uint8_t i = 0; i < static_cast<uint8_t>(MOUSE_BUTTON::eLAST); ++i) {
+        gInputData.mouse.previousButtonState[i] =
+            gInputData.mouse.currentButtonState[i];
+    }
+
+
+    // Register previous mouse position
+    gInputData.mouse.previousPosition = gInputData.mouse.currentPosition;
+
+    glfwPollEvents();
+
+    // Poll gamepad joysticks
+    PollGamepadJoysticks();
+}
+

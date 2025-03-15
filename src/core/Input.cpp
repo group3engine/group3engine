@@ -45,6 +45,21 @@ bool IsKeyReleased(KEY key) {
            gInputData.keyboard.currentKeyState[static_cast<uint16_t>(key)] == 0;
 }
 
+// get an axis value from the gamepad
+float GetGamepadAxis(GAMEPAD_AXIS axis) {
+    return gInputData.gamepadAxis.currentAxisState[static_cast<uint8_t>(axis)];
+}
+
+// Check if a gamepad button has been pressed once
+bool IsGamepadButtonPressed(GAMEPAD_BUTTON button) {
+    return gInputData.gamepadButtons.currentButtonState[static_cast<uint8_t>(button)] == 1 &&
+           gInputData.gamepadButtons.previousButtonState[static_cast<uint8_t>(button)] == 0;
+}
+
+bool IsGamepadButtonDown(GAMEPAD_BUTTON button) {
+    return gInputData.gamepadButtons.currentButtonState[static_cast<uint8_t>(button)] == 1;
+}
+
 
 
 // Check if a mouse button has been pressed once

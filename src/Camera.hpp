@@ -91,8 +91,21 @@ class Camera {
     void SetInput(EInputState inputState, bool state) {
         inputMap[static_cast<size_t>(inputState)] = state;
     }
+    void SetInput(EInputState inputState, float state)
+    {
+        if (state > 0.2f)
+        {
+            SetInput(inputState, true);
+        }
+        else
+        {
+            SetInput(inputState, false);
+        }
+
+    }
 
     bool inputMap[std::size_t(EInputState::MAX)] = {};
+    float inputMapFloat[std::size_t(EInputState::MAX)] = {};
     bool wasMousing = false;
 
     void SetInputType(InputType inputType) { m_inputType = inputType; }
