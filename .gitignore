@@ -372,6 +372,7 @@ Makefile
 build/
 assets/shaders/
 assets/
+!assets/Skybox
 
 imgui.ini
 
