@@ -30,10 +30,6 @@ void Scene::Update(double aDeltaTime) {
     for (size_t i = 0; i < m_Lights.size(); i++) {
         m_LightBuffer.lights[i].type = static_cast<int>(m_Lights[i].Type);
 
-        if (m_Lights[i].Type == LightType::Directional) {
-            m_Lights[i].position.z += sin(glfwGetTime()) * 0.01;
-        }
-
         m_LightBuffer.lights[i].LightPosition = m_Lights[i].position;
         m_LightBuffer.lights[i].LightColour = m_Lights[i].colour;
         m_LightBuffer.lights[i].LightSpaceMatrix =
