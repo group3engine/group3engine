@@ -3,10 +3,6 @@
 #include <memory>
 #include <unordered_map>
 #include "Camera.hpp"
-#include "Skybox.hpp"
-
-
-// This is disgusting whoever did it lol
 #define SHADER_DIR std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/"
 #define OPAQUE_FRAGMENT_SHADER SHADER_DIR / "default.frag.spv"
 #define OPAQUE_VERTEX_SHADER SHADER_DIR / "default.vert.spv"
@@ -29,9 +25,6 @@ class ForwardPass {
     void Resize();
     Image &GetRenderTarget() { return m_RenderTarget; }
     Image &GetBrightnessTarget() { return m_BrightnessTexture; }
-    Image &GetDepthTarget() { return m_DepthTarget; }
-
-    Skybox* GetSkybox() { return m_Skybox.get(); }
 
   private:
     void CreatePipeline();
@@ -57,6 +50,4 @@ class ForwardPass {
     std::pair<VkPipeline, VkPipelineLayout> m_opaquePipeline;
     std::pair<VkPipeline, VkPipelineLayout> m_alphaMaskPipeline;
     std::pair<VkPipeline, VkPipelineLayout> m_skinnedPipeline;
-
-    std::unique_ptr<Skybox> m_Skybox;
 };

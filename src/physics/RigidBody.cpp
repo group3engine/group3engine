@@ -4,11 +4,49 @@
 
 #include "PhysicsManager.hpp"
 
+RigidBody::RigidBody(Shape shape, glm::vec3 glm_position, glm::quat glm_rotation)
+    : mShape(shape) {
+    if (mShape == Shape::Floor) {
+        // Next we can create a rigid body to serve as the floor, we make a
+        // large box Create the settings for the collision volume (the shape).
+        // Note that for simple shapes (like boxes) you can also directly
+        // construct a BoxShape.
+        BoxShapeSettings floorShapeSettings(Vec3(100.0f, 1.0f, 100.0f));
+        floorShapeSettings.SetEmbedded(); // A ref counted object on the stack (base class
+                                          // RefTarget) should be marked as such to prevent it
+                                          // from being freed when its reference count goes to
+                                          // 0.
+
+        // Create the shape
+        ShapeSettings::ShapeResult floorShapeResult = floorShapeSettings.Create();
+        ShapeRefC floorShape =
+            floorShapeResult.Get(); // We don't expect an error here, but you can check
+                                    // floorShapeResult for HasError() / GetError()
+
+        // Create the settings for the body itself. Note that here you can also
+        // set other properties like the restitution / friction.
+        mJoltCreationSettings = {floorShape, RVec3(0.0_r, 0.0_r, 0.0_r), Quat::sIdentity(),
+                                 EMotionType::Static, Layers::NON_MOVING};
+        mJoltCreationSettings.mRestitution = 0.5f;
+    } else if (mShape == Shape::Ball) {
+        RVec3 position(glm_position.x, glm_position.y, glm_position.z);
+        Quat rotation(glm_rotation.x, glm_rotation.y, glm_rotation.z, glm_rotation.w);
+
+        // Now create a dynamic body to bounce on the floor
+        mJoltCreationSettings = {new SphereShape(1.f), position,
+                                 rotation, EMotionType::Dynamic, Layers::MOVING};
+    }
+}
 
 // Add rigid body to physics system
 void RigidBody::Init(PhysicsManager &physicsManager) {
-    mBodyId = physicsManager.mPhysicsSystem.GetBodyInterface().CreateAndAddBody(
-        mJoltCreationSettings, EActivation::DontActivate);
+    if (mShape == Floor) {
+        mBodyId = physicsManager.mPhysicsSystem.GetBodyInterface().CreateAndAddBody(
+            mJoltCreationSettings, EActivation::DontActivate);
+    } else if (mShape == Ball) {
+        mBodyId = physicsManager.mPhysicsSystem.GetBodyInterface().CreateAndAddBody(
+            mJoltCreationSettings, EActivation::Activate);
+    }
 
     // Check that the physics system has not run out of bodies
     if (mBodyId.IsInvalid()) {
@@ -33,13 +71,13 @@ glm::vec4 RigidBody::GetPosition() const {
 void RigidBody::SetPosition(glm::vec3 glm_position) const {
     RVec3 position(glm_position.x, glm_position.y, glm_position.z);
 
-    PhysicsManager::get().mPhysicsSystem.GetBodyInterface().SetPosition(mBodyId, position, EActivation::DontActivate);
+    PhysicsManager::get().mPhysicsSystem.GetBodyInterface().SetPosition(mBodyId, position, EActivation::Activate);
 }
 
 void RigidBody::SetRotation(glm::quat glm_rotation) const {
     
     Quat rotation(glm_rotation.x, glm_rotation.y, glm_rotation.z, glm_rotation.w);
-    PhysicsManager::get().mPhysicsSystem.GetBodyInterface().SetRotation(mBodyId, rotation, EActivation::DontActivate);
+    PhysicsManager::get().mPhysicsSystem.GetBodyInterface().SetRotation(mBodyId, rotation, EActivation::Activate);
 }
 
 glm::vec4 RigidBody::GetVelocity() const {

@@ -35,11 +35,7 @@ class ShadowMap {
     std::shared_ptr<Scene> scene;
     std::vector<VkDescriptorSet> m_descriptorSets;
     VkDescriptorSetLayout m_descriptorSetLayout;
-    VkDescriptorSetLayout skinDescriptorSetLayout;
 
     VkPipeline m_Pipeline;
     VkPipelineLayout m_PipelineLayout;
-
-    VkPipeline m_SkinnedPipeline;
-    VkPipelineLayout m_SkinnedPipelineLayout;
 };

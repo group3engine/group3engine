@@ -9,34 +9,33 @@ void Scene::AddLightSource(Light &LightSource) {
 }
 
 void Scene::Update(double aDeltaTime) {
-
-    // update the entities
     for(auto &entity : m_Entities) {
-        entity->BaseUpdate(aDeltaTime);
-        entity->Update(aDeltaTime);
-    }
-    // late update the entities
-    for(auto &entity : m_Entities) {
-        entity->LateUpdate(aDeltaTime);
+        entity.Update(aDeltaTime);
     }
 
-    for (auto& light : m_Lights)
-    {
-        glm::mat4 ortho = glm::ortho(-light.view, light.view, -light.view, light.view, light.near, light.far);
-        glm::mat4 view = glm::lookAt(glm::vec3(light.position), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0));
-        light.LightSpaceMatrix = ortho * view;
-    }
+	for (auto& light : m_Lights)
+	{
+		glm::mat4 ortho = glm::ortho(-light.view, light.view, -light.view, light.view, light.near, light.far);
+		glm::mat4 view = glm::lookAt(glm::vec3(light.position), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0));
+		light.LightSpaceMatrix = ortho * view;
+	}
 
-    // Fill GPU Data with data defined for the scene
-    for (size_t i = 0; i < m_Lights.size(); i++) {
-        m_LightBuffer.lights[i].type = static_cast<int>(m_Lights[i].Type);
-        m_LightBuffer.lights[i].LightPosition = m_Lights[i].position;
-        m_LightBuffer.lights[i].LightColour = m_Lights[i].colour;
-        m_LightBuffer.lights[i].LightSpaceMatrix = m_Lights[i].LightSpaceMatrix;
-    }
+	// Fill GPU Data with data defined for the scene
+        for (size_t i = 0; i < m_Lights.size(); i++) {
+            m_LightBuffer.lights[i].type = static_cast<int>(m_Lights[i].Type);
 
-    // Pass the light data to the GPU to update all light properties
-    m_LightUBO[vkutil::currentFrame].WriteToBuffer(m_LightBuffer, sizeof(vkutil::LightBuffer));
+            if (m_Lights[i].Type == LightType::Directional) {
+                m_Lights[i].position.z += sin(glfwGetTime()) * 0.01;
+            }
+
+            m_LightBuffer.lights[i].LightPosition = m_Lights[i].position;
+            m_LightBuffer.lights[i].LightColour = m_Lights[i].colour;
+            m_LightBuffer.lights[i].LightSpaceMatrix =
+            m_Lights[i].LightSpaceMatrix;
+        }
+
+	// Pass the light data to the GPU to update all light properties
+	m_LightUBO[vkutil::currentFrame].WriteToBuffer(m_LightBuffer, sizeof(vkutil::LightBuffer));
 }
 
 void Scene::Destroy()
@@ -51,9 +50,6 @@ void Scene::Destroy()
         delete mTextureManager;
 
         // delete the entities
-        for (auto &entity : m_Entities) {
-            delete entity;
-        }
         m_Entities.clear();
 }
 
@@ -61,15 +57,6 @@ void Scene::Load(const std::filesystem::path &aFilepath) {
     // Load the GLTF file
     LoadGLTF(aFilepath, *mMeshManager, *mMaterialManager, *mTextureManager,
              m_Entities, false, m_Animations, m_Skins);
-
-}
-
-void Scene::Awake()
-{
-    // call the awake function on all entities
-    for (auto &entity : m_Entities) {
-        entity->Awake();
-    }
 }
 
 Scene::Scene(Context &context)
@@ -92,26 +79,26 @@ Scene::Scene(Context &context)
 void Scene::DrawOpaque(VkCommandBuffer cmd,
                        VkPipelineLayout pipelineLayout) {
     for (auto &entity : m_Entities) {
-        entity->RecordDrawOpaque(cmd, pipelineLayout);
+        entity.RecordDrawOpaque(cmd, pipelineLayout);
     }
 }
 
 void Scene::DrawAlphaMasked(VkCommandBuffer cmd,
                             VkPipelineLayout pipelineLayout) {
     for (auto &entity : m_Entities) {
-        entity->RecordDrawCutout(cmd, pipelineLayout);
+        entity.RecordDrawCutout(cmd, pipelineLayout);
     }
 }
 void Scene::DrawShadowMap(VkCommandBuffer cmd,
                           VkPipelineLayout pipelineLayout) {
     for (auto& entity : m_Entities) {
-        entity->RecordDrawShadow(cmd, pipelineLayout);
+        entity.RecordDrawShadow(cmd, pipelineLayout);
     }
 }
 
 void Scene::DrawSkinned(VkCommandBuffer cmd,
                         VkPipelineLayout pipelineLayout) {
     for (auto &entity : m_Entities) {
-        entity->RecordDrawSkinned(cmd, pipelineLayout);
+        entity.RecordDrawSkinned(cmd, pipelineLayout);
     }
 }

@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "PhysicsHelpers.hpp"
-#include "CustomContactListener.hpp"
 
 // Disable common warnings triggered by Jolt, you can use JPH_SUPPRESS_WARNING_PUSH /
 // JPH_SUPPRESS_WARNING_POP to store and restore the warning state
@@ -42,8 +41,6 @@ const uint cMaxContactConstraints = 1024;
 
 const int ten_megabytes = 10 * 1024 * 1024;
 
-
-
 class PhysicsManager {
   private:
     PhysicsManager() = default;
@@ -63,9 +60,6 @@ class PhysicsManager {
 
     void StartUp();
     void ShutDown();
-
-    // registers a entity as a rigid bodies owner
-    void RegisterEntity(Entity *entity, BodyID bodyId);
 
   public:
     // We need a temp allocator for temporary allocations during the physics update. We're
@@ -101,12 +95,11 @@ class PhysicsManager {
 
     PhysicsSystem mPhysicsSystem;
     MyBodyActivationListener mBodyActivationListener;
-    CustomContactListener mContactListener;
+    MyContactListener mContactListener;
     BodyInterface &mBodyInterface = mPhysicsSystem.GetBodyInterface();
 
     float cDeltaTime = 1.0f / 60.0f;
 
     std::vector<BodyID> mBodyIds;
-
 };
 #endif // PHYSICS_PHYSICSMANAGER_HPP

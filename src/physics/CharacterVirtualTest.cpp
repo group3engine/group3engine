@@ -11,8 +11,6 @@
 
 #include "PhysicsHelpers.hpp"
 
-#include "Entity.hpp"
-
 void CharacterVirtualTest::Initialize()
 {
 	CharacterBaseTest::Initialize();
@@ -111,25 +109,11 @@ void CharacterVirtualTest::HandleInput(Vec3Arg inMovementDirection, bool inJump,
 		new_velocity = ground_velocity;
 
 		// Jump
-		if (inJump && moving_towards_ground) {
-                    new_velocity += sJumpSpeed * mCharacter->GetUp();
-                        mJumpState = EJumpState::Start;
-                }
-                else if (mJumpState != EJumpState::None && mJumpState != EJumpState::End) {
-                    mJumpState = EJumpState::End;
-                }
-                else
-                {
-                        mJumpState = EJumpState::None;
-                }
+		if (inJump && moving_towards_ground)
+			new_velocity += sJumpSpeed * mCharacter->GetUp();
 	}
-	else {
-            new_velocity = current_vertical_velocity;
-            if(new_velocity.GetY() > 0.2f)
-            {
-                mJumpState = EJumpState::Falling;
-            }
-        }
+	else
+		new_velocity = current_vertical_velocity;
 
 	// Gravity
 	new_velocity += (character_up_rotation * mPhysicsSystem->GetGravity()) * inDeltaTime;
@@ -175,14 +159,6 @@ void CharacterVirtualTest::OnContactAdded(const CharacterVirtual *inCharacter, c
 		}
 		mActiveContacts.push_back(c);
 	}
-
-    if(mCustomContactListener->GetMap().find(inBodyID2) != mCustomContactListener->GetMap().end()) {
-        mCustomContactListener->GetMap()[inBodyID2]->OnCollisionStart(mCustomContactListener->GetMap()[inCharacter->GetInnerBodyID()]);
-    }
-
-    if(mCustomContactListener->GetMap().find(inCharacter->GetInnerBodyID()) != mCustomContactListener->GetMap().end()) {
-        mCustomContactListener->GetMap()[inCharacter->GetInnerBodyID()]->OnCollisionStart(mCustomContactListener->GetMap()[inBodyID2]);
-    }
 }
 
 void CharacterVirtualTest::OnContactPersisted(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings)

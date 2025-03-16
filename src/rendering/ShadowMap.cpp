@@ -8,7 +8,7 @@
 #include "Utils.hpp"
 #include "Buffer.hpp"
 
-#define RESOLUTION 2048
+#define RESOLUTION 1024
 
 ShadowMap::ShadowMap(Context &context, std::shared_ptr<Scene> &scene)
     : context{context}, scene{scene} {
@@ -42,10 +42,6 @@ ShadowMap::~ShadowMap() {
     vkDestroyFramebuffer(context.device, m_framebuffer, nullptr);
     vkDestroyRenderPass(context.device, m_renderPass, nullptr);
     vkDestroyDescriptorSetLayout(context.device, m_descriptorSetLayout, nullptr);
-
-    vkDestroyPipeline(context.device, m_SkinnedPipeline, nullptr);
-    vkDestroyPipelineLayout(context.device, m_SkinnedPipelineLayout, nullptr);
-    vkDestroyDescriptorSetLayout(context.device, skinDescriptorSetLayout, nullptr);
 }
 
 void ShadowMap::Resize() {
@@ -97,27 +93,11 @@ void ShadowMap::Execute(VkCommandBuffer cmd) {
     vkCmdSetScissor(cmd, 0, 1, &scissor);
 
     vkCmdBeginRenderPass(cmd, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_descriptorSets[vkutil::currentFrame], 0, nullptr);
 
-    vkCmdSetDepthBias(cmd, vkutil::ShadowBias, 0.0f, vkutil::ShadowSlope);
-
-    // DRAW SKINNED
-#ifdef _DEBUG
-    vkutil::RenderPassLabel(cmd, "ShadowMap - SKINNED");
-#endif
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_SkinnedPipeline);
-    scene->DrawSkinned(cmd, m_SkinnedPipelineLayout);
-
-#ifdef _DEBUG
-    vkutil::EndRenderPassLabel(cmd);
-#endif
-
-
-    // REST OF THE SCENE
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
     scene->DrawShadowMap(cmd, m_PipelineLayout);
 
-    // END RENDER PASS
     vkCmdEndRenderPass(cmd);
 
 #ifdef _DEBUG
@@ -136,8 +116,8 @@ void ShadowMap::CreatePipeline() {
                                     .AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "shadow_map.vert.spv", ShaderType::VERTEX)
                                     .AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "shadow_map.frag.spv", ShaderType::FRAGMENT)
                                     .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-                                    .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_DEPTH_BIAS}})
-                                    .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_FRONT_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, VK_TRUE)
+                                    .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}})
+                                    .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_FRONT_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE)
                                     .SetPipelineLayout({{m_descriptorSetLayout, vkutil::materialDescriptorSetLayout}}, pushConstantRange)
                                     .SetSampling(VK_SAMPLE_COUNT_1_BIT)
                                     .AddBlendAttachmentState()
@@ -147,23 +127,6 @@ void ShadowMap::CreatePipeline() {
 
     m_Pipeline = ShadowMapPipelineRes.first;
     m_PipelineLayout = ShadowMapPipelineRes.second;
-
-    auto skinnedShadowMapPipelineRes = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
-        .AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "shadow_map_skinned.vert.spv", ShaderType::VERTEX)
-        .AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "shadow_map.frag.spv", ShaderType::FRAGMENT)
-        .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-        .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_DEPTH_BIAS}})
-        .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_FRONT_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, VK_TRUE)
-        .SetPipelineLayout({{m_descriptorSetLayout, vkutil::materialDescriptorSetLayout, skinDescriptorSetLayout}}, pushConstantRange)
-        .SetSampling(VK_SAMPLE_COUNT_1_BIT)
-        .AddBlendAttachmentState()
-        .SetDepthState(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL)
-        .SetRenderPass(m_renderPass)
-        .Build();
-
-    m_SkinnedPipeline = skinnedShadowMapPipelineRes.first;
-    m_SkinnedPipelineLayout = skinnedShadowMapPipelineRes.second;
-
 }
 
 void ShadowMap::CreateRenderPass() {
@@ -210,14 +173,12 @@ void ShadowMap::BuildDescriptors() {
         vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_descriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, m_descriptorSets);
     }
 
-    skinDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}});
-
     // Camera Transform UBO
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorBufferInfo bufferInfo{};
         bufferInfo.buffer = scene->GetLightsUBO()[i].buffer;
         bufferInfo.offset = 0;
-        bufferInfo.range = sizeof(vkutil::LightUBO) * scene->GetLights().size();
+        bufferInfo.range = sizeof(vkutil::LightUBO);
         vkutil::UpdateDescriptorSet(context, 0, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
     }
 }

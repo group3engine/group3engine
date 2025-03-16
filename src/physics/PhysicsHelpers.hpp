@@ -74,7 +74,7 @@ static constexpr ObjectLayer MOVING = 1;
 static constexpr ObjectLayer NUM_LAYERS = 2;
 }; // namespace Layers
 
-// Class that determines if two object layers can collide
+/// Class that determines if two object layers can collide
 class ObjectLayerPairFilterImpl : public ObjectLayerPairFilter {
   public:
     virtual bool ShouldCollide(ObjectLayer inObject1, ObjectLayer inObject2) const override {
@@ -138,7 +138,7 @@ class BPLayerInterfaceImpl final : public BroadPhaseLayerInterface {
     BroadPhaseLayer mObjectToBroadPhase[Layers::NUM_LAYERS];
 };
 
-// Class that determines if an object layer can collide with a broadphase layer
+/// Class that determines if an object layer can collide with a broadphase layer
 class ObjectVsBroadPhaseLayerFilterImpl : public ObjectVsBroadPhaseLayerFilter {
   public:
     virtual bool ShouldCollide(ObjectLayer inLayer1, BroadPhaseLayer inLayer2) const override {

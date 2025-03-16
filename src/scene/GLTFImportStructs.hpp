@@ -19,17 +19,11 @@
 #include "glm/gtc/quaternion.hpp"
 #include "glm/gtx/transform.hpp"
 
-/// A vertex, stored on the CPU
 struct Vertex {
-    /// The position of the vertex
     glm::vec3 pos;
-    /// The texture coordinates of the vertex
     glm::vec2 tex;
-    /// The normal of the vertex
     glm::vec3 normal;
-    /// The joints of the vertex (integer indices)
     glm::vec4 joints;
-    /// The weights of the vertex
     glm::vec4 weights;
 
     static VkVertexInputBindingDescription GetBindingDescription() {
@@ -123,22 +117,16 @@ struct MeshPrimitiveGPU {
     std::uint32_t mIndexCount;
 };
 
-/// A primitive, stored as a list of vertices and indices
 struct MeshPrimitive {
-    /// The vertices that make up the primitive
     std::vector<Vertex> vertices;
-    /// The indices that make up the primitive
+    // TODO: Bone weights
     std::vector<std::uint32_t> indices;
     MeshPrimitiveGPU *meshGPU;
-    /// The material of the primitive
     Material *material;
 };
 
-/// A mesh, stored as a list of primitives
 struct Mesh {
-    /// The name of the mesh
     std::string name;
-    /// The primitives that make up the mesh
     std::vector<MeshPrimitive> meshPrimitives;
 };
 
@@ -153,38 +141,25 @@ struct Image_STB {
 };
 
 enum class AlphaMode { eOpaque, eMask, eBlend };
-/// A transformation, stored as a translation, rotation, and scale
+
 struct Transform {
-    /// The translation of the transform
     glm::vec3 translation;
-    /// The rotation of the transform, stored as a quaternion (x, y, z, w)
     glm::quat rotation;
-    /// The scale of the transform
     glm::vec3 scale;
 
-    glm::mat4 matrix{};
-
-    /// Update the matrix. If this function is not called since the last change, the matrix will be out of date
-    void UpdateMatrix() {
+    // function to get the matrix
+    [[nodiscard]] glm::mat4 getMatrix() const {
         glm::mat4 translationMatrix = glm::translate(translation);
         glm::mat4 rotationMatrix = glm::toMat4(glm::normalize(rotation));
         glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), scale);
-        matrix = translationMatrix * rotationMatrix * scaleMatrix;
+        return translationMatrix * rotationMatrix * scaleMatrix;
     }
-
-    /// Get the transform as a glm::mat4
-    [[nodiscard]] glm::mat4 getMatrix() const {
-        return matrix;
-    }
-
-    /// Interpolate between this transform and another. The matrix for the result is updated
-    [[nodiscard]] Transform Interpolate(Transform other, float t)
+    Transform Interpolate(Transform other, float t)
     {
         Transform result{};
         result.translation = translation * (1 - t) + other.translation * t;
         result.rotation = glm::normalize(glm::slerp(rotation, other.rotation, t));
         result.scale = scale * (1-t) + other.scale * t;
-        result.UpdateMatrix();
         return result;
     }
 };

@@ -38,7 +38,7 @@ class Animator {
     void SetActiveAnimation(int index) { mActiveAnimation = index;
     }
     void SetActiveAnimation(const std::string&);
-    void SetActiveAnimation(const std::string& aName, float blendTime, bool lockForFirstLoop);
+    void SetActiveAnimation(const std::string& aName, float blendTime);
 
     void SetTimeScale(float aTimeScale);
 
@@ -77,9 +77,6 @@ class Animator {
 
     // the multiplier for an animations time
     float mAnimationTimeScale = 1.f;
-
-    // the amount of time remaining until a new animation can be set
-    float mAnimationLockTimer = 0.f;
 
 
     double mTotalBlendTime = 0.f;

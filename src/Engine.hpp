@@ -25,9 +25,11 @@ class Engine {
 
     void UpdateLogic();
 
-    void Update(double deltaTime);
+    void Update(double deltaTime, glm::vec3 character_position);
     void Render();
 
     std::shared_ptr<Scene> mScene;
     std::unique_ptr<Renderer> mRenderer;
+
+    CharacterVirtualTest mCharacterVirtualTest;
 };

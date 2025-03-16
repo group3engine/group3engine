@@ -11,8 +11,9 @@
 #include "Utils.hpp"
 #include "Buffer.hpp"
 
-Image::Image(const std::string name, uint32_t width, uint32_t height, VmaAllocator allocator, VkImage image, VkImageView imageView, VmaAllocation allocation) noexcept :
-	name{name}, allocation{allocation}, image{image}, imageView{imageView}, allocator{allocator} {}
+Image::Image(const std::string name, VmaAllocator allocator, VkImage image, VkImageView imageView, VmaAllocation allocation) noexcept
+    : name{name}, allocation{allocation}, image{image}, imageView{imageView}, allocator{allocator} {
+}
 
 Image::Image(Image &&other) noexcept
     : name(std::exchange(other.name, "")),
@@ -207,50 +208,47 @@ Image LoadTextureFromDisk(std::filesystem::path path, Context &context, VkFormat
     return img;
 }
 
-Image CreateImageTexture2D(const std::string name, Context& context, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags imageaspectFlags, uint32_t mipLevels, VkImageCreateFlags flags, uint32_t arrayLayers)
-{
-	VkImageCreateInfo imageInfo{ VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
-	imageInfo.imageType = VK_IMAGE_TYPE_2D;
-	imageInfo.extent.width = width;
-	imageInfo.extent.height = height;
-	imageInfo.extent.depth = 1;
-	imageInfo.mipLevels = mipLevels;
-	imageInfo.arrayLayers = arrayLayers;
-	imageInfo.format = format;
-	imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-	imageInfo.usage = usage;
-	imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	imageInfo.flags = flags;
+Image CreateImageTexture2D(const std::string name, Context &context, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags imageaspectFlags, uint32_t mipLevels) {
+    VkImageCreateInfo imageInfo{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
+    imageInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageInfo.extent.width = width;
+    imageInfo.extent.height = height;
+    imageInfo.extent.depth = 1;
+    imageInfo.mipLevels = mipLevels;
+    imageInfo.arrayLayers = 1;
+    imageInfo.format = format;
+    imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+    imageInfo.usage = usage;
+    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-	VmaAllocationCreateInfo allocInfo{};
-	allocInfo.flags = 0;
-	allocInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+    VmaAllocationCreateInfo allocInfo{};
+    allocInfo.flags = 0;
+    allocInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
 
-	VkImage image = VK_NULL_HANDLE;
-	VmaAllocation allocation = VK_NULL_HANDLE;
+    VkImage image = VK_NULL_HANDLE;
+    VmaAllocation allocation = VK_NULL_HANDLE;
 
-	VK_CHECK(vmaCreateImage(context.allocator, &imageInfo, &allocInfo, &image, &allocation, nullptr), "Failed to allocate memory for image");
+    VK_CHECK(vmaCreateImage(context.allocator, &imageInfo, &allocInfo, &image, &allocation, nullptr), "Failed to allocate memory for image");
 
-	context.SetObjectName(context.device, (uint64_t)image, VK_OBJECT_TYPE_IMAGE, name.c_str());
+    context.SetObjectName(context.device, (uint64_t)image, VK_OBJECT_TYPE_IMAGE, name.c_str());
 
-	vmaSetAllocationName(context.allocator, allocation, name.c_str());
+    vmaSetAllocationName(context.allocator, allocation, name.c_str());
 
-	// Now create the image view
-	VkImageViewCreateInfo viewInfo{};
-	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	viewInfo.image = image;
-	viewInfo.viewType = (flags & VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT) != 0 ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D;
-	viewInfo.format = format;
-	viewInfo.components = VkComponentMapping{};
-	viewInfo.subresourceRange = VkImageSubresourceRange{ imageaspectFlags, 0, VK_REMAINING_MIP_LEVELS, 0, VK_REMAINING_ARRAY_LAYERS };
+    // Now create the image view
+    VkImageViewCreateInfo viewInfo{};
+    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    viewInfo.image = image;
+    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    viewInfo.format = format;
+    viewInfo.components = VkComponentMapping{};
+    viewInfo.subresourceRange = VkImageSubresourceRange{imageaspectFlags, 0, VK_REMAINING_MIP_LEVELS, 0, 1};
 
-	VkImageView imageView = VK_NULL_HANDLE;
-	VK_CHECK(vkCreateImageView(context.device, &viewInfo, nullptr, &imageView), "Failed to create image view");
+    VkImageView imageView = VK_NULL_HANDLE;
+    VK_CHECK(vkCreateImageView(context.device, &viewInfo, nullptr, &imageView), "Failed to create image view");
 
-	context.SetObjectName(context.device, (uint64_t)imageView, VK_OBJECT_TYPE_IMAGE_VIEW, name.c_str());
+    context.SetObjectName(context.device, (uint64_t)imageView, VK_OBJECT_TYPE_IMAGE_VIEW, name.c_str());
 
-
-	return Image(name, width, height, context.allocator, image, imageView, allocation);
+    return Image(name, context.allocator, image, imageView, allocation);
 }

@@ -13,7 +13,7 @@ std::vector<NodeAnimation> Animation::CalcNodeAnimation(float aTime, const Skin 
     std::vector<NodeAnimation> result;
     // reserve one pair for each channel
     result.reserve(mTargets.size());
-    Transform transform = aTargetSkin.GetEntity(mChannels[0].targetIndex)->GetLocalTransform();
+    Transform transform = aTargetSkin.GetEntity(mChannels[0].targetIndex)->GetTransform();
     int lastTargetIndex = -1;
     int channelNumber = 0;
     // for each channel, get the animation. If it is the same target as last
@@ -33,12 +33,10 @@ std::vector<NodeAnimation> Animation::CalcNodeAnimation(float aTime, const Skin 
                 result.emplace_back(aTargetSkin.GetEntity(lastTargetIndex), transform);
             }
             lastTargetIndex = channel.targetIndex;
-            transform.UpdateMatrix();
             // we use the currrent transform of the object as default for if
             // there isn't a keyframe for a channel to keep the value. This
             // follows GLTF spec (I think)
-            transform =
-                aTargetSkin.GetEntity(mChannels[++channelNumber].targetIndex)->GetLocalTransform();
+            transform = aTargetSkin.GetEntity(mChannels[++channelNumber].targetIndex)->GetTransform();
         }
         switch (channel.transformChannel) {
         case TransformChannel::TRANSLATION:
@@ -56,7 +54,6 @@ std::vector<NodeAnimation> Animation::CalcNodeAnimation(float aTime, const Skin 
     }
     // add the last transform
     if (lastTargetIndex != -1) {
-        transform.UpdateMatrix();
         result.emplace_back(aTargetSkin.GetEntity(lastTargetIndex), transform);
     }
     return result;

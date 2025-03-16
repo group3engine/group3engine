@@ -80,9 +80,6 @@ void Animator::UpdateAnimationSamples(double aDeltaTime) {
     if (mAnimations.empty()) {
         return;
     }
-    // reduce the animation lock time
-    mAnimationLockTimer -= aDeltaTime;
-
     // for each animation, set the weight to 0 and time to 0
     for (auto &sample : mAnimationSamples) {
         if (sample.first != mActiveAnimation &&
@@ -108,25 +105,17 @@ void Animator::UpdateAnimationSamples(double aDeltaTime) {
     }
 
     if (mActiveAnimation != -1) {
-        if(mAnimationLockTimer > 0.0f){
-            // if the lock timer is still active, then don't modulus the time, but still increment it
-                mAnimationSamples[mActiveAnimation] = {
-                        mAnimationSamples[mActiveAnimation].time +
-                                   aDeltaTime * mAnimationTimeScale,
-                        currentWeight};
-        }
-        else {
-            mAnimationSamples[mActiveAnimation] = {
-                (std::fmod(mAnimationSamples[mActiveAnimation].time +
-                               aDeltaTime * mAnimationTimeScale,
-                           mAnimations[mActiveAnimation]->GetMaxTime())),
-                currentWeight};
-        }
+        mAnimationSamples[mActiveAnimation] = {
+            (std::fmod(mAnimationSamples[mActiveAnimation].time +
+                           aDeltaTime * mAnimationTimeScale,
+                       mAnimations[mActiveAnimation]->GetMaxTime())),
+            currentWeight};
     }
     if (mLastAnimation != -1) {
         mAnimationSamples[mLastAnimation] = {
-            mAnimationSamples[mLastAnimation].time +
+            (std::fmod(mAnimationSamples[mLastAnimation].time +
                            aDeltaTime * mAnimationTimeScale,
+                       mAnimations[mLastAnimation]->GetMaxTime())),
             pastWeight};
     }
 }
@@ -152,7 +141,7 @@ void Animator::UpdateJointsTransform() {
         for (auto &data : animationData) {
             auto entity = data.target;
             auto transform = data.transform;
-            entity->SetTransform(transform);
+            entity->SetJointTransform(transform.getMatrix());
         }
     }
 }
@@ -170,11 +159,7 @@ void Animator::SetActiveAnimation(const std::string &aName) {
     }
 }
 
-void Animator::SetActiveAnimation(const std::string &aName, float blendTime, bool lockForFirstLoop = false) {
-    // if the lock timer is still active, then don't change the animation
-    if (mAnimationLockTimer > 0.0f) {
-            return;
-    }
+void Animator::SetActiveAnimation(const std::string &aName, float blendTime) {
     if (aName != mCurrentAnimationName && mActiveAnimation != -1) {
         mTotalBlendTime = blendTime;
         mLastAnimation = mActiveAnimation;
@@ -183,13 +168,6 @@ void Animator::SetActiveAnimation(const std::string &aName, float blendTime, boo
     for (size_t i = 0; i < mAnimations.size(); i++) {
         if (aName == mAnimations[i]->GetName()) {
             mCurrentAnimationName = aName;
-            // if we are locking for the first loop, and the animation is changed, then set the lock timer
-            if(mActiveAnimation != static_cast<int>(i) && lockForFirstLoop){
-                // set the lock timer to the animation duration
-                mAnimationLockTimer = mAnimations[i]->GetMaxTime();
-                // set the animations time to 0
-                mAnimationSamples[static_cast<int>(i)].time = 0;
-            }
             mActiveAnimation = static_cast<int>(i);
             return;
         }

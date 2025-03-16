@@ -40,7 +40,7 @@ PresentPass::~PresentPass() {
 
 void PresentPass::Resize() {
     // Update the descriptor to the new updated re-sized renderedScene image
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorImageInfo imgInfo = {
             .sampler = vkutil::repeatSampler,
             .imageView = renderedScene.imageView,
@@ -133,7 +133,7 @@ void PresentPass::BuildDescriptors() {
 
     vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_descriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, m_descriptorSets);
 
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorBufferInfo bufferInfo{};
         bufferInfo.buffer = m_postProcessUbo[i].buffer;
         bufferInfo.offset = 0;
@@ -141,7 +141,7 @@ void PresentPass::BuildDescriptors() {
         vkutil::UpdateDescriptorSet(context, 0, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
     }
 
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorImageInfo imgInfo = {
             .sampler = vkutil::repeatSampler,
             .imageView = renderedScene.imageView,
