@@ -29,6 +29,7 @@ layout(set = 0, binding = 2) uniform SSRSettings
 layout (set = 0, binding = 1) uniform sampler2D depthBuffer;
 layout (set = 0, binding = 3) uniform sampler2D renderedScene;
 layout (set = 0, binding = 4) uniform sampler2D MetallicRoughness; // r = metallic, g = roughness
+layout (set = 0, binding = 5) uniform samplerCube skybox;
 
 vec4 DepthToPosition(vec2 uv)
 {
@@ -134,6 +135,14 @@ bool inScreenSpace(vec2 ssPos)
 	return false;
 }
 
+float LinearizeDepth(float d)
+{
+    float zNear = ubo.nearPlane;
+    float zFar = ubo.farPlane;
+	return (zFar * zNear) / (zFar - zNear) / (d + zFar / (zNear - zFar));
+}
+
+
 vec4 NaiveScreenSpaceReflections()
 {
 	int STEPS = ssr.MaxSteps;
@@ -153,9 +162,10 @@ vec4 NaiveScreenSpaceReflections()
 
 
 	vec4 color = vec4(0,0,0,0);
-	for(int i = 1; i < STEPS; i++)
+	for(int i = 0; i < STEPS; i++)
 	{
-		RayPos += ( i + noise(uv + ssr.time)) * RayStep;
+		//RayPos += ( i + noise(uv + ssr.time)) * RayStep;
+		RayPos += RayStep * IGN(gl_FragCoord.xy);
 
 		// Get the position of the ray in screen-space
 		vec4 projectedCoords = ubo.projection * ubo.view * vec4(RayPos.xyz, 1.0);
@@ -170,8 +180,8 @@ vec4 NaiveScreenSpaceReflections()
 			return vec4(0.0, 0.0, 0.0, 1.0);
 		}
 
-		float rayDepth = projectedCoords.z;
-		float depth = texture(depthBuffer, projectedCoords.xy).x;
+		float rayDepth = (projectedCoords.z);
+		float depth = (texture(depthBuffer, projectedCoords.xy).x);
 
 		if((rayDepth - depth) > 0.0 && (rayDepth - depth) < ssr.thickness)
 		{
@@ -214,8 +224,9 @@ vec4 NaiveScreenSpaceReflections()
 			vec2 vignette = clamp(abs(hitPixelNDC) * blendScreenEdgeFade - (blendScreenEdgeFade - 1.0), 0.0, 1.0);
 			float fadeFactor = clamp(1.0 - dot(vignette, vignette), 0.0, 1.0);
 
-			color = color * fadeFactor;
-			return mix(color, vec4(0), NdotR);
+			//color = color * fadeFactor;
+			//mix(color, vec4(0), NdotR)
+			return color;
 
 			//return mix(color.rgb, vec3(0,0,0), NdotR); // if its closer to 1, we get less reflection since its aligned with camera
 		}
@@ -225,7 +236,9 @@ vec4 NaiveScreenSpaceReflections()
 
 	// TODO: Read from cube map
 
-	return vec4(0.0, 0.0, 0.0, 1.0);
+	//vec4 skyboxColour = texture(skybox, worldReflectionDir);
+
+	return vec4(0,0,0,1);
 }
 
 void main()

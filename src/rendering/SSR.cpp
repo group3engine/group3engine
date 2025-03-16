@@ -5,9 +5,10 @@
 #include "RenderPass.hpp"
 #include "Utils.hpp"
 
-SSR::SSR(Context &context, Image &depthBuffer, Image& renderedScene, Image& metallicRoughness, std::shared_ptr<Camera> camera) :
+SSR::SSR(Context &context, Image &depthBuffer, Image& renderedScene, Image& metallicRoughness, Image& skybox, std::shared_ptr<Camera> camera) :
 
-    context{context}, depthBuffer{depthBuffer}, renderedScene{renderedScene}, metallicRoughness{metallicRoughness}, camera{camera} {
+    context{context}, depthBuffer{depthBuffer}, renderedScene{renderedScene},
+      metallicRoughness{metallicRoughness}, skybox{skybox}, camera{camera} {
 
     m_width = context.extent.width;
     m_height = context.extent.height;
@@ -227,7 +228,8 @@ void SSR::BuildDescriptors()
             vkutil::CreateDescriptorBinding(1, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
             vkutil::CreateDescriptorBinding(2, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT),
             vkutil::CreateDescriptorBinding(3, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
-            vkutil::CreateDescriptorBinding(4, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+            vkutil::CreateDescriptorBinding(4, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
+            vkutil::CreateDescriptorBinding(5, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
         };
 
         m_DescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
@@ -267,7 +269,7 @@ void SSR::BuildDescriptors()
     for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
     {
         VkDescriptorImageInfo imageInfo = {
-            .sampler = vkutil::repeatSampler,
+            .sampler = vkutil::clampToEdgeSamplerAniso,
             .imageView = renderedScene.imageView,
             .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         };
@@ -284,6 +286,17 @@ void SSR::BuildDescriptors()
         };
 
         vkutil::UpdateDescriptorSet(context, 4, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    }
+
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        VkDescriptorImageInfo imageInfo = {
+            .sampler = vkutil::clampToEdgeSamplerAniso,
+            .imageView = skybox.imageView,
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        };
+
+        vkutil::UpdateDescriptorSet(context, 5, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     }
 }
 

@@ -81,9 +81,9 @@ void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::share
     auto &sunLight = lights[0];
 
     if (!initialized) {
-        SunElevation = 0.60f; // default elevation // -21
+        SunElevation = 0.89f; // default elevation // -21
         SunAzimuthal = 0.0f; // default azimuth // 45
-        sunLight.view = -24.0f;
+        sunLight.view = -43.0f;
         sunLight.far = 50.0f;
         sunLight.near = -125.0f;
         initialized = true;
@@ -113,6 +113,9 @@ void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::share
         ImGui::SliderFloat("View", &sunLight.view, -200.0f, 200.0f, "%.2f");
         ImGui::SliderFloat("Near", &sunLight.near, -200.0f, 1.0f, "%.2f");
         ImGui::SliderFloat("Far", &sunLight.far, 0.0f, 50.0f, "%.2f");
+
+        ImGui::SliderFloat("Shadow bias: ", &vkutil::ShadowBias, 0.0f, 10.0f);
+        ImGui::SliderFloat("Shadow slope: ", &vkutil::ShadowSlope, 0.0f, 10.0f);
     }
 
     if (ImGui::CollapsingHeader("Lights")) {

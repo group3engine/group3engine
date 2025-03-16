@@ -55,7 +55,7 @@ void Engine::InitScene() {
 
     // Random spot light positions put side by side each other
     for (size_t i = 0; i < 25; i++) {
-        spotLightPositions.push_back(glm::vec4(-9.0 + i * 0.8, 0.7f, 0.5f, 1.0f));
+        spotLightPositions.push_back(glm::vec4(-9.0 + i * 0.8, 4.4f, 0.5f, 1.0f));
     }
 
     // Create the scene which will store models and lights

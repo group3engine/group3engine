@@ -226,7 +226,7 @@ float myPCF(vec3 WorldPos)
 		for(int y = -range; y < range; y++)
 		{
 			vec2 offset = vec2(x,y) * texSize;
-			vec4 sampleCoord = vec4(fragPositionInLightSpace.xy + offset, fragPositionInLightSpace.z - 0.005, fragPositionInLightSpace.w);
+			vec4 sampleCoord = vec4(fragPositionInLightSpace.xy + offset, fragPositionInLightSpace.z, fragPositionInLightSpace.w);
 			sum += textureProj(shadowMap, sampleCoord);
 			samples++;
 		}
@@ -234,7 +234,6 @@ float myPCF(vec3 WorldPos)
 
 	return sum / float(samples);
 }
-
 
 void main()
 {
@@ -251,7 +250,7 @@ void main()
 
 	vec3 outLight = vec3(0.0);
 
-	for(int i = 0; i < 1; i++)
+	for(int i = 0; i < NUM_LIGHTS; i++)
 	{
 		vec3 lightDir = normalize(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
 		vec3 viewDir = normalize(ubo.cameraPosition.xyz - WorldPos.xyz);

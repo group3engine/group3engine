@@ -15,6 +15,8 @@ class Skybox {
     void Execute(VkCommandBuffer cmd);
     void Resize();
 
+    Image& GetSkyBoxImage() { return m_Skybox; }
+
   private:
     void CreatePipeline();
     void BuildDescriptors();
