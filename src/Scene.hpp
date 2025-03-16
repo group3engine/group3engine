@@ -19,7 +19,7 @@
 #include "CharacterVirtualTest.h"
 #include "CharacterEntity.hpp"
 
-
+#include "ImGuiRenderer.hpp"
 
 class Scene {
   public:
@@ -32,9 +32,12 @@ class Scene {
     void DrawSkinned(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
     void AddLightSource(Light& LightSource);
     void Update(double aDeltaTime);
+    void UpdateUi(double aDeltaTime);
     void Awake();
 
     void Destroy();
+
+    TextureManager *GetTextureManager() const { return mTextureManager; }
 
     std::vector<Light> &GetLights() { return m_Lights; }
 
@@ -69,5 +72,7 @@ class Scene {
 
     bool mHasCharacter = false;
     CharacterEntity *mCharacter;
+
+    gui::TimerData mGuiTimerData{};
 };
 

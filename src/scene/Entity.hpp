@@ -151,6 +151,8 @@ class Entity {
     /// called every frame, after physics has been updated
     virtual void Update(double deltaTime) {}
 
+    virtual void UpdateUi(double deltaTime) {}
+
   public:
     // functions used by the engine, the user should not call these
     void BaseUpdate(double deltaTime);

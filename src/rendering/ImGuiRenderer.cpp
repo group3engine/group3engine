@@ -8,7 +8,23 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
 
-void ImGuiRenderer::Initialize(const Context &context) {
+#include <spdlog/fmt/fmt.h>
+
+#include "TextureManager.hpp"
+#include "spdlog/spdlog.h"
+
+namespace {
+    auto PushBackStyleVar = [](size_t i, std::function<void()> f) {
+        f();
+        return ++i;
+    };
+
+    bool enableTextWindowBorder = true;
+    bool enableDeathPopup = true;
+    bool enableFinishPopup = true;
+}
+
+void ImGuiRenderer::Initialize(const Context &context, TextureManager *textureManager) {
     VkDescriptorPoolCreateInfo pool_info = {};
     pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
@@ -42,14 +58,292 @@ void ImGuiRenderer::Initialize(const Context &context) {
     ImGui_ImplVulkan_Init(&info);
 
     io.Fonts->AddFontDefault();
+
+    // Load texture
+    // TODO: Cleanup
+    {
+        std::filesystem::path path = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets" / "heart.png";
+        std::string textureName = "heart";
+
+        // TODO: Return a pointer to the newly created texture?
+        textureManager->addTexture(path, textureName);
+
+        Texture *texture = textureManager->GetTexture(textureName);
+
+        // Create Descriptor Set using ImGUI's implementation
+        myTexData.DS =
+            ImGui_ImplVulkan_AddTexture(vkutil::clampToEdgeSamplerAniso, texture->image.imageView,
+                                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+        myTexData.Width = texture->image.mWidth;
+        myTexData.Height = texture->image.mHeight;
+        SPDLOG_INFO("ImGui loaded {} with, width {} height {}", textureName, texture->image.mWidth, texture->image.mHeight);
+    }
+}
+
+void ImGuiRenderer::NewHeartSprite(const ImVec2 &offset) {
+    // TODO: Remove hardcoded image size
+    ImVec2 imageSize = ImVec2(myTexData.Width * 0.02f, myTexData.Height * 0.02f);
+
+    size_t sv = 0;
+
+    float windowBorderSize = 0.0f;
+    if (enableTextWindowBorder) {
+        // Display a window border for debug purposes
+        windowBorderSize = ImGui::GetStyle().WindowBorderSize;
+    } else {
+        // No window border
+        sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); });
+    }
+
+    // Make the window fit the heart exactly
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(0, 0)); });
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0)); });
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); });
+
+    ImGui::SetNextWindowSize(imageSize);
+    ImGui::SetNextWindowPos(ImVec2(offset.x - windowBorderSize - imageSize.x, offset.y - windowBorderSize - imageSize.y));
+    ImGui::SetNextWindowBgAlpha(0.0f);
+
+    // Flags to get a non-interactable blank window to draw on
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                             ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+                             ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
+
+    ImGui::Begin("Heart", nullptr, flags);
+    ImGui::Image((ImTextureID)myTexData.DS, imageSize);
+
+    ImGui::PopStyleVar(sv);
+
+    ImGui::End();
+}
+
+void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data) {
+    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+
+    size_t deathCount = data.deathCount;
+
+    // Format to a width of 4
+    // See https://hackingcpp.com/cpp/libs/fmt.html
+    std::string str = fmt::format("Death Counter {:4}", deathCount);
+
+    size_t sv = 0;
+
+    float windowBorderSize = 0.0f;
+    if (enableTextWindowBorder) {
+        // Display a window border for debug purposes
+        windowBorderSize = ImGui::GetStyle().WindowBorderSize;
+    } else {
+        // No window border
+        sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); });
+    }
+
+    // Bottom right of viewport. NOTE: hardcoded bottom right positioning
+    ImVec2 pos = ImVec2(viewport->WorkPos.x + viewport->WorkSize.x, viewport->WorkPos.y + viewport->WorkSize.y);
+    ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
+
+    // Make the window fit the text exactly
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(0, 0)); });
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0)); });
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); });
+
+    ImGui::SetNextWindowSize(textSize);
+    // NOTE: hardcoded bottom right positioning
+    ImGui::SetNextWindowPos(ImVec2(pos.x - textSize.x - windowBorderSize, pos.y - textSize.y - windowBorderSize));
+    ImGui::SetNextWindowBgAlpha(0.0f);
+
+    // Flags to get a non-interactable blank window to draw on
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                             ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+                             ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
+
+    ImGui::Begin("Death Counter Window", nullptr, flags);
+
+    // Text
+    ImGui::Text("%s", str.c_str());
+
+    // Heart
+    ImVec2 offset = {pos.x - textSize.x, pos.y};
+    NewHeartSprite(offset);
+
+    ImGui::PopStyleVar(sv);
+
+    ImGui::End();
+}
+
+void ImGuiRenderer::NewDeathPopup(const gui::DeathPopupData &data) {
+    if (!enableDeathPopup) {
+        // Early return
+        return;
+    }
+
+    // If the visible timer has run out
+    if (data.visibleTimer <= 0.0f) {
+        // Early return
+        return;
+    }
+
+    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+
+    std::string str = fmt::format("DEATH POPUP");
+
+    size_t sv = 0;
+
+    float windowBorderSize = 0.0f;
+    if (enableTextWindowBorder) {
+        // Display a window border for debug purposes
+        windowBorderSize = ImGui::GetStyle().WindowBorderSize;
+    } else {
+        // No window border
+        sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); });
+    }
+
+    // Middle of viewport. NOTE: hardcoded middle of viewport positioning
+    ImVec2 pos = ImVec2(viewport->WorkPos.x + viewport->WorkSize.x / 2.0f, viewport->WorkPos.y + viewport->WorkSize.y / 2.0f);
+    ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
+
+    // Make the window fit the text exactly
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(0, 0)); });
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0)); });
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); });
+
+    ImGui::SetNextWindowSize(textSize);
+    // NOTE: hardcoded middle of viewport positioning
+    ImGui::SetNextWindowPos(ImVec2(pos.x - textSize.x - windowBorderSize, pos.y - textSize.y - windowBorderSize));
+    ImGui::SetNextWindowBgAlpha(0.0f);
+
+    // Flags to get a non-interactable blank window to draw on
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                             ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+                             ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
+
+    ImGui::Begin("Death Popup Window", nullptr, flags);
+
+    // Text
+    ImGui::Text("%s", str.c_str());
+
+    ImGui::PopStyleVar(sv);
+
+    ImGui::End();
+}
+
+void ImGuiRenderer::NewFinishPopup(const gui::FinishPopupData &data) {
+    if (!enableFinishPopup) {
+        // Early return
+        return;
+    }
+
+    // If the visible timer has run out
+    if (data.visibleTimer <= 0.0f) {
+        // Early return
+        return;
+    }
+
+    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+
+    std::string str = fmt::format("FINISH POPUP");
+
+    size_t sv = 0;
+
+    float windowBorderSize = 0.0f;
+    if (enableTextWindowBorder) {
+        // Display a window border for debug purposes
+        windowBorderSize = ImGui::GetStyle().WindowBorderSize;
+    } else {
+        // No window border
+        sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); });
+    }
+
+    // Middle of viewport. NOTE: hardcoded middle of viewport positioning
+    ImVec2 pos = ImVec2(viewport->WorkPos.x + viewport->WorkSize.x / 2.0f, viewport->WorkPos.y + viewport->WorkSize.y / 2.0f);
+    ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
+
+    // Make the window fit the text exactly
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(0, 0)); });
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0)); });
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); });
+
+    ImGui::SetNextWindowSize(textSize);
+    // NOTE: hardcoded middle of viewport positioning
+    ImGui::SetNextWindowPos(ImVec2(pos.x - textSize.x - windowBorderSize, pos.y - textSize.y - windowBorderSize));
+    ImGui::SetNextWindowBgAlpha(0.0f);
+
+    // Flags to get a non-interactable blank window to draw on
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                             ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+                             ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
+
+    ImGui::Begin("Finish Popup Window", nullptr, flags);
+
+    // Text
+    ImGui::Text("%s", str.c_str());
+
+    ImGui::PopStyleVar(sv);
+
+    ImGui::End();
+}
+
+void ImGuiRenderer::NewTimer(const gui::TimerData &data) {
+    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+
+    float time = data.time;
+
+    // Format to a width of 8 and to a precision of 3
+    // See https://hackingcpp.com/cpp/libs/fmt.html
+    std::string str = fmt::format("Timer {:8.3f}", time);
+
+    size_t sv = 0;
+
+    float windowBorderSize = 0.0f;
+    if (enableTextWindowBorder) {
+        // Display a window border for debug purposes
+        windowBorderSize = ImGui::GetStyle().WindowBorderSize;
+    } else {
+        // No window border
+        sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); });
+    }
+
+    // Top right of viewport. NOTE: hardcoded top right positioning
+    ImVec2 pos = ImVec2(viewport->WorkPos.x + viewport->WorkSize.x, viewport->WorkPos.y);
+    ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
+
+    // Make the window fit the text exactly
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(0, 0)); });
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0)); });
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); });
+
+    ImGui::SetNextWindowSize(textSize);
+    // NOTE: hardcoded top right positioning
+    ImGui::SetNextWindowPos(ImVec2(pos.x - textSize.x - windowBorderSize, pos.y + windowBorderSize));
+    ImGui::SetNextWindowBgAlpha(0.0f);
+
+    // Flags to get a non-interactable blank window to draw on
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                             ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+                             ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
+
+    ImGui::Begin("Timer Window", nullptr, flags);
+
+    // Text
+    ImGui::Text("%s", str.c_str());
+
+    ImGui::PopStyleVar(sv);
+
+    ImGui::End();
+}
+
+void ImGuiRenderer::NewFrame() {
+    ImGui_ImplVulkan_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+}
+
+void ImGuiRenderer::EndFrame() {
+    ImGui::EndFrame();
 }
 
 void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::shared_ptr<Camera>& camera)
 {
-    ImGui_ImplVulkan_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
     ImGui::BeginChild("Settings");
     // Display FPS
     ImGui::TextColored(
@@ -163,27 +457,11 @@ void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::share
         ImGui::End();
     }
 
+    ImGui::Checkbox("Enable Text Window Border", &enableTextWindowBorder);
 
-    // TODO: Entities doesn't have a GetPosition or SetPosition to make this simple
-    //if (ImGui::CollapsingHeader("Entities")) {
-    //    auto &entities = scene->GetEntities();
-    //    for (size_t i = 0; i < entities.size(); ++i) {
-    //        // Get current position
-    //        glm::vec3 pos = entities[i].GetPosition();
-    //        // Unique label for each entity
-    //        std::string label = "Entity " + std::to_string(i) + " Position";
-    //        // Slider to edit position
-    //        if (ImGui::SliderFloat3(label.c_str(), &pos.x, -10.0f, 10.0f,
-    //                                "%.2f")) {
-    //            // If the slider changes the value, update the entity
-    //            entities[i].SetPosition(pos);
-    //        }
-    //    }
-    //}
+    ImGui::Checkbox("Enable Death Popup", &enableDeathPopup);
 
     ImGui::EndChild();
-
-    //ImGui::ShowDemoWindow();
 }
 
 void ImGuiRenderer::Render(VkCommandBuffer cmd, const Context &context, uint32_t imageIndex)
@@ -195,6 +473,8 @@ void ImGuiRenderer::Render(VkCommandBuffer cmd, const Context &context, uint32_t
 
 void ImGuiRenderer::Shutdown(const Context& context)
 {
+    ImGui_ImplVulkan_RemoveTexture(myTexData.DS);
+
     ImGui_ImplVulkan_Shutdown();
     vkDestroyDescriptorPool(context.device, imGuiDescriptorPool, nullptr);
     vkDestroyRenderPass(context.device, imGuiRenderPass, nullptr);

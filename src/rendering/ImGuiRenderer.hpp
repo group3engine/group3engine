@@ -1,12 +1,43 @@
+#ifndef RENDERING_IMGUIRENDERER_HPP
+#define RENDERING_IMGUIRENDERER_HPP
+
 #include <volk.h>
 #include <vector>
 #include <functional>
 #include <iostream>
 #include <memory>
 
+class ImVec2;
+
 class Context;
 class Scene;
 class Camera;
+class TextureManager;
+
+struct MyTextureData {
+    VkDescriptorSet DS{};         // Descriptor set: this is what you'll pass to Image()
+
+    int             Width;
+    int             Height;
+};
+
+namespace gui {
+struct DeathCounterData {
+    size_t deathCount;
+};
+
+struct DeathPopupData {
+    float visibleTimer;
+};
+
+struct FinishPopupData {
+    float visibleTimer;
+};
+
+struct TimerData {
+    float time;
+};
+} // namespace gui
 
 namespace ImGuiRenderer
 {
@@ -41,11 +72,22 @@ namespace ImGuiRenderer
         {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000}
     };
 
-    void Initialize(const Context &context);
+    void NewHeartSprite(const ImVec2 &offset);
+    void NewDeathCounter(const gui::DeathCounterData &data);
+    void NewDeathPopup(const gui::DeathPopupData &data);
+    void NewFinishPopup(const gui::FinishPopupData &data);
+    void NewTimer(const gui::TimerData &data);
+
+    void Initialize(const Context &context, TextureManager *textureManager);
     void Shutdown(const Context &context);
+    void NewFrame();
     void Update(const std::shared_ptr<Scene>& scene, const std::shared_ptr<Camera>& camera);
+    void EndFrame();
     void Render(VkCommandBuffer cmd, const Context& context, uint32_t imageIndex);
 
     inline VkDescriptorPool imGuiDescriptorPool;
     inline VkRenderPass imGuiRenderPass;
+
+    inline MyTextureData myTexData;
 }
+#endif // RENDERING_IMGUIRENDERER_HPP

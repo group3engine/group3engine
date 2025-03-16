@@ -15,6 +15,12 @@ bool IsMouseButtonDown(MOUSE_BUTTON button);
 
 bool IsMouseButtonReleased(MOUSE_BUTTON button);
 
+float GetGamepadAxis(GAMEPAD_AXIS axis);
+
+bool IsGamepadButtonPressed(GAMEPAD_BUTTON button);
+
+bool IsGamepadButtonDown(GAMEPAD_BUTTON button) ;
+
 float GetMouseX();
 
 float GetMouseY();
