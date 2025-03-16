@@ -29,7 +29,6 @@ class Image {
     VkImage image;
     VkImageView imageView;
     VmaAllocator allocator;
-
     uint32_t mWidth;
     uint32_t mHeight;
 };
@@ -37,4 +36,4 @@ class Image {
 void ImageTransition(VkCommandBuffer cmd, VkImage image, VkFormat format, VkImageLayout currentLayout, VkImageLayout newLayout, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkPipelineStageFlagBits srcStageMask, VkPipelineStageFlagBits dstStageMask);
 uint32_t ComputeMipLevels(uint32_t width, uint32_t height);
 Image LoadTextureFromDisk(std::filesystem::path path, Context &context, VkFormat format);
-Image CreateImageTexture2D(const std::string name, Context &context, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags imageaspectFlags, uint32_t mipLevels = 1);
+Image CreateImageTexture2D(const std::string name, Context& context, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags imageaspectFlags, uint32_t mipLevels = 1, VkImageCreateFlags flags = 0, uint32_t arrayLayers = 1);

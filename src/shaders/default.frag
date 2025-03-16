@@ -95,25 +95,66 @@ float GeometryTerm(vec3 normal, vec3 halfVector, vec3 lightDir, vec3 viewDir)
 	return G;
 }
 
+// ======================================================================
+// GGX
+// https://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
+// ======================================================================
+
+float GGXNormalDistributionFunction(vec3 N, vec3 H, float roughness)
+{
+	float a = roughness * roughness;
+	float a2 = a * a;
+	float NdotH = max(dot(N, H), 0.001);
+	float NdotH2 = NdotH * NdotH;
+
+	float numerator = a2;
+	float denominator = ((NdotH2) * (a2 - 1.0) + 1.0);
+	denominator = PI * denominator * denominator;
+
+	return numerator / max(denominator, 0.001);
+}
+
+float GGXGeometrySchlick(float NdotV, float roughness)
+{
+	float a = roughness * roughness;
+	float a2 = a * a;
+	float NdotV2 = NdotV * NdotV;
+
+	float numerator   = 2.0 * NdotV;
+	float denominator = NdotV + sqrt(a2 + (1.0 - a2) * NdotV2);
+
+	return numerator / max(denominator, 0.001);
+}
+
+float GGXGeometrySmith(vec3 normal, vec3 lightDir, vec3 viewDir, float roughness)
+{
+	float NdotV = max(dot(normal, viewDir), 0.001);
+	float NdotL = max(dot(normal, lightDir), 0.001);
+
+	float ggx1 = GGXGeometrySchlick(NdotV, roughness);
+	float ggx2 = GGXGeometrySchlick(NdotL, roughness);
+
+	return ggx1 * ggx2;
+}
+
 // Compute BRDF
 vec3 CookTorranceBRDF(vec3 normal, vec3 halfVector, vec3 viewDir, vec3 lightDir, float metallic, float roughness, vec3 baseColor, vec3 LightColour)
 {
     vec3 F = Fresnel(halfVector, viewDir, baseColor, metallic);
-    float D = BeckmannNormalDistribution(normal, halfVector, roughness);
-	float G = GeometryTerm(normal, halfVector, lightDir, viewDir);
+    float D = GGXNormalDistributionFunction(normal, halfVector, roughness);
+	float G = GGXGeometrySmith(normal, lightDir, viewDir, roughness);
 
-    vec3 ambient = vec3(0.02);
-    vec3 L_Diffuse = (baseColor.xyz / PI) * (vec3(1,1,1) - F) * (1.0 - metallic);
+    vec3 L_Diffuse = (baseColor / PI) * (vec3(1.0) - F) * (1.0 - metallic);
 
-    float NdotV = max(dot(normal, viewDir), 0.0);
-	float NdotL = max(dot(normal, lightDir), 0.0);
+    float NdotV = max(dot(normal, viewDir), 0.001);
+	float NdotL = max(dot(normal, lightDir), 0.001);
 
 	vec3 numerator = D * G * F;
 	float denominator = (4 * NdotV * NdotL) + 0.001;
 
 	vec3 specular = numerator / denominator;
 
-    vec3 outLight = (L_Diffuse + specular) * LightColour.xyz * NdotL;
+    vec3 outLight = (L_Diffuse + specular) * NdotL;
 
     return vec3(outLight);
 }
@@ -125,7 +166,6 @@ float isInShadow(vec4 shadowMapPosition)
 		return textureProj(shadowMap, shadowMapPosition);
 
 }
-
 
 const vec2 PCFFilter4x4[16] = vec2[](
 vec2(-1.5, 1.5), vec2(-0.5, 1.5), vec2(0.5, 1.5), vec2(1.5, 1.5),
@@ -150,16 +190,51 @@ float PCF(vec4 shadowMapPosition)
 // https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing
 float Shadows(vec3 WorldPos)
 {
-    vec3 lightDir = normalize(lightData.lights[0].LightPosition.xyz);
-	lightDir = -lightDir;
-
 	// Use direct lighting only. Point light shadows are handleded differently (cube depth)
 	vec4 fragPositionInLightSpace = lightData.lights[0].LightSpaceMatrix * vec4(WorldPos, 1.0);
 	fragPositionInLightSpace.xyz /= fragPositionInLightSpace.w;
 	fragPositionInLightSpace.xy = fragPositionInLightSpace.xy * 0.5 + 0.5;
-	fragPositionInLightSpace.z = fragPositionInLightSpace.z - 0.01;
+	fragPositionInLightSpace.z = fragPositionInLightSpace.z - 0.005;
 	float shadow = PCF(fragPositionInLightSpace);
-	return 0.0;
+
+	return shadow;
+}
+
+float Shadow(vec3 WorldPos)
+{
+	vec4 fragPositionInLightSpace = lightData.lights[0].LightSpaceMatrix * vec4(WorldPos, 1.0);
+	fragPositionInLightSpace.xyz /= fragPositionInLightSpace.w;
+	fragPositionInLightSpace.xy = fragPositionInLightSpace.xy * 0.5 + 0.5;
+	fragPositionInLightSpace.z -= 0.005;
+
+	float shadow = textureProj(shadowMap, fragPositionInLightSpace);
+	return shadow;
+}
+
+// https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing
+float myPCF(vec3 WorldPos)
+{
+	// Use direct lighting only. Point light shadows are handleded differently (cube depth)
+	vec4 fragPositionInLightSpace = lightData.lights[0].LightSpaceMatrix * vec4(WorldPos, 1.0);
+	fragPositionInLightSpace.xyz /= fragPositionInLightSpace.w;
+	fragPositionInLightSpace.xy = fragPositionInLightSpace.xy * 0.5 + 0.5;
+
+	vec2 texSize = 1.0 / textureSize(shadowMap, 0);
+	int range = 2; // 4x4
+	int samples = 0;
+	float sum = 0.0;
+	for(int x = -range; x < range; x++)
+	{
+		for(int y = -range; y < range; y++)
+		{
+			vec2 offset = vec2(x,y) * texSize;
+			vec4 sampleCoord = vec4(fragPositionInLightSpace.xy + offset, fragPositionInLightSpace.z, fragPositionInLightSpace.w);
+			sum += textureProj(shadowMap, sampleCoord);
+			samples++;
+		}
+	}
+
+	return sum / float(samples);
 }
 
 void main()
@@ -183,31 +258,30 @@ void main()
 		vec3 LightColour = vec3(0.0);
 		bool isDirectional = lightData.lights[i].Type == 1 ? false : true;
 
-		if(!isDirectional)
+		if (!isDirectional)
 		{
 			float dist = length(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
 			float att = 1.0 / (dist * dist);
 			LightColour = lightData.lights[i].LightColour.xyz * att;
 		}
-		else {
-			lightDir = normalize(-lightData.lights[i].LightPosition.xyz);
+		else
+		{
+			lightDir = normalize(lightData.lights[i].LightPosition.xyz);
 			LightColour = lightData.lights[i].LightColour.rgb;
+			halfVector = normalize(viewDir + lightDir);
 		}
 
-		if(isDirectional) {
-			float shadowTerm = 1.0 - Shadows(WorldPos.xyz);
-			outLight += shadowTerm * CookTorranceBRDF(WorldNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour);
+		float shadowTerm = 1.0;
+		if (isDirectional)
+		{
+			shadowTerm = 1.0 - myPCF(WorldPos.xyz);
+		}
 
-		}
-		else {
-			outLight += CookTorranceBRDF(WorldNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour);
-		}
+		vec3 brdf = CookTorranceBRDF(WorldNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour);
+		outLight += brdf * LightColour.xyz * shadowTerm;
 	}
 
-    float shadowTerm = 1.0 - Shadows(WorldPos.xyz);
-
-	vec3 ambient = vec3(0.02) * color * shadowTerm;
-
+	vec3 ambient = vec3(0.02) * color;
 	fragColor = vec4(vec3(ambient + outLight), 1.0);
 
 	float brightness = dot(fragColor.rgb, vec3(0.2126, 0.7152, 0.0722));

@@ -49,9 +49,13 @@ ForwardPass::ForwardPass(Context &context, Image &shadowMap, Image &depthPrepass
     CreateRenderPass();
     CreateFramebuffer();
     CreatePipeline();
+
+    m_Skybox = std::make_unique<Skybox>(context, camera, m_renderPass);
 }
 
 ForwardPass::~ForwardPass() {
+
+    m_Skybox.reset();
     m_RenderTarget.Destroy(context.device);
     m_DepthTarget.Destroy(context.device);
     m_BrightnessTexture.Destroy(context.device);
@@ -159,6 +163,9 @@ void ForwardPass::Execute(VkCommandBuffer cmd) {
     vkCmdSetScissor(cmd, 0, 1, &scissor);
 
     vkCmdBeginRenderPass(cmd, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    m_Skybox->Execute(cmd);
+
     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_opaquePipeline.second, 0, 1, &m_descriptorSets[vkutil::currentFrame], 0, nullptr);
 
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_skinnedPipeline.first);
@@ -304,11 +311,7 @@ void ForwardPass::BuildDescriptors() {
     meshDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
 
     vkutil::AllocateDescriptorSets(context, context.descriptorPool, meshDescriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, m_descriptorSets);
-    skinDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(
-        context, {
-                     {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1,
-                      VK_SHADER_STAGE_VERTEX_BIT, nullptr},
-                 });
+    skinDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}});
 
     // Camera Transform UBO
     for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {

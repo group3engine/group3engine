@@ -1,13 +1,5 @@
 #version 450
 
-//layout(set = 0, binding = 0) uniform Light
-//{
-//	vec4 LightPosition;
-//	vec4 LightColour;
-//	mat4 LightSpaceMatrix;
-//}LightUBO;
-//
-//
 struct Light
 {
 	int Type;
@@ -16,7 +8,7 @@ struct Light
 	mat4 LightSpaceMatrix;
 };
 
-const int NUM_LIGHTS = 16;
+const int NUM_LIGHTS = 26;
 
 layout(set = 0, binding = 0) uniform LightBuffer {
 	Light lights[NUM_LIGHTS];
