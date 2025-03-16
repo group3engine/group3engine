@@ -254,10 +254,10 @@ Image CreateImageTexture2D(const std::string name, Context& context, uint32_t wi
     VkImageViewCreateInfo viewInfo{};
     viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     viewInfo.image = image;
-    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    viewInfo.viewType = (flags & VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT) != 0 ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D;
     viewInfo.format = format;
     viewInfo.components = VkComponentMapping{};
-    viewInfo.subresourceRange = VkImageSubresourceRange{imageaspectFlags, 0, VK_REMAINING_MIP_LEVELS, 0, 1};
+    viewInfo.subresourceRange = VkImageSubresourceRange{imageaspectFlags, 0, VK_REMAINING_MIP_LEVELS, 0, VK_REMAINING_ARRAY_LAYERS};
 
     VkImageView imageView = VK_NULL_HANDLE;
     VK_CHECK(vkCreateImageView(context.device, &viewInfo, nullptr, &imageView), "Failed to create image view");
