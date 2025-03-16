@@ -28,6 +28,7 @@ float SpatialDenoisedSSAO()
     return float(totalao / 16.0);
 }
 
+// This kind of works right now, needs changing
 vec3 SpatialDenoisedSSR(vec2 uv)
 {
     vec2 texelSize = 1.0 / textureSize(SSR, 0);
