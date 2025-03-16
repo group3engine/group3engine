@@ -5,6 +5,16 @@
 #pragma once
 
 #include "CharacterBaseTest.h"
+#include "CustomContactListener.hpp"
+
+// enum of jump states - start, falling, end, none
+enum class EJumpState
+{
+        Start,
+        Falling,
+        End,
+        None
+};
 
 // Simple test that test the CharacterVirtual class. Allows the user to move around with the arrow keys and jump with the J button.
 class CharacterVirtualTest : public CharacterBaseTest, public CharacterContactListener
@@ -31,7 +41,17 @@ public:
 	// Get position of the character
 	virtual RVec3			GetCharacterPosition() const override				{ return mCharacter->GetPosition(); }
 
+        // Get velocity of the character (used for animation, don't include ground velocity)
+        virtual Vec3			GetCharacterVelocity() const				{ return mCharacter->GetLinearVelocity() - mCharacter->GetGroundVelocity(); }
+
 	void SetCharacterPosition(RVec3 pos) { mCharacter->SetPosition(pos); }
+
+    // Set the custom contact listener
+	void SetCustomContactListener(CustomContactListener *inCustomContactListener) { mCustomContactListener = inCustomContactListener; }
+    Ref<CharacterVirtual>	GetCharacter() {return mCharacter; }
+
+        // get the jump state
+        [[nodiscard]] EJumpState GetJumpState() { return mJumpState; }
 
 protected:
 	// Common function to be called when contacts are added/persisted
@@ -69,4 +89,11 @@ private:
 	// Track active contacts for debugging purposes
 	using ContactSet = Array<CharacterVirtual::ContactKey>;
 	ContactSet				mActiveContacts;
+
+    CustomContactListener* mCustomContactListener;
+
+        // current jump state
+        EJumpState              mJumpState = EJumpState::None;
+
+
 };

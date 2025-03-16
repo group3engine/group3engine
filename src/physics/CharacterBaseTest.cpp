@@ -18,6 +18,8 @@
 
 #include "PhysicsHelpers.hpp"
 
+#include "Camera.hpp"
+
 using namespace JPH;
 
 // Scene constants
@@ -31,6 +33,8 @@ void CharacterBaseTest::Initialize()
 	case EType::Box:
 		mStandingShape = RotatedTranslatedShapeSettings(Vec3(0, 0/* this is the offset from the characters origin to its center*/, 0), Quat::sIdentity(), new BoxShape(Vec3(cCharacterRadiusStanding, cCharacterRadiusStanding, cCharacterRadiusStanding))).Create().Get();
 		break;
+        default:
+            assert(false);
 	}
 
 	// Create CharacterVirtual
@@ -44,24 +48,30 @@ void CharacterBaseTest::Initialize()
 
 void CharacterBaseTest::ProcessInput(const ProcessInputParams &inParams)
 {
-	// Determine controller input
-	mControlInput = Vec3::sZero();
-	if (IsKeyDown(KEY::eA))	mControlInput.SetZ(-1);
-	if (IsKeyDown(KEY::eD))	mControlInput.SetZ(1);
-	if (IsKeyDown(KEY::eW))	mControlInput.SetX(1);
-	if (IsKeyDown(KEY::eS))	mControlInput.SetX(-1);
-	if (mControlInput != Vec3::sZero())
-		mControlInput = mControlInput.Normalized();
+        if(Camera::GetMainCamera()->isInFollowCharacterMode()) {
+            // Determine controller input
+            mControlInput = Vec3::sZero();
+            if (IsKeyDown(KEY::eA))
+                mControlInput.SetZ(-1);
+            if (IsKeyDown(KEY::eD))
+                mControlInput.SetZ(1);
+            if (IsKeyDown(KEY::eW))
+                mControlInput.SetX(1);
+            if (IsKeyDown(KEY::eS))
+                mControlInput.SetX(-1);
+            if (mControlInput != Vec3::sZero())
+                mControlInput = mControlInput.Normalized();
 
-	// Rotate controls to align with the camera
-	Vec3 cam_fwd = inParams.mCameraState.mForward;
-	cam_fwd.SetY(0.0f);
-	cam_fwd = cam_fwd.NormalizedOr(Vec3::sAxisX());
-	Quat rotation = Quat::sFromTo(Vec3::sAxisX(), cam_fwd);
-	mControlInput = rotation * mControlInput;
+            // Rotate controls to align with the camera
+            Vec3 cam_fwd = inParams.mCameraState.mForward;
+            cam_fwd.SetY(0.0f);
+            cam_fwd = cam_fwd.NormalizedOr(Vec3::sAxisX());
+            Quat rotation = Quat::sFromTo(Vec3::sAxisX(), cam_fwd);
+            mControlInput = rotation * mControlInput;
 
-	// Check actions
-	mJump = IsKeyPressed(KEY::eSPACE);
+            // Check actions
+            mJump = IsKeyPressed(KEY::eSPACE);
+        }
 }
 
 void CharacterBaseTest::PrePhysicsUpdate(const PreUpdateParams &inParams)

@@ -8,7 +8,7 @@ class Context;
 
 class Composite {
   public:
-    explicit Composite(Context &context, Image &LightingPass, Image &BloomPass);
+    explicit Composite(Context &context, Image &LightingPass, Image &BloomPass, Image& SSAO, Image& SSRImage);
     ~Composite();
 
     void Execute(VkCommandBuffer cmd);
@@ -27,6 +27,8 @@ class Composite {
     Image m_RenderTarget;
     Image &LightingPass;
     Image &BloomPass;
+    Image &SSAO;
+    Image &SSRImage;
 
     VkPipeline m_Pipeline;
     VkPipelineLayout m_PipelineLayout;

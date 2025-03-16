@@ -11,12 +11,15 @@
 #define CGLTF_WRITE_IMPLEMENTATION
 
 #include "Entity.hpp"
+#include "EntitySorter.hpp"
 #include "animation/Animation.hpp"
 #include "animation/Skin.hpp"
 #include "cgltf_write.h"
 #include "glm/gtc/type_ptr.hpp"
 
 #include <glm/gtx/io.hpp>
+
+#include <spdlog/spdlog.h>
 
 Material LoadMaterialDefault() {
     PBRMetallicRoughnessMaterial pbrMetallicRoughness{
@@ -44,7 +47,7 @@ std::string DecodeURI(std::string_view uri, std::string_view gltfPath) {
 
 int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
              MaterialManager &aMaterialManager, TextureManager &aTextureManager,
-             std::vector<Entity> &aEntities, bool aIsDebug,
+             std::vector<Entity*> &aEntities, bool aIsDebug,
              std::vector<Animation> &aAnimations, std::vector<Skin> &aSkins) {
     // Convert directory separators to preferred directory separator
     // Slight try at cross-platform for Windows
@@ -295,6 +298,9 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             int materialIndex =
                 static_cast<int>(gltfPrimitive.material - data->materials) +
                 static_cast<int>(defaultMaterialsCount);
+            if(gltfPrimitive.material == nullptr) {
+                materialIndex = 0;
+            }
             meshPrimitive.material =
                 aMaterialManager.GetMaterial(materialIndex);
             // if the material doesn't have pbrMetallicRoughness, skip the mesh
@@ -308,18 +314,169 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
 
         aMeshManager.addMesh(mesh);
     }
-
     // set up entities
     // for each node
     for (size_t ni = 0; ni < data->nodes_count; ni++) {
         const auto &gltfNode = data->nodes[ni];
+        std::string entityTypeName = "default";
 
-        // add an entity
-        aEntities.emplace_back();
-        Entity &entity = aEntities.back();
+        // IDEA: Store parse data in this struct and use C-style char * so
+        // we can use cgltf_parse_json_string. Then, we can store info
+        // in actual entities and construct std::string or enum values
+        // based on the char * string.
+        struct group3_extras {
+            char *entity_type = nullptr;
+            std::vector<std::string> tags;
+            bool is_sensor = false;
+            bool is_solid = true;
+            bool is_kinematic = false;
+            bool is_invisible = false;
+        } group3_extras;
+
+        if (gltfNode.extras.data) {
+            // Our existing cgltf_options does not include a memory allocator
+            // If we want to use cgltf_parse_json_string then we need to pass an options with one
+            cgltf_options fixed_options = options;
+            if (fixed_options.memory.alloc_func == NULL) {
+                fixed_options.memory.alloc_func = &cgltf_default_alloc;
+            }
+            if (fixed_options.memory.free_func == NULL) {
+                fixed_options.memory.free_func = &cgltf_default_free;
+            }
+
+
+            jsmn_parser parser;
+
+            jsmn_init(&parser);
+            jsmntok_t tokens[256];
+
+            jsmn_parse(&parser, gltfNode.extras.data, strlen(gltfNode.extras.data), tokens, 256);
+
+
+            // Cast to match cgltf functionality
+            const uint8_t *json_chunk = reinterpret_cast<const uint8_t *>(gltfNode.extras.data);
+
+            // Current token index
+            int i = 0;
+
+            // i = 0, token should be an object
+            CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
+
+            int size = tokens[i].size;
+            ++i;
+
+            for (int j = 0; j < size; ++j) {
+                // i = 1 now, token should be a string
+                CGLTF_CHECK_KEY(tokens[i]);
+
+                // check the entity type
+                if (cgltf_json_strcmp(tokens + i, json_chunk, "entity_type") == 0) {
+                    // Parse token i + 1, e.g., token 2 (the value of the entity_type key)
+                    // Update i to i + 1, so we can continue parsing
+                    i = cgltf_parse_json_string(&fixed_options, tokens, i + 1, json_chunk, &group3_extras.entity_type);
+                }
+
+                // check the tags
+                else if (cgltf_json_strcmp(tokens + i, json_chunk, "tags") == 0) {
+                    // Parse token i + 1, e.g., token 2 (the value of the tags key)
+                    // Update i to i + 1, so we can continue parsing
+                    char* tags_cstr = nullptr;
+                    i = cgltf_parse_json_string(&fixed_options, tokens, i + 1, json_chunk, &tags_cstr);
+                    // cast to std::string
+                    if(tags_cstr != nullptr) {
+                        std::string tags = std::string(tags_cstr);
+                        // split on pipes
+                        std::istringstream tokenStream(tags);
+                        std::string token;
+                        while (std::getline(tokenStream, token, '|')) {
+                            group3_extras.tags.push_back(token);
+                            spdlog::info("tag : {}", token);
+                        }
+                        fixed_options.memory.free_func(fixed_options.memory.user_data, tags_cstr);
+                    }
+                }
+
+                // check for sensor
+                else if (cgltf_json_strcmp(tokens + i, json_chunk, "is_sensor") == 0) {
+                    // Parse token i + 1, e.g., token 2 (the value of the is_sensor key)
+                    // Update i to i + 1, so we can continue parsing
+                    ++i;
+                    bool is_sensor = cgltf_json_to_bool(tokens + i, json_chunk);
+                    ++i;
+                    group3_extras.is_sensor = is_sensor;
+                }
+
+                // check for solid
+                else if (cgltf_json_strcmp(tokens + i, json_chunk, "is_solid") == 0) {
+                    // Parse token i + 1, e.g., token 2 (the value of the is_solid key)
+                    // Update i to i + 1, so we can continue parsing
+                    ++i;
+                    bool is_solid = cgltf_json_to_bool(tokens + i, json_chunk);
+                    ++i;
+                    group3_extras.is_solid = is_solid;
+                }
+
+                // check for kinematic
+                else if (cgltf_json_strcmp(tokens + i, json_chunk, "is_kinematic") == 0) {
+                    // Parse token i + 1, e.g., token 2 (the value of the is_kinematic key)
+                    // Update i to i + 1, so we can continue parsing
+                    ++i;
+                    bool is_kinematic = cgltf_json_to_bool(tokens + i, json_chunk);
+                    ++i;
+                    group3_extras.is_kinematic = is_kinematic;
+                }
+
+                // check for invisible
+                else if  (cgltf_json_strcmp(tokens + i, json_chunk, "is_invisible") == 0)
+                {
+                    // Parse token i + 1, e.g., token 2 (the value of the is_kinematic key)
+                    // Update i to i + 1, so we can continue parsing
+                    ++i;
+                    bool is_invisible = cgltf_json_to_bool(tokens + i, json_chunk);
+                    ++i;
+                    group3_extras.is_invisible = is_invisible;
+                }
+
+
+            }
+
+            if(group3_extras.entity_type != nullptr) {
+                entityTypeName = group3_extras.entity_type;
+                fixed_options.memory.free_func(fixed_options.memory.user_data, group3_extras.entity_type);
+
+            }
+
+
+        }
+
+        // select the entity type based on the
+        Entity* entityPtr = CreateNewEntity(entityTypeName);
+        aEntities.emplace_back(entityPtr);
+        Entity &entity = *entityPtr;
+
         // set the name
         if (gltfNode.name) {
             entity.SetName(gltfNode.name);
+        }
+        // add the tags
+        for (const auto &tag : group3_extras.tags) {
+            entity.AddTag(tag);
+        }
+        // set the sensor
+        if (group3_extras.is_sensor) {
+            entity.SetAsSensor();
+        }
+        // set the solid
+        if (!group3_extras.is_solid) {
+            entity.SetAsNotSolid();
+        }
+        // set the kinematic
+        if (group3_extras.is_kinematic) {
+            entity.SetAsKinematic();
+        }
+        // set the invisible
+        if (group3_extras.is_invisible) {
+            entity.SetAsInvisible();
         }
         // get the transform
         if (gltfNode.has_matrix) {
@@ -348,6 +505,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             Transform transform = {.translation = translation,
                                    .rotation = rotation,
                                    .scale = scale};
+            transform.UpdateMatrix();
             entity.SetTransform(transform);
         }
         // add the mesh
@@ -394,15 +552,26 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         //            }
         //        }
     }
+    // last, create the root node
+    Entity *root = new Entity();
+    root->SetName("root");
+    root->SetTransform(glm::mat4(1.f));
+    aEntities.push_back(root);
     // go through each entity and add its parent
     for (size_t ni = 0; ni < data->nodes_count; ni++) {
         const auto &gltfNode = data->nodes[ni];
         if (gltfNode.parent) {
             int parentIndex = static_cast<int>(gltfNode.parent - data->nodes);
             assert(parentIndex < (int)data->nodes_count);
-            aEntities[ni].SetParent(&aEntities[parentIndex]);
+            aEntities[ni]->SetParent(aEntities[parentIndex]);
+        }
+        else
+        {
+            aEntities[ni]->SetParent(aEntities.back());
         }
     }
+    // update the children from the root node
+    root->SetTransform(glm::mat4(1.f));
     // add skins
     for (size_t i = 0; i < data->skins_count; i++) {
         const auto &gltfSkin = data->skins[i];
@@ -410,7 +579,10 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         skin.SetName(gltfSkin.name);
         skin.ResizeJoints(gltfSkin.joints_count);
         // get the "skeleton" node
-        auto *skeleton = &aEntities[gltfSkin.skeleton - data->nodes];
+        Entity *skeleton = nullptr;
+        if(gltfSkin.skeleton != nullptr) {
+            skeleton = aEntities[gltfSkin.skeleton - data->nodes];
+        }
         skin.SetRoot(skeleton);
         // get the inverse bind matrices
         std::vector<glm::mat4> inverseBindMatrices;
@@ -431,7 +603,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         std::vector<Entity *> joint_nodes;
         joint_nodes.resize(gltfSkin.joints_count);
         for (size_t j = 0; j < gltfSkin.joints_count; j++) {
-            joint_nodes[j] = &aEntities[gltfSkin.joints[j] - data->nodes];
+            joint_nodes[j] = aEntities[gltfSkin.joints[j] - data->nodes];
         }
         // add the joints
         for (size_t j = 0; j < gltfSkin.joints_count; j++) {
@@ -440,8 +612,6 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             joint.inverseBindMatrix = inverseBindMatrices[j];
             skin.AddJoint(joint);
         }
-        // get the root
-        skin.SetRoot(&aEntities[gltfSkin.skeleton - data->nodes]);
         aSkins.push_back(skin);
     }
 
@@ -508,12 +678,11 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         for (size_t j = 0; j < gltfAnimation.channels_count; j++) {
             const auto &gltfChannel = gltfAnimation.channels[j];
             Channel channel = {};
-            channel.target = &aEntities[gltfChannel.target_node - data->nodes];
+            channel.target = aEntities[gltfChannel.target_node - data->nodes];
             entitiesInAnimation.push_back(channel.target);
             channel.targetIndex = -1;
             channel.sampler = static_cast<size_t>(gltfChannel.sampler -
                                                gltfAnimation.samplers);
-            assert(channel.sampler >= 0);
             switch (gltfChannel.target_path) {
             case cgltf_animation_path_type_translation:
                 channel.transformChannel = TransformChannel::TRANSLATION;
@@ -545,13 +714,13 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
     }
 
     // for each entity, if it has a skin, add an animator
-    for (size_t i = 0; i < aEntities.size(); i++) {
+    for (size_t i = 0; i < data->nodes_count; i++) {
         const auto &gltfNode = data->nodes[i];
         if (gltfNode.skin) {
             int skinIndex = static_cast<int>(gltfNode.skin - data->skins);
             auto *animator =
                 new Animator(&aMeshManager.mContext, &aSkins[skinIndex]);
-            aEntities[i].SetAnimator(animator);
+            aEntities[i]->SetAnimator(animator);
             animator->SetAnimations(animationPointers);
         }
     }

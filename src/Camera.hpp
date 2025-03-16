@@ -5,8 +5,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 
+#include "CharacterEntity.hpp"
 #include "Context.hpp"
 #include "PhysicsManager.hpp"
+#include "Scene.hpp"
 #include "Utils.hpp"
 #include "Buffer.hpp"
 
@@ -37,10 +39,21 @@ enum class EInputState {
     FAST,
     SLOW,
     MOUSING,
+    SWITCHVIEW,
+    TELEPORT,
+    ZOOM_IN,
+    ZOOM_OUT,
     MAX
 };
-
+enum class InputType {
+    FollowCharacter,
+    FreeCamera
+};
 class Camera {
+  public:
+    static Camera* GetMainCamera() { return kMainCamera; }
+  private:
+    static Camera* kMainCamera;
   public:
     Camera(Context &context, const glm::vec3 position, glm::vec3 direction, glm::vec3 up, float aspect);
     ~Camera();
@@ -52,13 +65,14 @@ class Camera {
     void SetNearPlane(float nearPlane) { m_transform.nearPlane = nearPlane; }
     void SetFarPlane(float farPlane) { m_transform.farPlane = farPlane; }
     void SetPhysics(PhysicsManager* input_physics_reference) {m_physics_reference = input_physics_reference; }
+    void SetScene(Scene* input_scene_pointer) {m_scene_pointer = input_scene_pointer; }
 
     const CameraTransform &GetCameraTransform() const { return m_transform; }
     std::vector<Buffer> &GetBuffers() { return m_cameraUBO; }
 
-    void Update(uint32_t width, uint32_t height, double deltaTime, glm::vec3 character_postion);
+    void Update(uint32_t width, uint32_t height, double deltaTime);
     void UpdateTransforms(uint32_t width, uint32_t height);
-    void UpdateCameraMovement(glm::vec3 position);
+    void UpdateCameraMovement();
     void UpdateCameraRotation();
     void UpdateCameraAngles(const glm::vec2 &offset);
 
@@ -81,7 +95,12 @@ class Camera {
     bool inputMap[std::size_t(EInputState::MAX)] = {};
     bool wasMousing = false;
 
-    
+    void SetInputType(InputType inputType) { m_inputType = inputType; }
+
+    [[nodiscard]] bool isInFreeCameraMode() const { return m_inputType == InputType::FreeCamera; }
+    [[nodiscard]] bool isInFollowCharacterMode() const { return m_inputType == InputType::FollowCharacter; }
+
+
 
   private:
     Context &context;
@@ -97,6 +116,11 @@ class Camera {
     float m_mouseSensitivity;
     double yaw = 90.0f;
     double pitch = 0.0f;
-    
+    float zoom_level = 1.f;
+
     const PhysicsManager* m_physics_reference;
+    Scene* m_scene_pointer;
+
+
+    InputType m_inputType = InputType::FollowCharacter;
 };

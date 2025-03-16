@@ -63,17 +63,59 @@ void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::share
         camera->GetPosition().z
     );
 
+   ImGui::Text("Directional Light: (%.2f, %.2f, %.2f)",
+        scene->GetLights()[0].position.x,
+        scene->GetLights()[0].position.y,
+        scene->GetLights()[0].position.z
+    );
+
+    static bool initialized = false;
+    static float SunElevation = 0.0f;
+    static float SunAzimuthal = 0.0f;
+    static const float distance = 1.0f;
+
+    auto &lights = scene->GetLights();
+    if (lights.empty())
+        return;
+
+    auto &sunLight = lights[0];
+
+    if (!initialized) {
+        SunElevation = 0.89f; // default elevation // -21
+        SunAzimuthal = 0.0f; // default azimuth // 45
+        sunLight.view = -43.0f;
+        sunLight.far = 50.0f;
+        sunLight.near = -125.0f;
+        initialized = true;
+    }
+
+    // Phis is elevation
+    // Theta is azimuthal
+    const float ElevationPhi = (SunElevation);
+    const float AzimuthalTheta = (SunAzimuthal);
+
+    const float x = cosf(ElevationPhi) * cosf(AzimuthalTheta) * distance;
+    const float y = sinf(ElevationPhi) * distance;
+    const float z = cosf(ElevationPhi) * sinf(AzimuthalTheta) * distance;
+
+    sunLight.position.x = x;
+    sunLight.position.y = y;
+    sunLight.position.z = z;
+    sunLight.position = sunLight.position;
 
     if (ImGui::CollapsingHeader("Directional Light"))
     {
-        auto &lights = scene->GetLights();
-        float* SunPosition[3] = { & lights[0].position.x, & lights[0].position.y, & lights[0].position.z };
-        ImGui::SliderFloat("X: ", SunPosition[0], -300.0f, 300.0f);
-        ImGui::SliderFloat("Y: ", SunPosition[1], -10.0f, 2000.0f);
-        ImGui::SliderFloat("Z: ", SunPosition[2], -300.0f, 300.0f);
-        ImGui::SliderFloat("View: ", &lights[0].view, -20.0f, 100.0f, "%.2f");
-        ImGui::SliderFloat("Near: ", &lights[0].near, 0.1f, 100.0f);
-        ImGui::SliderFloat("Far: ", &lights[0].far, 0.1f, 1000.0f);
+        ImGui::Text("Sun Angles");
+        ImGui::SliderFloat("Elevation - Phi", &SunElevation, 0.0f, 1.5708f, "%.2f");
+        ImGui::SliderFloat("Azimuthal - Theta", &SunAzimuthal, -3.141f, 3.141f, "%.2f");
+
+        ImGui::Text("Light Camera Settings");
+        ImGui::SliderFloat("View", &sunLight.view, -200.0f, 200.0f, "%.2f");
+        ImGui::SliderFloat("Near", &sunLight.near, -200.0f, 1.0f, "%.2f");
+        ImGui::SliderFloat("Far", &sunLight.far, 0.0f, 50.0f, "%.2f");
+
+        ImGui::SliderFloat("Shadow bias: ", &vkutil::ShadowBias, 0.0f, 10.0f);
+        ImGui::SliderFloat("Shadow slope: ", &vkutil::ShadowSlope, 0.0f, 10.0f);
     }
 
     if (ImGui::CollapsingHeader("Lights")) {
@@ -84,6 +126,30 @@ void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::share
                 ImGui::SliderFloat3(label.c_str(), &lights[i].position.x, -10.0f, 10.0f, "%.2f");
             }
         }
+    }
+
+    // SSAO settings
+    if (ImGui::CollapsingHeader("SSAO"))
+    {
+        ImGui::SliderInt("Directions: ", &vkutil::ssaoSettings.NumDirections, 1, 64);
+        ImGui::SliderInt("Steps: ", &vkutil::ssaoSettings.NumSteps, 1, 64);
+        ImGui::SliderFloat("Radius: ", &vkutil::ssaoSettings.Radius, 0.1f, 10.0f);
+        ImGui::SliderFloat("StepSize: ", &vkutil::ssaoSettings.StepSize, 0.0f, 0.1f);
+        ImGui::SliderFloat("Intensity: ", &vkutil::ssaoSettings.intensity, 0.0f, 10.0f);
+    }
+
+    // SSR settings
+    //int MaxSteps;
+    //int BinarySearchIterations;
+    //float MaxDistance;
+    //float thickness;
+    if (ImGui::CollapsingHeader("SSR"))
+    {
+        ImGui::SliderInt("MaxSteps: ", &vkutil::ssrSettings.MaxSteps, 1, 500);
+        ImGui::SliderFloat("MaxDistance: ", &vkutil::ssrSettings.MaxDistance, 0.0f, 20.0f);
+        ImGui::SliderInt("BSIterations: ", &vkutil::ssrSettings.BinarySearchIterations, 0, 100);
+        ImGui::SliderFloat("Thickness: ", &vkutil::ssrSettings.thickness, 0, 1.0f);
+        ImGui::SliderFloat("StepSize: ", &vkutil::ssrSettings.StepSize, 0.0f, 0.5f);
     }
 
     static bool enableTextureDebug = false;
