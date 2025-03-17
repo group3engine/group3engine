@@ -250,7 +250,7 @@ void main()
 	float roughness = texture(MetallicRoughness, uv).g;
 
 
-	fragColour = vec4(mix(vec3(0), NaiveScreenSpaceReflections().rgb, metallic), 1.0);
+	fragColour = vec4(mix(vec3(0), NaiveScreenSpaceReflections().rgb, roughness), 1.0);
 
 	//fragColour = vec4(vec3(NaiveScreenSpaceReflections().xyz), clamp(metallic, 0.0, 1.0));
 }

@@ -235,11 +235,11 @@ bool Engine::Initialize() {
 
         mScene->CreateCharacter(characterEntity, std::move(characterVirtual));
         mScene->SetHasCharacter(true);
-        
+
         characterEntity->Reset();
     }
 
-    
+
 
     // call the scene awake function
     mScene->Awake();
@@ -370,7 +370,7 @@ void Engine::Update(double deltaTime) {
     mScene->UpdateUi(deltaTime);
     PhysicsManager::get().UpdatePhysics(deltaTime);
     mRenderer->Update(deltaTime);
-    
+
 }
 
 void Engine::Render() {

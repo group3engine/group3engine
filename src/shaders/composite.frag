@@ -88,9 +88,10 @@ void main()
 	vec4 lighting = texture(renderedScene, uv);
 	vec4 bloom = texture(bloomPass, uv);
 	float ssao = SpatialDenoisedSSAO();
-	vec3 ssr = SpatialDenoisedSSR(uv);
+	//vec3 ssr = SpatialDenoisedSSR(uv);
 
 	vec3 hdrColor = (lighting.rgb) * ssao;
+    hdrColor = hdrColor + bloom.rgb;
 	//vec3 ldrColor = hdrColor / (hdrColor + vec3(1.0));
 
     vec3 ldrColor = ACESToneMappingFilm(hdrColor);
