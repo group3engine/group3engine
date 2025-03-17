@@ -1,21 +1,18 @@
 #version 450
 
-layout(set = 0, binding = 0) uniform SceneUniform
+struct Light
 {
-	mat4 model;
-	mat4 view;
-	mat4 projection;
-	vec4 cameraPosition;
-	vec2 viewportSize;
-	float fov;
-	float nearPlane;
-	float farPlane;
-} ubo;
+	int Type;
+	vec4 LightPosition;
+	vec4 LightColour;
+	mat4 LightSpaceMatrix;
+};
 
-layout(set = 2, binding = 0) uniform JointBuffer
-{
-	mat4 jointTransforms[256];
-} jointBuffer;
+const int NUM_LIGHTS = 26;
+
+layout(set = 0, binding = 0) uniform LightBuffer {
+	Light lights[NUM_LIGHTS];
+} lightData;
 
 layout(push_constant) uniform Push
 {
@@ -28,9 +25,6 @@ layout(location = 2) in vec3 normal;
 layout(location = 3) in vec4 joints;
 layout(location = 4) in vec4 weights;
 
-layout(location = 0) out vec4 WorldPos;
-layout(location = 1) out vec2 uv;
-layout(location = 2) out vec3 WorldNormal;
 
 // source: https://www.shadertoy.com/view/3s33zj
 mat3 adjugate( in mat4 m )
@@ -46,18 +40,21 @@ mat4 rotationX45 = mat4(
 	0.0, 0.0,                 0.0,                1.0
 );
 
+layout(set = 2, binding = 0) uniform JointBuffer
+{
+	mat4 jointTransforms[256];
+} jointBuffer;
+
+
 void main()
 {
-	uv = tex;
-
 	mat4 skinMat =
 		weights.x * jointBuffer.jointTransforms[int(joints.x)] +
 		weights.y * jointBuffer.jointTransforms[int(joints.y)] +
 		weights.z * jointBuffer.jointTransforms[int(joints.z)] +
 		weights.w * jointBuffer.jointTransforms[int(joints.w)];
 
-	WorldPos = skinMat * vec4(pos, 1.0);
-	gl_Position = ubo.projection * ubo.view * WorldPos;
-
-	WorldNormal = adjugate(skinMat) * normal;
+	vec4 WorldPos = skinMat * vec4(pos, 1.0);
+	gl_Position = lightData.lights[0].LightSpaceMatrix * vec4(WorldPos.xyz, 1.0);
 }
+

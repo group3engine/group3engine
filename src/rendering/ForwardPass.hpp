@@ -31,6 +31,8 @@ class ForwardPass {
     Image &GetBrightnessTarget() { return m_BrightnessTexture; }
     Image &GetDepthTarget() { return m_DepthTarget; }
 
+    Skybox* GetSkybox() { return m_Skybox.get(); }
+
   private:
     void CreatePipeline();
     void CreateRenderPass();

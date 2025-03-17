@@ -11,7 +11,8 @@ class Context;
 class Image {
   public:
     Image() noexcept = default;
-	Image(const std::string name, uint32_t width, uint32_t height, VmaAllocator allocator, VkImage image, VkImageView imageView, VmaAllocation allocation) noexcept;
+    Image(const std::string name, VmaAllocator allocator, VkImage image, VkImageView imageView,
+          VmaAllocation allocation, uint32_t width, uint32_t height) noexcept;
 
     // Copy assignment and operator is deleted
     Image(const Image &) = delete;
@@ -28,8 +29,8 @@ class Image {
     VkImage image;
     VkImageView imageView;
     VmaAllocator allocator;
-    uint32_t width;
-    uint32_t height;
+    uint32_t mWidth;
+    uint32_t mHeight;
 };
 
 void ImageTransition(VkCommandBuffer cmd, VkImage image, VkFormat format, VkImageLayout currentLayout, VkImageLayout newLayout, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkPipelineStageFlagBits srcStageMask, VkPipelineStageFlagBits dstStageMask);

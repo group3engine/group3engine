@@ -311,11 +311,7 @@ void ForwardPass::BuildDescriptors() {
     meshDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
 
     vkutil::AllocateDescriptorSets(context, context.descriptorPool, meshDescriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, m_descriptorSets);
-    skinDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(
-        context, {
-                     {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1,
-                      VK_SHADER_STAGE_VERTEX_BIT, nullptr},
-                 });
+    skinDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}});
 
     // Camera Transform UBO
     for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {

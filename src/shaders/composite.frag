@@ -28,6 +28,51 @@ float SpatialDenoisedSSAO()
     return float(totalao / 16.0);
 }
 
+// This kind of works right now, needs changing
+vec3 SpatialDenoisedSSR(vec2 uv)
+{
+    vec2 texelSize = 1.0 / textureSize(SSR, 0);
+    vec2 tex = clamp(uv - texelSize * 2.0, texelSize * 2.0, 1.0 - texelSize * 2.0);
+
+    // Gather for R, G, B separately
+    vec4 g1r = textureGather(SSR, tex, 0);
+    vec4 g1g = textureGather(SSR, tex, 1);
+    vec4 g1b = textureGather(SSR, tex, 2);
+
+    vec4 g2r = textureGather(SSR, tex + vec2(texelSize.x * 2.0, 0.0), 0);
+    vec4 g2g = textureGather(SSR, tex + vec2(texelSize.x * 2.0, 0.0), 1);
+    vec4 g2b = textureGather(SSR, tex + vec2(texelSize.x * 2.0, 0.0), 2);
+
+    vec4 g3r = textureGather(SSR, tex + vec2(0.0, texelSize.y * 2.0), 0);
+    vec4 g3g = textureGather(SSR, tex + vec2(0.0, texelSize.y * 2.0), 1);
+    vec4 g3b = textureGather(SSR, tex + vec2(0.0, texelSize.y * 2.0), 2);
+
+    vec4 g4r = textureGather(SSR, tex + vec2(texelSize.x * 2.0, texelSize.y * 2.0), 0);
+    vec4 g4g = textureGather(SSR, tex + vec2(texelSize.x * 2.0, texelSize.y * 2.0), 1);
+    vec4 g4b = textureGather(SSR, tex + vec2(texelSize.x * 2.0, texelSize.y * 2.0), 2);
+
+    // Compute average across all gathered samples
+    vec3 result = vec3(
+        (g1r.r + g1r.g + g1r.b + g1r.a +
+         g2r.r + g2r.g + g2r.b + g2r.a +
+         g3r.r + g3r.g + g3r.b + g3r.a +
+         g4r.r + g4r.g + g4r.b + g4r.a) / 16.0,
+
+        (g1g.r + g1g.g + g1g.b + g1g.a +
+         g2g.r + g2g.g + g2g.b + g2g.a +
+         g3g.r + g3g.g + g3g.b + g3g.a +
+         g4g.r + g4g.g + g4g.b + g4g.a) / 16.0,
+
+        (g1b.r + g1b.g + g1b.b + g1b.a +
+         g2b.r + g2b.g + g2b.b + g2b.a +
+         g3b.r + g3b.g + g3b.b + g3b.a +
+         g4b.r + g4b.g + g4b.b + g4b.a) / 16.0
+    );
+
+    return result;
+}
+
+
 // https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/
 vec3 ACESToneMappingFilm(vec3 x) {
   const float a = 2.51;
@@ -43,7 +88,7 @@ void main()
 	vec4 lighting = texture(renderedScene, uv);
 	vec4 bloom = texture(bloomPass, uv);
 	float ssao = SpatialDenoisedSSAO();
-	vec4 ssr = texture(SSR, uv);
+	vec3 ssr = SpatialDenoisedSSR(uv);
 
 	vec3 hdrColor = (lighting.rgb) * ssao;
 	//vec3 ldrColor = hdrColor / (hdrColor + vec3(1.0));

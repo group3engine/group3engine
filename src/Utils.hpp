@@ -87,6 +87,9 @@ inline SSRSettings ssrSettings = {20, 1, 1.0f, 0.001f, 0.001f};
 inline uint32_t setRenderingPipeline = 1;
 inline uint32_t setAlphaMakingPipeline = 2;
 
+inline float ShadowBias = 0.0f;
+inline float ShadowSlope = 3.4f;
+
 inline VkDescriptorSetLayout materialDescriptorSetLayout;
 } // namespace vkutil
 
