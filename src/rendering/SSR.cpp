@@ -1,5 +1,8 @@
-#include "Context.hpp"
 #include "SSR.hpp"
+
+#include <tracy/Tracy.hpp>
+
+#include "Context.hpp"
 #include <array>
 #include "Pipeline.hpp"
 #include "RenderPass.hpp"
@@ -132,6 +135,7 @@ void SSR::Resize()
 
 void SSR::Execute(VkCommandBuffer cmd)
 {
+    ZoneScopedN("SSR::Execute");
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "SSR");

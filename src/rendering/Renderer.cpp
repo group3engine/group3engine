@@ -4,6 +4,8 @@
 
 #include <glm/gtc/random.hpp>
 
+#include <tracy/Tracy.hpp>
+
 #include "Context.hpp"
 #include "Light.hpp"
 #include "Utils.hpp"
@@ -168,7 +170,11 @@ void Renderer::AllocateCommandBuffers() {
 }
 
 void Renderer::Render() {
-    vkWaitForFences(context.device, 1, &m_Fences[vkutil::currentFrame], VK_TRUE, UINT64_MAX);
+    {
+        ZoneScopedN("vkWaitForFences");
+
+        vkWaitForFences(context.device, 1, &m_Fences[vkutil::currentFrame], VK_TRUE, UINT64_MAX);
+    }
 
     uint32_t index;
     VkResult getImageIndex = vkAcquireNextImageKHR(context.device, context.swapchain, UINT64_MAX, m_imageAvailableSemaphores[vkutil::currentFrame], VK_NULL_HANDLE, &index);
@@ -268,6 +274,8 @@ void Renderer::Present(uint32_t imageIndex) {
 }
 
 void Renderer::Update(double deltaTime) {
+    ZoneScopedN("Renderer::Update");
+
     m_camera->Update(context.extent.width, context.extent.height, deltaTime);
 
     ImGuiRenderer::Update(m_scene, m_camera);

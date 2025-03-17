@@ -1,6 +1,9 @@
+#include "GBuffer.hpp"
+
+#include <tracy/Tracy.hpp>
+
 #include "Context.hpp"
 #include "Scene.hpp"
-#include "GBuffer.hpp"
 #include "Pipeline.hpp"
 #include "Utils.hpp"
 #include "Buffer.hpp"
@@ -95,6 +98,7 @@ void GBuffer::Resize()
 
 void GBuffer::Execute(VkCommandBuffer cmd)
 {
+    ZoneScopedN("GBuffer::Execute");
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "Thin-G-Buffer");

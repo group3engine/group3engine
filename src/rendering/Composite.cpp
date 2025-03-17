@@ -1,5 +1,7 @@
 #include "Composite.hpp"
 
+#include <tracy/Tracy.hpp>
+
 #include "Context.hpp"
 #include "Pipeline.hpp"
 #include "RenderPass.hpp"
@@ -113,6 +115,7 @@ void Composite::Resize() {
 }
 
 void Composite::Execute(VkCommandBuffer cmd) {
+    ZoneScopedN("Composite::Execute");
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "Composite");

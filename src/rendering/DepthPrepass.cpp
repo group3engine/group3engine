@@ -1,8 +1,11 @@
+#include "DepthPrepass.hpp"
+
+#include <tracy/Tracy.hpp>
+
 #include "Context.hpp"
 #include "Scene.hpp"
 #include "Image.hpp"
 #include "Camera.hpp"
-#include "DepthPrepass.hpp"
 #include "Pipeline.hpp"
 #include "RenderPass.hpp"
 
@@ -64,6 +67,8 @@ void DepthPrepass::Resize() {
 }
 
 void DepthPrepass::Execute(VkCommandBuffer cmd) {
+    ZoneScopedN("DepthPrepass::Execute");
+
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "DepthPrepass");
 #endif // !DEBUG

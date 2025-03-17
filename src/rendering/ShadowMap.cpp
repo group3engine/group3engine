@@ -1,5 +1,7 @@
 #include "ShadowMap.hpp"
 
+#include <tracy/Tracy.hpp>
+
 #include "Camera.hpp"
 #include "Context.hpp"
 #include "Pipeline.hpp"
@@ -66,6 +68,7 @@ void ShadowMap::Resize() {
 }
 
 void ShadowMap::Execute(VkCommandBuffer cmd) {
+    ZoneScopedN("ShadowMap::Execute");
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "ShadowMap");

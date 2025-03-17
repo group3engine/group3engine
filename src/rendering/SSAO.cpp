@@ -1,5 +1,8 @@
-#include "Context.hpp"
 #include "SSAO.hpp"
+
+#include <tracy/Tracy.hpp>
+
+#include "Context.hpp"
 #include "Pipeline.hpp"
 #include "RenderPass.hpp"
 
@@ -114,6 +117,7 @@ void SSAO::Resize()
 
 void SSAO::Execute(VkCommandBuffer cmd)
 {
+    ZoneScopedN("SSAO::Execute");
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "SSAO");

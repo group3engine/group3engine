@@ -1,5 +1,8 @@
-#include "Context.hpp"
 #include "Bloom.hpp"
+
+#include <tracy/Tracy.hpp>
+
+#include "Context.hpp"
 #include "Pipeline.hpp"
 #include "RenderPass.hpp"
 
@@ -122,11 +125,15 @@ void Bloom::CreateRenderPass() {
 
 // dstStage is where other operations will begin once srcStage is finished
 void Bloom::Execute(VkCommandBuffer cmd) {
+    ZoneScopedN("Bloom::Execute");
+
     RenderHorizontalBlur(cmd);
     RenderVerticalBlur(cmd);
 }
 
 void Bloom::RenderHorizontalBlur(VkCommandBuffer cmd) {
+    ZoneScopedN("Bloom::RenderHorizontalBlur");
+
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "BloomHorizontalBlur");
 #endif
@@ -171,6 +178,7 @@ void Bloom::RenderHorizontalBlur(VkCommandBuffer cmd) {
 }
 
 void Bloom::RenderVerticalBlur(VkCommandBuffer cmd) {
+    ZoneScopedN("Bloom::RenderVerticalBlur");
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "BloomVerticalBlur");

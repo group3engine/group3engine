@@ -13,6 +13,8 @@
 #include "TextureManager.hpp"
 #include "spdlog/spdlog.h"
 
+#include <tracy/Tracy.hpp>
+
 namespace {
     auto PushBackStyleVar = [](size_t i, std::function<void()> f) {
         f();
@@ -344,6 +346,8 @@ void ImGuiRenderer::EndFrame() {
 
 void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::shared_ptr<Camera>& camera)
 {
+    ZoneScopedN("ImGuiRenderer::Update");
+
     ImGui::BeginChild("Settings");
     // Display FPS
     ImGui::TextColored(
