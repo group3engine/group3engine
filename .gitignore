@@ -378,3 +378,7 @@ imgui.ini
 # don't ignore assets/dust2laugh
 !assets/Dust2Laugh/
 /assets/Sample obby/obby.blend
+!/assets/Skybox/
+!/assets/Sample obby/test_scene.blend
+!/assets/test_scene.bin
+!/assets/test_scene.gltf

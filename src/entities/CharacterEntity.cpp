@@ -144,7 +144,7 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
 
     }
 
-    if(aOther->CompareTag("finishzone")) 
+    if(aOther->CompareTag("finishzone"))
     {
         // do finish zone things
         mInternalUiEvents.push(InternalUiEvent::eFinishPopup);
