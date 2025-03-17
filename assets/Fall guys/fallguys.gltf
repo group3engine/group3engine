@@ -20,7 +20,14 @@
 				"export_file_path":"//fallguys.gltf",
 				"new_dropdown_item":"",
 				"new_tag":"",
-				"tags":[]
+				"tags":[
+					{
+						"tag":"highimpact"
+					},
+					{
+						"tag":"bounce"
+					}
+				]
 			},
 			"name":"Scene",
 			"nodes":[
@@ -5974,7 +5981,7 @@
 				"entity_type":"SpinningOnX",
 				"is_sensor":false,
 				"is_solid":true,
-				"is_kinematic":false,
+				"is_kinematic":true,
 				"is_invisible":false,
 				"tags":"highimpact"
 			},
@@ -6080,6 +6087,9 @@
 			]
 		},
 		{
+			"extras":{
+				"tags":"highimpact|bounce"
+			},
 			"mesh":23,
 			"name":"Cube.014",
 			"scale":[
@@ -6094,6 +6104,14 @@
 			]
 		},
 		{
+			"extras":{
+				"entity_type":"SpinningOnX",
+				"is_sensor":false,
+				"is_solid":true,
+				"is_kinematic":true,
+				"is_invisible":false,
+				"tags":"highimpact|bounce"
+			},
 			"mesh":24,
 			"name":"Cube.015",
 			"scale":[
@@ -6261,7 +6279,8 @@
 				"is_sensor":false,
 				"is_solid":true,
 				"is_kinematic":false,
-				"is_invisible":false
+				"is_invisible":false,
+				"tags":"highimpact|bounce"
 			},
 			"mesh":32,
 			"name":"Cube.024",
@@ -6282,7 +6301,8 @@
 				"is_sensor":false,
 				"is_solid":true,
 				"is_kinematic":false,
-				"is_invisible":false
+				"is_invisible":false,
+				"tags":"highimpact|bounce"
 			},
 			"mesh":33,
 			"name":"Cube.025",
@@ -6324,7 +6344,8 @@
 				"is_sensor":false,
 				"is_solid":true,
 				"is_kinematic":false,
-				"is_invisible":false
+				"is_invisible":false,
+				"tags":"highimpact|bounce"
 			},
 			"mesh":35,
 			"name":"Cube.027",
@@ -6345,7 +6366,8 @@
 				"is_sensor":false,
 				"is_solid":true,
 				"is_kinematic":false,
-				"is_invisible":false
+				"is_invisible":false,
+				"tags":"highimpact|bounce"
 			},
 			"mesh":36,
 			"name":"Cube.028",
@@ -8014,7 +8036,7 @@
 			},
 			"name":"Empty",
 			"translation":[
-				-91.11739349365234,
+				67.63756561279297,
 				18.778995513916016,
 				1.4087088108062744
 			]
@@ -8026,7 +8048,7 @@
 				"is_solid":true,
 				"is_kinematic":false,
 				"is_invisible":false,
-				"tags":"finishzone"
+				"tags":""
 			},
 			"mesh":49,
 			"name":"Cube.018",
