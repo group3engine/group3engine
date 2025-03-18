@@ -204,34 +204,33 @@ void main()
 
     vec3 outLight = vec3(0.0);
 
-    for(int i = 0; i < NUM_LIGHTS; i++)
+    {
+        int i = 0;
+
+        vec3 lightDir = normalize(lightData.lights[i].LightPosition.xyz);
+        vec3 viewDir = normalize(ubo.cameraPosition.xyz - WorldPos.xyz);
+        vec3 halfVector = normalize(viewDir + lightDir);
+
+        vec3 LightColour = lightData.lights[i].LightColour.rgb;
+
+        float shadowTerm = 1.0 - myPCF(WorldPos.xyz);
+
+        vec3 brdf;
+        COOK_TORRENCE_BRDF(WorldNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour, brdf);
+        outLight += brdf * LightColour.xyz * shadowTerm;
+    }
+
+    for (int i = 1; i < NUM_LIGHTS; i++)
     {
         vec3 lightDir = normalize(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
         vec3 viewDir = normalize(ubo.cameraPosition.xyz - WorldPos.xyz);
         vec3 halfVector = normalize(viewDir + lightDir);
 
-        // is it a spot light?
-        vec3 LightColour = vec3(0.0);
-        bool isDirectional = lightData.lights[i].Type == 1 ? false : true;
-
-        if (!isDirectional)
-        {
-            float dist = length(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
-            float att = 1.0 / (dist * dist);
-            LightColour = lightData.lights[i].LightColour.xyz * att;
-        }
-        else
-        {
-            lightDir = normalize(lightData.lights[i].LightPosition.xyz);
-            LightColour = lightData.lights[i].LightColour.rgb;
-            halfVector = normalize(viewDir + lightDir);
-        }
+        float dist = length(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
+        float att = 1.0 / (dist * dist);
+        vec3 LightColour = lightData.lights[i].LightColour.xyz * att;
 
         float shadowTerm = 1.0;
-        if (isDirectional)
-        {
-            shadowTerm = 1.0 - myPCF(WorldPos.xyz);
-        }
 
         vec3 brdf;
         COOK_TORRENCE_BRDF(WorldNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour, brdf);
