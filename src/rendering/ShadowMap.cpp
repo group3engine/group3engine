@@ -1,5 +1,7 @@
 #include "ShadowMap.hpp"
 
+#include <tracy/TracyVulkan.hpp>
+
 #include "Camera.hpp"
 #include "Context.hpp"
 #include "Pipeline.hpp"
@@ -66,6 +68,8 @@ void ShadowMap::Resize() {
 }
 
 void ShadowMap::Execute(VkCommandBuffer cmd) {
+    ZoneScopedN("ShadowMap::Execute");
+    TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "ShadowMap", tracy::Color::DimGrey);
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "ShadowMap");

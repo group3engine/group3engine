@@ -4,6 +4,8 @@
 
 #include <glm/gtc/random.hpp>
 
+#include <tracy/TracyVulkan.hpp>
+
 #include "Context.hpp"
 #include "Light.hpp"
 #include "Utils.hpp"
@@ -95,6 +97,10 @@ void Renderer::Destroy() {
     for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         vkDestroyCommandPool(context.device, m_commandPool[i], nullptr);
     }
+
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; ++i) {
+        TracyVkDestroy(context.tracyContexts[i]);
+    }
 }
 
 void Renderer::CreateResources() {
@@ -164,11 +170,25 @@ void Renderer::AllocateCommandBuffers() {
         VkCommandBuffer cmd = VK_NULL_HANDLE;
         VK_CHECK(vkAllocateCommandBuffers(context.device, &cmdAlloc, &cmd), "Failed to allocate command buffer");
         m_commandBuffers.push_back(cmd);
+
+        // Calibrated context function pointers
+        auto pfnVkGetPhysicalDeviceCalibrateableTimeDomainsEXT = vkGetPhysicalDeviceCalibrateableTimeDomainsEXT;
+        auto pfnVkGetCalibratedTimestampsEXT = vkGetCalibratedTimestampsEXT;
+
+        auto *tracyContext = TracyVkContextCalibrated(
+            context.pDevice, context.device, context.graphicsQueue, cmd,
+            pfnVkGetPhysicalDeviceCalibrateableTimeDomainsEXT, pfnVkGetCalibratedTimestampsEXT);
+
+        context.tracyContexts.push_back(tracyContext);
     }
 }
 
 void Renderer::Render() {
-    vkWaitForFences(context.device, 1, &m_Fences[vkutil::currentFrame], VK_TRUE, UINT64_MAX);
+    {
+        ZoneScopedN("vkWaitForFences");
+
+        vkWaitForFences(context.device, 1, &m_Fences[vkutil::currentFrame], VK_TRUE, UINT64_MAX);
+    }
 
     uint32_t index;
     VkResult getImageIndex = vkAcquireNextImageKHR(context.device, context.swapchain, UINT64_MAX, m_imageAvailableSemaphores[vkutil::currentFrame], VK_NULL_HANDLE, &index);
@@ -210,6 +230,9 @@ void Renderer::Render() {
         m_BloomPass->Execute(cmd);
         m_CompositePass->Execute(cmd);
         m_PresentPass->Execute(cmd, index);
+
+        // Periodically collect the GPU events
+        TracyVkCollect(context.tracyContexts[vkutil::currentFrame], cmd);
 
         vkEndCommandBuffer(cmd);
     }
@@ -268,6 +291,8 @@ void Renderer::Present(uint32_t imageIndex) {
 }
 
 void Renderer::Update(double deltaTime) {
+    ZoneScopedN("Renderer::Update");
+
     m_camera->Update(context.extent.width, context.extent.height, deltaTime);
 
     ImGuiRenderer::Update(m_scene, m_camera);

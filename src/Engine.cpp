@@ -6,6 +6,8 @@
 #include <memory>
 #include <spdlog/spdlog.h>
 
+#include <tracy/Tracy.hpp>
+
 #include "Camera.hpp"
 #include "CharacterEntity.hpp"
 #include "GLFW.hpp"
@@ -308,6 +310,8 @@ void Engine::Run() {
         ImGuiRenderer::EndFrame();
 
         Render();
+
+        FrameMark;
     }
 
     Shutdown();
@@ -365,6 +369,8 @@ void Engine::UpdateLogic() {
 }
 
 void Engine::Update(double deltaTime) {
+    ZoneScopedN("Engine::Update");
+
     UpdateLogic();
     mScene->Update(deltaTime);
     mScene->UpdateUi(deltaTime);
@@ -374,5 +380,7 @@ void Engine::Update(double deltaTime) {
 }
 
 void Engine::Render() {
+    ZoneScopedN("Engine::Render");
+
     mRenderer->Render();
 }

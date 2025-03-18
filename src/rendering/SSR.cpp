@@ -1,5 +1,8 @@
-#include "Context.hpp"
 #include "SSR.hpp"
+
+#include <tracy/TracyVulkan.hpp>
+
+#include "Context.hpp"
 #include <array>
 #include "Pipeline.hpp"
 #include "RenderPass.hpp"
@@ -132,6 +135,8 @@ void SSR::Resize()
 
 void SSR::Execute(VkCommandBuffer cmd)
 {
+    ZoneScopedN("SSR::Execute");
+    TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "SSR", tracy::Color::Gold);
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "SSR");

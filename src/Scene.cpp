@@ -2,6 +2,8 @@
 
 #include <unordered_map>
 
+#include <tracy/Tracy.hpp>
+
 #include "ResourceManager.hpp"
 
 #include "ImGuiRenderer.hpp"
@@ -11,6 +13,7 @@ void Scene::AddLightSource(Light &LightSource) {
 }
 
 void Scene::Update(double aDeltaTime) {
+    ZoneScopedN("Scene::Update");
 
     // update the entities
     for(auto &entity : m_Entities) {
@@ -42,6 +45,8 @@ void Scene::Update(double aDeltaTime) {
 }
 
 void Scene::UpdateUi(double aDeltaTime) {
+    ZoneScopedN("Scene::UpdateUi");
+
     // New timer window
     mGuiTimerData.time += aDeltaTime;
     ImGuiRenderer::NewTimer(mGuiTimerData);

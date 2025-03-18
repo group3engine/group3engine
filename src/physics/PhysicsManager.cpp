@@ -1,6 +1,8 @@
 #include "PhysicsManager.hpp"
 #include "spdlog/spdlog.h"
 
+#include <tracy/Tracy.hpp>
+
 void PhysicsManager::StartUp() {
     // Register allocation hook. In this example we'll just let Jolt use malloc / free but you can override these if you want (see Memory.h).
     // This needs to be done before any other Jolt function is called.
@@ -56,6 +58,8 @@ void PhysicsManager::StartUp() {
 }
 
 void PhysicsManager::UpdatePhysics(double delta_time) {
+    ZoneScoped;
+
     // Next step
     cDeltaTime = delta_time;
 

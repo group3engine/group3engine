@@ -7,6 +7,8 @@
 
 #include <GLFW/glfw3.h>
 
+#include <tracy/TracyVulkan.hpp>
+
 #include "Image.hpp"
 
 class Context {
@@ -56,6 +58,8 @@ class Context {
     VkCommandPool transientCommandPool;
     VkDescriptorPool descriptorPool;
     PFN_vkSetDebugUtilsObjectNameEXT vkSetDebugUtilsObjectNameEXT;
+
+    std::vector<TracyVkCtx> tracyContexts;
 
   private:
     // Create transient pool once to use for one-time submit command buffers
