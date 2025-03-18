@@ -1,6 +1,6 @@
 #include "GBuffer.hpp"
 
-#include <tracy/Tracy.hpp>
+#include <tracy/TracyVulkan.hpp>
 
 #include "Context.hpp"
 #include "Scene.hpp"
@@ -99,6 +99,7 @@ void GBuffer::Resize()
 void GBuffer::Execute(VkCommandBuffer cmd)
 {
     ZoneScopedN("GBuffer::Execute");
+    TracyVkZone(context.tracyContexts[vkutil::currentFrame], cmd, "Thin-G-Buffer");
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "Thin-G-Buffer");

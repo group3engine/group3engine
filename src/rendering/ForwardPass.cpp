@@ -1,6 +1,6 @@
 ﻿#include "ForwardPass.hpp"
 
-#include <tracy/Tracy.hpp>
+#include <tracy/TracyVulkan.hpp>
 
 #include "Camera.hpp"
 #include "Context.hpp"
@@ -134,6 +134,7 @@ void ForwardPass::Resize() {
 
 void ForwardPass::Execute(VkCommandBuffer cmd) {
     ZoneScopedN("ForwardPass::Execute");
+    TracyVkZone(context.tracyContexts[vkutil::currentFrame], cmd, "ForwardPass");
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "ForwardPass");

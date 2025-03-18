@@ -4,7 +4,7 @@
 
 #include <glm/gtc/random.hpp>
 
-#include <tracy/Tracy.hpp>
+#include <tracy/TracyVulkan.hpp>
 
 #include "Context.hpp"
 #include "Light.hpp"
@@ -97,6 +97,10 @@ void Renderer::Destroy() {
     for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         vkDestroyCommandPool(context.device, m_commandPool[i], nullptr);
     }
+
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; ++i) {
+        TracyVkDestroy(context.tracyContexts[i]);
+    }
 }
 
 void Renderer::CreateResources() {
@@ -166,6 +170,16 @@ void Renderer::AllocateCommandBuffers() {
         VkCommandBuffer cmd = VK_NULL_HANDLE;
         VK_CHECK(vkAllocateCommandBuffers(context.device, &cmdAlloc, &cmd), "Failed to allocate command buffer");
         m_commandBuffers.push_back(cmd);
+
+        // Calibrated context function pointers
+        auto pfnVkGetPhysicalDeviceCalibrateableTimeDomainsEXT = vkGetPhysicalDeviceCalibrateableTimeDomainsEXT;
+        auto pfnVkGetCalibratedTimestampsEXT = vkGetCalibratedTimestampsEXT;
+
+        auto *tracyContext = TracyVkContextCalibrated(
+            context.pDevice, context.device, context.graphicsQueue, cmd,
+            pfnVkGetPhysicalDeviceCalibrateableTimeDomainsEXT, pfnVkGetCalibratedTimestampsEXT);
+
+        context.tracyContexts.push_back(tracyContext);
     }
 }
 
@@ -216,6 +230,9 @@ void Renderer::Render() {
         m_BloomPass->Execute(cmd);
         m_CompositePass->Execute(cmd);
         m_PresentPass->Execute(cmd, index);
+
+        // Periodically collect the GPU events
+        TracyVkCollect(context.tracyContexts[vkutil::currentFrame], cmd);
 
         vkEndCommandBuffer(cmd);
     }

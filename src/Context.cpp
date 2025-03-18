@@ -429,7 +429,11 @@ void Context::CreateLogicalDevice() {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES_EXT,
         .scalarBlockLayout = VK_TRUE};
 
-    std::vector<const char *> extensions{VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+    std::vector<const char *> extensions{
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+        // In order to maintain synchronization between CPU and GPU time domain (Tracy)
+        VK_EXT_CALIBRATED_TIMESTAMPS_EXTENSION_NAME
+    };
 
     VkDeviceCreateInfo deviceInfo = {};
     deviceInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;

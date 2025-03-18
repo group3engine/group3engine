@@ -1,6 +1,6 @@
 #include "Bloom.hpp"
 
-#include <tracy/Tracy.hpp>
+#include <tracy/TracyVulkan.hpp>
 
 #include "Context.hpp"
 #include "Pipeline.hpp"
@@ -133,6 +133,7 @@ void Bloom::Execute(VkCommandBuffer cmd) {
 
 void Bloom::RenderHorizontalBlur(VkCommandBuffer cmd) {
     ZoneScopedN("Bloom::RenderHorizontalBlur");
+    TracyVkZone(context.tracyContexts[vkutil::currentFrame], cmd, "BloomHorizontalBlur");
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "BloomHorizontalBlur");
@@ -179,6 +180,7 @@ void Bloom::RenderHorizontalBlur(VkCommandBuffer cmd) {
 
 void Bloom::RenderVerticalBlur(VkCommandBuffer cmd) {
     ZoneScopedN("Bloom::RenderVerticalBlur");
+    TracyVkZone(context.tracyContexts[vkutil::currentFrame], cmd, "BloomVerticalBlur");
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "BloomVerticalBlur");

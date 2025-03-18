@@ -1,6 +1,6 @@
 #include "SSAO.hpp"
 
-#include <tracy/Tracy.hpp>
+#include <tracy/TracyVulkan.hpp>
 
 #include "Context.hpp"
 #include "Pipeline.hpp"
@@ -118,6 +118,7 @@ void SSAO::Resize()
 void SSAO::Execute(VkCommandBuffer cmd)
 {
     ZoneScopedN("SSAO::Execute");
+    TracyVkZone(context.tracyContexts[vkutil::currentFrame], cmd, "SSAO");
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "SSAO");

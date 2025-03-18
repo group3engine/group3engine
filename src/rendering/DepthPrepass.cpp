@@ -1,6 +1,6 @@
 #include "DepthPrepass.hpp"
 
-#include <tracy/Tracy.hpp>
+#include <tracy/TracyVulkan.hpp>
 
 #include "Context.hpp"
 #include "Scene.hpp"
@@ -68,6 +68,7 @@ void DepthPrepass::Resize() {
 
 void DepthPrepass::Execute(VkCommandBuffer cmd) {
     ZoneScopedN("DepthPrepass::Execute");
+    TracyVkZone(context.tracyContexts[vkutil::currentFrame], cmd, "DepthPrepass");
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "DepthPrepass");

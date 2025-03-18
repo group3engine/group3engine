@@ -1,6 +1,6 @@
 #include "PresentPass.hpp"
 
-#include <tracy/Tracy.hpp>
+#include <tracy/TracyVulkan.hpp>
 
 #include "Context.hpp"
 #include "Pipeline.hpp"
@@ -58,6 +58,7 @@ void PresentPass::Update() {
 
 void PresentPass::Execute(VkCommandBuffer cmd, uint32_t imageIndex) {
     ZoneScopedN("PresentPass::Execute");
+    TracyVkZone(context.tracyContexts[vkutil::currentFrame], cmd, "PresentPass");
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "PresentPass");
