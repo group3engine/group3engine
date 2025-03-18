@@ -191,7 +191,12 @@ void Renderer::Render() {
     }
 
     uint32_t index;
-    VkResult getImageIndex = vkAcquireNextImageKHR(context.device, context.swapchain, UINT64_MAX, m_imageAvailableSemaphores[vkutil::currentFrame], VK_NULL_HANDLE, &index);
+    VkResult getImageIndex;
+    {
+        ZoneScopedN("vkAcquireNextImageKHR");
+
+        getImageIndex = vkAcquireNextImageKHR(context.device, context.swapchain, UINT64_MAX, m_imageAvailableSemaphores[vkutil::currentFrame], VK_NULL_HANDLE, &index);
+    }
 
     if (getImageIndex == VK_ERROR_OUT_OF_DATE_KHR) {
         // Recreate swapchain
@@ -210,26 +215,41 @@ void Renderer::Render() {
         throw std::runtime_error("Failed to aquire swapchain image");
     }
 
-    vkResetFences(context.device, 1, &m_Fences[vkutil::currentFrame]);
-    vkResetCommandBuffer(m_commandBuffers[vkutil::currentFrame], 0);
+    {
+        ZoneScopedN("vkResetFences");
+
+        vkResetFences(context.device, 1, &m_Fences[vkutil::currentFrame]);
+    }
+
+    {
+        ZoneScopedN("vkResetCommandBuffer");
+
+        vkResetCommandBuffer(m_commandBuffers[vkutil::currentFrame], 0);
+    }
 
     VkCommandBuffer &cmd = m_commandBuffers[vkutil::currentFrame];
 
     {
+        ZoneScopedN("vk::Execute");
+
         VkCommandBufferBeginInfo beginInfo = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
 
         VK_CHECK(vkBeginCommandBuffer(cmd, &beginInfo), "Failed to begin command buffer");
 
-        m_ShadowMap->Execute(cmd);
-        m_DepthPrepass->Execute(cmd);
-        m_ForwardPass->Execute(cmd);
-        m_GBuffer->Execute(cmd);
-        m_SSAO->Execute(cmd);
-        m_SSR->Execute(cmd);
-        m_BloomPass->Execute(cmd);
-        m_CompositePass->Execute(cmd);
-        m_PresentPass->Execute(cmd, index);
+        {
+            TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "vk::Frame", tracy::Color::Crimson);
+
+            m_ShadowMap->Execute(cmd);
+            m_DepthPrepass->Execute(cmd);
+            m_ForwardPass->Execute(cmd);
+            m_GBuffer->Execute(cmd);
+            m_SSAO->Execute(cmd);
+            m_SSR->Execute(cmd);
+            m_BloomPass->Execute(cmd);
+            m_CompositePass->Execute(cmd);
+            m_PresentPass->Execute(cmd, index);
+        }
 
         // Periodically collect the GPU events
         TracyVkCollect(context.tracyContexts[vkutil::currentFrame], cmd);
@@ -244,6 +264,8 @@ void Renderer::Render() {
 }
 
 void Renderer::Submit() {
+    ZoneScopedN("Renderer::Submit");
+
     VkPipelineStageFlags waitStage = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 
     VkSubmitInfo subtmitInfo = {
@@ -264,6 +286,8 @@ void Renderer::Submit() {
 }
 
 void Renderer::Present(uint32_t imageIndex) {
+    ZoneScopedN("Renderer::Present");
+
     VkPresentInfoKHR presentInfo = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .waitSemaphoreCount = 1,
