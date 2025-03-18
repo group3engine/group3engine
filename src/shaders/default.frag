@@ -191,6 +191,10 @@ float myPCF(vec3 WorldPos)
 
 void main()
 {
+    #ifdef ALPHA
+    if (texture(uTextureColour, uv).a < uNumbers.alphaCutoff)
+        discard;
+    #endif
     vec3 color = texture(uTextureColour, uv).rgb * uNumbers.baseColour.rgb;
     vec3 emissive = vec3(0.0);
 
