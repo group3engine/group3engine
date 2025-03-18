@@ -118,7 +118,7 @@ void SSAO::Resize()
 void SSAO::Execute(VkCommandBuffer cmd)
 {
     ZoneScopedN("SSAO::Execute");
-    TracyVkZone(context.tracyContexts[vkutil::currentFrame], cmd, "SSAO");
+    TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "SSAO", tracy::Color::Goldenrod);
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "SSAO");

@@ -68,7 +68,7 @@ void DepthPrepass::Resize() {
 
 void DepthPrepass::Execute(VkCommandBuffer cmd) {
     ZoneScopedN("DepthPrepass::Execute");
-    TracyVkZone(context.tracyContexts[vkutil::currentFrame], cmd, "DepthPrepass");
+    TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "DepthPrepass", tracy::Color::Crimson);
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "DepthPrepass");

@@ -133,7 +133,7 @@ void Bloom::Execute(VkCommandBuffer cmd) {
 
 void Bloom::RenderHorizontalBlur(VkCommandBuffer cmd) {
     ZoneScopedN("Bloom::RenderHorizontalBlur");
-    TracyVkZone(context.tracyContexts[vkutil::currentFrame], cmd, "BloomHorizontalBlur");
+    TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "BloomHorizontalBlur", tracy::Color::LimeGreen);
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "BloomHorizontalBlur");
@@ -180,7 +180,7 @@ void Bloom::RenderHorizontalBlur(VkCommandBuffer cmd) {
 
 void Bloom::RenderVerticalBlur(VkCommandBuffer cmd) {
     ZoneScopedN("Bloom::RenderVerticalBlur");
-    TracyVkZone(context.tracyContexts[vkutil::currentFrame], cmd, "BloomVerticalBlur");
+    TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "BloomVerticalBlur", tracy::Color::Blue);
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "BloomVerticalBlur");

@@ -116,7 +116,7 @@ void Composite::Resize() {
 
 void Composite::Execute(VkCommandBuffer cmd) {
     ZoneScopedN("Composite::Execute");
-    TracyVkZone(context.tracyContexts[vkutil::currentFrame], cmd, "Composite");
+    TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "Composite", tracy::Color::Magenta);
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "Composite");

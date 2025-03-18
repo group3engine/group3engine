@@ -99,7 +99,7 @@ void GBuffer::Resize()
 void GBuffer::Execute(VkCommandBuffer cmd)
 {
     ZoneScopedN("GBuffer::Execute");
-    TracyVkZone(context.tracyContexts[vkutil::currentFrame], cmd, "Thin-G-Buffer");
+    TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "Thin-G-Buffer", tracy::Color::Coral);
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "Thin-G-Buffer");

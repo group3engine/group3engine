@@ -136,7 +136,7 @@ void SSR::Resize()
 void SSR::Execute(VkCommandBuffer cmd)
 {
     ZoneScopedN("SSR::Execute");
-    TracyVkZone(context.tracyContexts[vkutil::currentFrame], cmd, "SSR");
+    TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "SSR", tracy::Color::Gold);
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "SSR");

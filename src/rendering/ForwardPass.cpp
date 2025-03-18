@@ -134,7 +134,7 @@ void ForwardPass::Resize() {
 
 void ForwardPass::Execute(VkCommandBuffer cmd) {
     ZoneScopedN("ForwardPass::Execute");
-    TracyVkZone(context.tracyContexts[vkutil::currentFrame], cmd, "ForwardPass");
+    TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "ForwardPass", tracy::Color::Tomato);
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "ForwardPass");

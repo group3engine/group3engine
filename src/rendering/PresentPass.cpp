@@ -58,7 +58,7 @@ void PresentPass::Update() {
 
 void PresentPass::Execute(VkCommandBuffer cmd, uint32_t imageIndex) {
     ZoneScopedN("PresentPass::Execute");
-    TracyVkZone(context.tracyContexts[vkutil::currentFrame], cmd, "PresentPass");
+    TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "PresentPass", tracy::Color::DimGray);
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "PresentPass");
