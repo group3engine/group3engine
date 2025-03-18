@@ -62,37 +62,7 @@ layout (set = 1, binding = 2) uniform UNumbers
     vec3 F0 = vec3(0.04); \
     F0 = (1 - (metallic)) * F0 + ((metallic) * (baseColor)); \
     float HdotV = max(dot((halfVector), (viewDir)), 0.0); \
-    vec3 schlick_approx = F0 + (1 - F0) * pow(clamp(1 - HdotV, 0.0, 1.0), 5); \
-}
-
-// Normal distribution function
-float BeckmannNormalDistribution(vec3 normal, vec3 halfVector, float roughness)
-{
-    float a = roughness * roughness;
-	float a2 = a * a; // alpha is roughness squared
-	float NdotH = max(dot(normal, halfVector), 0.001); // preventing divide by zero
-	float NdotHSquared = NdotH * NdotH;
-	float numerator = exp((NdotHSquared - 1.0) / (a2 * NdotHSquared));
-	float denominator = PI * a2 * (NdotHSquared * NdotHSquared); // pi * a2 * (n * h)^4
-
-	float D = numerator / denominator;
-	return D;
-}
-
-// Geometry term
-float GeometryTerm(vec3 normal, vec3 halfVector, vec3 lightDir, vec3 viewDir)
-{
-	float NdotH = max(dot(normal, halfVector), 0.0);
-	float NdotV = max(dot(normal, viewDir), 0.0);
-	float VdotH = max(dot(viewDir, halfVector), 0.0);
-	float NdotL = max(dot(normal, lightDir), 0.0);
-
-	float term1 = 2 * (NdotH * NdotV) / VdotH;
-	float term2 = 2 * (NdotH * NdotL) / VdotH;
-
-	float G = min(1, min(term1, term2));
-
-	return G;
+    schlick_approx = F0 + (1 - F0) * pow(clamp(1 - HdotV, 0.0, 1.0), 5); \
 }
 
 // ======================================================================
@@ -148,14 +118,6 @@ float GeometryTerm(vec3 normal, vec3 halfVector, vec3 lightDir, vec3 viewDir)
     brdf = vec3(outLight);\
 }
 
-float isInShadow(vec4 shadowMapPosition)
-{
-
-		// sample the shadow map with textureproj
-		return textureProj(shadowMap, shadowMapPosition);
-
-}
-
 const vec2 PCFFilter4x4[16] = vec2[](
 vec2(-1.5, 1.5), vec2(-0.5, 1.5), vec2(0.5, 1.5), vec2(1.5, 1.5),
 vec2(-1.5, 0.5), vec2(-0.5, 0.5), vec2(0.5, 0.5), vec2(1.5, 0.5),
@@ -170,7 +132,8 @@ float PCF(vec4 shadowMapPosition)
 	float shadow = 0.0;
 	for (int i = 0; i < 16; i++)
 	{
-		shadow += isInShadow(shadowMapPosition + vec4(PCFFilter4x4[i] * offset, 0.0, 0.0));
+        vec4 pcfShadowMapPosition = shadowMapPosition + vec4(PCFFilter4x4[i] * offset, 0.0, 0.0);
+        shadow += textureProj(shadowMap, shadowMapPosition);
 	}
 
 	return shadow / 16.0;
@@ -228,17 +191,12 @@ float myPCF(vec3 WorldPos)
 
 void main()
 {
-    #ifdef ALPHA
-    // if the alpha value is less than the alpha cutoff value, discard the fragment
-    if(texture(uTextureColour, uv).a * uNumbers.baseColour.a < uNumbers.alphaCutoff)
-        discard;
-    #endif
-	vec3 color = texture(uTextureColour, uv).rgb * uNumbers.baseColour.rgb;
-	vec3 emissive = vec3(0.0);
+    vec3 color = texture(uTextureColour, uv).rgb * uNumbers.baseColour.rgb;
+    vec3 emissive = vec3(0.0);
 
     // == Metal and Roughness ==
-	float roughness = texture(uTextureMetallicRoughness, uv).g * uNumbers.roughness;
-	float metallic = texture(uTextureMetallicRoughness, uv).b * uNumbers.metallness;
+    float roughness = texture(uTextureMetallicRoughness, uv).g * uNumbers.roughness;
+    float metallic = texture(uTextureMetallicRoughness, uv).b * uNumbers.metallness;
 
     vec3 outLight = vec3(0.0);
 
@@ -276,14 +234,12 @@ void main()
         outLight += brdf * LightColour.xyz * shadowTerm;
     }
 
-
-
     vec3 ambient = vec3(0.02) * color;
-	fragColor = vec4(vec3(ambient + outLight), 1.0);
+    fragColor = vec4(vec3(ambient + outLight), 1.0);
 
-	float brightness = dot(fragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
-	if(brightness > 1.0)
-		brightColours = vec4(fragColor.rgb, 1.0);
-	else
-        brightColours = vec4(0.0, 0.0, 0.0, 1.0);
+    float brightness = dot(fragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+    if(brightness > 1.0)
+    brightColours = vec4(fragColor.rgb, 1.0);
+    else
+    brightColours = vec4(0.0, 0.0, 0.0, 1.0);
 }
