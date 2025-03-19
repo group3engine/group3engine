@@ -28,13 +28,8 @@ class CharacterEntity : public Entity {
     CharacterEntity();
     ~CharacterEntity() override;
 
-    void SetCharacterVirtual(unique_ptr<CharacterVirtualTest> &&uniquePtr);
-    void ProcessInput(const ProcessInputParams &inParams) {
-        mCharacterVirtual->ProcessInput(inParams);
-    }
-    void PrePhysicsUpdate(const PreUpdateParams &inParams) {
-        mCharacterVirtual->PrePhysicsUpdate(inParams);
-    }
+    void ProcessInput();
+    void PrePhysicsUpdate();
 
     Vec3 GetCharacterPosition() {
         return mCharacterVirtual->GetCharacterPosition();
@@ -44,6 +39,8 @@ class CharacterEntity : public Entity {
     void Update(double deltaTime) override;
 
     void UpdateUi(double deltaTime) override;
+
+    void CreateCharacterVirtual();
 
     void Awake() override ;
 
@@ -70,7 +67,6 @@ class CharacterEntity : public Entity {
         mCharacterPositionOffset = glm::vec3(x, y, z);
     }
 
-    void SetScene(Scene* input_scene){mScene = input_scene;}
     void MoveToSpawn();
 
   private:
@@ -94,7 +90,6 @@ class CharacterEntity : public Entity {
     std::stack<InternalEvent> mInternalEvents;
     std::stack<InternalUiEvent> mInternalUiEvents;
     bool m_has_save = false;
-    Scene* mScene;
 };
 
 #endif // GROUP3ENGINE_CHARACTERENTITY_HPP

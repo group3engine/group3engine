@@ -8,17 +8,39 @@
 #include <fstream>
 #include <cstdlib>
 
+#include "Camera.hpp"
 #include "Scene.hpp"
 
-void CharacterEntity::SetCharacterVirtual(unique_ptr<CharacterVirtualTest> &&uniquePtr) {
-    mCharacterVirtual = std::move(uniquePtr);
-
-}
 
 
 CharacterEntity::~CharacterEntity() {
 }
+
+void CharacterEntity::ProcessInput(){
+    ProcessInputParams inputParams = {};
+    auto cameraForward = Camera::GetMainCamera()->GetDirection();
+    inputParams.mCameraState.mForward = Vec3(cameraForward.x, cameraForward.y, cameraForward.z);
+    mCharacterVirtual->ProcessInput(inputParams);
+}
+
+void CharacterEntity::PrePhysicsUpdate() {
+    PreUpdateParams preUpdateParams{};
+    preUpdateParams.mDeltaTime = GlobalUtil::deltaTime;
+    mCharacterVirtual->PrePhysicsUpdate(preUpdateParams);
+}
+
 void CharacterEntity::Update(double deltaTime) {
+    // process the input
+    ProcessInput();
+    // pre physics update
+    PrePhysicsUpdate();
+    // update the character position offset
+    auto characterVirtualPos = mCharacterVirtual->GetCharacterPosition();
+    SetCharacterPositionOffset(characterVirtualPos.GetX(), characterVirtualPos.GetY(), characterVirtualPos.GetZ());
+
+
+
+
     while (!mInternalEvents.empty()) {
         auto &event = mInternalEvents.top();
         mInternalEvents.pop();
@@ -121,6 +143,18 @@ void CharacterEntity::UpdateUi(double deltaTime) {
     mGuiFinishPopupData.visibleTimer = mFinishVisibleTimer;
 
     ImGuiRenderer::NewFinishPopup(mGuiFinishPopupData);
+}
+
+void CharacterEntity::CreateCharacterVirtual()
+{
+    mCharacterVirtual = std::make_unique<CharacterVirtualTest>();
+    mCharacterVirtual->SetPhysicsSystem(&PhysicsManager::get().mPhysicsSystem);
+    mCharacterVirtual->SetJobSystem(PhysicsManager::get().mJobSystem.get());
+    mCharacterVirtual->SetTempAllocator(PhysicsManager::get().mTempAllocator.get());
+    mCharacterVirtual->SetCustomContactListener(&PhysicsManager::get().mContactListener);
+    mCharacterVirtual->Initialize();
+    PhysicsManager::get().RegisterEntity(this, mCharacterVirtual->GetCharacter()->GetInnerBodyID());
+
 }
 
 CharacterEntity::CharacterEntity() {
@@ -254,7 +288,10 @@ void CharacterEntity::Load() {
 
 void CharacterEntity::Awake() {
     mInitialTransform = GetLocalTransform();
-
+    // create the character virtual
+    CreateCharacterVirtual();
+    // register the character with the scene
+    Scene::GetActiveScene()->SetMainCharacter(this);
     // if there is no save
     if(!m_has_save)
     {
@@ -264,7 +301,7 @@ void CharacterEntity::Awake() {
 
 void CharacterEntity::MoveToSpawn()
 {
-    for(auto &entity: mScene->GetEntities())
+    for(auto &entity: Scene::GetActiveScene()->GetEntities())
     {
         if(entity->CompareTag("spawnpoint"))
         {

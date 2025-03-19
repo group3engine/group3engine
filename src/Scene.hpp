@@ -22,6 +22,11 @@
 #include "ImGuiRenderer.hpp"
 
 class Scene {
+public:
+    static Scene* GetActiveScene() { return sActiveScene; }
+private:
+    static Scene* sActiveScene;
+    static void SetActiveScene(Scene* scene) { sActiveScene = scene; }
   public:
     explicit Scene(Context &context);
     void Load(const std::filesystem::path &aFilepath);

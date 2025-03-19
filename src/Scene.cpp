@@ -8,6 +8,8 @@
 
 #include "ImGuiRenderer.hpp"
 
+Scene* Scene::sActiveScene = nullptr;
+
 void Scene::AddLightSource(Light &LightSource) {
     m_Lights.push_back(std::move(LightSource));
 }
@@ -104,6 +106,7 @@ Scene::Scene(Context &context)
     mMeshManager = new MeshManager(context);
     mMaterialManager = new MaterialManager(context);
     mTextureManager = new TextureManager(context);
+    SetActiveScene(this);
 }
 
 void Scene::DrawOpaque(VkCommandBuffer cmd,
