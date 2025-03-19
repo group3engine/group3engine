@@ -36,7 +36,11 @@ Camera::Camera(Context &context, const glm::vec3 position, glm::vec3 direction, 
 
     m_cameraUBO.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
     for (auto &buffer : m_cameraUBO) {
-        buffer = CreateBuffer("cameraUBO", context, sizeof(CameraTransform), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+        buffer = CreateBuffer("cameraUBO", context, sizeof(CameraTransform),
+                              VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                              VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+                                  VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
+                                  VMA_ALLOCATION_CREATE_MAPPED_BIT);
     }
 
     // Set the main camera to this camera

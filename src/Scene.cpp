@@ -94,10 +94,11 @@ Scene::Scene(Context &context)
     m_LightUBO.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
     // Light uniform buffers
     for (auto &buffer : m_LightUBO) {
-        buffer = CreateBuffer(
-            "LightUBO", context, sizeof(vkutil::LightBuffer),
-            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-            VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+        buffer = CreateBuffer("LightUBO", context, sizeof(vkutil::LightBuffer),
+                              VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                              VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+                                  VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
+                                  VMA_ALLOCATION_CREATE_MAPPED_BIT);
     }
 
     // create the mesh manager, material manager and texture manager

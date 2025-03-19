@@ -48,10 +48,12 @@ Animator::Animator(Context *aContext, Skin *aSkin)
     vkutil::AllocateDescriptorSet(*mContext, mDescriptorPool, mDescriptorSetLayout,
                               1, mDescriptorSet);
     // create the joint buffer
-    mJointBuffer = CreateBuffer(
-        "JointBuffer", *mContext, sizeof(glm::mat4) * mSkin->GetJoints().size(),
-        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-        VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+    mJointBuffer =
+        CreateBuffer("JointBuffer", *mContext, sizeof(glm::mat4) * mSkin->GetJoints().size(),
+                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                     VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+                         VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
+                         VMA_ALLOCATION_CREATE_MAPPED_BIT);
     // make the descriptor set point to the joint buffer
     VkDescriptorBufferInfo bufferInfo{};
     bufferInfo.buffer = mJointBuffer.buffer;
