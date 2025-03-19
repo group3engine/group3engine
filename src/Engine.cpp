@@ -214,7 +214,7 @@ bool Engine::Initialize() {
                     }
                     bool activate = false;
 
-                    if(entity->CompareTag("dynamic"))
+                    if(entity->IsDynamic())
                     {
                         // Create the settings object for a mesh shape
                         JPH::ConvexHullShapeSettings consettings(list_of_points.data(), list_of_points.size());
@@ -231,7 +231,6 @@ bool Engine::Initialize() {
                         result.Get(), RVec3(entity_transform.translation.x, entity_transform.translation.y, entity_transform.translation.z), Quat(entity_transform.rotation.x, entity_transform.rotation.y, entity_transform.rotation.z, entity_transform.rotation.w),
                         motionType, Layers::MOVING};
                         activate = true;
-                        entity->SetAsKinematic();
 
                         // RESTITUTION ALSO HARDCODED FOR SHOWING IT WORKING
                         bodyCreationSettings.mRestitution = 0.8f;

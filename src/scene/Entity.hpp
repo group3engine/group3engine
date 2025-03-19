@@ -121,6 +121,9 @@ class Entity {
     /// Query if the entity is kinematic (uses physics but is not affected by forces)
     [[nodiscard]] bool IsKinematic() const { return mIsKinematic; }
 
+    /// Query if the entity is dynamic (uses physics and is affected by forces)
+    [[nodiscard]] bool IsDynamic() const { return mIsDynamic; }
+
     /// Query if the entity is invisible
     [[nodiscard]] bool IsVisible() const { return mIsVisible; }
     /// Set the entity as invisible
@@ -190,6 +193,8 @@ class Entity {
     void SetAsSensor() { mIsSensor = true; }
     // set the entity as kinematic
     void SetAsKinematic() { mIsKinematic = true; }
+    // set the entity as dynamic
+    void SetAsDynamic() { mIsDynamic = true; }
 
     // set the parent transform
     void SetParentTransform(glm::mat4 aParentTransform);
@@ -244,6 +249,8 @@ class Entity {
     bool mIsVisible = true;
 
     bool mIsKinematic = false;
+
+    bool mIsDynamic = false;
 
     float mTotalTime = 0.0f;
 
