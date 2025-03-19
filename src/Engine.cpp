@@ -13,6 +13,10 @@
 #include "GLFW.hpp"
 #include "Image.hpp"
 #include "Input.hpp"
+#include "Jolt/Math/Vec3.h"
+#include "Jolt/Physics/Body/Body.h"
+#include "Jolt/Physics/Body/MotionType.h"
+#include "Jolt/Physics/Collision/Shape/SphereShape.h"
 #include "PhysicsHelpers.hpp"
 #include "PhysicsManager.hpp"
 #include "RigidBody.hpp"
@@ -151,12 +155,15 @@ bool Engine::Initialize() {
                 glm::decompose(entityWorldTransform, scale, rotation, position, skew, perspective);
                 // create a scaling matrix
                 glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f), scale);
+                VertexList vertices;
                 for (const auto &primitive : mesh->meshPrimitives) {
                     // Create an array of vertices
                     VertexList vertices;
+                    vector<JPH::Vec3> list_of_points;
                     for (const auto &vertex : primitive.vertices) {
                         auto worldPos = scalingMatrix * glm::vec4(vertex.pos, 1.0f);
                         vertices.emplace_back(worldPos.x, worldPos.y, worldPos.z);
+                        list_of_points.emplace_back(Vec3(worldPos.x, worldPos.y, worldPos.z));
                         ++totalVertices;
                     }
 
@@ -189,7 +196,14 @@ bool Engine::Initialize() {
                     }
                     BodyCreationSettings bodyCreationSettings = {
                         result.Get(), RVec3(entity_transform.translation.x, entity_transform.translation.y, entity_transform.translation.z), Quat(entity_transform.rotation.x, entity_transform.rotation.y, entity_transform.rotation.z, entity_transform.rotation.w),
-                        motionType, Layers::MOVING};
+                        motionType, Layers::NON_MOVING};
+                    
+                    // HARDCODED A BOUNCY FLOOR FOR DEMONSTRATION
+                    if(entity->GetName() == "floor.001")
+                    {
+                        bodyCreationSettings.mFriction = 0.1f;
+                        bodyCreationSettings.mRestitution = 0.7f;
+                    }
                     bodyCreationSettings.mIsSensor = entity->IsSensor();
                     if(entity->IsKinematic()) {
                         bodyCreationSettings.mMassPropertiesOverride.mMass = 1.0f;
@@ -198,10 +212,35 @@ bool Engine::Initialize() {
                         bodyCreationSettings.mOverrideMassProperties =
                             EOverrideMassProperties::MassAndInertiaProvided;
                     }
+                    bool activate = false;
+
+                    if(entity->CompareTag("dynamic"))
+                    {
+                        // Create the settings object for a mesh shape
+                        JPH::ConvexHullShapeSettings consettings(list_of_points.data(), list_of_points.size());
+
+                        // Create shape
+                        JPH::Shape::ShapeResult result = consettings.Create();
+                        if (result.IsValid()) {
+                            shape = result.Get();
+                        } else {
+                            SPDLOG_ERROR("Shape result is invalid. {}", result.GetError());
+                        }
+                        motionType = EMotionType::Dynamic;
+                        bodyCreationSettings = {
+                        result.Get(), RVec3(entity_transform.translation.x, entity_transform.translation.y, entity_transform.translation.z), Quat(entity_transform.rotation.x, entity_transform.rotation.y, entity_transform.rotation.z, entity_transform.rotation.w),
+                        motionType, Layers::MOVING};
+                        activate = true;
+                        entity->SetAsKinematic();
+
+                        // RESTITUTION ALSO HARDCODED FOR SHOWING IT WORKING
+                        bodyCreationSettings.mRestitution = 0.8f;
+                    }
+
                     RigidBody entity_rigid_body = RigidBody(bodyCreationSettings);
 
 
-                    entity_rigid_body.Init(PhysicsManager::get());
+                    entity_rigid_body.Init(PhysicsManager::get(), activate);
                     // only do this part if its supposed to DO something when collided with (i.e. sensors)
                     PhysicsManager::get().RegisterEntity(entity, entity_rigid_body.mBodyId);
                     PhysicsManager::get().mPhysicsSystem.OptimizeBroadPhase();
@@ -268,6 +307,8 @@ void Engine::Run() {
     auto camera = static_cast<Camera *>(glfwGetWindowUserPointer(Platform::get().window));
     camera->SetPhysics(&PhysicsManager::get());
     camera->SetScene(mScene.get());
+
+    m_lastFrameTime = glfwGetTime();
 
     while (m_isRunning && !glfwWindowShouldClose(m_context.mWindow)) {
         double currentFrameTime = glfwGetTime();

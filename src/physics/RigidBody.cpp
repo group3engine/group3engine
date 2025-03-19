@@ -6,9 +6,20 @@
 
 
 // Add rigid body to physics system
-void RigidBody::Init(PhysicsManager &physicsManager) {
-    mBodyId = physicsManager.mPhysicsSystem.GetBodyInterface().CreateAndAddBody(
+void RigidBody::Init(PhysicsManager &physicsManager, bool activate) {
+    if(activate)
+    {
+        mBodyId = physicsManager.mPhysicsSystem.GetBodyInterface().CreateAndAddBody(
+        mJoltCreationSettings, EActivation::Activate);
+
+        // THESE ARE HARDCODED IN WE SHOULD PROBABLY FIND A WAY TO NOT DO THAT
+        physicsManager.mPhysicsSystem.GetBodyInterface().SetLinearAndAngularVelocity(mBodyId, Vec3(0.0f, 30.0f, 0.0f), Vec3(12.2f, 4.f, 2.5f));
+    }
+    else 
+    {
+        mBodyId = physicsManager.mPhysicsSystem.GetBodyInterface().CreateAndAddBody(
         mJoltCreationSettings, EActivation::DontActivate);
+    }
 
     // Check that the physics system has not run out of bodies
     if (mBodyId.IsInvalid()) {

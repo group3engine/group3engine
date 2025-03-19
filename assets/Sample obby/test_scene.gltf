@@ -5776,7 +5776,8 @@
 			"extras":{
 				"entity_type":"default",
 				"is_sensor":false,
-				"is_solid":true
+				"is_solid":true,
+                "tags":"dynamic"
 			},
 			"mesh":6,
 			"name":"Torus",
