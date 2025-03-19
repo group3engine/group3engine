@@ -55,6 +55,7 @@ class Buffer {
     VmaAllocationInfo allocInfo = {};
     VmaAllocator allocator = VK_NULL_HANDLE;
     VkMemoryPropertyFlags memPropFlags = 0;
+    bool createdWithTransferBit = false;
     std::string name;
 };
 
