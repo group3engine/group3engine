@@ -234,6 +234,11 @@ bool Engine::Initialize() {
 
                         // RESTITUTION ALSO HARDCODED FOR SHOWING IT WORKING
                         bodyCreationSettings.mRestitution = 0.8f;
+                        bodyCreationSettings.mMassPropertiesOverride.mMass = 1.0f;
+                        bodyCreationSettings.mMassPropertiesOverride.mInertia =
+                            JPH::Mat44::sIdentity();
+                        bodyCreationSettings.mOverrideMassProperties =
+                            EOverrideMassProperties::MassAndInertiaProvided;
                     }
 
                     RigidBody entity_rigid_body = RigidBody(bodyCreationSettings);

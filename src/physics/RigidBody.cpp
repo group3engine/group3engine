@@ -13,7 +13,7 @@ void RigidBody::Init(PhysicsManager &physicsManager, bool activate) {
         mJoltCreationSettings, EActivation::Activate);
 
         // THESE ARE HARDCODED IN WE SHOULD PROBABLY FIND A WAY TO NOT DO THAT
-        physicsManager.mPhysicsSystem.GetBodyInterface().SetLinearAndAngularVelocity(mBodyId, Vec3(0.0f, 30.0f, 0.0f), Vec3(12.2f, 4.f, 2.5f));
+        physicsManager.mPhysicsSystem.GetBodyInterface().SetLinearAndAngularVelocity(mBodyId, Vec3(0.0f, 10.0f, 0.0f), Vec3(0.2f, 0.f, 0.5f));
     }
     else 
     {
