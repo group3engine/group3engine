@@ -39,16 +39,16 @@ void Buffer::Destroy() {
 void Buffer::Update(const Context& context, const void *data, VkDeviceSize size_in_bytes)
 {
     // based on https://gpuopen-librariesandsdks.github.io/VulkanMemoryAllocator/html/usage_patterns.html
-    vkutil::ExecuteSingleTimeCommands(context, [&](VkCommandBuffer cmdBuf)
+
+    if(memPropFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
     {
-        if(memPropFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+        // Allocation ended up in a mappable memory and is already mapped - write to it directly.
+
+        // [Executed in runtime]:
+        memcpy(allocInfo.pMappedData, data, size_in_bytes);
+        VK_CHECK(vmaFlushAllocation(allocator, allocation, 0, VK_WHOLE_SIZE), "Failed to flush buffer");
+        vkutil::ExecuteSingleTimeCommands(context, [&](VkCommandBuffer cmdBuf)
         {
-            // Allocation ended up in a mappable memory and is already mapped - write to it directly.
-
-            // [Executed in runtime]:
-            memcpy(allocInfo.pMappedData, data, size_in_bytes);
-            VK_CHECK(vmaFlushAllocation(allocator, allocation, 0, VK_WHOLE_SIZE), "Failed to flush buffer");
-
             VkBufferMemoryBarrier bufMemBarrier = { VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER };
             bufMemBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
             bufMemBarrier.dstAccessMask = VK_ACCESS_UNIFORM_READ_BIT;
@@ -60,30 +60,33 @@ void Buffer::Update(const Context& context, const void *data, VkDeviceSize size_
 
             vkCmdPipelineBarrier(cmdBuf, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
                 0, 0, nullptr, 1, &bufMemBarrier, 0, nullptr);
-        }
-        else
+        });
+    }
+    else
+    {
+        // Allocation ended up in a non-mappable memory - a transfer using a staging buffer is required.
+        VkBufferCreateInfo stagingBufCreateInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+        stagingBufCreateInfo.size = 65536;
+        stagingBufCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+
+        VmaAllocationCreateInfo stagingAllocCreateInfo = {};
+        stagingAllocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO;
+        stagingAllocCreateInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+            VMA_ALLOCATION_CREATE_MAPPED_BIT;
+
+        VkBuffer stagingBuf;
+        VmaAllocation stagingAlloc;
+        VmaAllocationInfo stagingAllocInfo;
+        VK_CHECK(vmaCreateBuffer(allocator, &stagingBufCreateInfo, &stagingAllocCreateInfo,
+            &stagingBuf, &stagingAlloc, &stagingAllocInfo), "Failed to create staging buffer");
+
+        // [Executed in runtime]:
+        memcpy(stagingAllocInfo.pMappedData, data, size_in_bytes);
+        VK_CHECK(vmaFlushAllocation(allocator, stagingAlloc, 0, VK_WHOLE_SIZE), "Failed to flush staging buffer");
+        // Check result...
+
+        vkutil::ExecuteSingleTimeCommands(context, [&](VkCommandBuffer cmdBuf)
         {
-            // Allocation ended up in a non-mappable memory - a transfer using a staging buffer is required.
-            VkBufferCreateInfo stagingBufCreateInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-            stagingBufCreateInfo.size = 65536;
-            stagingBufCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-
-            VmaAllocationCreateInfo stagingAllocCreateInfo = {};
-            stagingAllocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO;
-            stagingAllocCreateInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
-                VMA_ALLOCATION_CREATE_MAPPED_BIT;
-
-            VkBuffer stagingBuf;
-            VmaAllocation stagingAlloc;
-            VmaAllocationInfo stagingAllocInfo;
-            VK_CHECK(vmaCreateBuffer(allocator, &stagingBufCreateInfo, &stagingAllocCreateInfo,
-                &stagingBuf, &stagingAlloc, &stagingAllocInfo), "Failed to create staging buffer");
-
-            // [Executed in runtime]:
-            memcpy(stagingAllocInfo.pMappedData, data, size_in_bytes);
-            VK_CHECK(vmaFlushAllocation(allocator, stagingAlloc, 0, VK_WHOLE_SIZE), "Failed to flush staging buffer");
-            // Check result...
-
             VkBufferMemoryBarrier bufMemBarrier = { VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER };
             bufMemBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
             bufMemBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
@@ -115,15 +118,19 @@ void Buffer::Update(const Context& context, const void *data, VkDeviceSize size_
 
             vkCmdPipelineBarrier(cmdBuf, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
                 0, 0, nullptr, 1, &bufMemBarrier2, 0, nullptr);
-        }
-    });
+        });
+
+        // Destroy staging buffer
+        vmaDestroyBuffer(allocator, stagingBuf, stagingAlloc);
+    }
+
 }
 
 Buffer CreateBuffer(const std::string &name, Context const &context, VkDeviceSize bSize, VkBufferUsageFlags usage, VmaAllocationCreateFlags memoryFlags, VmaMemoryUsage memUsage) {
     VkBufferCreateInfo bufferInfo = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .size = bSize,
-        .usage = usage};
+        .usage = usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT};
 
     VmaAllocationCreateInfo allocCreateInfo = {
         .flags = memoryFlags,
