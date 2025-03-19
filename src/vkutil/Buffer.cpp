@@ -12,22 +12,6 @@ Buffer::Buffer(std::string name, VmaAllocator allocator, VkBuffer buffer, VmaAll
     : buffer{buffer}, allocation{allocation}, allocator{allocator}, allocInfo{allocInfo}, name{std::move(name)}, memPropFlags{memPropFlags} {
 }
 
-Buffer::Buffer(Buffer &&other) noexcept
-    : buffer(std::exchange(other.buffer, VK_NULL_HANDLE)),
-      allocation(std::exchange(other.allocation, VK_NULL_HANDLE)),
-      allocator(std::exchange(other.allocator, VK_NULL_HANDLE)),
-      name(std::exchange(other.name, "")) {
-}
-
-Buffer &Buffer::operator=(Buffer &&other) noexcept {
-    std::swap(buffer, other.buffer);
-    std::swap(allocation, other.allocation);
-    std::swap(allocator, other.allocator);
-    std::swap(name, other.name);
-
-    return *this;
-}
-
 void Buffer::Destroy() {
     if (buffer != VK_NULL_HANDLE) {
         assert(allocator != VK_NULL_HANDLE);

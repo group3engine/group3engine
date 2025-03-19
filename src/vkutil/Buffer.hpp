@@ -22,8 +22,8 @@ class Buffer {
     Buffer &operator=(const Buffer &) = delete; // You cannot assign a buffer to another buffer
 
     /* Allow moving of Buffer object, transfers ownership of resources */
-    Buffer(Buffer &&) noexcept;
-    Buffer &operator=(Buffer &&) noexcept;
+    Buffer(Buffer &&) noexcept = default;
+    Buffer &operator=(Buffer &&) noexcept = default;
 
     void Destroy();
 
