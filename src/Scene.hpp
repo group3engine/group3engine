@@ -16,7 +16,6 @@
 #include "TextureManager.hpp"
 #include "Utils.hpp"
 
-#include "CharacterVirtualTest.h"
 #include "CharacterEntity.hpp"
 
 #include "ImGuiRenderer.hpp"

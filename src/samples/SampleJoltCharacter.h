@@ -17,7 +17,7 @@ enum class EJumpState
 };
 
 // Simple test that test the CharacterVirtual class. Allows the user to move around with the arrow keys and jump with the J button.
-class CharacterVirtualTest : public CharacterBaseTest, public CharacterContactListener
+class SampleJoltCharacter : public CharacterBaseTest, public CharacterContactListener
 {
 public:
 	// Initialize the test

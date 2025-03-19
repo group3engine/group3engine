@@ -8,7 +8,7 @@
 #include <stack>
 
 #include "Entity.hpp"
-#include "CharacterVirtualTest.h"
+#include "SampleJoltCharacter.h"
 
 #include "ImGuiRenderer.hpp"
 
@@ -32,7 +32,7 @@ class CharacterEntity : public Entity {
     void PrePhysicsUpdate();
 
     Vec3 GetCharacterPosition() {
-        return mCharacterVirtual->GetCharacterPosition();
+        return mSampleJoltCharacter->GetCharacterPosition();
     }
 
     // update override
@@ -40,7 +40,7 @@ class CharacterEntity : public Entity {
 
     void UpdateUi(double deltaTime) override;
 
-    void CreateCharacterVirtual();
+    void CreateJoltCharacter();
 
     void Awake() override ;
 
@@ -56,7 +56,7 @@ class CharacterEntity : public Entity {
 
     // reset the character to the last checkpoint
     void Reset() {
-        mCharacterVirtual->SetCharacterPosition(RVec3(mLastCheckpoint.x,
+        mSampleJoltCharacter->SetCharacterPosition(RVec3(mLastCheckpoint.x,
                                                 mLastCheckpoint.y,
                                                 mLastCheckpoint.z));
     }
@@ -75,7 +75,7 @@ class CharacterEntity : public Entity {
 
   private:
     Transform mInitialTransform = {};
-    std::unique_ptr<CharacterVirtualTest> mCharacterVirtual;
+    std::unique_ptr<SampleJoltCharacter> mSampleJoltCharacter;
 
     glm::vec3 mLastCheckpoint = glm::vec3(0, 10.0f, 0);
 

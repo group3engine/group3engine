@@ -23,7 +23,6 @@
 #include "glm/fwd.hpp"
 #include "glm/trigonometric.hpp"
 
-#include "CharacterVirtualTest.h"
 
 #include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>

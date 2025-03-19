@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2021 Jorrit Rouwe
 // SPDX-License-Identifier: MIT
 
-#include "CharacterVirtualTest.h"
+#include "SampleJoltCharacter.h"
 
 #include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
 #include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
@@ -13,7 +13,7 @@
 
 #include "Entity.hpp"
 
-void CharacterVirtualTest::Initialize()
+void SampleJoltCharacter::Initialize()
 {
 	CharacterBaseTest::Initialize();
 
@@ -33,7 +33,7 @@ void CharacterVirtualTest::Initialize()
 	mCharacter->SetListener(this);
 }
 
-void CharacterVirtualTest::PrePhysicsUpdate(const PreUpdateParams &inParams)
+void SampleJoltCharacter::PrePhysicsUpdate(const PreUpdateParams &inParams)
 {
 	CharacterBaseTest::PrePhysicsUpdate(inParams);
 
@@ -71,7 +71,7 @@ void CharacterVirtualTest::PrePhysicsUpdate(const PreUpdateParams &inParams)
 #endif
 }
 
-void CharacterVirtualTest::HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime)
+void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime)
 {
 	bool player_controls_horizontal_velocity = sControlMovementDuringJump || mCharacter->IsSupported();
 	if (player_controls_horizontal_velocity)
@@ -150,7 +150,7 @@ void CharacterVirtualTest::HandleInput(Vec3Arg inMovementDirection, bool inJump,
 	mCharacter->SetLinearVelocity(new_velocity);
 }
 
-void CharacterVirtualTest::OnContactCommon(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings)
+void SampleJoltCharacter::OnContactCommon(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings)
 {
 	// If we encounter an object that can push the player, enable sliding
 	if (inCharacter == mCharacter
@@ -159,7 +159,7 @@ void CharacterVirtualTest::OnContactCommon(const CharacterVirtual *inCharacter, 
 		mAllowSliding = true;
 }
 
-void CharacterVirtualTest::OnContactAdded(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings)
+void SampleJoltCharacter::OnContactAdded(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings)
 {
 	OnContactCommon(inCharacter, inBodyID2, inSubShapeID2, inContactPosition, inContactNormal, ioSettings);
 
@@ -212,7 +212,7 @@ void CharacterVirtualTest::OnContactAdded(const CharacterVirtual *inCharacter, c
     
 }
 
-void CharacterVirtualTest::OnContactPersisted(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings)
+void SampleJoltCharacter::OnContactPersisted(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings)
 {
 	OnContactCommon(inCharacter, inBodyID2, inSubShapeID2, inContactPosition, inContactNormal, ioSettings);
 
@@ -228,7 +228,7 @@ void CharacterVirtualTest::OnContactPersisted(const CharacterVirtual *inCharacte
 	}
 }
 
-void CharacterVirtualTest::OnContactRemoved(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2)
+void SampleJoltCharacter::OnContactRemoved(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2)
 {
 	if (inCharacter == mCharacter)
 	{
@@ -245,7 +245,7 @@ void CharacterVirtualTest::OnContactRemoved(const CharacterVirtual *inCharacter,
 
 }
 
-void CharacterVirtualTest::OnContactSolve(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, Vec3Arg inContactVelocity, const PhysicsMaterial *inContactMaterial, Vec3Arg inCharacterVelocity, Vec3 &ioNewCharacterVelocity)
+void SampleJoltCharacter::OnContactSolve(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, Vec3Arg inContactVelocity, const PhysicsMaterial *inContactMaterial, Vec3Arg inCharacterVelocity, Vec3 &ioNewCharacterVelocity)
 {
 	// Ignore callbacks for other characters than the player
 	if (inCharacter != mCharacter)

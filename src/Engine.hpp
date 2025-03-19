@@ -8,7 +8,6 @@
 #include "Renderer.hpp"
 #include "RigidBody.hpp"
 
-#include "CharacterVirtualTest.h"
 
 class Engine {
   public:

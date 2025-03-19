@@ -20,13 +20,13 @@ void CharacterEntity::ProcessInput(){
     ProcessInputParams inputParams = {};
     auto cameraForward = Camera::GetMainCamera()->GetDirection();
     inputParams.mCameraState.mForward = Vec3(cameraForward.x, cameraForward.y, cameraForward.z);
-    mCharacterVirtual->ProcessInput(inputParams);
+    mSampleJoltCharacter->ProcessInput(inputParams);
 }
 
 void CharacterEntity::PrePhysicsUpdate() {
     PreUpdateParams preUpdateParams{};
     preUpdateParams.mDeltaTime = GlobalUtil::deltaTime;
-    mCharacterVirtual->PrePhysicsUpdate(preUpdateParams);
+    mSampleJoltCharacter->PrePhysicsUpdate(preUpdateParams);
 }
 
 void CharacterEntity::Update(double deltaTime) {
@@ -35,8 +35,8 @@ void CharacterEntity::Update(double deltaTime) {
     // pre physics update
     PrePhysicsUpdate();
     // update the character position offset
-    auto characterVirtualPos = mCharacterVirtual->GetCharacterPosition();
-    SetCharacterPositionOffset(characterVirtualPos.GetX(), characterVirtualPos.GetY(), characterVirtualPos.GetZ());
+    auto characterPhysicsPos = mSampleJoltCharacter->GetCharacterPosition();
+    SetCharacterPositionOffset(characterPhysicsPos.GetX(), characterPhysicsPos.GetY(), characterPhysicsPos.GetZ());
 
 
 
@@ -62,7 +62,7 @@ void CharacterEntity::Update(double deltaTime) {
 
     // get the character state
     // calculate the delta velocity
-    Vec3 characterVelocityJolt = mCharacterVirtual->GetCharacterVelocity();
+    Vec3 characterVelocityJolt = mSampleJoltCharacter->GetCharacterVelocity();
     glm::vec3 characterVelocity = glm::vec3(characterVelocityJolt.GetX(), characterVelocityJolt.GetY(), characterVelocityJolt.GetZ());
     // set the character to face the direction of the velocity without the y component
     characterVelocity.y = 0;
@@ -82,7 +82,7 @@ void CharacterEntity::Update(double deltaTime) {
         timeScale = min(glm::length(characterVelocity) / 5.5f, 2.f);
     }
     // spdlog the current jump state
-    switch (mCharacterVirtual->GetJumpState()) {
+    switch (mSampleJoltCharacter->GetJumpState()) {
     case EJumpState::Start:
         activeAnimation = "jump up";
         playWholeAnimation = false;
@@ -145,15 +145,15 @@ void CharacterEntity::UpdateUi(double deltaTime) {
     ImGuiRenderer::NewFinishPopup(mGuiFinishPopupData);
 }
 
-void CharacterEntity::CreateCharacterVirtual()
+void CharacterEntity::CreateJoltCharacter()
 {
-    mCharacterVirtual = std::make_unique<CharacterVirtualTest>();
-    mCharacterVirtual->SetPhysicsSystem(&PhysicsManager::get().mPhysicsSystem);
-    mCharacterVirtual->SetJobSystem(PhysicsManager::get().mJobSystem.get());
-    mCharacterVirtual->SetTempAllocator(PhysicsManager::get().mTempAllocator.get());
-    mCharacterVirtual->SetCustomContactListener(&PhysicsManager::get().mContactListener);
-    mCharacterVirtual->Initialize();
-    PhysicsManager::get().RegisterEntity(this, mCharacterVirtual->GetCharacter()->GetInnerBodyID());
+    mSampleJoltCharacter = std::make_unique<SampleJoltCharacter>();
+    mSampleJoltCharacter->SetPhysicsSystem(&PhysicsManager::get().mPhysicsSystem);
+    mSampleJoltCharacter->SetJobSystem(PhysicsManager::get().mJobSystem.get());
+    mSampleJoltCharacter->SetTempAllocator(PhysicsManager::get().mTempAllocator.get());
+    mSampleJoltCharacter->SetCustomContactListener(&PhysicsManager::get().mContactListener);
+    mSampleJoltCharacter->Initialize();
+    PhysicsManager::get().RegisterEntity(this, mSampleJoltCharacter->GetCharacter()->GetInnerBodyID());
 
 }
 
@@ -288,14 +288,18 @@ void CharacterEntity::Load() {
 
 void CharacterEntity::Awake() {
     mInitialTransform = GetLocalTransform();
-    // create the character virtual
-    CreateCharacterVirtual();
+    // create the jolt character
+    CreateJoltCharacter();
     // register the character with the scene
     Scene::GetActiveScene()->SetMainCharacter(this);
     // if there is no save
     if(!m_has_save)
     {
         MoveToSpawn();
+    }
+    else
+    {
+        Reset();
     }
 }
 
