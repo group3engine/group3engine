@@ -50,13 +50,14 @@ class Buffer {
         }
     }
 
+    bool createdWithTransferBit = false;
+
     VkBuffer buffer = VK_NULL_HANDLE;
     VmaAllocation allocation = VK_NULL_HANDLE;
-    VmaAllocationInfo allocInfo = {};
     VmaAllocator allocator = VK_NULL_HANDLE;
-    VkMemoryPropertyFlags memPropFlags = 0;
-    bool createdWithTransferBit = false;
+    VmaAllocationInfo allocInfo = {};
     std::string name;
+    VkMemoryPropertyFlags memPropFlags = 0;
 };
 
 Buffer CreateBuffer(const std::string &name, Context const &context, VkDeviceSize bSize, VkBufferUsageFlags usage, VmaAllocationCreateFlags memoryFlags, VmaMemoryUsage = VMA_MEMORY_USAGE_AUTO);
