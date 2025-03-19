@@ -73,7 +73,7 @@ void Animator::UpdateJointBuffer(Entity *aMesh) {
         glm::decompose(joint, scale, rotation, translation, skew, perspective);
     }
     // upload the joints to the buffer
-    mJointBuffer.WriteToBuffer(joints.data(),
+    mJointBuffer.Update(*mContext, joints.data(),
                                sizeof(glm::mat4) * joints.size());
 }
 void Animator::UpdateAnimationSamples(double aDeltaTime) {

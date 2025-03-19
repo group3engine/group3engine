@@ -41,7 +41,7 @@ void Scene::Update(double aDeltaTime) {
     }
 
     // Pass the light data to the GPU to update all light properties
-    m_LightUBO[vkutil::currentFrame].WriteToBuffer(m_LightBuffer, sizeof(vkutil::LightBuffer));
+    m_LightUBO[vkutil::currentFrame].Update(context, &m_LightBuffer, sizeof(vkutil::LightBuffer));
 }
 
 void Scene::UpdateUi(double aDeltaTime) {
