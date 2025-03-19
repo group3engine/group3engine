@@ -218,29 +218,6 @@ bool Engine::Initialize() {
     }
 
 
-    // Find character
-    auto &entities = mScene->GetEntities();
-    auto it = std::find_if(entities.begin(), entities.end(),
-                           [](const auto &entity) { return entity->IsCharacter(); });
-
-    if (it != entities.end()) {
-        CharacterEntity* characterEntity = dynamic_cast<CharacterEntity*>(*it);
-        characterEntity->SetScene(mScene.get());
-
-        auto characterVirtual = std::make_unique<CharacterVirtualTest>();
-        characterVirtual->SetPhysicsSystem(&PhysicsManager::get().mPhysicsSystem);
-        characterVirtual->SetJobSystem(PhysicsManager::get().mJobSystem.get());
-        characterVirtual->SetTempAllocator(PhysicsManager::get().mTempAllocator.get());
-        characterVirtual->SetCustomContactListener(&PhysicsManager::get().mContactListener);
-        characterVirtual->Initialize();
-        PhysicsManager::get().RegisterEntity(characterEntity, characterVirtual->GetCharacter()->GetInnerBodyID());
-
-        mScene->CreateCharacter(characterEntity, std::move(characterVirtual));
-        mScene->SetHasCharacter(true);
-
-        characterEntity->Reset();
-    }
-
 
 
     // call the scene awake function
@@ -280,32 +257,7 @@ void Engine::Run() {
 
         PollInputEvents();
 
-
-
-        ProcessInputParams processInputParams{};
-        auto cameraForward = camera->GetDirection();
-        processInputParams.mCameraState.mForward = {cameraForward.x, cameraForward.y, cameraForward.z};
-
-        if (mScene->HasCharacter()) {
-            mScene->GetCharacter().ProcessInput(processInputParams);
-        }
-
-        PreUpdateParams preUpdateParams{};
-        preUpdateParams.mDeltaTime = GlobalUtil::deltaTime;
-
-        if (mScene->HasCharacter()) {
-            mScene->GetCharacter().PrePhysicsUpdate(preUpdateParams);
-        }
-
-        if (mScene->HasCharacter()) {
-            auto characterVirtualPos = mScene->GetCharacter().GetCharacterPosition();
-            mScene->GetCharacter().SetCharacterPositionOffset(
-                characterVirtualPos.GetX(), characterVirtualPos.GetY(), characterVirtualPos.GetZ());
-
-            Update(GlobalUtil::deltaTime);
-        } else {
-            Update(GlobalUtil::deltaTime);
-        }
+        Update(GlobalUtil::deltaTime);
 
         ImGuiRenderer::EndFrame();
 
@@ -371,8 +323,8 @@ void Engine::UpdateLogic() {
 void Engine::Update(double deltaTime) {
     ZoneScopedN("Engine::Update");
 
-    UpdateLogic();
     mScene->Update(deltaTime);
+    UpdateLogic();
     mScene->UpdateUi(deltaTime);
     PhysicsManager::get().UpdatePhysics(deltaTime);
     mRenderer->Update(deltaTime);

@@ -48,11 +48,11 @@ class Scene {
     void SetHasCharacter(bool hasCharacter) { mHasCharacter = hasCharacter; }
     [[nodiscard]] bool HasCharacter() const { return mHasCharacter; }
 
-    CharacterEntity &GetCharacter() { return *mCharacter; }
+    Entity &GetCharacter() { return *mCharacter; }
 
-    void CreateCharacter(CharacterEntity *entity, std::unique_ptr<CharacterVirtualTest> characterVirtual) {
+    void SetMainCharacter(CharacterEntity *entity) {
         mCharacter = entity;
-        mCharacter->SetCharacterVirtual(std::move(characterVirtual));
+        mHasCharacter = true;
     }
 
   private:
@@ -71,7 +71,7 @@ class Scene {
     std::vector<Skin> m_Skins;
 
     bool mHasCharacter = false;
-    CharacterEntity *mCharacter;
+    Entity *mCharacter;
 
     gui::TimerData mGuiTimerData{};
 };

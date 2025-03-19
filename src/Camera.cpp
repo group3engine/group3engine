@@ -141,8 +141,7 @@ void Camera::UpdateCameraMovement() {
             m_position -= m_cameraSpeed * m_up;
         }
         if (inputMap[std::size_t(EInputState::TELEPORT)]) {
-            m_scene_pointer->GetCharacter().SetCheckpoint(m_position);
-            m_scene_pointer->GetCharacter().Reset();
+            // TODO: flag for teleporting
         }
     }
 }
