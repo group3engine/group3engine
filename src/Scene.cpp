@@ -40,8 +40,11 @@ void Scene::Update(double aDeltaTime) {
         m_LightBuffer.lights[i].LightSpaceMatrix = m_Lights[i].LightSpaceMatrix;
     }
 
+}
+
+void Scene::UploadLights(VkCommandBuffer cmdBuff) {
     // Pass the light data to the GPU to update all light properties
-    m_LightUBO[vkutil::currentFrame].Update(context, &m_LightBuffer, sizeof(vkutil::LightBuffer));
+    m_LightUBO[vkutil::currentFrame].Upload(cmdBuff, &m_LightBuffer, sizeof(vkutil::LightBuffer));
 }
 
 void Scene::UpdateUi(double aDeltaTime) {

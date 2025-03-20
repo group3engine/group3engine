@@ -34,7 +34,7 @@ void Animator::Update(double aDeltaTime, Entity *aMesh) {
     // update the joints transform
     UpdateJointsTransform();
     // update the joint buffer
-    UpdateJointBuffer(aMesh, vkutil::currentFrame);
+    UpdateJointBuffer(aMesh);
 }
 Animator::Animator(Context *aContext, Skin *aSkin)
     : mContext(aContext), mSkin(aSkin) {
@@ -71,11 +71,11 @@ Animator::Animator(Context *aContext, Skin *aSkin)
                                 VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
     }
 }
-void Animator::UpdateJointBuffer(Entity *aMesh, size_t aCurrentFrame) {
+void Animator::UpdateJointBuffer(Entity *aMesh) {
     // get the joints from the skin
-    auto joints = mSkin->GetJointMatrices(aMesh);
+    mJoints = mSkin->GetJointMatrices(aMesh);
     // for each joint matrix, decompose it into its components
-    for (auto &joint : joints) {
+    for (auto &joint : mJoints) {
         // get the translation, rotation and scale
         glm::vec3 translation, scale;
         glm::quat rotation;
@@ -83,10 +83,13 @@ void Animator::UpdateJointBuffer(Entity *aMesh, size_t aCurrentFrame) {
         glm::vec4 perspective;
         glm::decompose(joint, scale, rotation, translation, skew, perspective);
     }
-    // upload the joints to the buffer
-    mJointBuffers[aCurrentFrame].Update(*mContext, joints.data(),
-                               sizeof(glm::mat4) * joints.size());
 }
+
+void Animator::UploadJointBuffer(VkCommandBuffer cmdBuff) {
+    // upload the joints to the buffer
+    mJointBuffers[vkutil::currentFrame].Upload(cmdBuff, mJoints.data(), sizeof(glm::mat4) * mJoints.size());
+}
+
 void Animator::UpdateAnimationSamples(double aDeltaTime) {
     if (mAnimations.empty()) {
         return;

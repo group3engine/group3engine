@@ -71,6 +71,7 @@ class Camera {
     std::vector<Buffer> &GetBuffers() { return m_cameraUBO; }
 
     void Update(uint32_t width, uint32_t height, double deltaTime);
+    void Upload(VkCommandBuffer cmdBuff);
     void UpdateTransforms(uint32_t width, uint32_t height);
     void UpdateCameraMovement();
     void UpdateCameraRotation(double deltaTime);
