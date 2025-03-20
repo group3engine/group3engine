@@ -4,15 +4,15 @@
 
 #include "CharacterBaseTest.h"
 
-#include <../../extern/JoltPhysics/Jolt/Physics/PhysicsScene.h>
-#include <../../extern/JoltPhysics/Jolt/Physics/Collision/Shape/CapsuleShape.h>
-#include <../../extern/JoltPhysics/Jolt/Physics/Collision/Shape/CylinderShape.h>
-#include <../../extern/JoltPhysics/Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
-#include <../../extern/JoltPhysics/Jolt/Physics/Collision/Shape/BoxShape.h>
-#include <../../extern/JoltPhysics/Jolt/Physics/Collision/Shape/SphereShape.h>
-#include <../../extern/JoltPhysics/Jolt/Physics/Collision/Shape/MeshShape.h>
-#include <../../extern/JoltPhysics/Jolt/Physics/Constraints/HingeConstraint.h>
-#include <../../extern/JoltPhysics/Jolt/Core/StringTools.h>
+#include <Jolt/Physics/PhysicsScene.h>
+#include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
+#include <Jolt/Physics/Collision/Shape/CylinderShape.h>
+#include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
+#include <Jolt/Physics/Collision/Shape/BoxShape.h>
+#include <Jolt/Physics/Collision/Shape/SphereShape.h>
+#include <Jolt/Physics/Collision/Shape/MeshShape.h>
+#include <Jolt/Physics/Constraints/HingeConstraint.h>
+#include <Jolt/Core/StringTools.h>
 
 #include "../core/Input.hpp"
 
