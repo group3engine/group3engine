@@ -33,7 +33,7 @@ class Animator {
     void Update(double aDeltaTime, Entity* aMesh);
     // bind the descriptor set (for use when rendering)
     void BindDescriptorSet(VkCommandBuffer aCmdBuff,
-                           VkPipelineLayout aPipelineLayout, int aSet);
+                           VkPipelineLayout aPipelineLayout, int aSet, size_t aCurrentFrame);
 
     void SetActiveAnimation(int index) { mActiveAnimation = index;
     }
@@ -44,7 +44,7 @@ class Animator {
 
   private:
     // update the joint buffer
-    void UpdateJointBuffer(Entity* aMesh);
+    void UpdateJointBuffer(Entity* aMesh, size_t aCurrentFrame);
     // update the animation samples
     void UpdateAnimationSamples(double aDeltaTime);
     // update the joints transform based on the animation samples
@@ -58,11 +58,11 @@ class Animator {
     // descriptor set layout for the joint matrices
     VkDescriptorSetLayout mDescriptorSetLayout{};
     // descriptor set for the joint matrices
-    VkDescriptorSet mDescriptorSet{};
+    std::vector<VkDescriptorSet> mDescriptorSet;
     // descriptor pool for the joint matrices
     VkDescriptorPool mDescriptorPool{};
     // buffer for the joint matrices
-    Buffer mJointBuffer;
+    std::vector<Buffer> mJointBuffers;
 
     int mActiveAnimation = -1;
     int mLastAnimation = -1;

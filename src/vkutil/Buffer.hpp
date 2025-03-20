@@ -22,8 +22,8 @@ class Buffer {
     Buffer &operator=(const Buffer &) = delete; // You cannot assign a buffer to another buffer
 
     /* Allow moving of Buffer object, transfers ownership of resources */
-    Buffer(Buffer &&) noexcept;
-    Buffer &operator=(Buffer &&) noexcept;
+    Buffer(Buffer &&) noexcept = default;
+    Buffer &operator=(Buffer &&) noexcept = default;
 
     void Destroy();
 
@@ -50,13 +50,14 @@ class Buffer {
         }
     }
 
+    bool createdWithTransferBit = false;
+
     VkBuffer buffer = VK_NULL_HANDLE;
     VmaAllocation allocation = VK_NULL_HANDLE;
-    VmaAllocationInfo allocInfo = {};
     VmaAllocator allocator = VK_NULL_HANDLE;
-    VkMemoryPropertyFlags memPropFlags = 0;
-    bool createdWithTransferBit = false;
+    VmaAllocationInfo allocInfo = {};
     std::string name;
+    VkMemoryPropertyFlags memPropFlags = 0;
 };
 
 Buffer CreateBuffer(const std::string &name, Context const &context, VkDeviceSize bSize, VkBufferUsageFlags usage, VmaAllocationCreateFlags memoryFlags, VmaMemoryUsage = VMA_MEMORY_USAGE_AUTO);
