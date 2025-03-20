@@ -531,7 +531,7 @@ void Context::CreateSwapchain() {
         .oldSwapchain = oldSwapchain};
 
     // Set max frames in flight
-    vkutil::MAX_FRAMES_IN_FLIGHT = imageCount;
+    vkutil::NUM_FRAMES_IN_FLIGHT = imageCount;
 
     if (numIndices <= 1) {
         swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;

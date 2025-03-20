@@ -20,7 +20,7 @@ PresentPass::PresentPass(Context &context, Image &renderedScene)
       m_pipeline{VK_NULL_HANDLE},
       m_pipelineLayout{VK_NULL_HANDLE},
       m_renderType{vkutil::renderType} {
-    m_postProcessUbo.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+    m_postProcessUbo.resize(vkutil::NUM_FRAMES_IN_FLIGHT);
 
     for (auto &buffer : m_postProcessUbo) {
         buffer = CreateBuffer("PostProcessUBO", context, sizeof(vkutil::PostProcessing), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
@@ -42,7 +42,7 @@ PresentPass::~PresentPass() {
 
 void PresentPass::Resize() {
     // Update the descriptor to the new updated re-sized renderedScene image
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorImageInfo imgInfo = {
             .sampler = vkutil::repeatSampler,
             .imageView = renderedScene.imageView,
@@ -126,7 +126,7 @@ void PresentPass::CreatePipeline() {
 }
 
 void PresentPass::BuildDescriptors() {
-    m_descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+    m_descriptorSets.resize(vkutil::NUM_FRAMES_IN_FLIGHT);
 
     // Set = 0, binding 0 = rendered scene image
     std::vector<VkDescriptorSetLayoutBinding> bindings = {
@@ -135,9 +135,9 @@ void PresentPass::BuildDescriptors() {
 
     m_descriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
 
-    vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_descriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, m_descriptorSets);
+    vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_descriptorSetLayout, vkutil::NUM_FRAMES_IN_FLIGHT, m_descriptorSets);
 
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorBufferInfo bufferInfo{};
         bufferInfo.buffer = m_postProcessUbo[i].buffer;
         bufferInfo.offset = 0;
@@ -145,7 +145,7 @@ void PresentPass::BuildDescriptors() {
         vkutil::UpdateDescriptorSet(context, 0, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
     }
 
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorImageInfo imgInfo = {
             .sampler = vkutil::repeatSampler,
             .imageView = renderedScene.imageView,

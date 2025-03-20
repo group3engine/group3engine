@@ -120,7 +120,7 @@ void ForwardPass::Resize() {
         VK_IMAGE_ASPECT_COLOR_BIT,
         1);
 
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < (size_t)vkutil::NUM_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorImageInfo imageInfo = {
             .sampler = vkutil::clampToEdgeSamplerAniso,
             .imageView = shadowMap.imageView,
@@ -306,7 +306,7 @@ void ForwardPass::CreateFramebuffer() {
 }
 
 void ForwardPass::BuildDescriptors() {
-    m_descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+    m_descriptorSets.resize(vkutil::NUM_FRAMES_IN_FLIGHT);
 
     std::vector<VkDescriptorSetLayoutBinding> bindings = {
         vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT), // SceneUBO (projection, view etc..)
@@ -315,11 +315,11 @@ void ForwardPass::BuildDescriptors() {
 
     meshDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
 
-    vkutil::AllocateDescriptorSets(context, context.descriptorPool, meshDescriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, m_descriptorSets);
+    vkutil::AllocateDescriptorSets(context, context.descriptorPool, meshDescriptorSetLayout, vkutil::NUM_FRAMES_IN_FLIGHT, m_descriptorSets);
     skinDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}});
 
     // Camera Transform UBO
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < (size_t)vkutil::NUM_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorBufferInfo bufferInfo{};
         bufferInfo.buffer = camera->GetBuffers()[i].buffer;
         bufferInfo.offset = 0;
@@ -328,7 +328,7 @@ void ForwardPass::BuildDescriptors() {
     }
 
     // Light UBO
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < (size_t)vkutil::NUM_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorBufferInfo bufferInfo{};
         bufferInfo.buffer = scene->GetLightsUBO()[i].buffer;
         bufferInfo.offset = 0;
@@ -336,7 +336,7 @@ void ForwardPass::BuildDescriptors() {
         vkutil::UpdateDescriptorSet(context, 1, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
     }
 
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < (size_t)vkutil::NUM_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorImageInfo imageInfo = {
             .sampler = vkutil::clampToEdgeSamplerAniso,
             .imageView = shadowMap.imageView,

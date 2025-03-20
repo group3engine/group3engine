@@ -26,7 +26,7 @@ SSAO::SSAO(Context &context, Image &depthBuffer, Image& renderedScene, std::shar
         1
     );
 
-    m_SSAOUniform.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+    m_SSAOUniform.resize(vkutil::NUM_FRAMES_IN_FLIGHT);
     for (auto& buffer : m_SSAOUniform)
     {
         buffer = CreateBuffer("SSAOSettingsUBO", context, sizeof(vkutil::SSAOSettings), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
@@ -80,7 +80,7 @@ void SSAO::Resize()
         1
     );
 
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
+    for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++)
     {
         VkDescriptorBufferInfo bufferInfo{};
         bufferInfo.buffer = camera->GetBuffers()[i].buffer;
@@ -89,7 +89,7 @@ void SSAO::Resize()
         vkutil::UpdateDescriptorSet(context, 0, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
     }
 
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
+    for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++)
     {
         VkDescriptorImageInfo imageInfo = {
             .sampler = vkutil::clampToEdgeSamplerAniso,
@@ -100,7 +100,7 @@ void SSAO::Resize()
         vkutil::UpdateDescriptorSet(context, 1, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     }
 
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
+    for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++)
     {
         VkDescriptorImageInfo imageInfo = {
             .sampler = vkutil::clampToEdgeSamplerAniso,
@@ -209,7 +209,7 @@ void SSAO::CreateRenderPass()
 
 void SSAO::BuildDescriptors()
 {
-    m_descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+    m_descriptorSets.resize(vkutil::NUM_FRAMES_IN_FLIGHT);
     {
         std::vector<VkDescriptorSetLayoutBinding> bindings = {
             vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT),
@@ -223,9 +223,9 @@ void SSAO::BuildDescriptors()
         m_DescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
     }
 
-    vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_DescriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, m_descriptorSets);
+    vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_DescriptorSetLayout, vkutil::NUM_FRAMES_IN_FLIGHT, m_descriptorSets);
 
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
+    for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++)
     {
         VkDescriptorBufferInfo bufferInfo{};
         bufferInfo.buffer = camera->GetBuffers()[i].buffer;
@@ -234,7 +234,7 @@ void SSAO::BuildDescriptors()
         vkutil::UpdateDescriptorSet(context, 0, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
     }
 
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
+    for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++)
     {
         VkDescriptorImageInfo imageInfo = {
             .sampler = vkutil::clampToEdgeSamplerAniso,
@@ -245,7 +245,7 @@ void SSAO::BuildDescriptors()
         vkutil::UpdateDescriptorSet(context, 1, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     }
 
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
+    for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++)
     {
         VkDescriptorBufferInfo bufferInfo{};
         bufferInfo.buffer = m_SSAOUniform[i].buffer;
@@ -254,7 +254,7 @@ void SSAO::BuildDescriptors()
         vkutil::UpdateDescriptorSet(context, 2, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
     }
 
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
+    for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++)
     {
         VkDescriptorImageInfo imageInfo = {
             .sampler = vkutil::clampToEdgeSamplerAniso,
@@ -265,7 +265,7 @@ void SSAO::BuildDescriptors()
         vkutil::UpdateDescriptorSet(context, 3, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     }
 
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
+    for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++)
     {
         VkDescriptorImageInfo imageInfo = {
             .sampler = vkutil::repeatSamplerAniso,
@@ -276,7 +276,7 @@ void SSAO::BuildDescriptors()
         vkutil::UpdateDescriptorSet(context, 4, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     }
 
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
+    for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++)
     {
         VkDescriptorBufferInfo bufferInfo{};
         bufferInfo.buffer = m_SSAOSamples.buffer;

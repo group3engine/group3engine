@@ -45,13 +45,13 @@ Animator::Animator(Context *aContext, Skin *aSkin)
                         VK_SHADER_STAGE_VERTEX_BIT, nullptr},
                    });
     // create the descriptor pool
-    vkutil::CreateDescriptorPool(*mContext, vkutil::MAX_FRAMES_IN_FLIGHT, vkutil::MAX_FRAMES_IN_FLIGHT, mDescriptorPool);
+    vkutil::CreateDescriptorPool(*mContext, vkutil::NUM_FRAMES_IN_FLIGHT, vkutil::NUM_FRAMES_IN_FLIGHT, mDescriptorPool);
     // resize the descriptor sets
-    mDescriptorSet.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+    mDescriptorSet.resize(vkutil::NUM_FRAMES_IN_FLIGHT);
     // allocate the descriptor sets
-    vkutil::AllocateDescriptorSets(*mContext, mDescriptorPool, mDescriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, mDescriptorSet);
+    vkutil::AllocateDescriptorSets(*mContext, mDescriptorPool, mDescriptorSetLayout, vkutil::NUM_FRAMES_IN_FLIGHT, mDescriptorSet);
     // create the joint buffers
-    mJointBuffers.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+    mJointBuffers.resize(vkutil::NUM_FRAMES_IN_FLIGHT);
     for (auto &buffer : mJointBuffers) {
         buffer = CreateBuffer("JointBuffer", *mContext, sizeof(glm::mat4) * mSkin->GetJoints().size(),
                      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -61,7 +61,7 @@ Animator::Animator(Context *aContext, Skin *aSkin)
     }
     //
     // make the descriptor sets point to the corresponding joint buffer
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
+    for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++)
     {
         VkDescriptorBufferInfo bufferInfo{};
         bufferInfo.buffer = mJointBuffers[i].buffer;

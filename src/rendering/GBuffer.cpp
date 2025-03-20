@@ -247,7 +247,7 @@ void GBuffer::CreateFramebuffer()
 
 void GBuffer::BuildDescriptors()
 {
-    m_descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+    m_descriptorSets.resize(vkutil::NUM_FRAMES_IN_FLIGHT);
     {
         // Set = 0, binding 0 = cameraUBO, binding = 1 = textures
         std::vector<VkDescriptorSetLayoutBinding> bindings = {
@@ -256,11 +256,11 @@ void GBuffer::BuildDescriptors()
 
         m_descriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
 
-        vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_descriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, m_descriptorSets);
+        vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_descriptorSetLayout, vkutil::NUM_FRAMES_IN_FLIGHT, m_descriptorSets);
     }
 
     // Camera Transform UBO
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
+    for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++)
     {
         VkDescriptorBufferInfo bufferInfo{};
         bufferInfo.buffer = camera->GetBuffers()[i].buffer;

@@ -26,6 +26,7 @@ void Buffer::Update(const Context& context, const void *data, VkDeviceSize size_
 
     if(memPropFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
     {
+
         // Allocation ended up in a mappable memory and is already mapped - write to it directly.
 
         // [Executed in runtime]:

@@ -257,7 +257,7 @@ void Bloom::Resize() {
 
     CreateFramebuffer();
 
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorImageInfo imageInfo = {
             .sampler = vkutil::clampToEdgeSamplerAniso,
             .imageView = inputImage.imageView,
@@ -267,7 +267,7 @@ void Bloom::Resize() {
     }
 
     // Vertical
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorImageInfo imageInfo = {
             .sampler = vkutil::clampToEdgeSamplerAniso,
             .imageView = m_BloomBlurXRT.imageView,
@@ -315,7 +315,7 @@ void Bloom::CreatePipeline() {
 }
 
 void Bloom::BuildHorizontalBlurDescriptors() {
-    m_HorizontalBlurDescriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+    m_HorizontalBlurDescriptorSets.resize(vkutil::NUM_FRAMES_IN_FLIGHT);
     {
         std::vector<VkDescriptorSetLayoutBinding> bindings = {
             vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
@@ -325,9 +325,9 @@ void Bloom::BuildHorizontalBlurDescriptors() {
         m_HorizontalBlurDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
     }
 
-    vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_HorizontalBlurDescriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, m_HorizontalBlurDescriptorSets);
+    vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_HorizontalBlurDescriptorSetLayout, vkutil::NUM_FRAMES_IN_FLIGHT, m_HorizontalBlurDescriptorSets);
 
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorImageInfo imageInfo = {
             .sampler = vkutil::clampToEdgeSamplerAniso,
             .imageView = inputImage.imageView,
@@ -338,7 +338,7 @@ void Bloom::BuildHorizontalBlurDescriptors() {
 }
 
 void Bloom::BuildVerticalBlurDescriptors() {
-    m_VerticalBlurDescriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+    m_VerticalBlurDescriptorSets.resize(vkutil::NUM_FRAMES_IN_FLIGHT);
     {
         std::vector<VkDescriptorSetLayoutBinding> bindings = {
             vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
@@ -347,9 +347,9 @@ void Bloom::BuildVerticalBlurDescriptors() {
         m_VerticalBlurDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
     }
 
-    vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_VerticalBlurDescriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, m_VerticalBlurDescriptorSets);
+    vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_VerticalBlurDescriptorSetLayout, vkutil::NUM_FRAMES_IN_FLIGHT, m_VerticalBlurDescriptorSets);
 
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorImageInfo imageInfo = {
             .sampler = vkutil::clampToEdgeSamplerAniso,
             .imageView = m_BloomBlurXRT.imageView,

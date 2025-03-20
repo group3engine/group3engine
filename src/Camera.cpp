@@ -34,7 +34,7 @@ Camera::Camera(Context &context, const glm::vec3 position, glm::vec3 direction, 
     m_transform.fov = 45.0f;
     m_cameraSpeed = defaultSpeed;
 
-    m_cameraUBO.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+    m_cameraUBO.resize(vkutil::NUM_FRAMES_IN_FLIGHT);
     for (auto &buffer : m_cameraUBO) {
         buffer = CreateBuffer("cameraUBO", context, sizeof(CameraTransform),
                               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,

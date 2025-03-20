@@ -26,7 +26,7 @@ enum class RenderType {
     MESH_DENSITY
 };
 
-inline size_t MAX_FRAMES_IN_FLIGHT;
+inline size_t NUM_FRAMES_IN_FLIGHT;
 inline int currentFrame;
 
 inline VkSampler repeatSamplerAniso;
