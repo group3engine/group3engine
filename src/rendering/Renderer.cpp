@@ -280,6 +280,7 @@ void Renderer::Render() {
 
 void Renderer::Submit() {
     ZoneScopedN("Renderer::Submit");
+    ZoneValue(vkutil::currentFrame);
 
     VkPipelineStageFlags waitStage = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 
