@@ -145,7 +145,10 @@ void Camera::UpdateCameraMovement() {
             m_position -= m_cameraSpeed * m_up;
         }
         if (inputMap[std::size_t(EInputState::TELEPORT)]) {
-            // TODO: flag for teleporting
+            // call the teleport callback
+            if (m_teleportCallback) {
+                m_teleportCallback(m_position);
+            }
         }
     }
 }

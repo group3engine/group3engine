@@ -69,6 +69,11 @@ class CharacterEntity : public Entity {
 
     void MoveToSpawn();
 
+    void TeleportCallback(glm::vec3 aPosition) {
+        SetCheckpoint(aPosition);
+        Reset();
+    }
+
   private:
     void Save();
     void Load();

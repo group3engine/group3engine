@@ -292,6 +292,9 @@ void CharacterEntity::Awake() {
     CreateJoltCharacter();
     // register the character with the scene
     Scene::GetActiveScene()->SetMainCharacter(this);
+    // register the teleport callback
+    Camera::GetMainCamera()->SetTeleportCallbackFunction(std::bind(&CharacterEntity::TeleportCallback, this, std::placeholders::_1));
+
     // if there is no save
     if(!m_has_save)
     {
