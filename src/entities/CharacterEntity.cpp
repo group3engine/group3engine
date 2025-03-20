@@ -17,10 +17,36 @@ CharacterEntity::~CharacterEntity() {
 }
 
 void CharacterEntity::ProcessInput(){
-    ProcessInputParams inputParams = {};
-    auto cameraForward = Camera::GetMainCamera()->GetDirection();
-    inputParams.mCameraState.mForward = Vec3(cameraForward.x, cameraForward.y, cameraForward.z);
-    mSampleJoltCharacter->ProcessInput(inputParams);
+    glm::vec3 controlInput = glm::vec3(0.0f);
+    bool jump = false;
+    if(Camera::GetMainCamera()->isInFollowCharacterMode()) {
+        // Determine controller input
+        if (IsKeyDown(KEY::eA))
+            controlInput.z = -1;
+        if (IsKeyDown(KEY::eD))
+            controlInput.z = 1;
+        if (IsKeyDown(KEY::eW))
+            controlInput.x = 1;
+        if (IsKeyDown(KEY::eS))
+            controlInput.x = -1;
+        if (controlInput != glm::vec3(0.f))
+            controlInput = glm::normalize(controlInput);
+        if (abs(GetGamepadAxis(GAMEPAD_AXIS::eLEFT_Y)) > 0.1f)
+            controlInput.z = -GetGamepadAxis(GAMEPAD_AXIS::eLEFT_Y);
+        if (abs(GetGamepadAxis(GAMEPAD_AXIS::eLEFT_X)) > 0.1f)
+            controlInput.z = GetGamepadAxis(GAMEPAD_AXIS::eLEFT_X);
+
+        // Rotate controls to align with the camera
+        auto cameraForward = Camera::GetMainCamera()->GetDirection();
+        cameraForward.y = 0.0f;
+        cameraForward = glm::normalize(cameraForward);
+        glm::quat rotation = glm::rotation(glm::vec3(1.0f, 0.0f, 0.0f), cameraForward);
+        controlInput = rotation * controlInput;
+
+        // Check actions
+        jump = IsKeyPressed(KEY::eSPACE) || IsGamepadButtonPressed(GAMEPAD_BUTTON::eA);
+    }
+    mSampleJoltCharacter->ProcessInput(controlInput, jump);
 }
 
 void CharacterEntity::PrePhysicsUpdate() {
