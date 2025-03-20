@@ -33,6 +33,9 @@ class Scene {
     void AddLightSource(Light& LightSource);
     void Update(double aDeltaTime);
     void UpdateUi(double aDeltaTime);
+
+    void Initialise();
+    
     void Awake();
 
     void Destroy();
