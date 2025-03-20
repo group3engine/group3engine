@@ -246,8 +246,12 @@ bool Engine::Initialize() {
                         // initialise the body in the physics manager and do not activate it
                         entity_rigid_body.Init(PhysicsManager::get(), false);
 
-                        // only do this part if its supposed to DO something when collided with (i.e. sensors)
-                        PhysicsManager::get().RegisterEntity(entity, entity_rigid_body.mBodyId);
+                        if(entity->IsSensor())
+                        {
+                            // only do this part if its supposed to DO something when collided with (i.e. sensors)
+                            PhysicsManager::get().RegisterEntity(entity, entity_rigid_body.mBodyId);
+                        }
+                        
                         PhysicsManager::get().mPhysicsSystem.OptimizeBroadPhase();
                         entity->AddRigidBody(std::make_unique<RigidBody>(entity_rigid_body));
                     }
@@ -295,8 +299,11 @@ bool Engine::Initialize() {
                         // initialise the body in the physics manager and activate it
                         entity_rigid_body.Init(PhysicsManager::get(), true);
 
-                        // only do this part if its supposed to DO something when collided with (i.e. sensors)
-                        PhysicsManager::get().RegisterEntity(entity, entity_rigid_body.mBodyId);
+                        if(entity->IsSensor())
+                        {
+                            // only do this part if its supposed to DO something when collided with (i.e. sensors)
+                            PhysicsManager::get().RegisterEntity(entity, entity_rigid_body.mBodyId);
+                        }
                         PhysicsManager::get().mPhysicsSystem.OptimizeBroadPhase();
                         entity->AddRigidBody(std::make_unique<RigidBody>(entity_rigid_body));
                     }
@@ -344,8 +351,11 @@ bool Engine::Initialize() {
                         // initialise the body in the physics manager and activate it
                         entity_rigid_body.Init(PhysicsManager::get(), true);
 
-                        // only do this part if its supposed to DO something when collided with (i.e. sensors)
-                        PhysicsManager::get().RegisterEntity(entity, entity_rigid_body.mBodyId);
+                        if(entity->IsSensor())
+                        {
+                            // only do this part if its supposed to DO something when collided with (i.e. sensors)
+                            PhysicsManager::get().RegisterEntity(entity, entity_rigid_body.mBodyId);
+                        }
                         PhysicsManager::get().mPhysicsSystem.OptimizeBroadPhase();
                         entity->AddRigidBody(std::make_unique<RigidBody>(entity_rigid_body));
                     }
