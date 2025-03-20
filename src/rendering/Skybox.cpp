@@ -174,7 +174,7 @@ void Skybox::CreatePipeline()
 
 void Skybox::BuildDescriptors()
 {
-    m_descriptorSets.resize(vkutil::NUM_FRAMES_IN_FLIGHT);
+    m_descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
 	{
 		// Set = 0, binding 0 = cameraUBO, binding = 1 = textures
 		std::vector<VkDescriptorSetLayoutBinding> bindings = {
@@ -184,11 +184,11 @@ void Skybox::BuildDescriptors()
 
 		m_DescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
 
-		vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_DescriptorSetLayout, vkutil::NUM_FRAMES_IN_FLIGHT, m_descriptorSets);
+		vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_DescriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, m_descriptorSets);
 	}
 
 	// Camera Transform UBO
-	for (size_t i = 0; i < (size_t)vkutil::NUM_FRAMES_IN_FLIGHT; i++)
+	for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++)
 	{
 		VkDescriptorBufferInfo bufferInfo{};
 		bufferInfo.buffer = camera->GetBuffers()[i].buffer;
@@ -197,7 +197,7 @@ void Skybox::BuildDescriptors()
 		vkutil::UpdateDescriptorSet(context, 0, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 	}
 
-	for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++)
+	for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
 	{
 		VkDescriptorImageInfo imageInfo = {
 			.sampler = vkutil::clampToEdgeSamplerAniso,

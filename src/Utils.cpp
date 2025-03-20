@@ -94,14 +94,14 @@ void CreateDescriptorPool(Context &context, uint32_t maxDescriptors, uint32_t ma
 }
 
 void AllocateDescriptorSets(Context &context, VkDescriptorPool descriptorPool, const VkDescriptorSetLayout descriptorLayout, uint32_t setCount, std::vector<VkDescriptorSet> &descriptorSet) {
-    std::vector<VkDescriptorSetLayout> setLayout(vkutil::NUM_FRAMES_IN_FLIGHT, descriptorLayout);
+    std::vector<VkDescriptorSetLayout> setLayout(vkutil::MAX_FRAMES_IN_FLIGHT, descriptorLayout);
 
     VkDescriptorSetAllocateInfo allocInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
     allocInfo.descriptorPool = descriptorPool;
     allocInfo.descriptorSetCount = setCount;
     allocInfo.pSetLayouts = setLayout.data();
 
-    descriptorSet.resize(vkutil::NUM_FRAMES_IN_FLIGHT);
+    descriptorSet.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
 
     VK_CHECK(vkAllocateDescriptorSets(context.device, &allocInfo, descriptorSet.data()), "Failed to allocate descriptor sets");
 }

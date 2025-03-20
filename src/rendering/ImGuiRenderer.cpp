@@ -52,7 +52,7 @@ void ImGuiRenderer::Initialize(const Context &context, TextureManager *textureMa
     info.QueueFamily = context.graphicsFamilyIndex;
     info.DescriptorPool = ImGuiRenderer::imGuiDescriptorPool;
     info.MinImageCount = 3;
-    info.ImageCount = vkutil::NUM_FRAMES_IN_FLIGHT;
+    info.ImageCount = vkutil::MAX_FRAMES_IN_FLIGHT;
     info.Subpass = 0;
     info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
     info.RenderPass = context.renderPass;

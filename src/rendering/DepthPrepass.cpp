@@ -169,7 +169,7 @@ void DepthPrepass::CreateFramebuffer() {
 }
 
 void DepthPrepass::BuildDescriptors() {
-    m_descriptorSets.resize(vkutil::NUM_FRAMES_IN_FLIGHT);
+    m_descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
     {
         std::vector<VkDescriptorSetLayoutBinding> bindings = {
             vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT),
@@ -177,11 +177,11 @@ void DepthPrepass::BuildDescriptors() {
 
         m_descriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
 
-        vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_descriptorSetLayout, vkutil::NUM_FRAMES_IN_FLIGHT, m_descriptorSets);
+        vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_descriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, m_descriptorSets);
     }
 
     // Camera Transform UBO
-    for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorBufferInfo bufferInfo{};
         bufferInfo.buffer = camera->GetBuffers()[i].buffer;
         bufferInfo.offset = 0;

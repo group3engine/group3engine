@@ -72,7 +72,7 @@ void Composite::Resize() {
     CreateFramebuffer();
 
     // DefLighting pass
-    for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorImageInfo imageInfo = {
             .sampler = vkutil::repeatSamplerAniso,
             .imageView = LightingPass.imageView,
@@ -82,7 +82,7 @@ void Composite::Resize() {
     }
 
     // Bloom pass
-    for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorImageInfo imageInfo = {
             .sampler = vkutil::repeatSamplerAniso,
             .imageView = BloomPass.imageView,
@@ -91,7 +91,7 @@ void Composite::Resize() {
         vkutil::UpdateDescriptorSet(context, 1, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     }
 
-    for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++)
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
     {
         VkDescriptorImageInfo imageInfo = {
             .sampler = vkutil::repeatSamplerAniso,
@@ -102,7 +102,7 @@ void Composite::Resize() {
         vkutil::UpdateDescriptorSet(context, 2, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     }
 
-    for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++)
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
     {
         VkDescriptorImageInfo imageInfo = {
             .sampler = vkutil::repeatSamplerAniso,
@@ -215,7 +215,7 @@ void Composite::CreateFramebuffer() {
 }
 
 void Composite::BuildDescriptors() {
-    m_descriptorSets.resize(vkutil::NUM_FRAMES_IN_FLIGHT);
+    m_descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
     {
         // Set = 0, binding 0 = cameraUBO, binding = 1 = textures
         std::vector<VkDescriptorSetLayoutBinding> bindings = {
@@ -227,11 +227,11 @@ void Composite::BuildDescriptors() {
 
         m_descriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
 
-        vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_descriptorSetLayout, vkutil::NUM_FRAMES_IN_FLIGHT, m_descriptorSets);
+        vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_descriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, m_descriptorSets);
     }
 
     // DefLighting pass
-    for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorImageInfo imageInfo = {
             .sampler = vkutil::repeatSamplerAniso,
             .imageView = LightingPass.imageView,
@@ -241,7 +241,7 @@ void Composite::BuildDescriptors() {
     }
 
     // Bloom pass
-    for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorImageInfo imageInfo = {
             .sampler = vkutil::repeatSamplerAniso,
             .imageView = BloomPass.imageView,
@@ -250,7 +250,7 @@ void Composite::BuildDescriptors() {
         vkutil::UpdateDescriptorSet(context, 1, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     }
 
-    for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++)
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
     {
         VkDescriptorImageInfo imageInfo = {
             .sampler = vkutil::repeatSamplerAniso,
@@ -262,7 +262,7 @@ void Composite::BuildDescriptors() {
     }
 
 
-    for (size_t i = 0; i < vkutil::NUM_FRAMES_IN_FLIGHT; i++)
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
     {
         VkDescriptorImageInfo imageInfo = {
             .sampler = vkutil::repeatSamplerAniso,

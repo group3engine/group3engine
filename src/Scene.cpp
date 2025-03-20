@@ -91,7 +91,7 @@ void Scene::Awake()
 
 Scene::Scene(Context &context)
     : context(context) {
-    m_LightUBO.resize(vkutil::NUM_FRAMES_IN_FLIGHT);
+    m_LightUBO.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
     // Light uniform buffers
     for (auto &buffer : m_LightUBO) {
         buffer = CreateBuffer("LightUBO", context, sizeof(vkutil::LightBuffer),
