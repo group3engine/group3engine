@@ -7,6 +7,8 @@
 #include <glm/ext.hpp>
 #include <spdlog/spdlog.h>
 
+#include "Utils.hpp"
+
 std::atomic<uint32_t> Entity::kEntityCount{0};
 
 
@@ -212,7 +214,7 @@ void Entity::RecordDrawSkinned(VkCommandBuffer aCmdBuff,
                                VK_SHADER_STAGE_FRAGMENT_BIT,
                            0, sizeof(glm::mat4), &mModelMatrix);
         // bind the joint descriptor set
-        mAnimator->BindDescriptorSet(aCmdBuff, aPipeLayout, 2);
+        mAnimator->BindDescriptorSet(aCmdBuff, aPipeLayout, 2, vkutil::currentFrame);
         // for each mesh primitive
         for (const auto &meshPrimitive : mMesh->meshPrimitives) {
             // bind the mesh primitives material

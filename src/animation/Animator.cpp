@@ -17,13 +17,15 @@ Animator::~Animator() {
                                  nullptr);
     vkDestroyDescriptorPool(mContext->device, mDescriptorPool, nullptr);
     // destroy the buffer
-    mJointBuffer.Destroy();
+    for (auto &buffer : mJointBuffers) {
+        buffer.Destroy();
+    }
 }
 void Animator::BindDescriptorSet(VkCommandBuffer aCmdBuff,
-                                 VkPipelineLayout aPipelineLayout, int aSet) {
+                                 VkPipelineLayout aPipelineLayout, int aSet, size_t aCurrentFrame) {
     // bind the descriptor set
     vkCmdBindDescriptorSets(aCmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            aPipelineLayout, aSet, 1, &mDescriptorSet, 0,
+                            aPipelineLayout, aSet, 1, &mDescriptorSet[aCurrentFrame], 0,
                             nullptr);
 }
 void Animator::Update(double aDeltaTime, Entity *aMesh) {
@@ -32,7 +34,7 @@ void Animator::Update(double aDeltaTime, Entity *aMesh) {
     // update the joints transform
     UpdateJointsTransform();
     // update the joint buffer
-    UpdateJointBuffer(aMesh);
+    UpdateJointBuffer(aMesh, vkutil::currentFrame);
 }
 Animator::Animator(Context *aContext, Skin *aSkin)
     : mContext(aContext), mSkin(aSkin) {
@@ -43,26 +45,33 @@ Animator::Animator(Context *aContext, Skin *aSkin)
                         VK_SHADER_STAGE_VERTEX_BIT, nullptr},
                    });
     // create the descriptor pool
-    vkutil::CreateDescriptorPool(*mContext, 1, 1, mDescriptorPool);
-    // allocate the descriptor set
-    vkutil::AllocateDescriptorSet(*mContext, mDescriptorPool, mDescriptorSetLayout,
-                              1, mDescriptorSet);
-    // create the joint buffer
-    mJointBuffer =
-        CreateBuffer("JointBuffer", *mContext, sizeof(glm::mat4) * mSkin->GetJoints().size(),
+    vkutil::CreateDescriptorPool(*mContext, vkutil::MAX_FRAMES_IN_FLIGHT, vkutil::MAX_FRAMES_IN_FLIGHT, mDescriptorPool);
+    // resize the descriptor sets
+    mDescriptorSet.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+    // allocate the descriptor sets
+    vkutil::AllocateDescriptorSets(*mContext, mDescriptorPool, mDescriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, mDescriptorSet);
+    // create the joint buffers
+    mJointBuffers.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+    for (auto &buffer : mJointBuffers) {
+        buffer = CreateBuffer("JointBuffer", *mContext, sizeof(glm::mat4) * mSkin->GetJoints().size(),
                      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                      VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
                          VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
                          VMA_ALLOCATION_CREATE_MAPPED_BIT);
-    // make the descriptor set point to the joint buffer
-    VkDescriptorBufferInfo bufferInfo{};
-    bufferInfo.buffer = mJointBuffer.buffer;
-    bufferInfo.offset = 0;
-    bufferInfo.range = sizeof(glm::mat4) * mSkin->GetJoints().size();
-    vkutil::UpdateDescriptorSet(*mContext, 0, bufferInfo, mDescriptorSet,
-                            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+    }
+    //
+    // make the descriptor sets point to the corresponding joint buffer
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        VkDescriptorBufferInfo bufferInfo{};
+        bufferInfo.buffer = mJointBuffers[i].buffer;
+        bufferInfo.offset = 0;
+        bufferInfo.range = sizeof(glm::mat4) * mSkin->GetJoints().size();
+        vkutil::UpdateDescriptorSet(*mContext, 0, bufferInfo, mDescriptorSet[i],
+                                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+    }
 }
-void Animator::UpdateJointBuffer(Entity *aMesh) {
+void Animator::UpdateJointBuffer(Entity *aMesh, size_t aCurrentFrame) {
     // get the joints from the skin
     auto joints = mSkin->GetJointMatrices(aMesh);
     // for each joint matrix, decompose it into its components
@@ -75,7 +84,7 @@ void Animator::UpdateJointBuffer(Entity *aMesh) {
         glm::decompose(joint, scale, rotation, translation, skew, perspective);
     }
     // upload the joints to the buffer
-    mJointBuffer.Update(*mContext, joints.data(),
+    mJointBuffers[aCurrentFrame].Update(*mContext, joints.data(),
                                sizeof(glm::mat4) * joints.size());
 }
 void Animator::UpdateAnimationSamples(double aDeltaTime) {
