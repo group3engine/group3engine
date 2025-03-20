@@ -5,7 +5,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 
-#include "CharacterEntity.hpp"
 #include "Context.hpp"
 #include "PhysicsManager.hpp"
 #include "Scene.hpp"

@@ -9,7 +9,6 @@
 #include <tracy/Tracy.hpp>
 
 #include "Camera.hpp"
-#include "CharacterEntity.hpp"
 #include "GLFW.hpp"
 #include "Image.hpp"
 #include "Input.hpp"

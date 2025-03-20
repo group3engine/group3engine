@@ -16,7 +16,6 @@
 #include "TextureManager.hpp"
 #include "Utils.hpp"
 
-#include "CharacterEntity.hpp"
 
 #include "ImGuiRenderer.hpp"
 
@@ -54,7 +53,7 @@ private:
 
     Entity &GetCharacter() { return *mCharacter; }
 
-    void SetMainCharacter(CharacterEntity *entity) {
+    void SetMainCharacter(Entity *entity) {
         mCharacter = entity;
         mHasCharacter = true;
     }
