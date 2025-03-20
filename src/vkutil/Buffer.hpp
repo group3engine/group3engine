@@ -28,6 +28,7 @@ class Buffer {
     void Destroy();
 
     void Update(const Context& context, const void *data, VkDeviceSize size_in_bytes); // update buffer with new data
+    void Upload(VkCommandBuffer cmdBuff, const void *data, VkDeviceSize size_in_bytes);
 
     template <typename T>
     void WriteToBuffer(const T &data, VkDeviceSize size_in_bytes) // write data to a buffer

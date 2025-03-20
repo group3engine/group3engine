@@ -55,6 +55,8 @@ class Scene {
         mCharacter->SetCharacterVirtual(std::move(characterVirtual));
     }
 
+    void UploadLights(VkCommandBuffer cmdBuff);
+
   private:
     Context &context;
     MeshManager *mMeshManager;
