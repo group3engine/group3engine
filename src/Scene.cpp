@@ -57,7 +57,7 @@ void Scene::UpdateUi(double aDeltaTime) {
 
     // New timer window
     mGuiTimerData.time += aDeltaTime;
-    ImGuiRenderer::NewTimer(mGuiTimerData);
+    // ImGuiRenderer::NewTimer(mGuiTimerData);
 
     for (auto &entity : m_Entities) {
         entity->UpdateUi(aDeltaTime);
@@ -85,11 +85,11 @@ void Scene::Load(const std::filesystem::path &aFilepath) {
 
 }
 
-void Scene::Initialise()
+void Scene::Initialise(const std::filesystem::path &filePath)
 {
     // Current path is the current working directory, i.e., where the root CMakeLists.txt is
     std::filesystem::path basePath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets";
-    std::filesystem::path gltfPath = basePath / Sample::SampleObby;
+    std::filesystem::path gltfPath = basePath / filePath;
 
     // Define Light sources
     Light directionalLight;

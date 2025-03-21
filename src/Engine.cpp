@@ -69,7 +69,7 @@ bool Engine::Initialize() {
     
     PhysicsManager::get().StartUp();
 
-    mScene->Initialise();
+    mScene->Initialise(Sample::SampleObbyTestScene);
 
     mRenderer->CreateRenderPasses();
     // call the scene awake function
@@ -87,9 +87,9 @@ void Engine::Shutdown() {
     mRenderer.reset();
     mScene->Destroy();
 
-    mMeshManager.reset();
-    mMaterialManager.reset();
-    mTextureManager.reset();
+    mMeshManager->Destroy();
+    mMaterialManager->Destroy();
+    mTextureManager->Destroy();
 
     m_context.Destroy(); // Free vulkan device, allocator, window
     Platform::get().ShutDown();
@@ -110,15 +110,49 @@ void Engine::Run() {
 
         // See imgui.cpp
         // "(So you want to try calling NewFrame() as early as you can in your main loop to be able to use Dear ImGui everywhere)"
-        ImGuiRenderer::NewFrame();
+        // ImGuiRenderer::NewFrame();
 
         PollInputEvents();
 
         Update(GlobalUtil::deltaTime);
 
-        ImGuiRenderer::EndFrame();
+        // ImGuiRenderer::EndFrame();
 
         Render();
+
+        // Swap out scene
+        if (IsKeyPressed(KEY::eR)) {
+            // vkDestroyBuffer():  can't be called on VkBuffer that is currently in use by VkCommandBuffer
+            vkQueueWaitIdle(m_context.graphicsQueue);
+            vkQueueWaitIdle(m_context.presentQueue);
+
+            mScene->GetActiveScene()->Destroy();
+
+            mMaterialManager->Destroy();
+            mMeshManager->Destroy();
+            mTextureManager->Destroy();
+
+            // HACK: As managers do not have an initialise function
+            // TODO: Don't even try doing this, just make the managers proper
+            // singletons and change behaviour and API appropriately.
+            mMaterialManager.reset(new MaterialManager(m_context));
+            mMeshManager.reset(new MeshManager(m_context));
+            mTextureManager.reset(new TextureManager(m_context));
+
+            // ImGuiRenderer::RemoveTextures();
+
+            // TODO: Check if GetActiveScene is used everywhere
+            // Make sure the scene pointer that the renderer, camera, etc. uses
+            // is correct.
+
+            // TODO: Set the managers of the scene with the new ones
+
+            mScene->GetActiveScene()->Initialise(Sample::SampleObby);
+
+            // ImGuiRenderer::AddTextures(mTextureManager.get());
+
+            mScene->Awake();
+        }
 
         FrameMark;
     }

@@ -25,7 +25,7 @@ class MaterialManager {
 
     void DebugOutputMaterials();
 
-    ~MaterialManager() {
+    void Destroy() {
         // destroy the descriptor pool
         vkDestroyDescriptorPool(mContext.device, mDescriptorPool, nullptr);
         // destroy the descriptor set layout

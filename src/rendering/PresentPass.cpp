@@ -96,7 +96,7 @@ void PresentPass::Execute(VkCommandBuffer cmd, uint32_t imageIndex) {
     // Draw large triangle here
     vkCmdDraw(cmd, 3, 1, 0, 0);
 
-    ImGuiRenderer::Render(cmd, context, imageIndex);
+    // ImGuiRenderer::Render(cmd, context, imageIndex);
 
     vkCmdEndRenderPass(cmd);
 

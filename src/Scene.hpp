@@ -41,7 +41,7 @@ private:
     void Update(double aDeltaTime);
     void UpdateUi(double aDeltaTime);
 
-    void Initialise();
+    void Initialise(const std::filesystem::path &filePath);
     
     void Awake();
 

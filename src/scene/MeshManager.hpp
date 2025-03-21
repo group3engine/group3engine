@@ -12,7 +12,7 @@ class MeshManager {
     explicit MeshManager(Context &aContext)
         : mContext(aContext){};
 
-    ~MeshManager() {
+    void Destroy() {
         for (auto &meshGPU : mMeshesGPU) {
             meshGPU.mVertices.Destroy();
             meshGPU.mIndices.Destroy();

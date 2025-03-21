@@ -23,15 +23,6 @@ void TextureManager::addTexture(const std::filesystem::path &aTexturePath,
     mTextureMap[aTextureName] = std::move(texture);
 }
 
-TextureManager::~TextureManager() {
-    // free the command pool
-    vkDestroyCommandPool(mContext.device, mCommandPool, nullptr);
-
-    for (auto &image : mTextureMap) {
-        image.second.image.Destroy(mContext.device);
-    }
-}
-
 TextureManager::TextureManager(Context &aContext)
     : mContext(aContext) {
     // create a default (white) texture
