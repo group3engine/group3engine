@@ -321,8 +321,8 @@ void Engine::UpdateLogic() {
 void Engine::Update(double deltaTime) {
     ZoneScopedN("Engine::Update");
 
-    mScene->Update(deltaTime);
     UpdateLogic();
+    mScene->Update(deltaTime);
     mScene->UpdateUi(deltaTime);
     PhysicsManager::get().UpdatePhysics(deltaTime);
     mRenderer->Update(deltaTime);
