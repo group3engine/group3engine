@@ -246,19 +246,19 @@ void Scene::Initialise()
                         bodyCreationSettings.mIsSensor = entity->IsSensor();
 
                         // make the rigid body with the settings
-                        RigidBody entity_rigid_body = RigidBody(bodyCreationSettings);
+                        auto entity_rigid_body = std::make_unique<RigidBody>(bodyCreationSettings);
 
                         // initialise the body in the physics manager and do not activate it
-                        entity_rigid_body.Init(PhysicsManager::get(), false);
+                        entity_rigid_body->Init(PhysicsManager::get(), false);
 
                         if(entity->IsSensor())
                         {
                             // only do this part if its supposed to DO something when collided with (i.e. sensors)
-                            PhysicsManager::get().RegisterEntity(entity, entity_rigid_body.mBodyId);
+                            PhysicsManager::get().RegisterEntity(entity, entity_rigid_body->mBodyId);
                         }
                         
                         PhysicsManager::get().mPhysicsSystem.OptimizeBroadPhase();
-                        entity->AddRigidBody(std::make_unique<RigidBody>(entity_rigid_body));
+                        entity->AddRigidBody(std::move(entity_rigid_body));
                     }
                     else if(entity->GetPhysicsType() == PhysicsType::KINEMATIC)
                     {
@@ -299,18 +299,18 @@ void Scene::Initialise()
                         bodyCreationSettings.mIsSensor = entity->IsSensor();
 
                         // make the rigid body with the settings
-                        RigidBody entity_rigid_body = RigidBody(bodyCreationSettings);
+                        auto entity_rigid_body = std::make_unique<RigidBody>(bodyCreationSettings);
 
                         // initialise the body in the physics manager and activate it
-                        entity_rigid_body.Init(PhysicsManager::get(), true);
+                        entity_rigid_body->Init(PhysicsManager::get(), true);
 
                         if(entity->IsSensor())
                         {
                             // only do this part if its supposed to DO something when collided with (i.e. sensors)
-                            PhysicsManager::get().RegisterEntity(entity, entity_rigid_body.mBodyId);
+                            PhysicsManager::get().RegisterEntity(entity, entity_rigid_body->mBodyId);
                         }
                         PhysicsManager::get().mPhysicsSystem.OptimizeBroadPhase();
-                        entity->AddRigidBody(std::make_unique<RigidBody>(entity_rigid_body));
+                        entity->AddRigidBody(std::move(entity_rigid_body));
                     }
                     else if(entity->GetPhysicsType() == PhysicsType::DYNAMIC)
                     {
@@ -351,18 +351,18 @@ void Scene::Initialise()
                         bodyCreationSettings.mIsSensor = entity->IsSensor();
 
                         // make the rigid body with the settings
-                        RigidBody entity_rigid_body = RigidBody(bodyCreationSettings);
+                        auto entity_rigid_body = std::make_unique<RigidBody>(bodyCreationSettings);
 
                         // initialise the body in the physics manager and activate it
-                        entity_rigid_body.Init(PhysicsManager::get(), true);
+                        entity_rigid_body->Init(PhysicsManager::get(), true);
 
                         if(entity->IsSensor())
                         {
                             // only do this part if its supposed to DO something when collided with (i.e. sensors)
-                            PhysicsManager::get().RegisterEntity(entity, entity_rigid_body.mBodyId);
+                            PhysicsManager::get().RegisterEntity(entity, entity_rigid_body->mBodyId);
                         }
                         PhysicsManager::get().mPhysicsSystem.OptimizeBroadPhase();
-                        entity->AddRigidBody(std::make_unique<RigidBody>(entity_rigid_body));
+                        entity->AddRigidBody(std::move(entity_rigid_body));
                     }
 
                 }

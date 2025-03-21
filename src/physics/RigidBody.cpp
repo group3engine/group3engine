@@ -4,6 +4,13 @@
 
 #include "PhysicsManager.hpp"
 
+RigidBody::~RigidBody() {
+    // Remove body-entity mapping
+    PhysicsManager::get().UnregisterBody(mBodyId);
+
+    // Remove and destroy body
+    PhysicsManager::get().RemoveAndDestroyBody(mBodyId);
+}
 
 // Add rigid body to physics system
 void RigidBody::Init(PhysicsManager &physicsManager, bool activate) {
