@@ -26,7 +26,11 @@ private:
     static Scene* sActiveScene;
     static void SetActiveScene(Scene* scene) { sActiveScene = scene; }
   public:
-    explicit Scene(Context &context);
+    explicit Scene(Context &context,
+                   MaterialManager *materialManager,
+                   MeshManager *meshManager,
+                   TextureManager *textureManager);
+
     void Load(const std::filesystem::path &aFilepath);
 
     void DrawOpaque(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
@@ -65,8 +69,8 @@ private:
 
   private:
     Context &context;
-    MeshManager *mMeshManager;
     MaterialManager *mMaterialManager;
+    MeshManager *mMeshManager;
     TextureManager *mTextureManager;
 
     std::vector<size_t> m_FrontMeshes;

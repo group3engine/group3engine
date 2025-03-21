@@ -8,6 +8,9 @@
 #include "Renderer.hpp"
 #include "RigidBody.hpp"
 
+class MaterialManager;
+class MeshManager;
+class TextureManager;
 
 class Engine {
   public:
@@ -28,4 +31,9 @@ class Engine {
 
     std::shared_ptr<Scene> mScene;
     std::unique_ptr<Renderer> mRenderer;
+
+    // Managers
+    std::unique_ptr<MeshManager> mMeshManager;
+    std::unique_ptr<MaterialManager> mMaterialManager;
+    std::unique_ptr<TextureManager> mTextureManager;
 };

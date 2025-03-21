@@ -70,16 +70,12 @@ void Scene::Destroy()
 	{
 		buffer.Destroy();
 	}
-        // delete the mesh manager, material manager and texture manager
-        delete mMeshManager;
-        delete mMaterialManager;
-        delete mTextureManager;
 
-        // delete the entities
-        for (auto &entity : m_Entities) {
-            delete entity;
-        }
-        m_Entities.clear();
+    // delete the entities
+    for (auto &entity : m_Entities) {
+        delete entity;
+    }
+    m_Entities.clear();
 }
 
 void Scene::Load(const std::filesystem::path &aFilepath) {
@@ -387,8 +383,15 @@ void Scene::Awake()
     }
 }
 
-Scene::Scene(Context &context)
-    : context(context) {
+Scene::Scene(Context &context,
+             MaterialManager *materialManager,
+             MeshManager *meshManager,
+             TextureManager *textureManager)
+    : context(context),
+    mMaterialManager(materialManager),
+    mMeshManager(meshManager),
+    mTextureManager(textureManager)
+{
     m_LightUBO.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
     // Light uniform buffers
     for (auto &buffer : m_LightUBO) {
@@ -399,10 +402,6 @@ Scene::Scene(Context &context)
                                   VMA_ALLOCATION_CREATE_MAPPED_BIT);
     }
 
-    // create the mesh manager, material manager and texture manager
-    mMeshManager = new MeshManager(context);
-    mMaterialManager = new MaterialManager(context);
-    mTextureManager = new TextureManager(context);
     SetActiveScene(this);
 }
 

@@ -56,7 +56,14 @@ bool Engine::Initialize() {
         m_isRunning = true;
     }
 
-    mScene = std::make_shared<Scene>(m_context);
+    mMaterialManager = std::make_unique<MaterialManager>(m_context);
+    mMeshManager = std::make_unique<MeshManager>(m_context);
+    mTextureManager = std::make_unique<TextureManager>(m_context);
+
+    mScene = std::make_shared<Scene>(m_context,
+                                     mMaterialManager.get(),
+                                     mMeshManager.get(),
+                                     mTextureManager.get());
 
     mRenderer = std::make_unique<Renderer>(m_context, mScene);
     
@@ -67,8 +74,6 @@ bool Engine::Initialize() {
     mRenderer->CreateRenderPasses();
     // call the scene awake function
     mScene->Awake();
-
-    // ---END OF PHYSICS TEST INITIALISATION---
 
     SPDLOG_DEBUG("Engine initialised.");
 
@@ -81,6 +86,11 @@ void Engine::Shutdown() {
     mRenderer->Destroy();
     mRenderer.reset();
     mScene->Destroy();
+
+    mMeshManager.reset();
+    mMaterialManager.reset();
+    mTextureManager.reset();
+
     m_context.Destroy(); // Free vulkan device, allocator, window
     Platform::get().ShutDown();
     PhysicsManager::get().ShutDown();
