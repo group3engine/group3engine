@@ -22,6 +22,7 @@
 #include <Jolt/Physics/Character/CharacterVirtual.h>
 
 #include "Input.hpp"
+#include <glm/vec3.hpp>
 
 using namespace JPH;
 
@@ -58,7 +59,7 @@ public:
 	virtual void 			Initialize();
 
 	// Process input
-	void					ProcessInput(const ProcessInputParams &inParams);
+	void					ProcessInput(glm::vec3 controlInput, bool jump);
 
 	// Update the test, called before the physics update
 	virtual void			PrePhysicsUpdate(const PreUpdateParams &inParams);

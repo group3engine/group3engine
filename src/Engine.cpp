@@ -9,7 +9,6 @@
 #include <tracy/Tracy.hpp>
 
 #include "Camera.hpp"
-#include "CharacterEntity.hpp"
 #include "Entity.hpp"
 #include "GLFW.hpp"
 #include "Image.hpp"
@@ -28,7 +27,6 @@
 #include "glm/fwd.hpp"
 #include "glm/trigonometric.hpp"
 
-#include "CharacterVirtualTest.h"
 
 #include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
@@ -106,32 +104,7 @@ void Engine::Run() {
 
         PollInputEvents();
 
-
-
-        ProcessInputParams processInputParams{};
-        auto cameraForward = camera->GetDirection();
-        processInputParams.mCameraState.mForward = {cameraForward.x, cameraForward.y, cameraForward.z};
-
-        if (mScene->HasCharacter()) {
-            mScene->GetCharacter().ProcessInput(processInputParams);
-        }
-
-        PreUpdateParams preUpdateParams{};
-        preUpdateParams.mDeltaTime = GlobalUtil::deltaTime;
-
-        if (mScene->HasCharacter()) {
-            mScene->GetCharacter().PrePhysicsUpdate(preUpdateParams);
-        }
-
-        if (mScene->HasCharacter()) {
-            auto characterVirtualPos = mScene->GetCharacter().GetCharacterPosition();
-            mScene->GetCharacter().SetCharacterPositionOffset(
-                characterVirtualPos.GetX(), characterVirtualPos.GetY(), characterVirtualPos.GetZ());
-
-            Update(GlobalUtil::deltaTime);
-        } else {
-            Update(GlobalUtil::deltaTime);
-        }
+        Update(GlobalUtil::deltaTime);
 
         ImGuiRenderer::EndFrame();
 

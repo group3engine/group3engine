@@ -5,7 +5,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 
-#include "CharacterEntity.hpp"
 #include "Context.hpp"
 #include "PhysicsManager.hpp"
 #include "Scene.hpp"
@@ -77,6 +76,9 @@ class Camera {
     void UpdateCameraRotation(double deltaTime);
     void UpdateCameraAngles(const glm::vec2 &offset);
 
+
+    void SetTeleportCallbackFunction(const std::function<void(glm::vec3)> &callback) { m_teleportCallback = callback; }
+
     // Compute the camera direction based on the cameras updated rotation
     void UpdateCameraDirection();
 
@@ -132,6 +134,7 @@ class Camera {
     double yaw = 90.0f;
     double pitch = 0.0f;
     float zoom_level = 1.f;
+    function<void(glm::vec3)> m_teleportCallback = nullptr;
 
     const PhysicsManager* m_physics_reference;
     Scene* m_scene_pointer;

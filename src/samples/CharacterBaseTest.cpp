@@ -14,11 +14,11 @@
 #include <Jolt/Physics/Constraints/HingeConstraint.h>
 #include <Jolt/Core/StringTools.h>
 
-#include "Input.hpp"
+#include "../core/Input.hpp"
 
-#include "PhysicsHelpers.hpp"
+#include "../physics/PhysicsHelpers.hpp"
 
-#include "Camera.hpp"
+#include "../Camera.hpp"
 
 using namespace JPH;
 
@@ -46,36 +46,10 @@ void CharacterBaseTest::Initialize()
 	}
 }
 
-void CharacterBaseTest::ProcessInput(const ProcessInputParams &inParams)
+void CharacterBaseTest::ProcessInput(glm::vec3 controlInput, bool jump)
 {
-        if(Camera::GetMainCamera()->isInFollowCharacterMode()) {
-            // Determine controller input
-            mControlInput = Vec3::sZero();
-            if (IsKeyDown(KEY::eA))
-                mControlInput.SetZ(-1);
-            if (IsKeyDown(KEY::eD))
-                mControlInput.SetZ(1);
-            if (IsKeyDown(KEY::eW))
-                mControlInput.SetX(1);
-            if (IsKeyDown(KEY::eS))
-                mControlInput.SetX(-1);
-            if (mControlInput != Vec3::sZero())
-                mControlInput = mControlInput.Normalized();
-            if (abs(GetGamepadAxis(GAMEPAD_AXIS::eLEFT_Y)) > 0.1f)
-                mControlInput.SetX(-GetGamepadAxis(GAMEPAD_AXIS::eLEFT_Y));
-            if (abs(GetGamepadAxis(GAMEPAD_AXIS::eLEFT_X)) > 0.1f)
-                mControlInput.SetZ(GetGamepadAxis(GAMEPAD_AXIS::eLEFT_X));
-
-            // Rotate controls to align with the camera
-            Vec3 cam_fwd = inParams.mCameraState.mForward;
-            cam_fwd.SetY(0.0f);
-            cam_fwd = cam_fwd.NormalizedOr(Vec3::sAxisX());
-            Quat rotation = Quat::sFromTo(Vec3::sAxisX(), cam_fwd);
-            mControlInput = rotation * mControlInput;
-
-            // Check actions
-            mJump = IsKeyPressed(KEY::eSPACE) || IsGamepadButtonPressed(GAMEPAD_BUTTON::eA);
-        }
+        mJump = jump;
+        mControlInput = Vec3(controlInput.x, controlInput.y, controlInput.z);
 }
 
 void CharacterBaseTest::PrePhysicsUpdate(const PreUpdateParams &inParams)

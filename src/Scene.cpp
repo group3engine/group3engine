@@ -11,6 +11,8 @@
 #include "ImGuiRenderer.hpp"
 #include "SampleGLTFFilePaths.hpp"
 
+Scene* Scene::sActiveScene = nullptr;
+
 void Scene::AddLightSource(Light &LightSource) {
     m_Lights.push_back(std::move(LightSource));
 }
@@ -375,29 +377,6 @@ void Scene::Initialise()
         }
     }
 
-
-    // Find character
-    auto &entities = GetEntities();
-    auto it = std::find_if(entities.begin(), entities.end(),
-                           [](const auto &entity) { return entity->IsCharacter(); });
-
-    if (it != entities.end()) {
-        CharacterEntity* characterEntity = dynamic_cast<CharacterEntity*>(*it);
-        characterEntity->SetScene(this);
-
-        auto characterVirtual = std::make_unique<CharacterVirtualTest>();
-        characterVirtual->SetPhysicsSystem(&PhysicsManager::get().mPhysicsSystem);
-        characterVirtual->SetJobSystem(PhysicsManager::get().mJobSystem.get());
-        characterVirtual->SetTempAllocator(PhysicsManager::get().mTempAllocator.get());
-        characterVirtual->SetCustomContactListener(&PhysicsManager::get().mContactListener);
-        characterVirtual->Initialize();
-        PhysicsManager::get().RegisterEntity(characterEntity, characterVirtual->GetCharacter()->GetInnerBodyID());
-
-        CreateCharacter(characterEntity, std::move(characterVirtual));
-        SetHasCharacter(true);
-
-        characterEntity->Reset();
-    }
 }
 
 void Scene::Awake()
@@ -424,6 +403,7 @@ Scene::Scene(Context &context)
     mMeshManager = new MeshManager(context);
     mMaterialManager = new MaterialManager(context);
     mTextureManager = new TextureManager(context);
+    SetActiveScene(this);
 }
 
 void Scene::DrawOpaque(VkCommandBuffer cmd,

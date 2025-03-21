@@ -10,6 +10,7 @@
 #include "Jolt/Physics/Collision/CastResult.h"
 #include "Jolt/Physics/Collision/NarrowPhaseQuery.h"
 #include "Jolt/Physics/Collision/RayCast.h"
+#include <Jolt/Physics/Collision/ObjectLayer.h>
 #include "PhysicsManager.hpp"
 #include "Utils.hpp"
 #include "Buffer.hpp"
@@ -113,8 +114,8 @@ void Camera::UpdateCameraMovement() {
                               third_person_camera_offset.z);
 
         JPH::RayCastResult result;
-        bool hit =
-            m_physics_reference->get().mPhysicsSystem.GetNarrowPhaseQuery().CastRay(ray, result);
+        JPH::SpecifiedObjectLayerFilter objectLayerFilter{Layers::NON_MOVING};
+        bool hit = m_physics_reference->get().mPhysicsSystem.GetNarrowPhaseQuery().CastRay(ray, result, {}, objectLayerFilter, {});
 
         if (hit) {
             m_position = character_position + third_person_camera_offset * result.mFraction;
@@ -145,8 +146,10 @@ void Camera::UpdateCameraMovement() {
             m_position -= m_cameraSpeed * m_up;
         }
         if (inputMap[std::size_t(EInputState::TELEPORT)]) {
-            m_scene_pointer->GetCharacter().SetCheckpoint(m_position);
-            m_scene_pointer->GetCharacter().Reset();
+            // call the teleport callback
+            if (m_teleportCallback) {
+                m_teleportCallback(m_position);
+            }
         }
     }
 }

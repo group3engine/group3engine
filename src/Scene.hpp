@@ -16,12 +16,15 @@
 #include "TextureManager.hpp"
 #include "Utils.hpp"
 
-#include "CharacterVirtualTest.h"
-#include "CharacterEntity.hpp"
 
 #include "ImGuiRenderer.hpp"
 
 class Scene {
+public:
+    static Scene* GetActiveScene() { return sActiveScene; }
+private:
+    static Scene* sActiveScene;
+    static void SetActiveScene(Scene* scene) { sActiveScene = scene; }
   public:
     explicit Scene(Context &context);
     void Load(const std::filesystem::path &aFilepath);
@@ -51,11 +54,11 @@ class Scene {
     void SetHasCharacter(bool hasCharacter) { mHasCharacter = hasCharacter; }
     [[nodiscard]] bool HasCharacter() const { return mHasCharacter; }
 
-    CharacterEntity &GetCharacter() { return *mCharacter; }
+    Entity &GetCharacter() { return *mCharacter; }
 
-    void CreateCharacter(CharacterEntity *entity, std::unique_ptr<CharacterVirtualTest> characterVirtual) {
+    void SetMainCharacter(Entity *entity) {
         mCharacter = entity;
-        mCharacter->SetCharacterVirtual(std::move(characterVirtual));
+        mHasCharacter = true;
     }
 
     void UploadLights(VkCommandBuffer cmdBuff);
@@ -76,7 +79,7 @@ class Scene {
     std::vector<Skin> m_Skins;
 
     bool mHasCharacter = false;
-    CharacterEntity *mCharacter;
+    Entity *mCharacter;
 
     gui::TimerData mGuiTimerData{};
 };
