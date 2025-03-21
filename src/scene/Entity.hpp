@@ -132,7 +132,7 @@ class Entity {
 
     void SetPhysicsType(PhysicsType input_physics_type) { mPhysicsType = input_physics_type; }
 
-    PhysicsType GetPhysicsType() { return mPhysicsType; }
+    PhysicsType GetPhysicsType() const { return mPhysicsType; }
 
     /// Get the number of frames that have passed since the entity was created
     [[nodiscard]] size_t GetFrameNumber() const {return mFrameNumber;}
