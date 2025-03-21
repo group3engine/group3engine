@@ -29,6 +29,7 @@ void SampleJoltCharacter::Initialize()
 	settings->mSupportingVolume = Plane(Vec3::sAxisY(), -cCharacterRadiusStanding); // Accept contacts that touch the lower sphere of the capsule
 	settings->mEnhancedInternalEdgeRemoval = sEnhancedInternalEdgeRemoval;
     settings->mInnerBodyShape = new BoxShape(Vec3(cCharacterRadiusStanding, cCharacterRadiusStanding, cCharacterRadiusStanding));
+	settings->mInnerBodyLayer = Layers::MOVING;
 	mCharacter = new CharacterVirtual(settings, RVec3::sZero(), Quat::sIdentity(), 0, mPhysicsSystem);
 
 	mCharacter->SetListener(this);
