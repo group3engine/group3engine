@@ -57,6 +57,10 @@ namespace ImGuiRenderer
     // Todo: When resizing, somehow clear the list and add the new re-sized versions?
     void AddTexture(VkSampler sampler, VkImageView imageView, VkImageLayout imageLayout);
 
+    // Load textures with the TextureManager and add UI textures to ImGuiRenderer
+    void AddTextures(TextureManager *textureManager);
+    // Remove UI textures from ImGuiRenderer
+    void RemoveTextures();
 
     static std::vector<VkDescriptorPoolSize> ImGuiPoolSizes = {
         {VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
@@ -78,7 +82,7 @@ namespace ImGuiRenderer
     void NewFinishPopup(const gui::FinishPopupData &data);
     void NewTimer(const gui::TimerData &data);
 
-    void Initialize(const Context &context, TextureManager *textureManager);
+    void Initialize(const Context &context);
     void Shutdown(const Context &context);
     void NewFrame();
     void Update(const std::shared_ptr<Scene>& scene, const std::shared_ptr<Camera>& camera);

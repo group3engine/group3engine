@@ -26,7 +26,7 @@ namespace {
     bool enableFinishPopup = true;
 }
 
-void ImGuiRenderer::Initialize(const Context &context, TextureManager *textureManager) {
+void ImGuiRenderer::Initialize(const Context &context) {
     VkDescriptorPoolCreateInfo pool_info = {};
     pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
@@ -60,8 +60,9 @@ void ImGuiRenderer::Initialize(const Context &context, TextureManager *textureMa
     ImGui_ImplVulkan_Init(&info);
 
     io.Fonts->AddFontDefault();
+}
 
-    // Load texture
+void ImGuiRenderer::AddTextures(TextureManager *textureManager) {
     // TODO: Cleanup
     {
         std::filesystem::path path = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets" / "heart.png";
@@ -81,6 +82,24 @@ void ImGuiRenderer::Initialize(const Context &context, TextureManager *textureMa
         myTexData.Height = texture->image.mHeight;
         SPDLOG_INFO("ImGui loaded {} with, width {} height {}", textureName, texture->image.mWidth, texture->image.mHeight);
     }
+}
+
+void ImGuiRenderer::RemoveTextures() {
+    // When a scene is unloaded and the TextureManager is cleared, remove all
+    // UI textures so we can then immediately load them and add them again.
+
+    // This will be fine if we assume loading a loading screen texture (circle
+    // of dots maybe) is instant.
+
+    // TODO: We could have a separate part of texture manager that deals with
+    // UI textures to get around this problem. Only clearing non-UI textures.
+
+    // TODO: Slight asymmetry here with how AddTextures uses the TextureManager
+    // but this function does not. A better implementation would use the
+    // TextureManager and selectively remove textures from it.
+
+    // Free the descriptor set associated with the texture
+    ImGui_ImplVulkan_RemoveTexture(myTexData.DS);
 }
 
 void ImGuiRenderer::NewHeartSprite(const ImVec2 &offset) {
