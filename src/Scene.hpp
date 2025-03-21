@@ -36,6 +36,9 @@ private:
     void AddLightSource(Light& LightSource);
     void Update(double aDeltaTime);
     void UpdateUi(double aDeltaTime);
+
+    void Initialise();
+    
     void Awake();
 
     void Destroy();
@@ -57,6 +60,8 @@ private:
         mCharacter = entity;
         mHasCharacter = true;
     }
+
+    void UploadLights(VkCommandBuffer cmdBuff);
 
   private:
     Context &context;

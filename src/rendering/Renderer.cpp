@@ -238,6 +238,21 @@ void Renderer::Render() {
         VK_CHECK(vkBeginCommandBuffer(cmd, &beginInfo), "Failed to begin command buffer");
 
         {
+            ZoneScopedN("vk::Upload");
+
+            m_camera->Upload(cmd);
+
+            m_scene->UploadLights(cmd);
+
+            // Upload animation data to GPU
+            for (auto *entity : m_scene->GetEntities()) {
+                if (entity->HasAnimator()) {
+                    entity->GetAnimator().UploadJointBuffer(cmd);
+                }
+            }
+        }
+
+        {
             TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "vk::Frame", tracy::Color::Crimson);
 
             m_ShadowMap->Execute(cmd);
@@ -265,6 +280,7 @@ void Renderer::Render() {
 
 void Renderer::Submit() {
     ZoneScopedN("Renderer::Submit");
+    ZoneValue(vkutil::currentFrame);
 
     VkPipelineStageFlags waitStage = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 

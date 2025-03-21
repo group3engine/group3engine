@@ -17,7 +17,7 @@ class RigidBody {
     RigidBody(JPH::BodyCreationSettings joltCreationSettings)
         : mJoltCreationSettings(joltCreationSettings) {}
 
-    void Init(PhysicsManager &physicsManager);
+    void Init(PhysicsManager &physicsManager, bool activate);
 
     glm::vec4 GetPosition() const;
     void SetPosition(glm::vec3 glm_position) const;

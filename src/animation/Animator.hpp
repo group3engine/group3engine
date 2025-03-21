@@ -42,9 +42,11 @@ class Animator {
 
     void SetTimeScale(float aTimeScale);
 
+    void UploadJointBuffer(VkCommandBuffer cmdBuff);
+
   private:
     // update the joint buffer
-    void UpdateJointBuffer(Entity* aMesh, size_t aCurrentFrame);
+    void UpdateJointBuffer(Entity* aMesh);
     // update the animation samples
     void UpdateAnimationSamples(double aDeltaTime);
     // update the joints transform based on the animation samples
@@ -85,6 +87,8 @@ class Animator {
     double mTotalBlendTime = 0.f;
     double mCurrentBlendingTime = 0.f;
     std::string mCurrentAnimationName{};
+
+    std::vector<glm::mat4> mJoints;
 };
 
 #endif // GROUP3ENGINE_ANIMATOR_HPP

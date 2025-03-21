@@ -57,12 +57,12 @@ void Camera::Update(uint32_t width, uint32_t height, [[maybe_unused]] double del
     UpdateCameraRotation(deltaTime);
     UpdateCameraMovement();
     UpdateTransforms(width, height);
+}
 
+void Camera::Upload(VkCommandBuffer cmdBuff) {
     // Write new data to the buffer to update uniform
     VkDeviceSize size = sizeof(CameraTransform);
-    m_cameraUBO[vkutil::currentFrame].Update(context, &m_transform, size);
-
-
+    m_cameraUBO[vkutil::currentFrame].Upload(cmdBuff, &m_transform, size);
 }
 
 void Camera::UpdateTransforms(uint32_t width, uint32_t height) {

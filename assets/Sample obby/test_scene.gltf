@@ -5841,6 +5841,7 @@
 		{
 			"extras":{
 				"entity_type":"default",
+                "physics_type" : "dynamic",
 				"is_sensor":false,
 				"is_solid":true
 			},
@@ -6426,9 +6427,9 @@
 			"extras":{
 				"tags":"checkpoint",
 				"entity_type":"movingTest",
+                "physics_type" : "kinematic",
 				"is_sensor":false,
 				"is_solid":true,
-				"is_kinematic":true,
 				"_RNA_UI":{
 					"is_sensor":{
 						"use_export":true
