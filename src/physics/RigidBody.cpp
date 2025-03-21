@@ -6,9 +6,17 @@
 
 
 // Add rigid body to physics system
-void RigidBody::Init(PhysicsManager &physicsManager) {
-    mBodyId = physicsManager.mPhysicsSystem.GetBodyInterface().CreateAndAddBody(
+void RigidBody::Init(PhysicsManager &physicsManager, bool activate) {
+    if(activate)
+    {
+        mBodyId = physicsManager.mPhysicsSystem.GetBodyInterface().CreateAndAddBody(
+        mJoltCreationSettings, EActivation::Activate);
+    }
+    else 
+    {
+        mBodyId = physicsManager.mPhysicsSystem.GetBodyInterface().CreateAndAddBody(
         mJoltCreationSettings, EActivation::DontActivate);
+    }
 
     // Check that the physics system has not run out of bodies
     if (mBodyId.IsInvalid()) {

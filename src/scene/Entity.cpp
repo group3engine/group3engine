@@ -39,7 +39,7 @@ void Entity::UpdateWorldTransform()
     if (mHasCharacter) {
         mWorldTransform = glm::translate(mCharacterPositionOffset) * mParentTransform * mLocalTransform.getMatrix();
     }
-    else if (mIsKinematic && mHasRigidBody) {
+    else if ((GetPhysicsType() == PhysicsType::KINEMATIC || GetPhysicsType() == PhysicsType::DYNAMIC) && mHasRigidBody) {
         // also apply physics transformations
         auto physicsTransform = glm::transpose(mRigidBody->GetWorldTransform());
         // get the physicsTransform in the same space as the local transform
@@ -284,7 +284,7 @@ void Entity::BaseUpdate(double deltaTime) {
     if (mAnimator) {
         mAnimator->Update(deltaTime, this);
     }
-    if(mIsKinematic || mHasCharacter)
+    if(GetPhysicsType() == PhysicsType::KINEMATIC || GetPhysicsType() == PhysicsType::DYNAMIC || mHasCharacter)
     {
         UpdateWorldTransform();
         SetPhysicsTransform();

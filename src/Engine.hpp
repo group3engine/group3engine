@@ -13,7 +13,6 @@
 class Engine {
   public:
     Engine();
-    void InitScene();
     bool Initialize();
     void Run();
     void Shutdown();
