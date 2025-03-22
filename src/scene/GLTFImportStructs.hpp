@@ -188,4 +188,5 @@ struct Transform {
         return result;
     }
 };
+Transform ZEROTRANSFORM = Transform{glm::vec3(0.0f), glm::quat(0.0f, 0.0f, 0.0f, 1.0f), glm::vec3(1.0f)};
 #endif // VULKANTIME_GLTFIMPORTSTRUCTS_HPP
