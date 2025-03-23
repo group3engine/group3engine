@@ -14,6 +14,12 @@ using Colour = glm::vec4;
 // alias size to vec3
 using Size = glm::vec3;
 
+struct Emission
+{
+    glm::vec3 Position;
+    glm::vec3 Velocity;
+};
+
 /// The space in which the simulation is done
 enum class SimulationSpace {
     /// The simulation is done in world space
@@ -56,7 +62,7 @@ union Shape{
     } box;
     /// a cone shape
     struct {
-        /// the angle of the cone
+        /// the angle of the cone, in radians
         float angle = 25.0f;
         /// the radius of the cone
         float radius = 1.0f;
@@ -66,6 +72,16 @@ union Shape{
         EmitFrom emitFrom = EmitFrom::Volume;
     } cone;
 };
+
+// the functions to randomly choose a particle spawn location
+// we will do these with the method where you choose a random point in the bounding box and repeat until it is inside the sphere
+// sphere
+Emission SphereParticleSpawn(int &seed, Shape const &sphereShape);
+// box
+Emission BoxParticleSpawn(int &seed, Shape const &boxShape);
+// cone
+Emission ConeParticleSpawn(int &seed, Shape const &coneShape);
+
 
 /// The type of shape
 enum class ShapeType {
@@ -91,12 +107,14 @@ struct ParticleSystemEmissionShape
 
 /// The mesh types a particle can be rendered as
 enum class ParticleMeshType {
-    /// A billboard particle
+    /// A billboard particle, always facing the camera and axis aligned
     Billboard,
     /// A horizontal billboard particle (always perpendicular to the y axis)
     HorizontalBillboard,
     /// A vertical billboard particle (always parallel to the y axis)
     VerticalBillboard,
+    /// A quad, not aligned to any axis
+    Quad,
     /// A mesh particle
     Mesh,
 };
@@ -128,8 +146,6 @@ struct ParticleSystemRenderSettings
     int sortMode = 0;
     /// TODO: shadow casting mode
     bool castShadows = false;
-
-
 };
 
 
@@ -170,18 +186,61 @@ struct ParticleSystemSettings
     ParticleSystemEmissionSettings emission = ParticleSystemEmissionSettings();
     /// The shape of the emission.
     ParticleSystemEmissionShape emissionShape = ParticleSystemEmissionShape();
+    /// The render settings
+    ParticleSystemRenderSettings renderSettings = ParticleSystemRenderSettings();
 
 };
+
+// random function to use for seeding - source: https://github.com/PanosK92/SpartanEngine/blob/master/data/shaders/common.hlsl
+inline float get_hash(uint seed)
+{
+    seed ^= seed >> 17;
+    seed *= 0x5bd1e995u;
+    seed ^= seed >> 13;
+    return float(seed) / float(0xffffffffu);
+}
+// function to get random from -1 to 1
+inline float get_random(int &seed)
+{
+    return get_hash(seed++) * 2.0f - 1.0f;
+}
+
+// the particle struct used on the gpu for the instanced particles
+struct alignas(16) ParticleGPU
+{
+    // the transform is only really going to be used for those particles that are mesh particles
+    glm::mat4 transform; // 4 * 16 bytes
+    glm::vec4 colour; // 12 bytes
+};
+// total size: 48 bytes, 16 * 3
+// The particle struct used by the current particles
+struct Particle
+{
+    // the transform of the particle
+    Transform transform;
+    // the velocity of the particle
+    glm::vec3 velocity;
+    // the time remaining of the particle
+    float lifetime;
+    // the colour of the particle
+    Colour colour;
+};
+
 
 
 class ParticleSystem {
     public:
+    ParticleSystem(Context &aContext, ParticleSystemSettings aSettings);
+    ~ParticleSystem();
 
     void Start();
 
     void Stop();
 
     void Destroy();
+    private:
+    // function to generate the particle transforms
+
 
     private:
     bool mIsPlaying = false;
@@ -192,6 +251,10 @@ class ParticleSystem {
 
     float mTime = 0.0f;
     float mPreviousTime = 0.0f;
+
+    Particle* mParticles = nullptr;
+    size_t backOfParticleBuffer = 0;
+    Buffer mParticlesBuffer;
 
 };
 
