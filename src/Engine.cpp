@@ -168,6 +168,13 @@ void Engine::Run() {
 
             ImGuiRenderer::RemoveTextures();
 
+#ifndef NDEBUG
+            // Check there are no physics bodies left after scene destruction
+            BodyIDVector bodyIds;
+            PhysicsManager::get().mPhysicsSystem.GetBodies(bodyIds);
+            assert(bodyIds.empty());
+#endif // #ifndef NDEBUG
+
             mScene->StartUp();
             mScene->Initialise(SwitchScene());
 
