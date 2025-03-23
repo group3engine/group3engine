@@ -166,6 +166,7 @@ void Engine::Run() {
 
             mTextureManager->Initialise();
 
+            // Remove all UI textures as they were linked with the texture manager
             ImGuiRenderer::RemoveTextures();
 
 #ifndef NDEBUG
@@ -178,6 +179,7 @@ void Engine::Run() {
             mScene->StartUp();
             mScene->Initialise(SwitchScene());
 
+            // Add back UI textures
             ImGuiRenderer::AddTextures(mTextureManager.get());
 
             mRenderer->RebuildSceneDescriptors();
