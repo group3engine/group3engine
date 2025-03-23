@@ -168,9 +168,6 @@ void Engine::Run() {
 
             ImGuiRenderer::RemoveTextures();
 
-            // Make sure the scene pointer that the renderer, camera, etc. uses
-            // is correct.
-
             mScene->StartUp();
             mScene->Initialise(SwitchScene());
 
