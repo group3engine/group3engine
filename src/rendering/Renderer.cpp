@@ -53,16 +53,16 @@ void Renderer::CreateRenderPasses() {
     m_PresentPass = std::make_unique<PresentPass>(context, m_CompositePass->GetRenderTarget());
 
     // ImGui
-    // ImGuiRenderer::Initialize(context);
-    // ImGuiRenderer::AddTextures(m_scene->GetTextureManager());
+    ImGuiRenderer::Initialize(context);
+    ImGuiRenderer::AddTextures(m_scene->GetTextureManager());
     // // TODO: This will cause a validation error if you re-size the window. Just needs to be updated when re-sized
-    // ImGuiRenderer::AddTexture(vkutil::clampToEdgeSamplerAniso, m_ShadowMap->GetRenderTarget().imageView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL);
+    ImGuiRenderer::AddTexture(vkutil::clampToEdgeSamplerAniso, m_ShadowMap->GetRenderTarget().imageView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL);
 }
 
 void Renderer::Destroy() {
     vkDeviceWaitIdle(context.device);
 
-    // ImGuiRenderer::Shutdown(context);
+    ImGuiRenderer::Shutdown(context);
 
     m_DepthPrepass.reset();
     m_ForwardPass.reset();
@@ -336,7 +336,7 @@ void Renderer::Update(double deltaTime) {
 
     m_camera->Update(context.extent.width, context.extent.height, deltaTime);
 
-    // ImGuiRenderer::Update(m_scene, m_camera);
+    ImGuiRenderer::Update(m_scene, m_camera);
 
     m_SSAO->Update();
     m_SSR->Update();

@@ -19,6 +19,9 @@ class MeshManager {
             meshGPU.mVertices = {};
             meshGPU.mIndices = {};
         }
+
+        mMeshes.clear();
+        mMeshesGPU.clear();
     }
 
     // reserve space for meshes

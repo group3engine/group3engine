@@ -40,6 +40,28 @@
 
 #define TEMP_DISABLE_PHYSICS 0
 
+namespace {
+    enum class SceneValue {
+        OBBY,
+        OBBY_TEST_SCENE
+    };
+
+    SceneValue sceneValue{SceneValue::OBBY_TEST_SCENE};
+
+    const std::filesystem::path &SwitchScene() {
+        if (sceneValue == SceneValue::OBBY) {
+            sceneValue = SceneValue::OBBY_TEST_SCENE;
+            return Sample::SampleObbyTestScene;
+        } else if (sceneValue == SceneValue::OBBY_TEST_SCENE) {
+            sceneValue = SceneValue::OBBY;
+            return Sample::SampleObby;
+        } else {
+            SPDLOG_ERROR("Unaccounted for case.");
+            exit(EXIT_FAILURE);
+        }
+    }
+}
+
 Engine::Engine() {
     m_isRunning = false;
     m_lastFrameTime = 0.0;
@@ -57,13 +79,19 @@ bool Engine::Initialize() {
     }
 
     mMaterialManager = std::make_unique<MaterialManager>(m_context);
+    mMaterialManager->Initialise();
+
+    // Don't need to reinitialise mMeshManager, data can just be added again
     mMeshManager = std::make_unique<MeshManager>(m_context);
+
     mTextureManager = std::make_unique<TextureManager>(m_context);
+    mTextureManager->Initialise();
 
     mScene = std::make_shared<Scene>(m_context,
                                      mMaterialManager.get(),
                                      mMeshManager.get(),
                                      mTextureManager.get());
+    mScene->StartUp();
 
     mRenderer = std::make_unique<Renderer>(m_context, mScene);
     
@@ -110,13 +138,13 @@ void Engine::Run() {
 
         // See imgui.cpp
         // "(So you want to try calling NewFrame() as early as you can in your main loop to be able to use Dear ImGui everywhere)"
-        // ImGuiRenderer::NewFrame();
+        ImGuiRenderer::NewFrame();
 
         PollInputEvents();
 
         Update(GlobalUtil::deltaTime);
 
-        // ImGuiRenderer::EndFrame();
+        ImGuiRenderer::EndFrame();
 
         Render();
 
@@ -126,30 +154,27 @@ void Engine::Run() {
             vkQueueWaitIdle(m_context.graphicsQueue);
             vkQueueWaitIdle(m_context.presentQueue);
 
-            mScene->GetActiveScene()->Destroy();
+            mScene->Destroy();
 
             mMaterialManager->Destroy();
             mMeshManager->Destroy();
             mTextureManager->Destroy();
 
-            // HACK: As managers do not have an initialise function
-            // TODO: Don't even try doing this, just make the managers proper
-            // singletons and change behaviour and API appropriately.
-            mMaterialManager.reset(new MaterialManager(m_context));
-            mMeshManager.reset(new MeshManager(m_context));
-            mTextureManager.reset(new TextureManager(m_context));
+            mMaterialManager->Initialise();
 
-            // ImGuiRenderer::RemoveTextures();
+            // Don't need to reinitialise mMeshManager, data can just be added again
 
-            // TODO: Check if GetActiveScene is used everywhere
+            mTextureManager->Initialise();
+
+            ImGuiRenderer::RemoveTextures();
+
             // Make sure the scene pointer that the renderer, camera, etc. uses
             // is correct.
 
-            // TODO: Set the managers of the scene with the new ones
+            mScene->StartUp();
+            mScene->Initialise(SwitchScene());
 
-            mScene->GetActiveScene()->Initialise(Sample::SampleObby);
-
-            // ImGuiRenderer::AddTextures(mTextureManager.get());
+            ImGuiRenderer::AddTextures(mTextureManager.get());
 
             mScene->Awake();
         }

@@ -16,6 +16,8 @@ class TextureManager {
   public:
     TextureManager(Context &aContext);
 
+    void Initialise();
+
     void Destroy() {
         // free the command pool
         vkDestroyCommandPool(mContext.device, mCommandPool, nullptr);
@@ -23,6 +25,8 @@ class TextureManager {
         for (auto &image : mTextureMap) {
             image.second.image.Destroy(mContext.device);
         }
+
+        mTextureMap.clear();
     }
 
     void addTexture(const std::filesystem::path &aTexturePath, const std::string &aTextureName);

@@ -1,0 +1,7 @@
+NOTES
+
+
+
+TODO
+
+- Make save not always called save.txt and save/load based on map name

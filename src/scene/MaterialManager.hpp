@@ -11,6 +11,8 @@ class MaterialManager {
   public:
     MaterialManager(Context &aContext);
 
+    void Initialise();
+
     // TODO: this is copying a material by value into the vector, not ideal
     void AddMaterial(Material &material) {
         mMaterials.emplace_back(std::move(material));
@@ -34,6 +36,8 @@ class MaterialManager {
         for (auto &material : mMaterials) {
             material.materialBuffer.Destroy();
         }
+
+        mMaterials.clear();
     }
 
   private:

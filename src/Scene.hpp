@@ -45,6 +45,7 @@ private:
     
     void Awake();
 
+    void StartUp();
     void Destroy();
 
     TextureManager *GetTextureManager() const { return mTextureManager; }

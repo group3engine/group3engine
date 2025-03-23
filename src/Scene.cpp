@@ -57,7 +57,7 @@ void Scene::UpdateUi(double aDeltaTime) {
 
     // New timer window
     mGuiTimerData.time += aDeltaTime;
-    // ImGuiRenderer::NewTimer(mGuiTimerData);
+    ImGuiRenderer::NewTimer(mGuiTimerData);
 
     for (auto &entity : m_Entities) {
         entity->UpdateUi(aDeltaTime);
@@ -70,12 +70,23 @@ void Scene::Destroy()
 	{
 		buffer.Destroy();
 	}
+    m_LightUBO.clear();
 
     // delete the entities
     for (auto &entity : m_Entities) {
         delete entity;
     }
     m_Entities.clear();
+
+    m_FrontMeshes.clear();
+    m_BackMeshes.clear();
+    m_Lights.clear();
+    m_Entities.clear();
+    m_Animations.clear();
+    m_Skins.clear();
+
+    mHasCharacter = false;
+    mCharacter = nullptr;
 }
 
 void Scene::Load(const std::filesystem::path &aFilepath) {
@@ -392,6 +403,9 @@ Scene::Scene(Context &context,
     mMeshManager(meshManager),
     mTextureManager(textureManager)
 {
+}
+
+void Scene::StartUp() {
     m_LightUBO.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
     // Light uniform buffers
     for (auto &buffer : m_LightUBO) {

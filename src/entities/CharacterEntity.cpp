@@ -159,16 +159,16 @@ void CharacterEntity::UpdateUi(double deltaTime) {
     // simple parameters to the gui functions. But using structs might help
     // bundle things more nicely in some cases. This is just an example.
     mGuiDeathCounterData.deathCount = mDeathCount;
-    // ImGuiRenderer::NewDeathCounter(mGuiDeathCounterData);
+    ImGuiRenderer::NewDeathCounter(mGuiDeathCounterData);
 
     mDeathVisibleTimer = std::max(0.0f, mDeathVisibleTimer - static_cast<float>(deltaTime));
     mGuiDeathPopupData.visibleTimer = mDeathVisibleTimer;
-    // ImGuiRenderer::NewDeathPopup(mGuiDeathPopupData);
+    ImGuiRenderer::NewDeathPopup(mGuiDeathPopupData);
 
     mFinishVisibleTimer = std::max(0.0f, mFinishVisibleTimer - static_cast<float>(deltaTime));
     mGuiFinishPopupData.visibleTimer = mFinishVisibleTimer;
 
-    // ImGuiRenderer::NewFinishPopup(mGuiFinishPopupData);
+    ImGuiRenderer::NewFinishPopup(mGuiFinishPopupData);
 }
 
 void CharacterEntity::CreateJoltCharacter()
