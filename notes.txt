@@ -1,7 +1,29 @@
 NOTES
 
+- Need to reset / free descriptors when switching scene. However, descriptors
+  can only be freed when the whole descriptor pool is freed. Unless we set
+  VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT when creating the
+  descriptor pool. However, "Setting
+  VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT may prevent the
+  implementation from using a simpler (and faster) allocator.
+  https://docs.vulkan.org/samples/latest/samples/performance/descriptor_management/README.html
 
+- There are more advanced strategies in actual engines with more dynamic data
+  (e.g., textures being streamed in, see link above). We could have multiple
+  descriptor pools so that we can free a descriptor pool containing all scene
+  specific data. VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT seems the
+  easiest approach right now
+
+- We have a descriptor pool in Context and a vkutil::CreateDescriptorPool. Where
+  do we use the different pools? Context's descriptor pool is used in render
+  passes. Descriptor pools are created using the vkutil::function in Animator
+  and MaterialManager. But these should be cleaned up already. Just need to
+  free descriptor sets from the context descriptor pool
 
 TODO
 
 - Make save not always called save.txt and save/load based on map name
+
+- Free scene descriptors sets individually. Set
+  VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT when creating our context
+  descriptor pool
