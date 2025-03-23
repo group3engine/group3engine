@@ -30,6 +30,7 @@ ShadowMap::ShadowMap(Context &context, std::shared_ptr<Scene> &scene)
         VK_IMAGE_ASPECT_DEPTH_BIT,
         1);
 
+    BuildDescriptorSetLayouts();
     BuildDescriptors();
     CreateRenderPass();
     CreateFramebuffer();
@@ -202,19 +203,20 @@ void ShadowMap::CreateFramebuffer() {
     VK_CHECK(vkCreateFramebuffer(context.device, &fbcInfo, nullptr, &m_framebuffer), "Failed to create Forward pass framebuffer.");
 }
 
-void ShadowMap::BuildDescriptors() {
-    m_descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
-    {
-        // Light UBO
-        std::vector<VkDescriptorSetLayoutBinding> bindings = {
-            vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT), // SceneUBO (projection, view etc..)
-        };
+void ShadowMap::BuildDescriptorSetLayouts() {
+    // Light UBO
+    std::vector<VkDescriptorSetLayoutBinding> bindings = {
+        vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT), // SceneUBO (projection, view etc..)
+    };
 
-        m_descriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
-        vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_descriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, m_descriptorSets);
-    }
+    m_descriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
 
     skinDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}});
+}
+
+void ShadowMap::BuildDescriptors() {
+    m_descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+    vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_descriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, m_descriptorSets);
 
     // Camera Transform UBO
     for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
@@ -224,6 +226,15 @@ void ShadowMap::BuildDescriptors() {
         bufferInfo.range = sizeof(vkutil::LightUBO) * scene->GetLights().size();
         vkutil::UpdateDescriptorSet(context, 0, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
     }
+}
+
+void ShadowMap::DestroyDescriptors() {
+    vkFreeDescriptorSets(context.device, context.descriptorPool, m_descriptorSets.size(), m_descriptorSets.data());
+}
+
+void ShadowMap::RebuildDescriptors() {
+    DestroyDescriptors();
+    BuildDescriptors();
 }
 
 void ShadowMap::Update() {

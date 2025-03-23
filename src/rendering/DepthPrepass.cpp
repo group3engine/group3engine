@@ -34,6 +34,7 @@ DepthPrepass::DepthPrepass(Context &context, std::shared_ptr<Scene> scene, std::
 
     CreateRenderPass();
     CreateFramebuffer();
+    BuildDescriptorSetLayouts();
     BuildDescriptors();
     CreatePipeline();
 }
@@ -168,17 +169,17 @@ void DepthPrepass::CreateFramebuffer() {
     VK_CHECK(vkCreateFramebuffer(context.device, &fbcInfo, nullptr, &m_framebuffer), "Failed to create depth pre-pass framebuffer.");
 }
 
+void DepthPrepass::BuildDescriptorSetLayouts() {
+    std::vector<VkDescriptorSetLayoutBinding> bindings = {
+        vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT),
+    };
+
+    m_descriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
+}
+
 void DepthPrepass::BuildDescriptors() {
     m_descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
-    {
-        std::vector<VkDescriptorSetLayoutBinding> bindings = {
-            vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT),
-        };
-
-        m_descriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
-
-        vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_descriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, m_descriptorSets);
-    }
+    vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_descriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, m_descriptorSets);
 
     // Camera Transform UBO
     for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
@@ -188,4 +189,13 @@ void DepthPrepass::BuildDescriptors() {
         bufferInfo.range = sizeof(CameraTransform);
         vkutil::UpdateDescriptorSet(context, 0, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
     }
+}
+
+void DepthPrepass::DestroyDescriptors() {
+    vkFreeDescriptorSets(context.device, context.descriptorPool, m_descriptorSets.size(), m_descriptorSets.data());
+}
+
+void DepthPrepass::RebuildDescriptors() {
+    DestroyDescriptors();
+    BuildDescriptors();
 }

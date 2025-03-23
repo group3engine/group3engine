@@ -59,6 +59,13 @@ void Renderer::CreateRenderPasses() {
     ImGuiRenderer::AddTexture(vkutil::clampToEdgeSamplerAniso, m_ShadowMap->GetRenderTarget().imageView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL);
 }
 
+void Renderer::RebuildSceneDescriptors() {
+    m_ShadowMap->RebuildDescriptors();
+    m_DepthPrepass->RebuildDescriptors();
+    m_ForwardPass->RebuildDescriptors();
+    m_GBuffer->RebuildDescriptors();
+}
+
 void Renderer::Destroy() {
     vkDeviceWaitIdle(context.device);
 

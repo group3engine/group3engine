@@ -32,6 +32,8 @@ class Renderer {
     void Update(double deltaTime);
     std::shared_ptr<Scene> m_scene;
 
+    void RebuildSceneDescriptors();
+
   private:
     void CreateResources();
     void CreateFences();

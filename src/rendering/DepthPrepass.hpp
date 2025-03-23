@@ -21,11 +21,15 @@ class DepthPrepass {
 
     Image &GetRenderTarget() { return m_DepthTarget; };
 
+    void RebuildDescriptors();
+
   private:
     void CreatePipeline();
     void CreateRenderPass();
     void CreateFramebuffer();
+    void BuildDescriptorSetLayouts();
     void BuildDescriptors();
+    void DestroyDescriptors();
 
     Context &context;
     std::shared_ptr<Scene> scene;

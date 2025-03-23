@@ -18,11 +18,15 @@ class ShadowMap {
 
     Image &GetRenderTarget() { return m_ShadowMap; }
 
+    void RebuildDescriptors();
+
   private:
     void CreatePipeline();
     void CreateRenderPass();
     void CreateFramebuffer();
+    void BuildDescriptorSetLayouts();
     void BuildDescriptors();
+    void DestroyDescriptors();
 
     VkRenderPass m_renderPass;
     VkFramebuffer m_framebuffer;

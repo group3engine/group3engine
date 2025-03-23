@@ -33,11 +33,15 @@ class ForwardPass {
 
     Skybox* GetSkybox() { return m_Skybox.get(); }
 
+    void RebuildDescriptors();
+
   private:
     void CreatePipeline();
     void CreateRenderPass();
     void CreateFramebuffer();
+    void BuildDescriptorSetLayouts();
     void BuildDescriptors();
+    void DestroyDescriptors();
 
     Image m_RenderTarget;
     Image m_DepthTarget;

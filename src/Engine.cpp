@@ -176,6 +176,8 @@ void Engine::Run() {
 
             ImGuiRenderer::AddTextures(mTextureManager.get());
 
+            mRenderer->RebuildSceneDescriptors();
+
             mScene->Awake();
         }
 
