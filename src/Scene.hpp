@@ -56,6 +56,8 @@ private:
 
     std::vector<Entity *>& GetEntities() { return m_Entities; }
 
+    const std::filesystem::path &GetSceneFilename() { return mSceneFilename; }
+
     void SetHasCharacter(bool hasCharacter) { mHasCharacter = hasCharacter; }
     [[nodiscard]] bool HasCharacter() const { return mHasCharacter; }
 
@@ -87,5 +89,7 @@ private:
     Entity *mCharacter;
 
     gui::TimerData mGuiTimerData{};
+
+    std::filesystem::path mSceneFilename;
 };
 

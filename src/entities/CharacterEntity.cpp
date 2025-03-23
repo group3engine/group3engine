@@ -11,7 +11,14 @@
 #include "Camera.hpp"
 #include "Scene.hpp"
 
-
+namespace {
+    std::filesystem::path BuildSaveFilename() {
+        std::filesystem::path saveFilename = "save_";
+        saveFilename += Scene::GetActiveScene()->GetSceneFilename();
+        saveFilename += ".txt";
+        return saveFilename;
+    }
+}
 
 CharacterEntity::~CharacterEntity() {
 }
@@ -237,7 +244,7 @@ void CharacterEntity::Save() {
     }
 
     // Create the full file path
-    std::filesystem::path saveFile = savePath / "save.txt";
+    std::filesystem::path saveFile = savePath / BuildSaveFilename();
 
     // Open file for writing
     std::ofstream file(saveFile);
@@ -265,7 +272,7 @@ void CharacterEntity::Load() {
 
     // Path to save file
     std::filesystem::path savePath = homePath / "Documents" / "group3enginesaves";
-    std::filesystem::path saveFile = savePath / "save.txt";
+    std::filesystem::path saveFile = savePath / BuildSaveFilename();
 
     // Check if file exists
     if (!std::filesystem::exists(saveFile)) {

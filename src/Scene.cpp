@@ -98,6 +98,8 @@ void Scene::Load(const std::filesystem::path &aFilepath) {
 
 void Scene::Initialise(const std::filesystem::path &filePath)
 {
+    mSceneFilename = filePath.stem();
+
     // Current path is the current working directory, i.e., where the root CMakeLists.txt is
     std::filesystem::path basePath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets";
     std::filesystem::path gltfPath = basePath / filePath;
