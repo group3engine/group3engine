@@ -41,6 +41,8 @@
 #define TEMP_DISABLE_PHYSICS 0
 
 namespace {
+    // TODO: Improve this temporary scene switching mechanism
+
     enum class SceneValue {
         OBBY,
         OBBY_TEST_SCENE
@@ -149,6 +151,7 @@ void Engine::Run() {
         Render();
 
         // Swap out scene
+        // TODO: Async and loading screen. Do this when render passes can be turned on and off properly
         if (IsKeyPressed(KEY::eR)) {
             // vkDestroyBuffer():  can't be called on VkBuffer that is currently in use by VkCommandBuffer
             vkQueueWaitIdle(m_context.graphicsQueue);
