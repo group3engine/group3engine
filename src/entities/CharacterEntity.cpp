@@ -9,6 +9,8 @@
 #include <cstdlib>
 
 #include "Camera.hpp"
+#include "Engine.hpp"
+#include "SampleGLTFFilePaths.hpp"
 #include "Scene.hpp"
 
 namespace {
@@ -71,6 +73,10 @@ void CharacterEntity::Update(double deltaTime) {
     auto characterPhysicsPos = mSampleJoltCharacter->GetCharacterPosition();
     SetCharacterPositionOffset(characterPhysicsPos.GetX(), characterPhysicsPos.GetY(), characterPhysicsPos.GetZ());
 
+    if (IsKeyPressed(KEY::eR))
+    {
+        Engine::get().ChangeScene(Sample::SampleObby);
+    }
 
 
 

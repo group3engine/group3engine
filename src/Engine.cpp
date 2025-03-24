@@ -64,9 +64,18 @@ namespace {
     }
 }
 
+Engine* Engine::instance = nullptr;
+
+Engine & Engine::get()
+{
+    return *instance;
+}
+
 Engine::Engine() {
     m_isRunning = false;
     m_lastFrameTime = 0.0;
+    // singleton nonsense
+    instance = this;
 }
 
 bool Engine::Initialize() {
@@ -126,6 +135,12 @@ void Engine::Shutdown() {
     PhysicsManager::get().ShutDown();
 }
 
+void Engine::ChangeScene(const std::filesystem::path &filePath)
+{
+    m_sceneNeedsChanging = true;
+    m_scenePath = filePath;
+}
+
 void Engine::Run() {
     auto camera = static_cast<Camera *>(glfwGetWindowUserPointer(Platform::get().window));
     camera->SetPhysics(&PhysicsManager::get());
@@ -150,45 +165,13 @@ void Engine::Run() {
 
         Render();
 
-        // Swap out scene
-        // TODO: Async and loading screen. Do this when render passes can be turned on and off properly
-        if (IsKeyPressed(KEY::eR)) {
-            // vkDestroyBuffer():  can't be called on VkBuffer that is currently in use by VkCommandBuffer
-            vkQueueWaitIdle(m_context.graphicsQueue);
-            vkQueueWaitIdle(m_context.presentQueue);
-
-            mScene->Destroy();
-
-            mMaterialManager->Destroy();
-            mMeshManager->Destroy();
-            mTextureManager->Destroy();
-
-            mMaterialManager->Initialise();
-
-            // Don't need to reinitialise mMeshManager, data can just be added again
-
-            mTextureManager->Initialise();
-
-            // Remove all UI textures as they were linked with the texture manager
-            ImGuiRenderer::RemoveTextures();
-
-#ifndef NDEBUG
-            // Check there are no physics bodies left after scene destruction
-            BodyIDVector bodyIds;
-            PhysicsManager::get().mPhysicsSystem.GetBodies(bodyIds);
-            assert(bodyIds.empty());
-#endif // #ifndef NDEBUG
-
-            mScene->StartUp();
-            mScene->Initialise(SwitchScene());
-
-            // Add back UI textures
-            ImGuiRenderer::AddTextures(mTextureManager.get());
-
-            mRenderer->RebuildSceneDescriptors();
-
-            mScene->Awake();
+        if (m_sceneNeedsChanging)
+        {
+            ChangeSceneFR();
+            m_sceneNeedsChanging = false;
         }
+
+
 
         FrameMark;
     }
@@ -245,6 +228,44 @@ void Engine::UpdateLogic() {
     {
         SPDLOG_INFO("Camera Location: {}", glm::to_string(camera->GetPosition()));
     }
+}
+
+void Engine::ChangeSceneFR()
+{
+    // vkDestroyBuffer():  can't be called on VkBuffer that is currently in use by VkCommandBuffer
+    vkQueueWaitIdle(m_context.graphicsQueue);
+    vkQueueWaitIdle(m_context.presentQueue);
+
+    mScene->Destroy();
+    mMaterialManager->Destroy();
+    mMeshManager->Destroy();
+    mTextureManager->Destroy();
+
+    mMaterialManager->Initialise();
+
+    // Don't need to reinitialise mMeshManager, data can just be added again
+
+    mTextureManager->Initialise();
+
+    // Remove all UI textures as they were linked with the texture manager
+    ImGuiRenderer::RemoveTextures();
+
+#ifndef NDEBUG
+    // Check there are no physics bodies left after scene destruction
+    BodyIDVector bodyIds;
+    PhysicsManager::get().mPhysicsSystem.GetBodies(bodyIds);
+    assert(bodyIds.empty());
+#endif // #ifndef NDEBUG
+
+    mScene->StartUp();
+    mScene->Initialise(m_scenePath);
+
+    // Add back UI textures
+    ImGuiRenderer::AddTextures(mTextureManager.get());
+
+    mRenderer->RebuildSceneDescriptors();
+
+    mScene->Awake();
 }
 
 void Engine::Update(double deltaTime) {
