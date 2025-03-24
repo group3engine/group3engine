@@ -14,17 +14,25 @@ class RigidBody {
     // Enumerations for default test objects
     enum Shape { Ball, Floor };
 
-    RigidBody(Shape shape, glm::vec3 glm_position, glm::quat glm_rotation);
     RigidBody(JPH::BodyCreationSettings joltCreationSettings)
         : mJoltCreationSettings(joltCreationSettings) {}
 
-    void Init(PhysicsManager &physicsManager);
+    void Init(PhysicsManager &physicsManager, bool activate);
 
     glm::vec4 GetPosition() const;
     void SetPosition(glm::vec3 glm_position) const;
     void SetRotation(glm::quat glm_position) const;
     glm::vec4 GetVelocity() const;
     glm::mat4 GetWorldTransform() const;
+
+    void SetLinearVelocity(glm::vec3 glm_velocity) const {
+        Vec3 velocity(glm_velocity.x, glm_velocity.y, glm_velocity.z);
+        PhysicsManager::get().mPhysicsSystem.GetBodyInterface().SetLinearVelocity(mBodyId, velocity);
+    }
+    void SetAngularVelocity(glm::vec3 glm_velocity) const {
+        Vec3 velocity(glm_velocity.x, glm_velocity.y, glm_velocity.z);
+        PhysicsManager::get().mPhysicsSystem.GetBodyInterface().SetAngularVelocity(mBodyId, velocity);
+    }
 
   public:
     Shape mShape{};

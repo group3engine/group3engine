@@ -1,15 +1,19 @@
 #include "Composite.hpp"
 
+#include <tracy/TracyVulkan.hpp>
+
 #include "Context.hpp"
 #include "Pipeline.hpp"
 #include "RenderPass.hpp"
 #include "Utils.hpp"
 #include "Buffer.hpp"
 
-Composite::Composite(Context &context, Image &LightingPass, Image &BloomPass)
+Composite::Composite(Context &context, Image &LightingPass, Image &BloomPass, Image &SSAO, Image &SSRImage)
     : context{context},
       LightingPass{LightingPass},
       BloomPass{BloomPass},
+      SSAO{SSAO},
+      SSRImage{SSRImage},
       m_Pipeline{VK_NULL_HANDLE},
       m_PipelineLayout{VK_NULL_HANDLE},
       m_descriptorSetLayout{VK_NULL_HANDLE},
@@ -68,7 +72,7 @@ void Composite::Resize() {
     CreateFramebuffer();
 
     // DefLighting pass
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorImageInfo imageInfo = {
             .sampler = vkutil::repeatSamplerAniso,
             .imageView = LightingPass.imageView,
@@ -78,7 +82,7 @@ void Composite::Resize() {
     }
 
     // Bloom pass
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorImageInfo imageInfo = {
             .sampler = vkutil::repeatSamplerAniso,
             .imageView = BloomPass.imageView,
@@ -86,9 +90,33 @@ void Composite::Resize() {
 
         vkutil::UpdateDescriptorSet(context, 1, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     }
+
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        VkDescriptorImageInfo imageInfo = {
+            .sampler = vkutil::repeatSamplerAniso,
+            .imageView = SSAO.imageView,
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        };
+
+        vkutil::UpdateDescriptorSet(context, 2, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    }
+
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        VkDescriptorImageInfo imageInfo = {
+            .sampler = vkutil::repeatSamplerAniso,
+            .imageView = SSRImage.imageView,
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        };
+
+        vkutil::UpdateDescriptorSet(context, 3, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    }
 }
 
 void Composite::Execute(VkCommandBuffer cmd) {
+    ZoneScopedN("Composite::Execute");
+    TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "Composite", tracy::Color::Magenta);
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "Composite");
@@ -164,7 +192,7 @@ void Composite::CreateRenderPass() {
                        // External -> 0 : Color
                        .AddDependency(VK_SUBPASS_EXTERNAL, 0, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_DEPENDENCY_BY_REGION_BIT)
 
-                       // 0 -> External : Color : Wait for color writing to finish on the attachment before the fragment shader tries to read from it
+                       // 0 -> External : Color : Wait for color writing to finish on the attachment before the fragment shader tries to read from it 
                        .AddDependency(0, VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT, VK_DEPENDENCY_BY_REGION_BIT)
                        .Build();
 
@@ -193,6 +221,8 @@ void Composite::BuildDescriptors() {
         std::vector<VkDescriptorSetLayoutBinding> bindings = {
             vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
             vkutil::CreateDescriptorBinding(1, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
+            vkutil::CreateDescriptorBinding(2, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
+            vkutil::CreateDescriptorBinding(3, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
         };
 
         m_descriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
@@ -201,7 +231,7 @@ void Composite::BuildDescriptors() {
     }
 
     // DefLighting pass
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorImageInfo imageInfo = {
             .sampler = vkutil::repeatSamplerAniso,
             .imageView = LightingPass.imageView,
@@ -211,12 +241,35 @@ void Composite::BuildDescriptors() {
     }
 
     // Bloom pass
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorImageInfo imageInfo = {
             .sampler = vkutil::repeatSamplerAniso,
             .imageView = BloomPass.imageView,
             .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
 
         vkutil::UpdateDescriptorSet(context, 1, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    }
+
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        VkDescriptorImageInfo imageInfo = {
+            .sampler = vkutil::repeatSamplerAniso,
+            .imageView = SSAO.imageView,
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        };
+
+        vkutil::UpdateDescriptorSet(context, 2, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    }
+
+
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        VkDescriptorImageInfo imageInfo = {
+            .sampler = vkutil::repeatSamplerAniso,
+            .imageView = SSRImage.imageView,
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        };
+
+        vkutil::UpdateDescriptorSet(context, 3, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     }
 }

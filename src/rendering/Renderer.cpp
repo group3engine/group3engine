@@ -4,6 +4,8 @@
 
 #include <glm/gtc/random.hpp>
 
+#include <tracy/TracyVulkan.hpp>
+
 #include "Context.hpp"
 #include "Light.hpp"
 #include "Utils.hpp"
@@ -43,12 +45,16 @@ void Renderer::CreateRenderPasses() {
     m_ShadowMap = std::make_unique<ShadowMap>(context, m_scene);
     m_DepthPrepass = std::make_unique<DepthPrepass>(context, m_scene, m_camera);
     m_ForwardPass = std::make_unique<ForwardPass>(context, m_ShadowMap->GetRenderTarget(), m_DepthPrepass->GetRenderTarget(), m_scene, m_camera);
+    m_GBuffer = std::make_unique<GBuffer>(context, m_scene, m_camera);
+    m_SSAO = std::make_unique<SSAO>(context, m_ForwardPass->GetDepthTarget(), m_ForwardPass->GetRenderTarget(), m_camera);
+    m_SSR = std::make_unique<SSR>(context, m_ForwardPass->GetDepthTarget(), m_ForwardPass->GetRenderTarget(), m_GBuffer->GetMetallicRoughnessTarget(), m_ForwardPass->GetSkybox()->GetSkyBoxImage(), m_camera);
     m_BloomPass = std::make_unique<Bloom>(context, m_ForwardPass->GetBrightnessTarget());
-    m_CompositePass = std::make_unique<Composite>(context, m_ForwardPass->GetRenderTarget(), m_BloomPass->GetRenderTarget());
+    m_CompositePass = std::make_unique<Composite>(context, m_ForwardPass->GetRenderTarget(), m_BloomPass->GetRenderTarget(), m_SSAO->GetRenderTarget(), m_SSR->GetRenderTarget());
     m_PresentPass = std::make_unique<PresentPass>(context, m_CompositePass->GetRenderTarget());
 
     // ImGui
-    ImGuiRenderer::Initialize(context);
+    ImGuiRenderer::Initialize(context, m_scene->GetTextureManager());
+    // TODO: This will cause a validation error if you re-size the window. Just needs to be updated when re-sized
     ImGuiRenderer::AddTexture(vkutil::clampToEdgeSamplerAniso, m_ShadowMap->GetRenderTarget().imageView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL);
 }
 
@@ -59,9 +65,12 @@ void Renderer::Destroy() {
 
     m_DepthPrepass.reset();
     m_ForwardPass.reset();
+    m_GBuffer.reset();
     m_ShadowMap.reset();
     m_BloomPass.reset();
     m_CompositePass.reset();
+    m_SSAO.reset();
+    m_SSR.reset();
     m_PresentPass.reset();
     m_camera.reset();
 
@@ -87,6 +96,10 @@ void Renderer::Destroy() {
 
     for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         vkDestroyCommandPool(context.device, m_commandPool[i], nullptr);
+    }
+
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; ++i) {
+        TracyVkDestroy(context.tracyContexts[i]);
     }
 }
 
@@ -157,14 +170,33 @@ void Renderer::AllocateCommandBuffers() {
         VkCommandBuffer cmd = VK_NULL_HANDLE;
         VK_CHECK(vkAllocateCommandBuffers(context.device, &cmdAlloc, &cmd), "Failed to allocate command buffer");
         m_commandBuffers.push_back(cmd);
+
+        // Calibrated context function pointers
+        auto pfnVkGetPhysicalDeviceCalibrateableTimeDomainsEXT = vkGetPhysicalDeviceCalibrateableTimeDomainsEXT;
+        auto pfnVkGetCalibratedTimestampsEXT = vkGetCalibratedTimestampsEXT;
+
+        auto *tracyContext = TracyVkContextCalibrated(
+            context.pDevice, context.device, context.graphicsQueue, cmd,
+            pfnVkGetPhysicalDeviceCalibrateableTimeDomainsEXT, pfnVkGetCalibratedTimestampsEXT);
+
+        context.tracyContexts.push_back(tracyContext);
     }
 }
 
 void Renderer::Render() {
-    vkWaitForFences(context.device, 1, &m_Fences[vkutil::currentFrame], VK_TRUE, UINT64_MAX);
+    {
+        ZoneScopedN("vkWaitForFences");
+
+        vkWaitForFences(context.device, 1, &m_Fences[vkutil::currentFrame], VK_TRUE, UINT64_MAX);
+    }
 
     uint32_t index;
-    VkResult getImageIndex = vkAcquireNextImageKHR(context.device, context.swapchain, UINT64_MAX, m_imageAvailableSemaphores[vkutil::currentFrame], VK_NULL_HANDLE, &index);
+    VkResult getImageIndex;
+    {
+        ZoneScopedN("vkAcquireNextImageKHR");
+
+        getImageIndex = vkAcquireNextImageKHR(context.device, context.swapchain, UINT64_MAX, m_imageAvailableSemaphores[vkutil::currentFrame], VK_NULL_HANDLE, &index);
+    }
 
     if (getImageIndex == VK_ERROR_OUT_OF_DATE_KHR) {
         // Recreate swapchain
@@ -172,31 +204,70 @@ void Renderer::Render() {
         m_DepthPrepass->Resize();
         m_ShadowMap->Resize();
         m_ForwardPass->Resize();
+        m_GBuffer->Resize();
+        m_SSAO->Resize();
+        m_SSR->Resize();
         m_BloomPass->Resize();
         m_CompositePass->Resize();
         m_PresentPass->Resize();
-        return;
+
     } else if (getImageIndex != VK_SUCCESS && getImageIndex != VK_SUBOPTIMAL_KHR) {
         throw std::runtime_error("Failed to aquire swapchain image");
     }
 
-    vkResetFences(context.device, 1, &m_Fences[vkutil::currentFrame]);
-    vkResetCommandBuffer(m_commandBuffers[vkutil::currentFrame], 0);
+    {
+        ZoneScopedN("vkResetFences");
+
+        vkResetFences(context.device, 1, &m_Fences[vkutil::currentFrame]);
+    }
+
+    {
+        ZoneScopedN("vkResetCommandBuffer");
+
+        vkResetCommandBuffer(m_commandBuffers[vkutil::currentFrame], 0);
+    }
 
     VkCommandBuffer &cmd = m_commandBuffers[vkutil::currentFrame];
 
     {
+        ZoneScopedN("vk::Execute");
+
         VkCommandBufferBeginInfo beginInfo = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
 
         VK_CHECK(vkBeginCommandBuffer(cmd, &beginInfo), "Failed to begin command buffer");
 
-        m_ShadowMap->Execute(cmd);
-        m_DepthPrepass->Execute(cmd);
-        m_ForwardPass->Execute(cmd);
-        m_BloomPass->Execute(cmd);
-        m_CompositePass->Execute(cmd);
-        m_PresentPass->Execute(cmd, index);
+        {
+            ZoneScopedN("vk::Upload");
+
+            m_camera->Upload(cmd);
+
+            m_scene->UploadLights(cmd);
+
+            // Upload animation data to GPU
+            for (auto *entity : m_scene->GetEntities()) {
+                if (entity->HasAnimator()) {
+                    entity->GetAnimator().UploadJointBuffer(cmd);
+                }
+            }
+        }
+
+        {
+            TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "vk::Frame", tracy::Color::Crimson);
+
+            m_ShadowMap->Execute(cmd);
+            m_DepthPrepass->Execute(cmd);
+            m_ForwardPass->Execute(cmd);
+            m_GBuffer->Execute(cmd);
+            m_SSAO->Execute(cmd);
+            m_SSR->Execute(cmd);
+            m_BloomPass->Execute(cmd);
+            m_CompositePass->Execute(cmd);
+            m_PresentPass->Execute(cmd, index);
+        }
+
+        // Periodically collect the GPU events
+        TracyVkCollect(context.tracyContexts[vkutil::currentFrame], cmd);
 
         vkEndCommandBuffer(cmd);
     }
@@ -208,6 +279,9 @@ void Renderer::Render() {
 }
 
 void Renderer::Submit() {
+    ZoneScopedN("Renderer::Submit");
+    ZoneValue(vkutil::currentFrame);
+
     VkPipelineStageFlags waitStage = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 
     VkSubmitInfo subtmitInfo = {
@@ -228,6 +302,8 @@ void Renderer::Submit() {
 }
 
 void Renderer::Present(uint32_t imageIndex) {
+    ZoneScopedN("Renderer::Present");
+
     VkPresentInfoKHR presentInfo = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .waitSemaphoreCount = 1,
@@ -245,17 +321,24 @@ void Renderer::Present(uint32_t imageIndex) {
         m_DepthPrepass->Resize();
         m_ShadowMap->Resize();
         m_ForwardPass->Resize();
+        m_GBuffer->Resize();
+        m_SSAO->Resize();
+        m_SSR->Resize();
         m_BloomPass->Resize();
         m_CompositePass->Resize();
         m_PresentPass->Resize();
     }
 }
 
-void Renderer::Update(double deltaTime, glm::vec3 character_position) {
-    m_camera->Update(context.extent.width, context.extent.height, deltaTime, character_position);
+void Renderer::Update(double deltaTime) {
+    ZoneScopedN("Renderer::Update");
+
+    m_camera->Update(context.extent.width, context.extent.height, deltaTime);
 
     ImGuiRenderer::Update(m_scene, m_camera);
 
+    m_SSAO->Update();
+    m_SSR->Update();
     // Update passes
     m_ShadowMap->Update();
     m_ForwardPass->Update();

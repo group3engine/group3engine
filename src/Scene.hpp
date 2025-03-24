@@ -16,7 +16,15 @@
 #include "TextureManager.hpp"
 #include "Utils.hpp"
 
+
+#include "ImGuiRenderer.hpp"
+
 class Scene {
+public:
+    static Scene* GetActiveScene() { return sActiveScene; }
+private:
+    static Scene* sActiveScene;
+    static void SetActiveScene(Scene* scene) { sActiveScene = scene; }
   public:
     explicit Scene(Context &context);
     void Load(const std::filesystem::path &aFilepath);
@@ -27,14 +35,34 @@ class Scene {
     void DrawSkinned(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
     void AddLightSource(Light& LightSource);
     void Update(double aDeltaTime);
+    void UpdateUi(double aDeltaTime);
+
+    void Initialise();
+    
+    void Awake();
 
     void Destroy();
+
+    TextureManager *GetTextureManager() const { return mTextureManager; }
 
     std::vector<Light> &GetLights() { return m_Lights; }
 
     std::vector<Buffer> &GetLightsUBO() { return m_LightUBO; }
 
-    std::vector<Entity>& GetEntities() { return m_Entities; }
+    std::vector<Entity *>& GetEntities() { return m_Entities; }
+
+    void SetHasCharacter(bool hasCharacter) { mHasCharacter = hasCharacter; }
+    [[nodiscard]] bool HasCharacter() const { return mHasCharacter; }
+
+    Entity &GetCharacter() { return *mCharacter; }
+
+    void SetMainCharacter(Entity *entity) {
+        mCharacter = entity;
+        mHasCharacter = true;
+    }
+
+    void UploadLights(VkCommandBuffer cmdBuff);
+
   private:
     Context &context;
     MeshManager *mMeshManager;
@@ -46,8 +74,13 @@ class Scene {
     std::vector<Light>  m_Lights;
     vkutil::LightBuffer m_LightBuffer;
     std::vector<Buffer> m_LightUBO;
-    std::vector<Entity> m_Entities;
+    std::vector<Entity *> m_Entities;
     std::vector<Animation> m_Animations;
     std::vector<Skin> m_Skins;
+
+    bool mHasCharacter = false;
+    Entity *mCharacter;
+
+    gui::TimerData mGuiTimerData{};
 };
 

@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2021 Jorrit Rouwe
 // SPDX-License-Identifier: MIT
 
-#include "CharacterVirtualTest.h"
+#include "SampleJoltCharacter.h"
 
 #include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
 #include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
@@ -11,7 +11,9 @@
 
 #include "PhysicsHelpers.hpp"
 
-void CharacterVirtualTest::Initialize()
+#include "Entity.hpp"
+
+void SampleJoltCharacter::Initialize()
 {
 	CharacterBaseTest::Initialize();
 
@@ -26,12 +28,14 @@ void CharacterVirtualTest::Initialize()
 	settings->mPredictiveContactDistance = sPredictiveContactDistance;
 	settings->mSupportingVolume = Plane(Vec3::sAxisY(), -cCharacterRadiusStanding); // Accept contacts that touch the lower sphere of the capsule
 	settings->mEnhancedInternalEdgeRemoval = sEnhancedInternalEdgeRemoval;
+    settings->mInnerBodyShape = RotatedTranslatedShapeSettings(Vec3(0, cCharacterHeightStanding, 0), Quat::sIdentity(), new CapsuleShape(cCharacterHeightStanding, cCharacterRadiusStanding)).Create().Get();
+	settings->mInnerBodyLayer = Layers::MOVING;
 	mCharacter = new CharacterVirtual(settings, RVec3::sZero(), Quat::sIdentity(), 0, mPhysicsSystem);
 
 	mCharacter->SetListener(this);
 }
 
-void CharacterVirtualTest::PrePhysicsUpdate(const PreUpdateParams &inParams)
+void SampleJoltCharacter::PrePhysicsUpdate(const PreUpdateParams &inParams)
 {
 	CharacterBaseTest::PrePhysicsUpdate(inParams);
 
@@ -69,7 +73,7 @@ void CharacterVirtualTest::PrePhysicsUpdate(const PreUpdateParams &inParams)
 #endif
 }
 
-void CharacterVirtualTest::HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime)
+void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime)
 {
 	bool player_controls_horizontal_velocity = sControlMovementDuringJump || mCharacter->IsSupported();
 	if (player_controls_horizontal_velocity)
@@ -109,11 +113,25 @@ void CharacterVirtualTest::HandleInput(Vec3Arg inMovementDirection, bool inJump,
 		new_velocity = ground_velocity;
 
 		// Jump
-		if (inJump && moving_towards_ground)
-			new_velocity += sJumpSpeed * mCharacter->GetUp();
+		if (inJump && moving_towards_ground) {
+                    new_velocity += sJumpSpeed * mCharacter->GetUp();
+                        mJumpState = EJumpState::Start;
+                }
+                else if (mJumpState != EJumpState::None && mJumpState != EJumpState::End) {
+                    mJumpState = EJumpState::End;
+                }
+                else
+                {
+                        mJumpState = EJumpState::None;
+                }
 	}
-	else
-		new_velocity = current_vertical_velocity;
+	else {
+            new_velocity = current_vertical_velocity;
+            if(new_velocity.GetY() > 0.2f)
+            {
+                mJumpState = EJumpState::Falling;
+            }
+        }
 
 	// Gravity
 	new_velocity += (character_up_rotation * mPhysicsSystem->GetGravity()) * inDeltaTime;
@@ -134,7 +152,7 @@ void CharacterVirtualTest::HandleInput(Vec3Arg inMovementDirection, bool inJump,
 	mCharacter->SetLinearVelocity(new_velocity);
 }
 
-void CharacterVirtualTest::OnContactCommon(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings)
+void SampleJoltCharacter::OnContactCommon(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings)
 {
 	// If we encounter an object that can push the player, enable sliding
 	if (inCharacter == mCharacter
@@ -143,7 +161,7 @@ void CharacterVirtualTest::OnContactCommon(const CharacterVirtual *inCharacter, 
 		mAllowSliding = true;
 }
 
-void CharacterVirtualTest::OnContactAdded(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings)
+void SampleJoltCharacter::OnContactAdded(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings)
 {
 	OnContactCommon(inCharacter, inBodyID2, inSubShapeID2, inContactPosition, inContactNormal, ioSettings);
 
@@ -157,11 +175,46 @@ void CharacterVirtualTest::OnContactAdded(const CharacterVirtual *inCharacter, c
 			SPDLOG_ERROR("Got an add contact that should have been a persisted contact");
 			exit(EXIT_FAILURE);
 		}
-		mActiveContacts.push_back(c);
+        
+
+        // assume the thing isnt already an active contact
+        bool is_already_in_contact = false;
+
+        // for all contacts
+        for(auto contact: mActiveContacts)
+        {
+            // if the new contact has the same body as one that already exists
+            if(c.IsSameBody(contact))
+            {
+                // then its already in contact
+                is_already_in_contact = true;
+            }
+        }
+        
+        // we push this contact into the list of active contacts
+        mActiveContacts.push_back(c);
+
+        // if its not already in contact
+        if(!is_already_in_contact)
+        {
+            // handle the contact
+            if(mCustomContactListener->GetMap().find(inBodyID2) != mCustomContactListener->GetMap().end()) {
+                mCustomContactListener->GetMap()[inBodyID2]->OnCollisionStart(mCustomContactListener->GetMap()[inCharacter->GetInnerBodyID()]);
+            }
+
+            if(mCustomContactListener->GetMap().find(inCharacter->GetInnerBodyID()) != mCustomContactListener->GetMap().end()) {
+                mCustomContactListener->GetMap()[inCharacter->GetInnerBodyID()]->OnCollisionStart(mCustomContactListener->GetMap()[inBodyID2]);
+            }
+        }
+
+        
 	}
+
+    
+    
 }
 
-void CharacterVirtualTest::OnContactPersisted(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings)
+void SampleJoltCharacter::OnContactPersisted(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings)
 {
 	OnContactCommon(inCharacter, inBodyID2, inSubShapeID2, inContactPosition, inContactNormal, ioSettings);
 
@@ -177,7 +230,7 @@ void CharacterVirtualTest::OnContactPersisted(const CharacterVirtual *inCharacte
 	}
 }
 
-void CharacterVirtualTest::OnContactRemoved(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2)
+void SampleJoltCharacter::OnContactRemoved(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2)
 {
 	if (inCharacter == mCharacter)
 	{
@@ -191,9 +244,10 @@ void CharacterVirtualTest::OnContactRemoved(const CharacterVirtual *inCharacter,
 		}
 		mActiveContacts.erase(it);
 	}
+
 }
 
-void CharacterVirtualTest::OnContactSolve(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, Vec3Arg inContactVelocity, const PhysicsMaterial *inContactMaterial, Vec3Arg inCharacterVelocity, Vec3 &ioNewCharacterVelocity)
+void SampleJoltCharacter::OnContactSolve(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, Vec3Arg inContactVelocity, const PhysicsMaterial *inContactMaterial, Vec3Arg inCharacterVelocity, Vec3 &ioNewCharacterVelocity)
 {
 	// Ignore callbacks for other characters than the player
 	if (inCharacter != mCharacter)

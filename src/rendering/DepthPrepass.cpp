@@ -1,8 +1,11 @@
+#include "DepthPrepass.hpp"
+
+#include <tracy/TracyVulkan.hpp>
+
 #include "Context.hpp"
 #include "Scene.hpp"
 #include "Image.hpp"
 #include "Camera.hpp"
-#include "DepthPrepass.hpp"
 #include "Pipeline.hpp"
 #include "RenderPass.hpp"
 
@@ -64,6 +67,9 @@ void DepthPrepass::Resize() {
 }
 
 void DepthPrepass::Execute(VkCommandBuffer cmd) {
+    ZoneScopedN("DepthPrepass::Execute");
+    TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "DepthPrepass", tracy::Color::Crimson);
+
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "DepthPrepass");
 #endif // !DEBUG
@@ -175,7 +181,7 @@ void DepthPrepass::BuildDescriptors() {
     }
 
     // Camera Transform UBO
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorBufferInfo bufferInfo{};
         bufferInfo.buffer = camera->GetBuffers()[i].buffer;
         bufferInfo.offset = 0;

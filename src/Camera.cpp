@@ -10,6 +10,7 @@
 #include "Jolt/Physics/Collision/CastResult.h"
 #include "Jolt/Physics/Collision/NarrowPhaseQuery.h"
 #include "Jolt/Physics/Collision/RayCast.h"
+#include <Jolt/Physics/Collision/ObjectLayer.h>
 #include "PhysicsManager.hpp"
 #include "Utils.hpp"
 #include "Buffer.hpp"
@@ -17,9 +18,12 @@
 #include "Input.hpp"
 #include "glm/fwd.hpp"
 
+Camera* Camera::kMainCamera = nullptr;
+
 Camera::Camera(Context &context, const glm::vec3 position, glm::vec3 direction, glm::vec3 up, float aspect)
     : context{context}, m_position{position}, m_direction{direction}, m_up{up} {
     m_mouseSensitivity = 0.1f;
+    m_controllerSensitivity = 100.f;
     m_increaseSpeed = 0.0f;
     m_transform.view = glm::lookAt(position, position + direction, up);
     m_transform.projection = glm::perspective(m_transform.fov, aspect, m_transform.nearPlane, m_transform.farPlane);
@@ -33,8 +37,15 @@ Camera::Camera(Context &context, const glm::vec3 position, glm::vec3 direction, 
 
     m_cameraUBO.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
     for (auto &buffer : m_cameraUBO) {
-        buffer = CreateBuffer("cameraUBO", context, sizeof(CameraTransform), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+        buffer = CreateBuffer("cameraUBO", context, sizeof(CameraTransform),
+                              VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                              VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+                                  VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
+                                  VMA_ALLOCATION_CREATE_MAPPED_BIT);
     }
+
+    // Set the main camera to this camera
+    kMainCamera = this;
 }
 
 Camera::~Camera() {
@@ -43,15 +54,16 @@ Camera::~Camera() {
     }
 }
 
-void Camera::Update(uint32_t width, uint32_t height, [[maybe_unused]] double deltaTime, glm::vec3 character_position) {
+void Camera::Update(uint32_t width, uint32_t height, [[maybe_unused]] double deltaTime) {
+    UpdateCameraRotation(deltaTime);
+    UpdateCameraMovement();
     UpdateTransforms(width, height);
+}
 
+void Camera::Upload(VkCommandBuffer cmdBuff) {
     // Write new data to the buffer to update uniform
     VkDeviceSize size = sizeof(CameraTransform);
-    m_cameraUBO[vkutil::currentFrame].WriteToBuffer(m_transform, size);
-
-    UpdateCameraRotation();
-    UpdateCameraMovement(character_position);
+    m_cameraUBO[vkutil::currentFrame].Upload(cmdBuff, &m_transform, size);
 }
 
 void Camera::UpdateTransforms(uint32_t width, uint32_t height) {
@@ -66,45 +78,99 @@ void Camera::UpdateTransforms(uint32_t width, uint32_t height) {
     m_transform.fov = m_transform.fov;
 }
 
-void Camera::UpdateCameraMovement(glm::vec3 input_position) {
-    glm::vec3 forward = glm::normalize(m_direction);
-    glm::vec3 rightVector = glm::normalize(glm::cross(m_direction, m_up));
-
-    glm::vec3 third_person_camera_offset = (-2.f * forward) + (0.5f * m_up) + (0.5f * rightVector);
-
-    RRayCast ray;
-    ray.mOrigin = Vec3(input_position.x, input_position.y, input_position.z);
-    ray.mDirection = Vec3(third_person_camera_offset.x, third_person_camera_offset.y, third_person_camera_offset.z);
-
-    JPH::RayCastResult result;
-    bool hit = m_physics_reference->get().mPhysicsSystem.GetNarrowPhaseQuery().CastRay(ray, result);
-
-    if(hit)
-    {
-        m_position = input_position + third_person_camera_offset * result.mFraction;
+void Camera::UpdateCameraMovement() {
+    Transform character_transform{};
+    if (m_scene_pointer->HasCharacter()) {
+        character_transform = m_scene_pointer->GetCharacter().GetWorldTransformComponents();
     }
-    else 
+    glm::vec3 character_position = character_transform.translation;
+
+    if(inputMap[std::size_t(EInputState::SWITCHVIEW)] == true)
     {
-        m_position = input_position + third_person_camera_offset;
+        if(m_inputType == InputType::FreeCamera){
+            m_inputType = InputType::FollowCharacter;
+        }
+        else {
+            m_inputType = InputType::FreeCamera;
+        }
     }
+    if(m_inputType == InputType::FollowCharacter) {
+        glm::vec3 forward = glm::normalize(m_direction);
+        glm::vec3 rightVector = glm::normalize(glm::cross(m_direction, m_up));
 
-
-
-    //m_position = input_position + third_person_camera_offset;
-}
-
-void Camera::UpdateCameraRotation() {
-    // If we're using the mouse
-    if (inputMap[std::size_t(EInputState::MOUSING)]) {
-        // check if this is the first time mouse is being used, if so skip updating
-        // skip next frame so we have the correct lastx and lasty position for cursor
-        if (wasMousing) {
-            glm::vec2 delta = m_mouseSensitivity * GetMouseDelta();
-            delta.y = -delta.y; // Prevent inverted y
-            UpdateCameraAngles(delta);
-            UpdateCameraDirection();
+        if (inputMap[std::size_t(EInputState::ZOOM_IN)]) {
+            zoom_level -= 0.1f;
+        }
+        if (inputMap[std::size_t(EInputState::ZOOM_OUT)]) {
+            zoom_level += 0.1f;
         }
 
+        glm::vec3 third_person_camera_offset =
+            ((-2.f * forward) + (1.0f * m_up) + (0.5f * rightVector)) * zoom_level;
+
+        RRayCast ray;
+        ray.mOrigin = Vec3(character_position.x, character_position.y, character_position.z);
+        ray.mDirection = Vec3(third_person_camera_offset.x, third_person_camera_offset.y,
+                              third_person_camera_offset.z);
+
+        JPH::RayCastResult result;
+        JPH::SpecifiedObjectLayerFilter objectLayerFilter{Layers::NON_MOVING};
+        bool hit = m_physics_reference->get().mPhysicsSystem.GetNarrowPhaseQuery().CastRay(ray, result, {}, objectLayerFilter, {});
+
+        if (hit) {
+            m_position = character_position + third_person_camera_offset * result.mFraction;
+        } else {
+            m_position = character_position + third_person_camera_offset;
+        }
+    }
+    else if(m_inputType == InputType::FreeCamera) {
+        glm::vec3 forward = glm::normalize(m_direction);
+        glm::vec3 rightVector = glm::normalize(glm::cross(m_direction, m_up));
+
+        if (inputMap[std::size_t(EInputState::FORWARD)]) {
+            m_position += m_cameraSpeed * forward;
+        }
+        if (inputMap[std::size_t(EInputState::BACKWARD)]) {
+            m_position -= m_cameraSpeed * forward;
+        }
+        if (inputMap[std::size_t(EInputState::LEFT)]) {
+            m_position -= m_cameraSpeed * rightVector;
+        }
+        if (inputMap[std::size_t(EInputState::RIGHT)]) {
+            m_position += m_cameraSpeed * rightVector;
+        }
+        if (inputMap[std::size_t(EInputState::UP)]) {
+            m_position += m_cameraSpeed * m_up;
+        }
+        if (inputMap[std::size_t(EInputState::DOWN)]) {
+            m_position -= m_cameraSpeed * m_up;
+        }
+        if (inputMap[std::size_t(EInputState::TELEPORT)]) {
+            // call the teleport callback
+            if (m_teleportCallback) {
+                m_teleportCallback(m_position);
+            }
+        }
+    }
+}
+
+void Camera::UpdateCameraRotation(double deltaTime) {
+    // If we're using the mouse
+        // check if this is the first time mouse is being used, if so skip updating
+        // skip next frame so we have the correct lastx and lasty position for cursor
+        glm::vec2 delta {};
+        if (wasMousing) {
+            delta = m_mouseSensitivity * GetMouseDelta();
+            delta.y = -delta.y; // Prevent inverted y
+        }
+        // Get the right joystick input
+        delta.x += GetGamepadAxis(GAMEPAD_AXIS::eRIGHT_X) * m_controllerSensitivity * deltaTime;
+        delta.y -= GetGamepadAxis(GAMEPAD_AXIS::eRIGHT_Y) * m_controllerSensitivity * deltaTime;
+
+        // Update the camera angles based on the mouse and controller movement
+        UpdateCameraAngles(delta);
+        UpdateCameraDirection();
+    if (inputMap[std::size_t(EInputState::MOUSING)]) {
         wasMousing = true;
     } else {
         wasMousing = false;

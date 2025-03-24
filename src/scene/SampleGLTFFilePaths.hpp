@@ -117,6 +117,9 @@ static std::filesystem::path IridescenceLamp{"IridescenceLamp/glTF/IridescenceLa
 static std::filesystem::path Corset{"Corset/glTF/Corset.gltf"};
 static std::filesystem::path Laughing{"Sitting Laughing/laugh.gltf"};
 static std::filesystem::path Dust2{"Dust2/dust2.gltf"};
+static std::filesystem::path Dust2Laugh{"Dust2Laugh/Dust2Laugh.gltf"};
+static std::filesystem::path SampleObby{"Sample obby/test_scene.gltf"};
+static std::filesystem::path FallGuys{"Fall guys/fall guys map.gltf"};
 } // namespace Sample
 
 #endif // GROUP3ENGINE_SAMPLEGLTFFILEPATHS_HPP

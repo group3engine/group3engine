@@ -1,5 +1,8 @@
-#include "Context.hpp"
 #include "Bloom.hpp"
+
+#include <tracy/TracyVulkan.hpp>
+
+#include "Context.hpp"
 #include "Pipeline.hpp"
 #include "RenderPass.hpp"
 
@@ -122,11 +125,16 @@ void Bloom::CreateRenderPass() {
 
 // dstStage is where other operations will begin once srcStage is finished
 void Bloom::Execute(VkCommandBuffer cmd) {
+    ZoneScopedN("Bloom::Execute");
+
     RenderHorizontalBlur(cmd);
     RenderVerticalBlur(cmd);
 }
 
 void Bloom::RenderHorizontalBlur(VkCommandBuffer cmd) {
+    ZoneScopedN("Bloom::RenderHorizontalBlur");
+    TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "BloomHorizontalBlur", tracy::Color::LimeGreen);
+
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "BloomHorizontalBlur");
 #endif
@@ -171,6 +179,8 @@ void Bloom::RenderHorizontalBlur(VkCommandBuffer cmd) {
 }
 
 void Bloom::RenderVerticalBlur(VkCommandBuffer cmd) {
+    ZoneScopedN("Bloom::RenderVerticalBlur");
+    TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "BloomVerticalBlur", tracy::Color::Blue);
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "BloomVerticalBlur");
@@ -247,7 +257,7 @@ void Bloom::Resize() {
 
     CreateFramebuffer();
 
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorImageInfo imageInfo = {
             .sampler = vkutil::clampToEdgeSamplerAniso,
             .imageView = inputImage.imageView,
@@ -257,7 +267,7 @@ void Bloom::Resize() {
     }
 
     // Vertical
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorImageInfo imageInfo = {
             .sampler = vkutil::clampToEdgeSamplerAniso,
             .imageView = m_BloomBlurXRT.imageView,
@@ -317,7 +327,7 @@ void Bloom::BuildHorizontalBlurDescriptors() {
 
     vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_HorizontalBlurDescriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, m_HorizontalBlurDescriptorSets);
 
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorImageInfo imageInfo = {
             .sampler = vkutil::clampToEdgeSamplerAniso,
             .imageView = inputImage.imageView,
@@ -339,7 +349,7 @@ void Bloom::BuildVerticalBlurDescriptors() {
 
     vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_VerticalBlurDescriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, m_VerticalBlurDescriptorSets);
 
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorImageInfo imageInfo = {
             .sampler = vkutil::clampToEdgeSamplerAniso,
             .imageView = m_BloomBlurXRT.imageView,

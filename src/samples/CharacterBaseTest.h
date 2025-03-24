@@ -22,6 +22,7 @@
 #include <Jolt/Physics/Character/CharacterVirtual.h>
 
 #include "Input.hpp"
+#include <glm/vec3.hpp>
 
 using namespace JPH;
 
@@ -58,7 +59,7 @@ public:
 	virtual void 			Initialize();
 
 	// Process input
-	void					ProcessInput(const ProcessInputParams &inParams);
+	void					ProcessInput(glm::vec3 controlInput, bool jump);
 
 	// Update the test, called before the physics update
 	virtual void			PrePhysicsUpdate(const PreUpdateParams &inParams);
@@ -86,7 +87,7 @@ public:
 	virtual void			HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime) = 0;
 
 	// Character size
-	static constexpr float	cCharacterHeightStanding = 1.35f;
+	static constexpr float	cCharacterHeightStanding = 0.8f;
 	static constexpr float	cCharacterRadiusStanding = 0.3f;
 
 	// Character movement properties

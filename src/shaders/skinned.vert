@@ -40,23 +40,24 @@ mat3 adjugate( in mat4 m )
 	cross(m[0].xyz, m[1].xyz));
 }
 mat4 rotationX45 = mat4(
-1.0, 0.0,                 0.0,                0.0,
-0.0, cos(radians(45.0)), -sin(radians(45.0)), 0.0,
-0.0, sin(radians(45.0)),  cos(radians(45.0)), 0.0,
-0.0, 0.0,                 0.0,                1.0
+	1.0, 0.0,                 0.0,                0.0,
+	0.0, cos(radians(45.0)), -sin(radians(45.0)), 0.0,
+	0.0, sin(radians(45.0)),  cos(radians(45.0)), 0.0,
+	0.0, 0.0,                 0.0,                1.0
 );
 
 void main()
 {
 	uv = tex;
-	// calculate the skinned transform
-	vec4 skinnedTransform = jointBuffer.jointTransforms[int(joints.x)] * vec4(pos, 1.0) * weights.x;
-	skinnedTransform += jointBuffer.jointTransforms[int(joints.y)] * vec4(pos, 1.0) * weights.y;
-	skinnedTransform += jointBuffer.jointTransforms[int(joints.z)] * vec4(pos, 1.0) * weights.z;
-	skinnedTransform += jointBuffer.jointTransforms[int(joints.w)] * vec4(pos, 1.0) * weights.w;
 
-	// calculate the skinned position
-	WorldPos = pc.ModelMatrix * vec4(pos, 1.0);
-	gl_Position = ubo.projection * ubo.view * pc.ModelMatrix * skinnedTransform;
-	WorldNormal = adjugate(pc.ModelMatrix) * normal;
+	mat4 skinMat =
+		weights.x * jointBuffer.jointTransforms[int(joints.x)] +
+		weights.y * jointBuffer.jointTransforms[int(joints.y)] +
+		weights.z * jointBuffer.jointTransforms[int(joints.z)] +
+		weights.w * jointBuffer.jointTransforms[int(joints.w)];
+
+	WorldPos = skinMat * vec4(pos, 1.0);
+	gl_Position = ubo.projection * ubo.view * WorldPos;
+
+	WorldNormal = adjugate(skinMat) * normal;
 }

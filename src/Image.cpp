@@ -11,8 +11,16 @@
 #include "Utils.hpp"
 #include "Buffer.hpp"
 
-Image::Image(const std::string name, VmaAllocator allocator, VkImage image, VkImageView imageView, VmaAllocation allocation) noexcept
-    : name{name}, allocation{allocation}, image{image}, imageView{imageView}, allocator{allocator} {
+Image::Image(const std::string name, VmaAllocator allocator, VkImage image, VkImageView imageView,
+             VmaAllocation allocation, uint32_t width, uint32_t height) noexcept
+    : name{name},
+    allocation{allocation},
+    image{image},
+    imageView{imageView},
+    allocator{allocator},
+    mWidth{width},
+    mHeight{height}
+{
 }
 
 Image::Image(Image &&other) noexcept
@@ -20,7 +28,10 @@ Image::Image(Image &&other) noexcept
       allocation(std::exchange(other.allocation, VK_NULL_HANDLE)),
       image(std::exchange(other.image, VK_NULL_HANDLE)),
       imageView(std::exchange(other.imageView, VK_NULL_HANDLE)),
-      allocator(std::exchange(other.allocator, VK_NULL_HANDLE)) {
+      allocator(std::exchange(other.allocator, VK_NULL_HANDLE)),
+      mWidth(std::move(other.mWidth)),
+      mHeight(std::move(other.mHeight))
+{
 
     // std::cout << "Move Constructing Image\n";
 }
@@ -31,6 +42,8 @@ Image &Image::operator=(Image &&other) noexcept {
     std::swap(image, other.image);
     std::swap(imageView, other.imageView);
     std::swap(allocator, other.allocator);
+    std::swap(mWidth, other.mWidth);
+    std::swap(mHeight, other.mHeight);
 
     return *this;
 }
@@ -208,14 +221,15 @@ Image LoadTextureFromDisk(std::filesystem::path path, Context &context, VkFormat
     return img;
 }
 
-Image CreateImageTexture2D(const std::string name, Context &context, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags imageaspectFlags, uint32_t mipLevels) {
+Image CreateImageTexture2D(const std::string name, Context& context, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags imageaspectFlags, uint32_t mipLevels, VkImageCreateFlags flags, uint32_t arrayLayers) {
     VkImageCreateInfo imageInfo{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
+    imageInfo.flags = flags;
     imageInfo.imageType = VK_IMAGE_TYPE_2D;
     imageInfo.extent.width = width;
     imageInfo.extent.height = height;
     imageInfo.extent.depth = 1;
     imageInfo.mipLevels = mipLevels;
-    imageInfo.arrayLayers = 1;
+    imageInfo.arrayLayers = arrayLayers;
     imageInfo.format = format;
     imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
     imageInfo.usage = usage;
@@ -240,15 +254,15 @@ Image CreateImageTexture2D(const std::string name, Context &context, uint32_t wi
     VkImageViewCreateInfo viewInfo{};
     viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     viewInfo.image = image;
-    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    viewInfo.viewType = (flags & VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT) != 0 ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D;
     viewInfo.format = format;
     viewInfo.components = VkComponentMapping{};
-    viewInfo.subresourceRange = VkImageSubresourceRange{imageaspectFlags, 0, VK_REMAINING_MIP_LEVELS, 0, 1};
+    viewInfo.subresourceRange = VkImageSubresourceRange{imageaspectFlags, 0, VK_REMAINING_MIP_LEVELS, 0, VK_REMAINING_ARRAY_LAYERS};
 
     VkImageView imageView = VK_NULL_HANDLE;
     VK_CHECK(vkCreateImageView(context.device, &viewInfo, nullptr, &imageView), "Failed to create image view");
 
     context.SetObjectName(context.device, (uint64_t)imageView, VK_OBJECT_TYPE_IMAGE_VIEW, name.c_str());
 
-    return Image(name, context.allocator, image, imageView, allocation);
+    return Image(name, context.allocator, image, imageView, allocation, width, height);
 }

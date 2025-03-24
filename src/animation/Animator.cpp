@@ -17,13 +17,15 @@ Animator::~Animator() {
                                  nullptr);
     vkDestroyDescriptorPool(mContext->device, mDescriptorPool, nullptr);
     // destroy the buffer
-    mJointBuffer.Destroy();
+    for (auto &buffer : mJointBuffers) {
+        buffer.Destroy();
+    }
 }
 void Animator::BindDescriptorSet(VkCommandBuffer aCmdBuff,
-                                 VkPipelineLayout aPipelineLayout, int aSet) {
+                                 VkPipelineLayout aPipelineLayout, int aSet, size_t aCurrentFrame) {
     // bind the descriptor set
     vkCmdBindDescriptorSets(aCmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            aPipelineLayout, aSet, 1, &mDescriptorSet, 0,
+                            aPipelineLayout, aSet, 1, &mDescriptorSet[aCurrentFrame], 0,
                             nullptr);
 }
 void Animator::Update(double aDeltaTime, Entity *aMesh) {
@@ -43,28 +45,37 @@ Animator::Animator(Context *aContext, Skin *aSkin)
                         VK_SHADER_STAGE_VERTEX_BIT, nullptr},
                    });
     // create the descriptor pool
-    vkutil::CreateDescriptorPool(*mContext, 1, 1, mDescriptorPool);
-    // allocate the descriptor set
-    vkutil::AllocateDescriptorSet(*mContext, mDescriptorPool, mDescriptorSetLayout,
-                              1, mDescriptorSet);
-    // create the joint buffer
-    mJointBuffer = CreateBuffer(
-        "JointBuffer", *mContext, sizeof(glm::mat4) * mSkin->GetJoints().size(),
-        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-        VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
-    // make the descriptor set point to the joint buffer
-    VkDescriptorBufferInfo bufferInfo{};
-    bufferInfo.buffer = mJointBuffer.buffer;
-    bufferInfo.offset = 0;
-    bufferInfo.range = sizeof(glm::mat4) * mSkin->GetJoints().size();
-    vkutil::UpdateDescriptorSet(*mContext, 0, bufferInfo, mDescriptorSet,
-                            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+    vkutil::CreateDescriptorPool(*mContext, vkutil::MAX_FRAMES_IN_FLIGHT, vkutil::MAX_FRAMES_IN_FLIGHT, mDescriptorPool);
+    // resize the descriptor sets
+    mDescriptorSet.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+    // allocate the descriptor sets
+    vkutil::AllocateDescriptorSets(*mContext, mDescriptorPool, mDescriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, mDescriptorSet);
+    // create the joint buffers
+    mJointBuffers.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+    for (auto &buffer : mJointBuffers) {
+        buffer = CreateBuffer("JointBuffer", *mContext, sizeof(glm::mat4) * mSkin->GetJoints().size(),
+                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                     VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+                         VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
+                         VMA_ALLOCATION_CREATE_MAPPED_BIT);
+    }
+    //
+    // make the descriptor sets point to the corresponding joint buffer
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        VkDescriptorBufferInfo bufferInfo{};
+        bufferInfo.buffer = mJointBuffers[i].buffer;
+        bufferInfo.offset = 0;
+        bufferInfo.range = sizeof(glm::mat4) * mSkin->GetJoints().size();
+        vkutil::UpdateDescriptorSet(*mContext, 0, bufferInfo, mDescriptorSet[i],
+                                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+    }
 }
 void Animator::UpdateJointBuffer(Entity *aMesh) {
     // get the joints from the skin
-    auto joints = mSkin->GetJointMatrices(aMesh);
+    mJoints = mSkin->GetJointMatrices(aMesh);
     // for each joint matrix, decompose it into its components
-    for (auto &joint : joints) {
+    for (auto &joint : mJoints) {
         // get the translation, rotation and scale
         glm::vec3 translation, scale;
         glm::quat rotation;
@@ -72,14 +83,20 @@ void Animator::UpdateJointBuffer(Entity *aMesh) {
         glm::vec4 perspective;
         glm::decompose(joint, scale, rotation, translation, skew, perspective);
     }
-    // upload the joints to the buffer
-    mJointBuffer.WriteToBuffer(joints.data(),
-                               sizeof(glm::mat4) * joints.size());
 }
+
+void Animator::UploadJointBuffer(VkCommandBuffer cmdBuff) {
+    // upload the joints to the buffer
+    mJointBuffers[vkutil::currentFrame].Upload(cmdBuff, mJoints.data(), sizeof(glm::mat4) * mJoints.size());
+}
+
 void Animator::UpdateAnimationSamples(double aDeltaTime) {
     if (mAnimations.empty()) {
         return;
     }
+    // reduce the animation lock time
+    mAnimationLockTimer -= aDeltaTime;
+
     // for each animation, set the weight to 0 and time to 0
     for (auto &sample : mAnimationSamples) {
         if (sample.first != mActiveAnimation &&
@@ -105,17 +122,25 @@ void Animator::UpdateAnimationSamples(double aDeltaTime) {
     }
 
     if (mActiveAnimation != -1) {
-        mAnimationSamples[mActiveAnimation] = {
-            (std::fmod(mAnimationSamples[mActiveAnimation].time +
-                           aDeltaTime * mAnimationTimeScale,
-                       mAnimations[mActiveAnimation]->GetMaxTime())),
-            currentWeight};
+        if(mAnimationLockTimer > 0.0f){
+            // if the lock timer is still active, then don't modulus the time, but still increment it
+                mAnimationSamples[mActiveAnimation] = {
+                        mAnimationSamples[mActiveAnimation].time +
+                                   aDeltaTime * mAnimationTimeScale,
+                        currentWeight};
+        }
+        else {
+            mAnimationSamples[mActiveAnimation] = {
+                (std::fmod(mAnimationSamples[mActiveAnimation].time +
+                               aDeltaTime * mAnimationTimeScale,
+                           mAnimations[mActiveAnimation]->GetMaxTime())),
+                currentWeight};
+        }
     }
     if (mLastAnimation != -1) {
         mAnimationSamples[mLastAnimation] = {
-            (std::fmod(mAnimationSamples[mLastAnimation].time +
+            mAnimationSamples[mLastAnimation].time +
                            aDeltaTime * mAnimationTimeScale,
-                       mAnimations[mLastAnimation]->GetMaxTime())),
             pastWeight};
     }
 }
@@ -141,7 +166,7 @@ void Animator::UpdateJointsTransform() {
         for (auto &data : animationData) {
             auto entity = data.target;
             auto transform = data.transform;
-            entity->SetJointTransform(transform.getMatrix());
+            entity->SetTransform(transform);
         }
     }
 }
@@ -159,7 +184,11 @@ void Animator::SetActiveAnimation(const std::string &aName) {
     }
 }
 
-void Animator::SetActiveAnimation(const std::string &aName, float blendTime) {
+void Animator::SetActiveAnimation(const std::string &aName, float blendTime, bool lockForFirstLoop = false) {
+    // if the lock timer is still active, then don't change the animation
+    if (mAnimationLockTimer > 0.0f) {
+            return;
+    }
     if (aName != mCurrentAnimationName && mActiveAnimation != -1) {
         mTotalBlendTime = blendTime;
         mLastAnimation = mActiveAnimation;
@@ -168,6 +197,13 @@ void Animator::SetActiveAnimation(const std::string &aName, float blendTime) {
     for (size_t i = 0; i < mAnimations.size(); i++) {
         if (aName == mAnimations[i]->GetName()) {
             mCurrentAnimationName = aName;
+            // if we are locking for the first loop, and the animation is changed, then set the lock timer
+            if(mActiveAnimation != static_cast<int>(i) && lockForFirstLoop){
+                // set the lock timer to the animation duration
+                mAnimationLockTimer = mAnimations[i]->GetMaxTime();
+                // set the animations time to 0
+                mAnimationSamples[static_cast<int>(i)].time = 0;
+            }
             mActiveAnimation = static_cast<int>(i);
             return;
         }

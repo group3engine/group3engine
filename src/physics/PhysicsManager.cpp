@@ -1,6 +1,8 @@
 #include "PhysicsManager.hpp"
 #include "spdlog/spdlog.h"
 
+#include <tracy/Tracy.hpp>
+
 void PhysicsManager::StartUp() {
     // Register allocation hook. In this example we'll just let Jolt use malloc / free but you can override these if you want (see Memory.h).
     // This needs to be done before any other Jolt function is called.
@@ -55,13 +57,17 @@ void PhysicsManager::StartUp() {
     mPhysicsSystem.OptimizeBroadPhase();
 }
 
-void PhysicsManager::UpdatePhysics(double delta_time = 1 / 60.f) {
+void PhysicsManager::UpdatePhysics(double delta_time) {
+    ZoneScoped;
+
     // Next step
     cDeltaTime = delta_time;
 
     // cout << "Step " << step << endl;
     // If you take larger steps than 1 / 60th of a second you need to do multiple collision steps in order to keep the simulation stable. Do 1 collision step per 1 / 60th of a second (round up).
+    // Calculate number of collision steps needed (1 step per 1/60th second)
     const int cCollisionSteps = 1;
+
 
     // Step the world
     mPhysicsSystem.Update(cDeltaTime, cCollisionSteps, mTempAllocator.get(), mJobSystem.get());
@@ -82,4 +88,8 @@ void PhysicsManager::ShutDown() {
     // Destroy the factory
     delete Factory::sInstance;
     Factory::sInstance = nullptr;
+}
+void PhysicsManager::RegisterEntity(Entity *entity, BodyID bodyId) {
+    mContactListener.AddBodyEntityMapping(bodyId, entity);
+
 }
