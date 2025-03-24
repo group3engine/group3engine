@@ -263,12 +263,12 @@ void Engine::Update(double deltaTime) {
 // Draw physics before physics update
 // TODO: Understand why Jolt does this
 #ifdef JPH_DEBUG_RENDERER
-        auto cameraPos = mRenderer->GetCamera()->GetPosition();
-        mDebugRenderer.get()->SetCameraPos(RVec3{cameraPos.x, cameraPos.y, cameraPos.z});
+    auto cameraPos = mRenderer->GetCamera()->GetPosition();
+    mDebugRenderer.get()->SetCameraPos(RVec3{cameraPos.x, cameraPos.y, cameraPos.z});
 
-        // Create render primitives: vertex buffers, index buffers and store them for later
-        // Except for lines, we will create the primitives at draw time
-        DrawPhysics();
+    // Create render primitives: vertex buffers, index buffers and store them for later
+    // Except for lines, we will create the primitives at draw time
+    DrawPhysics();
 #endif // JPH_DEBUG_RENDERER
 
     PhysicsManager::get().UpdatePhysics(deltaTime);
