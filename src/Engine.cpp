@@ -64,18 +64,9 @@ namespace {
     }
 }
 
-Engine* Engine::instance = nullptr;
-
-Engine & Engine::get()
-{
-    return *instance;
-}
-
 Engine::Engine() {
     m_isRunning = false;
     m_lastFrameTime = 0.0;
-    // singleton nonsense
-    instance = this;
 }
 
 bool Engine::Initialize() {

@@ -13,12 +13,20 @@ class MeshManager;
 class TextureManager;
 
 class Engine {
-public:
-    static Engine& get();
-private:
-    static Engine* instance;
-  public:
+  private:
     Engine();
+    ~Engine() = default;
+
+  public:
+    Engine(const Engine &) = delete;
+    Engine &operator=(const Engine &) = delete;
+
+    static Engine &get() {
+        static Engine instance;
+        return instance;
+    }
+
+  public:
     bool Initialize();
     void Run();
     void Shutdown();
