@@ -75,7 +75,7 @@ private:
 	static inline float		sPredictiveContactDistance = 0.1f;
 	static inline bool		sEnableWalkStairs = true;
 	static inline bool		sEnableStickToFloor = true;
-	static inline bool		sEnhancedInternalEdgeRemoval = false;
+	static inline bool		sEnhancedInternalEdgeRemoval = true;
 
 	// The 'player' character
 	Ref<CharacterVirtual>	mCharacter;
