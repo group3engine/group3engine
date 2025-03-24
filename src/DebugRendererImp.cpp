@@ -112,7 +112,7 @@ void DebugRendererImp::Destroy() {
 
 void DebugRendererImp::DrawLine(RVec3Arg inFrom, RVec3Arg inTo, ColorArg inColor)
 {
-    ZoneScopedN("DebugRendererImp::DrawTriangle");
+    ZoneScopedN("DebugRendererImp::DrawLine");
 
     Line line;
     Vec3(inFrom).StoreFloat3(&line.mFrom);
