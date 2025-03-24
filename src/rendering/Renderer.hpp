@@ -28,9 +28,31 @@ class Renderer {
 
     void Destroy();
 
-    void Render();
+    void BeginFrame(VkCommandBuffer cmd);
+    void EndFrame(VkCommandBuffer cmd);
     void Update(double deltaTime);
+
     std::shared_ptr<Scene> m_scene;
+
+
+    // TODO: Check if we are calling this from within a frame
+    VkCommandBuffer GetCommandBuffer() const { return m_commandBuffers[vkutil::currentFrame]; }
+
+    Context &GetContext() const { return context; }
+
+    const DepthPrepass *GetDepthPrepass() const { return m_DepthPrepass.get(); }
+    const ShadowMap *GetShadowMap() const { return m_ShadowMap.get(); }
+    const ForwardPass *GetForwardPass() const { return m_ForwardPass.get(); }
+    const GBuffer *GetGBuffer() const { return m_GBuffer.get(); }
+    const SSAO *GetSSAO() const { return m_SSAO.get(); }
+    const SSR *GetSSR() const { return m_SSR.get(); }
+    const Bloom *GetBloomPass() const { return m_BloomPass.get(); }
+    const Composite *GetCompositePass() const { return m_CompositePass.get(); }
+    const PresentPass *GetPresentPass() const { return m_PresentPass.get(); }
+
+    const Camera *GetCamera() const { return m_camera.get(); }
+
+    uint32_t GetImageIndex() const { return mImageIndex; }
 
     void RebuildSceneDescriptors();
 
@@ -63,4 +85,6 @@ class Renderer {
     std::unique_ptr<PresentPass> m_PresentPass;
 
     std::shared_ptr<Camera> m_camera;
+
+    uint32_t mImageIndex = 0;
 };

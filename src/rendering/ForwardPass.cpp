@@ -133,13 +133,13 @@ void ForwardPass::Resize() {
     CreateFramebuffer();
 }
 
-void ForwardPass::Execute(VkCommandBuffer cmd) {
+void ForwardPass::BeginExecute(VkCommandBuffer cmd) const {
     ZoneScopedN("ForwardPass::Execute");
     TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "ForwardPass", tracy::Color::Tomato);
 
-#ifdef _DEBUG
-    vkutil::RenderPassLabel(cmd, "ForwardPass");
-#endif // !DEBUG
+// #ifdef _DEBUG
+//     vkutil::RenderPassLabel(cmd, "ForwardPass");
+// #endif // !DEBUG
 
     VkRenderPassBeginInfo beginInfo = {};
     beginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -182,13 +182,14 @@ void ForwardPass::Execute(VkCommandBuffer cmd) {
 
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_alphaMaskPipeline.first);
     scene->DrawAlphaMasked(cmd, m_alphaMaskPipeline.second);
+}
 
-
+void ForwardPass::EndExecute(VkCommandBuffer cmd) const {
     vkCmdEndRenderPass(cmd);
 
-#ifdef _DEBUG
-    vkutil::EndRenderPassLabel(cmd);
-#endif // !DEBUG
+// #ifdef _DEBUG
+//     vkutil::EndRenderPassLabel(cmd);
+// #endif // !DEBUG
 }
 
 void ForwardPass::CreatePipeline() {
