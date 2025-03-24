@@ -270,15 +270,6 @@ void GBuffer::BuildDescriptors()
     }
 }
 
-void GBuffer::DestroyDescriptors() {
-    vkFreeDescriptorSets(context.device, context.descriptorPool, m_descriptorSets.size(), m_descriptorSets.data());
-}
-
-void GBuffer::RebuildDescriptors() {
-    DestroyDescriptors();
-    BuildDescriptors();
-}
-
 void GBuffer::Update()
 {
 

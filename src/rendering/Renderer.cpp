@@ -61,9 +61,7 @@ void Renderer::CreateRenderPasses() {
 
 void Renderer::RebuildSceneDescriptors() {
     m_ShadowMap->RebuildDescriptors();
-    m_DepthPrepass->RebuildDescriptors();
     m_ForwardPass->RebuildDescriptors();
-    m_GBuffer->RebuildDescriptors();
 }
 
 void Renderer::Destroy() {

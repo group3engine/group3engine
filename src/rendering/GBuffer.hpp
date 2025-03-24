@@ -25,15 +25,12 @@ class GBuffer {
 
     Image& GetMetallicRoughnessTarget() { return m_RenderTarget; }
 
-    void RebuildDescriptors();
-
   private:
     void CreatePipeline();
     void CreateRenderPass();
     void CreateFramebuffer();
     void BuildDescriptorSetLayouts();
     void BuildDescriptors();
-    void DestroyDescriptors();
 
     uint32_t m_width;
     uint32_t m_height;

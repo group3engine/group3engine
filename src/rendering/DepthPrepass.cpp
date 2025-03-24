@@ -190,12 +190,3 @@ void DepthPrepass::BuildDescriptors() {
         vkutil::UpdateDescriptorSet(context, 0, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
     }
 }
-
-void DepthPrepass::DestroyDescriptors() {
-    vkFreeDescriptorSets(context.device, context.descriptorPool, m_descriptorSets.size(), m_descriptorSets.data());
-}
-
-void DepthPrepass::RebuildDescriptors() {
-    DestroyDescriptors();
-    BuildDescriptors();
-}
