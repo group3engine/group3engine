@@ -296,10 +296,9 @@ void Engine::Render() {
 
         mRenderer->GetForwardPass()->BeginExecute(mRenderer->GetCommandBuffer());
 
-    #ifdef JPH_DEBUG_RENDERER
-        // TODO: Actually record draw commands once all render primitives have been created
+#ifdef JPH_DEBUG_RENDERER
         static_cast<DebugRendererImp*>(mDebugRenderer.get())->Draw();
-    #endif // JPH_DEBUG_RENDERER
+#endif // JPH_DEBUG_RENDERER
 
         mRenderer->GetForwardPass()->EndExecute(mRenderer->GetCommandBuffer());
 
