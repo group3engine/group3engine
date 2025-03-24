@@ -112,6 +112,8 @@ void DebugRendererImp::Destroy() {
 
 void DebugRendererImp::DrawLine(RVec3Arg inFrom, RVec3Arg inTo, ColorArg inColor)
 {
+    ZoneScopedN("DebugRendererImp::DrawTriangle");
+
     Line line;
     Vec3(inFrom).StoreFloat3(&line.mFrom);
     line.mFromColor = inColor;
@@ -124,6 +126,8 @@ void DebugRendererImp::DrawLine(RVec3Arg inFrom, RVec3Arg inTo, ColorArg inColor
 
 void DebugRendererImp::DrawTriangle(RVec3Arg inV1, RVec3Arg inV2, RVec3Arg inV3, ColorArg inColor, ECastShadow inCastShadow)
 {
+    ZoneScopedN("DebugRendererImp::DrawTriangle");
+
     lock_guard lock(mVerticesLock);
 
     // Construct triangle
@@ -140,9 +144,7 @@ void DebugRendererImp::DrawText3D(RVec3Arg inPosition, const std::string_view &i
 }
 
 void DebugRendererImp::DrawLines() {
-    if (!mLines.empty()) {
-        // spdlog::info("DrawLines");
-    }
+    ZoneScopedN("DebugRendererImp::DrawLines");
 
     lock_guard lock(mLinesLock);
 
@@ -183,6 +185,8 @@ void DebugRendererImp::DrawLines() {
 }
 
 void DebugRendererImp::DrawTriangles() {
+    ZoneScopedN("DebugRendererImp::DrawTriangles");
+
     // NOTE: Draws wireframe triangles with the current pipeline
 
     lock_guard lock(mVerticesLock);
@@ -224,6 +228,11 @@ void DebugRendererImp::DrawTriangles() {
 }
 
 void DebugRendererImp::Draw() {
+    ZoneScopedN("DebugRendererImp::Draw");
+    TracyVkZoneC(mRenderer->GetContext().tracyContexts[vkutil::currentFrame],
+                 mRenderer->GetCommandBuffer(), "DebugRenderer::Draw",
+                 tracy::Color::Coral4);
+
     // DrawLines();
     DrawTriangles();
 }

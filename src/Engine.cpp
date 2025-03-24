@@ -277,6 +277,8 @@ void Engine::Update(double deltaTime) {
 
 #ifdef JPH_DEBUG_RENDERER
 void Engine::DrawPhysics() {
+    ZoneScopedN("DrawPhysics");
+
     JPH::BodyManager::DrawSettings bodyDrawSettings;
     bodyDrawSettings.mDrawShape = true;
     PhysicsManager::get().mPhysicsSystem.DrawBodies(bodyDrawSettings, mDebugRenderer.get());
@@ -284,30 +286,31 @@ void Engine::DrawPhysics() {
 #endif // JPH_DEBUG_RENDERER
 
 void Engine::Render() {
-    TracyVkZoneC(mRenderer->GetContext().tracyContexts[vkutil::currentFrame],
-                 mRenderer->GetCommandBuffer(), "vk::Frame", tracy::Color::Crimson);
+    ZoneScopedN("Engine::Render");
 
     mRenderer->BeginFrame(mRenderer->GetCommandBuffer());
 
-    mRenderer->GetShadowMap()->Execute(mRenderer->GetCommandBuffer());
-    mRenderer->GetDepthPrepass()->Execute(mRenderer->GetCommandBuffer());
+    {
+        mRenderer->GetShadowMap()->Execute(mRenderer->GetCommandBuffer());
+        mRenderer->GetDepthPrepass()->Execute(mRenderer->GetCommandBuffer());
 
-    mRenderer->GetForwardPass()->BeginExecute(mRenderer->GetCommandBuffer());
+        mRenderer->GetForwardPass()->BeginExecute(mRenderer->GetCommandBuffer());
 
-#ifdef JPH_DEBUG_RENDERER
-    // TODO: Actually record draw commands once all render primitives have been created
-    static_cast<DebugRendererImp*>(mDebugRenderer.get())->Draw();
-#endif // JPH_DEBUG_RENDERER
+    #ifdef JPH_DEBUG_RENDERER
+        // TODO: Actually record draw commands once all render primitives have been created
+        static_cast<DebugRendererImp*>(mDebugRenderer.get())->Draw();
+    #endif // JPH_DEBUG_RENDERER
 
-    mRenderer->GetForwardPass()->EndExecute(mRenderer->GetCommandBuffer());
+        mRenderer->GetForwardPass()->EndExecute(mRenderer->GetCommandBuffer());
 
-    mRenderer->GetGBuffer()->Execute(mRenderer->GetCommandBuffer());
-    mRenderer->GetSSAO()->Execute(mRenderer->GetCommandBuffer());
-    mRenderer->GetSSR()->Execute(mRenderer->GetCommandBuffer());
+        mRenderer->GetGBuffer()->Execute(mRenderer->GetCommandBuffer());
+        mRenderer->GetSSAO()->Execute(mRenderer->GetCommandBuffer());
+        mRenderer->GetSSR()->Execute(mRenderer->GetCommandBuffer());
 
-    mRenderer->GetBloomPass()->Execute(mRenderer->GetCommandBuffer());
-    mRenderer->GetCompositePass()->Execute(mRenderer->GetCommandBuffer());
-    mRenderer->GetPresentPass()->Execute(mRenderer->GetCommandBuffer(), mRenderer->GetImageIndex());
+        mRenderer->GetBloomPass()->Execute(mRenderer->GetCommandBuffer());
+        mRenderer->GetCompositePass()->Execute(mRenderer->GetCommandBuffer());
+        mRenderer->GetPresentPass()->Execute(mRenderer->GetCommandBuffer(), mRenderer->GetImageIndex());
 
-    mRenderer->EndFrame(mRenderer->GetCommandBuffer());
+        mRenderer->EndFrame(mRenderer->GetCommandBuffer());
+    }
 }
