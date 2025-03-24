@@ -29,7 +29,7 @@ private:
     bool m_isRunning;
     double m_lastFrameTime;
 
-    bool m_sceneNeedsChanging;
+    bool m_sceneNeedsChanging = false;
     std::filesystem::path m_scenePath;
 
     void UpdateLogic();
