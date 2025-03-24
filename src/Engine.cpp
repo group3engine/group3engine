@@ -38,6 +38,8 @@
 #include <Jolt/Core/HashCombine.h>
 #include <Jolt/Geometry/IndexedTriangle.h>
 
+#include "Config.hpp"
+
 #define TEMP_DISABLE_PHYSICS 0
 
 namespace {
@@ -117,7 +119,9 @@ bool Engine::Initialize() {
 }
 
 void Engine::Shutdown() {
+#ifdef JPH_DEBUG_RENDERER
     static_cast<DebugRendererImp*>(mDebugRenderer.get())->Destroy();
+#endif // JPH_DEBUG_RENDERER
 
     mRenderer->Destroy();
     mRenderer.reset();
@@ -263,12 +267,14 @@ void Engine::Update(double deltaTime) {
 // Draw physics before physics update
 // TODO: Understand why Jolt does this
 #ifdef JPH_DEBUG_RENDERER
-    auto cameraPos = mRenderer->GetCamera()->GetPosition();
-    mDebugRenderer.get()->SetCameraPos(RVec3{cameraPos.x, cameraPos.y, cameraPos.z});
+    if (GlobalConfig::enablePhysicsDebugRenderer) {
+        auto cameraPos = mRenderer->GetCamera()->GetPosition();
+        mDebugRenderer.get()->SetCameraPos(RVec3{cameraPos.x, cameraPos.y, cameraPos.z});
 
-    // Create render primitives: vertex buffers, index buffers and store them for later
-    // Except for lines, we will create the primitives at draw time
-    DrawPhysics();
+        // Create render primitives: vertex buffers, index buffers and store them for later
+        // Except for lines, we will create the primitives at draw time
+        DrawPhysics();
+    }
 #endif // JPH_DEBUG_RENDERER
 
     PhysicsManager::get().UpdatePhysics(deltaTime);
@@ -297,7 +303,9 @@ void Engine::Render() {
         mRenderer->GetForwardPass()->BeginExecute(mRenderer->GetCommandBuffer());
 
 #ifdef JPH_DEBUG_RENDERER
-        static_cast<DebugRendererImp*>(mDebugRenderer.get())->Draw();
+        if (GlobalConfig::enablePhysicsDebugRenderer) {
+            static_cast<DebugRendererImp*>(mDebugRenderer.get())->Draw();
+        }
 #endif // JPH_DEBUG_RENDERER
 
         mRenderer->GetForwardPass()->EndExecute(mRenderer->GetCommandBuffer());

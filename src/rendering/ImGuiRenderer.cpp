@@ -15,6 +15,8 @@
 
 #include <tracy/Tracy.hpp>
 
+#include "Config.hpp"
+
 namespace {
     auto PushBackStyleVar = [](size_t i, std::function<void()> f) {
         f();
@@ -483,6 +485,10 @@ void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::share
     ImGui::Checkbox("Enable Text Window Border", &enableTextWindowBorder);
 
     ImGui::Checkbox("Enable Death Popup", &enableDeathPopup);
+
+#ifdef JPH_DEBUG_RENDERER
+    ImGui::Checkbox("Enable Physics Debug Renderer", &GlobalConfig::enablePhysicsDebugRenderer);
+#endif // JPH_DEBUG_RENDERER
 
     ImGui::EndChild();
 }
