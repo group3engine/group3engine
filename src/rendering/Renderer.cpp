@@ -38,6 +38,8 @@ Renderer::Renderer(Context &context, std::shared_ptr<Scene> scene)
 
     // GLFW callbacks
     glfwSetWindowUserPointer(context.mWindow, m_camera.get());
+
+    mFreedBuffers.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
 }
 
 void Renderer::CreateRenderPasses() {
@@ -108,6 +110,16 @@ void Renderer::Destroy() {
 
     for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; ++i) {
         TracyVkDestroy(context.tracyContexts[i]);
+    }
+
+    for (auto &freedBuffers : mFreedBuffers) {
+        for (auto &freedBuffer : freedBuffers) {
+            if (freedBuffer.buffer) {
+                assert(freedBuffer.allocator);
+                assert(freedBuffer.allocation);
+                vmaDestroyBuffer(freedBuffer.allocator, freedBuffer.buffer, freedBuffer.allocation);
+            }
+        }
     }
 }
 
@@ -196,6 +208,15 @@ void Renderer::BeginFrame(VkCommandBuffer cmd) {
         ZoneScopedN("vkWaitForFences");
 
         vkWaitForFences(context.device, 1, &m_Fences[vkutil::currentFrame], VK_TRUE, UINT64_MAX);
+    }
+
+    for (auto &freedBuffer : mFreedBuffers[vkutil::currentFrame]) {
+        if (freedBuffer.buffer) {
+            assert(freedBuffer.allocator);
+            assert(freedBuffer.allocation);
+            vmaDestroyBuffer(freedBuffer.allocator, freedBuffer.buffer, freedBuffer.allocation);
+            freedBuffer = {nullptr, nullptr, nullptr};
+        }
     }
 
     VkResult getImageIndex;

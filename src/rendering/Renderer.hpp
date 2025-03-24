@@ -20,6 +20,12 @@
 
 class Context;
 
+struct FreedBuffer {
+    VkBuffer buffer = VK_NULL_HANDLE;
+    VmaAllocation allocation = VK_NULL_HANDLE;
+    VmaAllocator allocator = VK_NULL_HANDLE;
+};
+
 class Renderer {
   public:
     Renderer(Context &context, std::shared_ptr<Scene> scene);
@@ -65,6 +71,9 @@ class Renderer {
 
     void Submit();
     void Present(uint32_t imageIndex);
+
+  public:
+    std::vector<std::vector<FreedBuffer>> mFreedBuffers;
 
   private:
     Context &context;

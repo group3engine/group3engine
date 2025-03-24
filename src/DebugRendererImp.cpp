@@ -174,6 +174,12 @@ void DebugRendererImp::DrawLines() {
     }
 
     mLines.clear();
+
+    // Push the vertex buffer to be freed the next time this frame is used. Do
+    // this to delay the vertex buffer being freed so it can be used this frame.
+    auto &vtxBuff = mVertexBuffers[vkutil::currentFrame];
+    FreedBuffer freedBuffer = {vtxBuff.buffer, vtxBuff.allocation, vtxBuff.allocator};
+    mRenderer->mFreedBuffers[vkutil::currentFrame].push_back(freedBuffer);
 }
 
 void DebugRendererImp::DrawTriangles() {
@@ -209,6 +215,12 @@ void DebugRendererImp::DrawTriangles() {
     }
 
     mVertices.clear();
+
+    // Push the vertex buffer to be freed the next time this frame is used. Do
+    // this to delay the vertex buffer being freed so it can be used this frame.
+    auto &vtxBuff = mVertexBuffers[vkutil::currentFrame];
+    FreedBuffer freedBuffer = {vtxBuff.buffer, vtxBuff.allocation, vtxBuff.allocator};
+    mRenderer->mFreedBuffers[vkutil::currentFrame].push_back(freedBuffer);
 }
 
 void DebugRendererImp::Draw() {
