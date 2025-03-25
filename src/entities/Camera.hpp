@@ -48,7 +48,7 @@ enum class InputType {
     FollowCharacter,
     FreeCamera
 };
-class Camera {
+class Camera : public Entity {
   public:
     static Camera* GetMainCamera() { return kMainCamera; }
   private:

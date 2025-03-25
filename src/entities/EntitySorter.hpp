@@ -20,6 +20,7 @@ enum class EntityType {
     ROTATING,
     SPINNINGONX,
     SECONDCHARACTER,
+    CAMERA
     // Add more entity types here
 };
 // a map of strings to entity types
@@ -30,9 +31,10 @@ static const std::unordered_map<std::string, EntityType> entityTypeMap = {
     {"rotatingPlatform", EntityType::ROTATING},
     {"SpinningOnX", EntityType::SPINNINGONX},
     {"second", EntityType::SECONDCHARACTER},
+    {"camera", EntityType::CAMERA},
 };
 // a function to convert a string to an entity type
-EntityType GetEntityTypeFromString(const std::string& aTypeName) {
+inline EntityType GetEntityTypeFromString(const std::string& aTypeName) {
     auto it = entityTypeMap.find(aTypeName);
     if (it != entityTypeMap.end()) {
         return it->second;
@@ -41,7 +43,7 @@ EntityType GetEntityTypeFromString(const std::string& aTypeName) {
 }
 
 // this function should return an entity pointer, selected from the different entity types by the string given
-Entity* CreateNewEntity(const std::string& aEntityType)
+inline Entity* CreateNewEntity(const std::string& aEntityType)
 {
     EntityType entityType = GetEntityTypeFromString(aEntityType);
 
@@ -58,6 +60,9 @@ Entity* CreateNewEntity(const std::string& aEntityType)
         return new RotateOnX(10.f);
     case EntityType::SECONDCHARACTER:
         return new SampleSecondaryEntity();
+    case EntityType::CAMERA:
+        SPDLOG_ERROR("Cannot create Camera entity using CreateNewEntity.");
+        exit(EXIT_FAILURE);
 
     // Add more cases here
     default:
