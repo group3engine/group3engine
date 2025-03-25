@@ -435,6 +435,10 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                     group3_extras.is_invisible = is_invisible;
                 }
 
+                else {
+                    SPDLOG_ERROR("Unexpected token while parsing extras.");
+                    exit(EXIT_FAILURE);
+                }
 
             }
 

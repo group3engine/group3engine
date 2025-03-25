@@ -87,7 +87,7 @@ public:
 	virtual void			HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime) = 0;
 
 	// Character size
-	static constexpr float	cCharacterHeightStanding = 1.35f;
+	static constexpr float	cCharacterHeightStanding = 0.8f;
 	static constexpr float	cCharacterRadiusStanding = 0.3f;
 
 	// Character movement properties
