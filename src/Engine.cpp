@@ -38,6 +38,8 @@
 #include <Jolt/Core/HashCombine.h>
 #include <Jolt/Geometry/IndexedTriangle.h>
 
+#include "imgui.h"
+
 #include "Config.hpp"
 
 #define TEMP_DISABLE_PHYSICS 0
@@ -237,6 +239,14 @@ void Engine::ChangeSceneFR()
     vkQueueWaitIdle(m_context.graphicsQueue);
     vkQueueWaitIdle(m_context.presentQueue);
 
+
+
+
+
+
+    // Remove all UI textures as they were linked with the texture manager
+    ImGuiRenderer::RemoveTextures();
+
     mScene->Destroy();
     mMaterialManager->Destroy();
     mMeshManager->Destroy();
@@ -248,8 +258,16 @@ void Engine::ChangeSceneFR()
 
     mTextureManager->Initialise();
 
-    // Remove all UI textures as they were linked with the texture manager
-    ImGuiRenderer::RemoveTextures();
+    // load in heart
+    std::filesystem::path loadingPath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets" / "loadingImage.png";
+    ImGuiRenderer::AddTextures(mTextureManager.get(), loadingPath, "load");
+
+
+    m_isLoading = true;
+    m_progress = 0.f;
+    std::thread loadingScreen(&Engine::RenderLoadingScreen, this);
+
+
 
 #ifndef NDEBUG
     // Check there are no physics bodies left after scene destruction
@@ -257,16 +275,26 @@ void Engine::ChangeSceneFR()
     PhysicsManager::get().mPhysicsSystem.GetBodies(bodyIds);
     assert(bodyIds.empty());
 #endif // #ifndef NDEBUG
-
+    m_progress = 25.f;
     mScene->StartUp();
     mScene->Initialise(m_scenePath);
+    m_progress = 75.f;
 
     // Add back UI textures
-    ImGuiRenderer::AddTextures(mTextureManager.get());
+    std::filesystem::path path = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets" / "heart.png";
+    ImGuiRenderer::AddTextures(mTextureManager.get(), path, "heart");
 
     mRenderer->RebuildSceneDescriptors();
 
     mScene->Awake();
+    m_progress = 100.f;
+    // sleep for 1 second
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    // end the loading screen
+    m_isLoading = false;
+    // wait for loading screen thread to finish
+    while (!loadingScreen.joinable()) {}
+    loadingScreen.join();
 }
 
 void Engine::Update(double deltaTime) {
@@ -331,5 +359,26 @@ void Engine::Render() {
         mRenderer->GetPresentPass()->Execute(mRenderer->GetCommandBuffer(), mRenderer->GetImageIndex());
 
         mRenderer->EndFrame(mRenderer->GetCommandBuffer());
+    }
+}
+
+void Engine::RenderLoadingScreen()
+{
+    // load in a new image from assets/loadingImage.png
+
+    try
+    {
+        while (m_isLoading)
+        {
+            ImGuiRenderer::NewFrame();
+            ImGuiRenderer::Image("load", ImVec2{0,0}, ImVec2{1,1});
+            ImGuiRenderer::LoadingBar(m_progress, ImVec2(500, 500));
+            ImGuiRenderer::EndFrame();
+            // render some text with imgui
+            mRenderer->RenderUIOnly();
+        }
+    }catch (const std::exception& e) {
+        // Handle the exception
+        SPDLOG_ERROR(e.what());
     }
 }
