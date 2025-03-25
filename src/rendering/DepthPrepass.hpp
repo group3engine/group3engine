@@ -16,7 +16,7 @@ class DepthPrepass {
     explicit DepthPrepass(Context &context, std::shared_ptr<Scene> scene, std::shared_ptr<Camera> camera);
     ~DepthPrepass();
 
-    void Execute(VkCommandBuffer cmd);
+    void Execute(VkCommandBuffer cmd) const;
     void Resize();
 
     Image &GetRenderTarget() { return m_DepthTarget; };
@@ -25,6 +25,7 @@ class DepthPrepass {
     void CreatePipeline();
     void CreateRenderPass();
     void CreateFramebuffer();
+    void BuildDescriptorSetLayouts();
     void BuildDescriptors();
 
     Context &context;

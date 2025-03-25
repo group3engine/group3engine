@@ -12,7 +12,7 @@ class Bloom {
     explicit Bloom(Context &context, Image &inputImage);
     ~Bloom();
 
-    void Execute(VkCommandBuffer cmd);
+    void Execute(VkCommandBuffer cmd) const;
     void Update();
     void Resize();
 
@@ -25,8 +25,8 @@ class Bloom {
     void CreateFramebuffer();
     void CreateRenderPass();
 
-    void RenderHorizontalBlur(VkCommandBuffer cmd);
-    void RenderVerticalBlur(VkCommandBuffer cmd);
+    void RenderHorizontalBlur(VkCommandBuffer cmd) const;
+    void RenderVerticalBlur(VkCommandBuffer cmd) const;
 
     Context &context;
     Image m_BloomBlurXRT;

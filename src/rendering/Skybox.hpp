@@ -20,7 +20,6 @@ class Skybox {
   private:
     void CreatePipeline();
     void BuildDescriptors();
-    void CreateRenderPass();
     void CreateFramebuffer();
     void LoadCubemapFace(std::filesystem::path facePath, char **pixelData);
 

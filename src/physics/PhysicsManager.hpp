@@ -67,6 +67,12 @@ class PhysicsManager {
     // registers a entity as a rigid bodies owner
     void RegisterEntity(Entity *entity, BodyID bodyId);
 
+    // Unregister a body from a body-entity mapping
+    void UnregisterBody(BodyID bodyId);
+
+    // Remove and destroy body from the physics system
+    void RemoveAndDestroyBody(BodyID bodyId);
+
   public:
     // We need a temp allocator for temporary allocations during the physics update. We're
     // pre-allocating 10 MB to avoid having to do allocations during the physics update.

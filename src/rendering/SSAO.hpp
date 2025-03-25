@@ -21,7 +21,7 @@ class SSAO {
 
     explicit SSAO(Context &context, Image& depthBuffer, Image& renderedScene, std::shared_ptr<Camera> camera);
     ~SSAO();
-    void Execute(VkCommandBuffer cmd);
+    void Execute(VkCommandBuffer cmd) const;
     void Update();
     void Resize();
 

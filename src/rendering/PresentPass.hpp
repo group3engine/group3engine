@@ -11,7 +11,7 @@ class PresentPass {
   public:
     PresentPass(Context &context, Image &renderedScene);
     ~PresentPass();
-    void Execute(VkCommandBuffer cmd, uint32_t imageIndex);
+    void Execute(VkCommandBuffer cmd, uint32_t imageIndex) const;
     void Update();
     void Resize();
 

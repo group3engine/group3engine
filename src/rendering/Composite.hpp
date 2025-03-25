@@ -11,7 +11,7 @@ class Composite {
     explicit Composite(Context &context, Image &LightingPass, Image &BloomPass, Image& SSAO, Image& SSRImage);
     ~Composite();
 
-    void Execute(VkCommandBuffer cmd);
+    void Execute(VkCommandBuffer cmd) const;
     void Update();
     void Resize();
 

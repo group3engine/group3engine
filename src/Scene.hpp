@@ -26,7 +26,11 @@ private:
     static Scene* sActiveScene;
     static void SetActiveScene(Scene* scene) { sActiveScene = scene; }
   public:
-    explicit Scene(Context &context);
+    explicit Scene(Context &context,
+                   MaterialManager *materialManager,
+                   MeshManager *meshManager,
+                   TextureManager *textureManager);
+
     void Load(const std::filesystem::path &aFilepath);
 
     void DrawOpaque(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
@@ -37,10 +41,11 @@ private:
     void Update(double aDeltaTime);
     void UpdateUi(double aDeltaTime);
 
-    void Initialise();
+    void Initialise(const std::filesystem::path &filePath);
     
     void Awake();
 
+    void StartUp();
     void Destroy();
 
     TextureManager *GetTextureManager() const { return mTextureManager; }
@@ -50,6 +55,8 @@ private:
     std::vector<Buffer> &GetLightsUBO() { return m_LightUBO; }
 
     std::vector<Entity *>& GetEntities() { return m_Entities; }
+
+    const std::filesystem::path &GetSceneFilename() { return mSceneFilename; }
 
     void SetHasCharacter(bool hasCharacter) { mHasCharacter = hasCharacter; }
     [[nodiscard]] bool HasCharacter() const { return mHasCharacter; }
@@ -65,8 +72,8 @@ private:
 
   private:
     Context &context;
-    MeshManager *mMeshManager;
     MaterialManager *mMaterialManager;
+    MeshManager *mMeshManager;
     TextureManager *mTextureManager;
 
     std::vector<size_t> m_FrontMeshes;
@@ -82,5 +89,7 @@ private:
     Entity *mCharacter;
 
     gui::TimerData mGuiTimerData{};
+
+    std::filesystem::path mSceneFilename;
 };
 

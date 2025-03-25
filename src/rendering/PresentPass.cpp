@@ -56,7 +56,7 @@ void PresentPass::Update() {
     m_postProcessUbo[vkutil::currentFrame].WriteToBuffer(vkutil::postProcessSettings, sizeof(vkutil::PostProcessing));
 }
 
-void PresentPass::Execute(VkCommandBuffer cmd, uint32_t imageIndex) {
+void PresentPass::Execute(VkCommandBuffer cmd, uint32_t imageIndex) const {
     ZoneScopedN("PresentPass::Execute");
     TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "PresentPass", tracy::Color::DimGray);
 

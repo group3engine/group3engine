@@ -74,6 +74,11 @@ struct Vertex {
     }
 };
 
+// TODO: Fix this problem properly
+namespace WPT {
+    using Vertex = Vertex;
+}
+
 struct Texture {
     Image image;
     std::string name;

@@ -18,6 +18,10 @@ class CustomContactListener : public JPH::ContactListener {
         mBodyEntityMap[bodyId] = entity;
     }
 
+    void RemoveBodyEntityMapping(JPH::BodyID bodyId) {
+        mBodyEntityMap.erase(bodyId);
+    }
+
     std::unordered_map<JPH::BodyID, Entity *>& GetMap() {return mBodyEntityMap; };
 
     // See: ContactListener

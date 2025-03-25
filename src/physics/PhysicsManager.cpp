@@ -93,3 +93,17 @@ void PhysicsManager::RegisterEntity(Entity *entity, BodyID bodyId) {
     mContactListener.AddBodyEntityMapping(bodyId, entity);
 
 }
+
+void PhysicsManager::UnregisterBody(BodyID bodyId) {
+    mContactListener.RemoveBodyEntityMapping(bodyId);
+}
+
+void PhysicsManager::RemoveAndDestroyBody(BodyID bodyId) {
+    std::erase(mBodyIds, bodyId);
+
+    // Remove the body from the physics system. Note that the body itself keeps all of its state and can be re-added at any time.
+    mPhysicsSystem.GetBodyInterface().RemoveBody(bodyId);
+
+    // Destroy the body. After this the body  ID is no longer valid.
+    mPhysicsSystem.GetBodyInterface().DestroyBody(bodyId);
+}

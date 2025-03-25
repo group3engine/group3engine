@@ -4,6 +4,8 @@
 #include <utility>
 #include "Utils.hpp"
 
+#include <utility>
+
 Buffer::Buffer() noexcept
     : buffer{VK_NULL_HANDLE}, allocation{VK_NULL_HANDLE}, allocator{VK_NULL_HANDLE} {
 }
@@ -51,7 +53,7 @@ void Buffer::Update(const Context& context, const void *data, VkDeviceSize size_
     {
         // Allocation ended up in a non-mappable memory - a transfer using a staging buffer is required.
         VkBufferCreateInfo stagingBufCreateInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-        stagingBufCreateInfo.size = 65536;
+        stagingBufCreateInfo.size = size_in_bytes;
         stagingBufCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
         VmaAllocationCreateInfo stagingAllocCreateInfo = {};
@@ -139,7 +141,7 @@ void Buffer::Upload(VkCommandBuffer cmdBuff, const void *data, VkDeviceSize size
     {
         // Allocation ended up in a non-mappable memory - a transfer using a staging buffer is required.
         VkBufferCreateInfo stagingBufCreateInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-        stagingBufCreateInfo.size = 65536;
+        stagingBufCreateInfo.size = size_in_bytes;
         stagingBufCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
         VmaAllocationCreateInfo stagingAllocCreateInfo = {};

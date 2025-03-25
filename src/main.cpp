@@ -21,14 +21,12 @@
 #include <string>
 
 int main() try {
-    Engine engine;
-
-    if (!engine.Initialize()) {
+    if (!Engine::get().Initialize()) {
         std::cout << "Failed to initialize engine. " << std::endl;
         return 0;
     }
 
-    engine.Run();
+    Engine::get().Run();
 
     return 0;
 

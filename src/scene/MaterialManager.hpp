@@ -11,6 +11,8 @@ class MaterialManager {
   public:
     MaterialManager(Context &aContext);
 
+    void Initialise();
+
     // TODO: this is copying a material by value into the vector, not ideal
     void AddMaterial(Material &material) {
         mMaterials.emplace_back(std::move(material));
@@ -25,7 +27,7 @@ class MaterialManager {
 
     void DebugOutputMaterials();
 
-    ~MaterialManager() {
+    void Destroy() {
         // destroy the descriptor pool
         vkDestroyDescriptorPool(mContext.device, mDescriptorPool, nullptr);
         // destroy the descriptor set layout
@@ -34,6 +36,8 @@ class MaterialManager {
         for (auto &material : mMaterials) {
             material.materialBuffer.Destroy();
         }
+
+        mMaterials.clear();
     }
 
   private:

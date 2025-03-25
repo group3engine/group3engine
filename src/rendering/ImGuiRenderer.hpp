@@ -57,6 +57,10 @@ namespace ImGuiRenderer
     // Todo: When resizing, somehow clear the list and add the new re-sized versions?
     void AddTexture(VkSampler sampler, VkImageView imageView, VkImageLayout imageLayout);
 
+    // Load textures with the TextureManager and add UI textures to ImGuiRenderer
+    void AddTextures(TextureManager *textureManager, const std::filesystem::path &path, std::string textureName);
+    // Remove UI textures from ImGuiRenderer
+    void RemoveTextures();
 
     static std::vector<VkDescriptorPoolSize> ImGuiPoolSizes = {
         {VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
@@ -77,8 +81,11 @@ namespace ImGuiRenderer
     void NewDeathPopup(const gui::DeathPopupData &data);
     void NewFinishPopup(const gui::FinishPopupData &data);
     void NewTimer(const gui::TimerData &data);
+    void LoadingBar(float progress, ImVec2 position);
 
-    void Initialize(const Context &context, TextureManager *textureManager);
+    void Image(std::string const &imageName, ImVec2 position, ImVec2 size);
+
+    void Initialize(const Context &context);
     void Shutdown(const Context &context);
     void NewFrame();
     void Update(const std::shared_ptr<Scene>& scene, const std::shared_ptr<Camera>& camera);
@@ -88,6 +95,7 @@ namespace ImGuiRenderer
     inline VkDescriptorPool imGuiDescriptorPool;
     inline VkRenderPass imGuiRenderPass;
 
-    inline MyTextureData myTexData;
+    // map of strings to texture data
+    inline std::unordered_map<std::string, MyTextureData> textureDatas {};
 }
 #endif // RENDERING_IMGUIRENDERER_HPP
