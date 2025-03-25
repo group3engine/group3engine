@@ -68,7 +68,7 @@ void ShadowMap::Resize() {
     CreateFramebuffer();
 }
 
-void ShadowMap::Execute(VkCommandBuffer cmd) {
+void ShadowMap::Execute(VkCommandBuffer cmd) const {
     ZoneScopedN("ShadowMap::Execute");
     TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "ShadowMap", tracy::Color::DimGrey);
 

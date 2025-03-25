@@ -12,7 +12,7 @@ class ShadowMap {
   public:
     ShadowMap(Context &context, std::shared_ptr<Scene> &scene);
     ~ShadowMap();
-    void Execute(VkCommandBuffer cmd);
+    void Execute(VkCommandBuffer cmd) const;
     void Update();
     void Resize();
 

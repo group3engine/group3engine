@@ -164,6 +164,7 @@ void Skybox::CreatePipeline()
 		.SetPipelineLayout({ {m_DescriptorSetLayout} }, pushConstantRange)
 		.SetSampling(VK_SAMPLE_COUNT_1_BIT)
 		.AddBlendAttachmentState()
+		.AddBlendAttachmentState()
 		.SetDepthState(VK_TRUE, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL)
 		.SetRenderPass(m_RenderPass)
 		.Build();
@@ -226,23 +227,3 @@ void Skybox::LoadCubemapFace(std::filesystem::path facePath, char** pixelData)
 
 	*pixelData = reinterpret_cast<char*>(pixels);
 }
-
-
-void Skybox::CreateRenderPass()
-{
-	RenderPass builder(context.device, 1);
-
-	m_RenderPass = builder
-		.AddAttachment(VK_FORMAT_R8G8B8A8_SRGB, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-		.AddColorAttachmentRef(0, 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
-
-		// External -> 0 : Color
-		.AddDependency(VK_SUBPASS_EXTERNAL, 0, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_DEPENDENCY_BY_REGION_BIT)
-
-		// 0 -> External : Color : Wait for color writing to finish on the attachment before the fragment shader tries to read from it
-		.AddDependency(0, VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT, VK_DEPENDENCY_BY_REGION_BIT)
-		.Build();
-
-	context.SetObjectName(context.device, (uint64_t)m_RenderPass, VK_OBJECT_TYPE_RENDER_PASS, "SkyboxRenderPass");
-}
-

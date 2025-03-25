@@ -115,7 +115,7 @@ void SSAO::Resize()
     CreateFramebuffer();
 }
 
-void SSAO::Execute(VkCommandBuffer cmd)
+void SSAO::Execute(VkCommandBuffer cmd) const
 {
     ZoneScopedN("SSAO::Execute");
     TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "SSAO", tracy::Color::Goldenrod);

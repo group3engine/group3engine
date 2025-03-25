@@ -38,6 +38,8 @@
 #include <Jolt/Core/HashCombine.h>
 #include <Jolt/Geometry/IndexedTriangle.h>
 
+#include "Config.hpp"
+
 #define TEMP_DISABLE_PHYSICS 0
 
 namespace {
@@ -105,6 +107,10 @@ bool Engine::Initialize() {
     // call the scene awake function
     mScene->Awake();
 
+#ifdef JPH_DEBUG_RENDERER
+    mDebugRenderer = std::make_unique<DebugRendererImp>(mRenderer.get());
+#endif // JPH_DEBUG_RENDERER
+
     SPDLOG_DEBUG("Engine initialised.");
 
 
@@ -113,6 +119,10 @@ bool Engine::Initialize() {
 }
 
 void Engine::Shutdown() {
+#ifdef JPH_DEBUG_RENDERER
+    static_cast<DebugRendererImp*>(mDebugRenderer.get())->Destroy();
+#endif // JPH_DEBUG_RENDERER
+
     mRenderer->Destroy();
     mRenderer.reset();
     mScene->Destroy();
@@ -265,13 +275,61 @@ void Engine::Update(double deltaTime) {
     UpdateLogic();
     mScene->Update(deltaTime);
     mScene->UpdateUi(deltaTime);
+
+// Draw physics before physics update
+// TODO: Understand why Jolt does this
+#ifdef JPH_DEBUG_RENDERER
+    if (GlobalConfig::enablePhysicsDebugRenderer) {
+        auto cameraPos = mRenderer->GetCamera()->GetPosition();
+        mDebugRenderer.get()->SetCameraPos(RVec3{cameraPos.x, cameraPos.y, cameraPos.z});
+
+        // Create render primitives: vertex buffers, index buffers and store them for later
+        // Except for lines, we will create the primitives at draw time
+        DrawPhysics();
+    }
+#endif // JPH_DEBUG_RENDERER
+
     PhysicsManager::get().UpdatePhysics(deltaTime);
     mRenderer->Update(deltaTime);
-
 }
+
+#ifdef JPH_DEBUG_RENDERER
+void Engine::DrawPhysics() {
+    ZoneScopedN("DrawPhysics");
+
+    JPH::BodyManager::DrawSettings bodyDrawSettings;
+    bodyDrawSettings.mDrawShape = true;
+    PhysicsManager::get().mPhysicsSystem.DrawBodies(bodyDrawSettings, mDebugRenderer.get());
+}
+#endif // JPH_DEBUG_RENDERER
 
 void Engine::Render() {
     ZoneScopedN("Engine::Render");
 
-    mRenderer->Render();
+    mRenderer->BeginFrame(mRenderer->GetCommandBuffer());
+
+    {
+        mRenderer->GetShadowMap()->Execute(mRenderer->GetCommandBuffer());
+        mRenderer->GetDepthPrepass()->Execute(mRenderer->GetCommandBuffer());
+
+        mRenderer->GetForwardPass()->BeginExecute(mRenderer->GetCommandBuffer());
+
+#ifdef JPH_DEBUG_RENDERER
+        if (GlobalConfig::enablePhysicsDebugRenderer) {
+            static_cast<DebugRendererImp*>(mDebugRenderer.get())->Draw();
+        }
+#endif // JPH_DEBUG_RENDERER
+
+        mRenderer->GetForwardPass()->EndExecute(mRenderer->GetCommandBuffer());
+
+        mRenderer->GetGBuffer()->Execute(mRenderer->GetCommandBuffer());
+        mRenderer->GetSSAO()->Execute(mRenderer->GetCommandBuffer());
+        mRenderer->GetSSR()->Execute(mRenderer->GetCommandBuffer());
+
+        mRenderer->GetBloomPass()->Execute(mRenderer->GetCommandBuffer());
+        mRenderer->GetCompositePass()->Execute(mRenderer->GetCommandBuffer());
+        mRenderer->GetPresentPass()->Execute(mRenderer->GetCommandBuffer(), mRenderer->GetImageIndex());
+
+        mRenderer->EndFrame(mRenderer->GetCommandBuffer());
+    }
 }

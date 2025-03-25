@@ -38,6 +38,8 @@ Renderer::Renderer(Context &context, std::shared_ptr<Scene> scene)
 
     // GLFW callbacks
     glfwSetWindowUserPointer(context.mWindow, m_camera.get());
+
+    mFreedBuffers.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
 }
 
 void Renderer::CreateRenderPasses() {
@@ -106,6 +108,16 @@ void Renderer::Destroy() {
 
     for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; ++i) {
         TracyVkDestroy(context.tracyContexts[i]);
+    }
+
+    for (auto &freedBuffers : mFreedBuffers) {
+        for (auto &freedBuffer : freedBuffers) {
+            if (freedBuffer.buffer) {
+                assert(freedBuffer.allocator);
+                assert(freedBuffer.allocation);
+                vmaDestroyBuffer(freedBuffer.allocator, freedBuffer.buffer, freedBuffer.allocation);
+            }
+        }
     }
 }
 
@@ -189,19 +201,27 @@ void Renderer::AllocateCommandBuffers() {
     }
 }
 
-void Renderer::Render() {
+void Renderer::BeginFrame(VkCommandBuffer cmd) {
     {
         ZoneScopedN("vkWaitForFences");
 
         vkWaitForFences(context.device, 1, &m_Fences[vkutil::currentFrame], VK_TRUE, UINT64_MAX);
     }
 
-    uint32_t index;
+    for (auto &freedBuffer : mFreedBuffers[vkutil::currentFrame]) {
+        if (freedBuffer.buffer) {
+            assert(freedBuffer.allocator);
+            assert(freedBuffer.allocation);
+            vmaDestroyBuffer(freedBuffer.allocator, freedBuffer.buffer, freedBuffer.allocation);
+            freedBuffer = {nullptr, nullptr, nullptr};
+        }
+    }
+
     VkResult getImageIndex;
     {
         ZoneScopedN("vkAcquireNextImageKHR");
 
-        getImageIndex = vkAcquireNextImageKHR(context.device, context.swapchain, UINT64_MAX, m_imageAvailableSemaphores[vkutil::currentFrame], VK_NULL_HANDLE, &index);
+        getImageIndex = vkAcquireNextImageKHR(context.device, context.swapchain, UINT64_MAX, m_imageAvailableSemaphores[vkutil::currentFrame], VK_NULL_HANDLE, &mImageIndex);
     }
 
     if (getImageIndex == VK_ERROR_OUT_OF_DATE_KHR) {
@@ -233,8 +253,6 @@ void Renderer::Render() {
         vkResetCommandBuffer(m_commandBuffers[vkutil::currentFrame], 0);
     }
 
-    VkCommandBuffer &cmd = m_commandBuffers[vkutil::currentFrame];
-
     {
         ZoneScopedN("vk::Execute");
 
@@ -257,29 +275,17 @@ void Renderer::Render() {
                 }
             }
         }
-
-        {
-            TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "vk::Frame", tracy::Color::Crimson);
-
-            m_ShadowMap->Execute(cmd);
-            m_DepthPrepass->Execute(cmd);
-            m_ForwardPass->Execute(cmd);
-            m_GBuffer->Execute(cmd);
-            m_SSAO->Execute(cmd);
-            m_SSR->Execute(cmd);
-            m_BloomPass->Execute(cmd);
-            m_CompositePass->Execute(cmd);
-            m_PresentPass->Execute(cmd, index);
-        }
-
-        // Periodically collect the GPU events
-        TracyVkCollect(context.tracyContexts[vkutil::currentFrame], cmd);
-
-        vkEndCommandBuffer(cmd);
     }
+}
+
+void Renderer::EndFrame(VkCommandBuffer cmd) {
+    // Periodically collect the GPU events
+    TracyVkCollect(context.tracyContexts[vkutil::currentFrame], cmd);
+
+    vkEndCommandBuffer(cmd);
 
     Submit();
-    Present(index);
+    Present(mImageIndex);
 
     vkutil::currentFrame = (vkutil::currentFrame + 1) % vkutil::MAX_FRAMES_IN_FLIGHT;
 }

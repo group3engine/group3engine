@@ -96,7 +96,7 @@ void GBuffer::Resize()
     CreateFramebuffer();
 }
 
-void GBuffer::Execute(VkCommandBuffer cmd)
+void GBuffer::Execute(VkCommandBuffer cmd) const
 {
     ZoneScopedN("GBuffer::Execute");
     TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "Thin-G-Buffer", tracy::Color::Coral);

@@ -67,7 +67,7 @@ class Camera {
     void SetScene(Scene* input_scene_pointer) {m_scene_pointer = input_scene_pointer; }
 
     const CameraTransform &GetCameraTransform() const { return m_transform; }
-    std::vector<Buffer> &GetBuffers() { return m_cameraUBO; }
+    const std::vector<Buffer> &GetBuffers() const { return m_cameraUBO; }
 
     void Update(uint32_t width, uint32_t height, double deltaTime);
     void Upload(VkCommandBuffer cmdBuff);
