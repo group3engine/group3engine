@@ -1,0 +1,10 @@
+NOTES
+
+- Need to make Camera an entity
+- Have looked at EntitySorter. Camera will not be able to be used there as it
+  has a constructor. All the rest of the entities created in CreateNewEntity
+  have default constructors. This is okay because CreateNewEntity is only
+  called in LoadGLTF. We can potentially create the camera entities outside of
+  LoadGLTF and with a different function
+
+TODO
