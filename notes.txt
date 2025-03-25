@@ -7,4 +7,25 @@ NOTES
   called in LoadGLTF. We can potentially create the camera entities outside of
   LoadGLTF and with a different function
 
+- We need to have at minimum 3 cameras. One for each player (2 players) and one
+  freecam. Maybe we could have 2 cameras and make it so that each player can
+  go into freecam mode instead?
+- So instead of having a static main camera in Camera each camera can be
+  "active" or not. At first we can switch between different cameras, having one
+  active camera for one viewport. Then, we can have two viewports and select
+  which two active cameras to use
+
+- How to update input and state?
+
+- Who owns the scene UBO and where is it stored. See DebugRendererImp for a
+  problematic case
+- However, the "scene" UBO stores camera information (view, projection, ...).
+  None of this information is scene information
+
 TODO
+
+- Remove static Camera* kMainCamera and add a per camera mIsActive
+
+- Remove model matrix from scene (camera) UBO
+
+- Rename scene UBO to camera UBO
