@@ -18,7 +18,6 @@ constexpr float minSpeed = 1.0f;
 constexpr float defaultSpeed = 3.0f;
 
 struct CameraTransform {
-    alignas(16) glm::mat4 model;
     alignas(16) glm::mat4 view;
     alignas(16) glm::mat4 projection;
     alignas(16) glm::vec4 cameraPosition;

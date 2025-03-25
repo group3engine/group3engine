@@ -67,7 +67,6 @@ void Camera::Upload(VkCommandBuffer cmdBuff) {
 }
 
 void Camera::UpdateTransforms(uint32_t width, uint32_t height) {
-    m_transform.model = glm::mat4(1.0f);
     m_transform.view = glm::lookAt(m_position, m_position + m_direction, m_up);
     m_transform.projection = glm::perspective(m_transform.fov, width / (float)height, m_transform.nearPlane, m_transform.farPlane);
     m_transform.projection[1][1] *= -1;
