@@ -248,7 +248,7 @@ void GBuffer::CreateFramebuffer()
 void GBuffer::BuildDescriptorSetLayouts() {
     // Set = 0, binding 0 = cameraUBO, binding = 1 = textures
     std::vector<VkDescriptorSetLayoutBinding> bindings = {
-        vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT) // SceneUBO (projection, view etc..)
+        vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT) // CameraUBO (projection, view etc..)
     };
 
     m_descriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);

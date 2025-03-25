@@ -4,7 +4,7 @@ layout(location = 0) in vec3 texCoords;
 
 layout(location = 0) out vec4 fragColor;
 
-layout(set = 0, binding = 0) uniform SceneUniform
+layout(set = 0, binding = 0) uniform CameraUBO
 {
 	mat4 view;
 	mat4 projection;

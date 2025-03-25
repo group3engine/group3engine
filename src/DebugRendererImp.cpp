@@ -27,7 +27,7 @@ DebugRendererImp::DebugRendererImp(Renderer *renderer) : mRenderer(renderer) {
     // TODO: Fix vertex attribute description to work with Line struct
     // {
     //     std::vector<VkDescriptorSetLayoutBinding> bindings = {
-    //         // SceneUBO (projection, view etc.)
+    //         // CameraUBO (projection, view etc.)
     //         vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)};
 
     //     auto &context = mRenderer->GetContext();
@@ -37,7 +37,7 @@ DebugRendererImp::DebugRendererImp(Renderer *renderer) : mRenderer(renderer) {
 
     //     vkutil::AllocateDescriptorSets(context, context.descriptorPool, mUboLayout, vkutil::MAX_FRAMES_IN_FLIGHT, mDescriptorSets);
 
-    //     // Scene UBO
+    //     // Camera UBO
     //     for (size_t i = 0; i < std::size_t(vkutil::MAX_FRAMES_IN_FLIGHT); i++) {
     //         VkDescriptorBufferInfo bufferInfo{};
     //         bufferInfo.buffer = camera->GetBuffers()[i].buffer;
@@ -65,7 +65,7 @@ DebugRendererImp::DebugRendererImp(Renderer *renderer) : mRenderer(renderer) {
     // The Vertex struct used elsewhere is larger than needed here.
     {
         std::vector<VkDescriptorSetLayoutBinding> bindings = {
-            // SceneUBO (projection, view etc.)
+            // CameraUBO (projection, view etc.)
             vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)};
 
         auto &context = mRenderer->GetContext();
@@ -75,7 +75,7 @@ DebugRendererImp::DebugRendererImp(Renderer *renderer) : mRenderer(renderer) {
 
         vkutil::AllocateDescriptorSets(context, context.descriptorPool, mUboLayout, vkutil::MAX_FRAMES_IN_FLIGHT, mDescriptorSets);
 
-        // Scene UBO
+        // Camera UBO
         for (size_t i = 0; i < std::size_t(vkutil::MAX_FRAMES_IN_FLIGHT); i++) {
             VkDescriptorBufferInfo bufferInfo{};
             bufferInfo.buffer = camera->GetBuffers()[i].buffer;

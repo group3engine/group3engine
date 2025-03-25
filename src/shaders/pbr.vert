@@ -8,7 +8,7 @@ layout (location = 0) in vec3 iPosition;
 layout (location = 1) in vec2 iTexCoord;
 layout (location = 2) in vec3 iNormal;
 
-layout(set = 0, binding = 0) uniform SceneUniform
+layout(set = 0, binding = 0) uniform CameraUBO
 {
     mat4 view;
     mat4 projection;
