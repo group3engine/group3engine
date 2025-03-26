@@ -76,11 +76,11 @@ union Shape{
 // the functions to randomly choose a particle spawn location
 // we will do these with the method where you choose a random point in the bounding box and repeat until it is inside the sphere
 // sphere
-Emission SphereParticleSpawn(int &seed, Shape const &sphereShape);
+Emission SphereParticleSpawn(size_t seed, Shape const &sphereShape);
 // box
-Emission BoxParticleSpawn(int &seed, Shape const &boxShape);
+Emission BoxParticleSpawn(size_t seed, Shape const &boxShape);
 // cone
-Emission ConeParticleSpawn(int &seed, Shape const &coneShape);
+Emission ConeParticleSpawn(size_t seed, Shape const &coneShape);
 
 
 /// The type of shape
@@ -169,6 +169,7 @@ struct ParticleSystemSettings
     /// The gravity applied to particles.
     glm::vec3 gravityModifier = {0.0f, -9.81f, 0.0f};
     /// The space in which the simulation is done.
+    // TODO: support more than just world
     SimulationSpace simulationSpace = SimulationSpace::World;
     /// The speed of the simulation.
     float simulationSpeed = 1.0f;
@@ -182,6 +183,8 @@ struct ParticleSystemSettings
     bool isRandomlySeeded = true;
     /// The random seed of the particle system. Only used if isRandomlySeeded is false.
     int randomSeed = 0;
+    /// The material for the particle system to use
+    const Material *material = nullptr;
     /// The emission settings of the particle system.
     ParticleSystemEmissionSettings emission = ParticleSystemEmissionSettings();
     /// The shape of the emission.
@@ -200,7 +203,7 @@ inline float get_hash(uint seed)
     return float(seed) / float(0xffffffffu);
 }
 // function to get random from -1 to 1
-inline float get_random(int &seed)
+inline float get_random(int seed)
 {
     return get_hash(seed++) * 2.0f - 1.0f;
 }
@@ -221,7 +224,7 @@ struct Particle
     // the velocity of the particle
     glm::vec3 velocity;
     // the time remaining of the particle
-    float lifetime;
+    double lifetime;
     // the colour of the particle
     Colour colour;
 };
@@ -230,7 +233,7 @@ struct Particle
 
 class ParticleSystem {
     public:
-    ParticleSystem(Context &aContext, ParticleSystemSettings aSettings);
+    ParticleSystem(Context &aContext, ParticleSystemSettings const &aSettings);
     ~ParticleSystem();
 
     void Start();
@@ -239,7 +242,13 @@ class ParticleSystem {
 
     void Destroy();
     private:
-    // function to generate the particle transforms
+    void Emit();
+    Transform GenerateTransform(Emission const & aEmission);
+
+    void UpdateParticles(double aDeltaTme);
+
+    // update function
+    void Update(double aDeltaTime, glm::vec3 aNewPosition);
 
 
     private:
@@ -247,15 +256,19 @@ class ParticleSystem {
     ParticleSystemSettings mSettings = ParticleSystemSettings();
     glm::vec3 mPosition = glm::vec3(0.0f);
     glm::vec3 mPreviousPosition = glm::vec3(0.0f);
-    glm::vec3 mVelocity = glm::vec3(0.0f);
+    double mDistanceMoved = 0.0f;
+    double mPreviousDistance = 0.0f;
 
-    float mTime = 0.0f;
-    float mPreviousTime = 0.0f;
+
+    double mTime = 0.0f;
+    double mPreviousTime = 0.0f;
 
     Particle* mParticles = nullptr;
     size_t backOfParticleBuffer = 0;
     Buffer mParticlesBuffer;
-
+    double mTimeStepToEmit;
+    double mDistanceStepToEmit;
+    size_t seed = 0.f;
 };
 
 
