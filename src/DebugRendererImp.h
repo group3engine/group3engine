@@ -26,12 +26,13 @@
 #include "GLTFImportStructs.hpp"
 
 class Renderer;
+class Scene;
 
 class DebugRendererImp final : public JPH::DebugRendererSimple {
   public:
     JPH_OVERRIDE_NEW_DELETE
 
-    DebugRendererImp(Renderer *renderer);
+    DebugRendererImp(Renderer *renderer, Scene *scene);
 
     void Destroy();
 
@@ -51,6 +52,7 @@ class DebugRendererImp final : public JPH::DebugRendererSimple {
 
   private:
     Renderer *mRenderer = nullptr;
+    Scene *mScene = nullptr;
 
     VkDescriptorSetLayout mUboLayout = VK_NULL_HANDLE;
 

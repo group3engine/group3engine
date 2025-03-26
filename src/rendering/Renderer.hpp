@@ -56,7 +56,7 @@ class Renderer {
     const Composite *GetCompositePass() const { return m_CompositePass.get(); }
     const PresentPass *GetPresentPass() const { return m_PresentPass.get(); }
 
-    Camera *GetCamera() const { return Scene::get().GetActiveScene()->GetActiveCamera(); }
+    Camera *GetCamera() const { return m_scene->GetActiveCamera(); }
 
     void AddCameras();
 

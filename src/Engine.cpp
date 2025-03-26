@@ -111,7 +111,7 @@ bool Engine::Initialize() {
     mRenderer->AddCameras();
 
 #ifdef JPH_DEBUG_RENDERER
-    mDebugRenderer = std::make_unique<DebugRendererImp>(mRenderer.get());
+    mDebugRenderer = std::make_unique<DebugRendererImp>(mRenderer.get(), mScene);
 #endif // JPH_DEBUG_RENDERER
 
     SPDLOG_DEBUG("Engine initialised.");
