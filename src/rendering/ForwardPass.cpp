@@ -47,6 +47,7 @@ ForwardPass::ForwardPass(Context &context, Image &shadowMap, Image &depthPrepass
         VK_IMAGE_ASPECT_COLOR_BIT,
         1);
 
+    BuildDescriptorSetLayouts();
     BuildDescriptors();
     CreateRenderPass();
     CreateFramebuffer();
@@ -132,13 +133,13 @@ void ForwardPass::Resize() {
     CreateFramebuffer();
 }
 
-void ForwardPass::Execute(VkCommandBuffer cmd) {
+void ForwardPass::BeginExecute(VkCommandBuffer cmd) const {
     ZoneScopedN("ForwardPass::Execute");
-    TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "ForwardPass", tracy::Color::Tomato);
+    TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "ForwardPass::BeginExecute", tracy::Color::Tomato);
 
-#ifdef _DEBUG
-    vkutil::RenderPassLabel(cmd, "ForwardPass");
-#endif // !DEBUG
+// #ifdef _DEBUG
+//     vkutil::RenderPassLabel(cmd, "ForwardPass");
+// #endif // !DEBUG
 
     VkRenderPassBeginInfo beginInfo = {};
     beginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -181,13 +182,16 @@ void ForwardPass::Execute(VkCommandBuffer cmd) {
 
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_alphaMaskPipeline.first);
     scene->DrawAlphaMasked(cmd, m_alphaMaskPipeline.second);
+}
 
+void ForwardPass::EndExecute(VkCommandBuffer cmd) const {
+    TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "ForwardPass::EndExecute", tracy::Color::Tomato);
 
     vkCmdEndRenderPass(cmd);
 
-#ifdef _DEBUG
-    vkutil::EndRenderPassLabel(cmd);
-#endif // !DEBUG
+// #ifdef _DEBUG
+//     vkutil::EndRenderPassLabel(cmd);
+// #endif // !DEBUG
 }
 
 void ForwardPass::CreatePipeline() {
@@ -305,9 +309,7 @@ void ForwardPass::CreateFramebuffer() {
     VK_CHECK(vkCreateFramebuffer(context.device, &fbcInfo, nullptr, &m_framebuffer), "Failed to create Forward pass framebuffer.");
 }
 
-void ForwardPass::BuildDescriptors() {
-    m_descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
-
+void ForwardPass::BuildDescriptorSetLayouts() {
     std::vector<VkDescriptorSetLayoutBinding> bindings = {
         vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT), // SceneUBO (projection, view etc..)
         vkutil::CreateDescriptorBinding(1, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT),                              // Light UBO
@@ -315,8 +317,12 @@ void ForwardPass::BuildDescriptors() {
 
     meshDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
 
-    vkutil::AllocateDescriptorSets(context, context.descriptorPool, meshDescriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, m_descriptorSets);
     skinDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}});
+}
+
+void ForwardPass::BuildDescriptors() {
+    m_descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+    vkutil::AllocateDescriptorSets(context, context.descriptorPool, meshDescriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, m_descriptorSets);
 
     // Camera Transform UBO
     for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
@@ -344,6 +350,15 @@ void ForwardPass::BuildDescriptors() {
 
         vkutil::UpdateDescriptorSet(context, 2, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     }
+}
+
+void ForwardPass::DestroyDescriptors() {
+    vkFreeDescriptorSets(context.device, context.descriptorPool, m_descriptorSets.size(), m_descriptorSets.data());
+}
+
+void ForwardPass::RebuildDescriptors() {
+    DestroyDescriptors();
+    BuildDescriptors();
 }
 
 void ForwardPass::Update() {

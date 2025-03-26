@@ -38,7 +38,35 @@
 #include <Jolt/Core/HashCombine.h>
 #include <Jolt/Geometry/IndexedTriangle.h>
 
+#include "imgui.h"
+
+#include "Config.hpp"
+
 #define TEMP_DISABLE_PHYSICS 0
+
+namespace {
+    // TODO: Improve this temporary scene switching mechanism
+
+    enum class SceneValue {
+        OBBY,
+        OBBY_TEST_SCENE
+    };
+
+    SceneValue sceneValue{SceneValue::OBBY_TEST_SCENE};
+
+    const std::filesystem::path &SwitchScene() {
+        if (sceneValue == SceneValue::OBBY) {
+            sceneValue = SceneValue::OBBY_TEST_SCENE;
+            return Sample::SampleObbyTestScene;
+        } else if (sceneValue == SceneValue::OBBY_TEST_SCENE) {
+            sceneValue = SceneValue::OBBY;
+            return Sample::SampleObby;
+        } else {
+            SPDLOG_ERROR("Unaccounted for case.");
+            exit(EXIT_FAILURE);
+        }
+    }
+}
 
 Engine::Engine() {
     m_isRunning = false;
@@ -56,19 +84,34 @@ bool Engine::Initialize() {
         m_isRunning = true;
     }
 
-    mScene = std::make_shared<Scene>(m_context);
+    mMaterialManager = std::make_unique<MaterialManager>(m_context);
+    mMaterialManager->Initialise();
+
+    // Don't need to reinitialise mMeshManager, data can just be added again
+    mMeshManager = std::make_unique<MeshManager>(m_context);
+
+    mTextureManager = std::make_unique<TextureManager>(m_context);
+    mTextureManager->Initialise();
+
+    mScene = std::make_shared<Scene>(m_context,
+                                     mMaterialManager.get(),
+                                     mMeshManager.get(),
+                                     mTextureManager.get());
+    mScene->StartUp();
 
     mRenderer = std::make_unique<Renderer>(m_context, mScene);
     
     PhysicsManager::get().StartUp();
 
-    mScene->Initialise();
+    mScene->Initialise(Sample::SampleObbyTestScene);
 
     mRenderer->CreateRenderPasses();
     // call the scene awake function
     mScene->Awake();
 
-    // ---END OF PHYSICS TEST INITIALISATION---
+#ifdef JPH_DEBUG_RENDERER
+    mDebugRenderer = std::make_unique<DebugRendererImp>(mRenderer.get());
+#endif // JPH_DEBUG_RENDERER
 
     SPDLOG_DEBUG("Engine initialised.");
 
@@ -78,12 +121,27 @@ bool Engine::Initialize() {
 }
 
 void Engine::Shutdown() {
+#ifdef JPH_DEBUG_RENDERER
+    static_cast<DebugRendererImp*>(mDebugRenderer.get())->Destroy();
+#endif // JPH_DEBUG_RENDERER
+
     mRenderer->Destroy();
     mRenderer.reset();
     mScene->Destroy();
+
+    mMeshManager->Destroy();
+    mMaterialManager->Destroy();
+    mTextureManager->Destroy();
+
     m_context.Destroy(); // Free vulkan device, allocator, window
     Platform::get().ShutDown();
     PhysicsManager::get().ShutDown();
+}
+
+void Engine::ChangeScene(const std::filesystem::path &filePath)
+{
+    m_sceneNeedsChanging = true;
+    m_scenePath = filePath;
 }
 
 void Engine::Run() {
@@ -109,6 +167,14 @@ void Engine::Run() {
         ImGuiRenderer::EndFrame();
 
         Render();
+
+        if (m_sceneNeedsChanging)
+        {
+            ChangeSceneFR();
+            m_sceneNeedsChanging = false;
+        }
+
+
 
         FrameMark;
     }
@@ -167,19 +233,152 @@ void Engine::UpdateLogic() {
     }
 }
 
+void Engine::ChangeSceneFR()
+{
+    // vkDestroyBuffer():  can't be called on VkBuffer that is currently in use by VkCommandBuffer
+    vkQueueWaitIdle(m_context.graphicsQueue);
+    vkQueueWaitIdle(m_context.presentQueue);
+
+
+
+
+
+
+    // Remove all UI textures as they were linked with the texture manager
+    ImGuiRenderer::RemoveTextures();
+
+    mScene->Destroy();
+    mMaterialManager->Destroy();
+    mMeshManager->Destroy();
+    mTextureManager->Destroy();
+
+    mMaterialManager->Initialise();
+
+    // Don't need to reinitialise mMeshManager, data can just be added again
+
+    mTextureManager->Initialise();
+
+    // load in heart
+    std::filesystem::path loadingPath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets" / "loadingImage.png";
+    ImGuiRenderer::AddTextures(mTextureManager.get(), loadingPath, "load");
+
+
+    m_isLoading = true;
+    m_progress = 0.f;
+    std::thread loadingScreen(&Engine::RenderLoadingScreen, this);
+
+
+
+#ifndef NDEBUG
+    // Check there are no physics bodies left after scene destruction
+    BodyIDVector bodyIds;
+    PhysicsManager::get().mPhysicsSystem.GetBodies(bodyIds);
+    assert(bodyIds.empty());
+#endif // #ifndef NDEBUG
+    m_progress = 25.f;
+    mScene->StartUp();
+    mScene->Initialise(m_scenePath);
+    m_progress = 75.f;
+
+    // Add back UI textures
+    std::filesystem::path path = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets" / "heart.png";
+    ImGuiRenderer::AddTextures(mTextureManager.get(), path, "heart");
+
+    mRenderer->RebuildSceneDescriptors();
+
+    mScene->Awake();
+    m_progress = 100.f;
+    // sleep for 1 second
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    // end the loading screen
+    m_isLoading = false;
+    // wait for loading screen thread to finish
+    while (!loadingScreen.joinable()) {}
+    loadingScreen.join();
+}
+
 void Engine::Update(double deltaTime) {
     ZoneScopedN("Engine::Update");
 
     UpdateLogic();
     mScene->Update(deltaTime);
     mScene->UpdateUi(deltaTime);
+
+// Draw physics before physics update
+// TODO: Understand why Jolt does this
+#ifdef JPH_DEBUG_RENDERER
+    if (GlobalConfig::enablePhysicsDebugRenderer) {
+        auto cameraPos = mRenderer->GetCamera()->GetPosition();
+        mDebugRenderer.get()->SetCameraPos(RVec3{cameraPos.x, cameraPos.y, cameraPos.z});
+
+        // Create render primitives: vertex buffers, index buffers and store them for later
+        // Except for lines, we will create the primitives at draw time
+        DrawPhysics();
+    }
+#endif // JPH_DEBUG_RENDERER
+
     PhysicsManager::get().UpdatePhysics(deltaTime);
     mRenderer->Update(deltaTime);
-
 }
+
+#ifdef JPH_DEBUG_RENDERER
+void Engine::DrawPhysics() {
+    ZoneScopedN("DrawPhysics");
+
+    JPH::BodyManager::DrawSettings bodyDrawSettings;
+    bodyDrawSettings.mDrawShape = true;
+    PhysicsManager::get().mPhysicsSystem.DrawBodies(bodyDrawSettings, mDebugRenderer.get());
+}
+#endif // JPH_DEBUG_RENDERER
 
 void Engine::Render() {
     ZoneScopedN("Engine::Render");
 
-    mRenderer->Render();
+    mRenderer->BeginFrame(mRenderer->GetCommandBuffer());
+
+    {
+        mRenderer->GetShadowMap()->Execute(mRenderer->GetCommandBuffer());
+        mRenderer->GetDepthPrepass()->Execute(mRenderer->GetCommandBuffer());
+
+        mRenderer->GetForwardPass()->BeginExecute(mRenderer->GetCommandBuffer());
+
+#ifdef JPH_DEBUG_RENDERER
+        if (GlobalConfig::enablePhysicsDebugRenderer) {
+            static_cast<DebugRendererImp*>(mDebugRenderer.get())->Draw();
+        }
+#endif // JPH_DEBUG_RENDERER
+
+        mRenderer->GetForwardPass()->EndExecute(mRenderer->GetCommandBuffer());
+
+        mRenderer->GetGBuffer()->Execute(mRenderer->GetCommandBuffer());
+        mRenderer->GetSSAO()->Execute(mRenderer->GetCommandBuffer());
+        mRenderer->GetSSR()->Execute(mRenderer->GetCommandBuffer());
+
+        mRenderer->GetBloomPass()->Execute(mRenderer->GetCommandBuffer());
+        mRenderer->GetCompositePass()->Execute(mRenderer->GetCommandBuffer());
+        mRenderer->GetPresentPass()->Execute(mRenderer->GetCommandBuffer(), mRenderer->GetImageIndex());
+
+        mRenderer->EndFrame(mRenderer->GetCommandBuffer());
+    }
+}
+
+void Engine::RenderLoadingScreen()
+{
+    // load in a new image from assets/loadingImage.png
+
+    try
+    {
+        while (m_isLoading)
+        {
+            ImGuiRenderer::NewFrame();
+            ImGuiRenderer::Image("load", ImVec2{0,0}, ImVec2{1,1});
+            ImGuiRenderer::LoadingBar(m_progress, ImVec2(500, 500));
+            ImGuiRenderer::EndFrame();
+            // render some text with imgui
+            mRenderer->RenderUIOnly();
+        }
+    }catch (const std::exception& e) {
+        // Handle the exception
+        SPDLOG_ERROR(e.what());
+    }
 }

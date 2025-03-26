@@ -12,17 +12,21 @@ class ShadowMap {
   public:
     ShadowMap(Context &context, std::shared_ptr<Scene> &scene);
     ~ShadowMap();
-    void Execute(VkCommandBuffer cmd);
+    void Execute(VkCommandBuffer cmd) const;
     void Update();
     void Resize();
 
     Image &GetRenderTarget() { return m_ShadowMap; }
 
+    void RebuildDescriptors();
+
   private:
     void CreatePipeline();
     void CreateRenderPass();
     void CreateFramebuffer();
+    void BuildDescriptorSetLayouts();
     void BuildDescriptors();
+    void DestroyDescriptors();
 
     VkRenderPass m_renderPass;
     VkFramebuffer m_framebuffer;

@@ -23,7 +23,11 @@ class ForwardPass {
   public:
     ForwardPass(Context &context, Image &shadowMap, Image &depthPrepass, std::shared_ptr<Scene> &scene, std::shared_ptr<Camera> &camera);
     ~ForwardPass();
-    void Execute(VkCommandBuffer cmd);
+
+    VkRenderPass Get() const { return m_renderPass; }
+
+    void BeginExecute(VkCommandBuffer cmd) const;
+    void EndExecute(VkCommandBuffer cmd) const;
     void Update();
 
     void Resize();
@@ -33,11 +37,15 @@ class ForwardPass {
 
     Skybox* GetSkybox() { return m_Skybox.get(); }
 
+    void RebuildDescriptors();
+
   private:
     void CreatePipeline();
     void CreateRenderPass();
     void CreateFramebuffer();
+    void BuildDescriptorSetLayouts();
     void BuildDescriptors();
+    void DestroyDescriptors();
 
     Image m_RenderTarget;
     Image m_DepthTarget;

@@ -70,16 +70,23 @@ void Scene::Destroy()
 	{
 		buffer.Destroy();
 	}
-        // delete the mesh manager, material manager and texture manager
-        delete mMeshManager;
-        delete mMaterialManager;
-        delete mTextureManager;
+    m_LightUBO.clear();
 
-        // delete the entities
-        for (auto &entity : m_Entities) {
-            delete entity;
-        }
-        m_Entities.clear();
+    // delete the entities
+    for (auto &entity : m_Entities) {
+        delete entity;
+    }
+    m_Entities.clear();
+
+    m_FrontMeshes.clear();
+    m_BackMeshes.clear();
+    m_Lights.clear();
+    m_Entities.clear();
+    m_Animations.clear();
+    m_Skins.clear();
+
+    mHasCharacter = false;
+    mCharacter = nullptr;
 }
 
 void Scene::Load(const std::filesystem::path &aFilepath) {
@@ -89,11 +96,13 @@ void Scene::Load(const std::filesystem::path &aFilepath) {
 
 }
 
-void Scene::Initialise()
+void Scene::Initialise(const std::filesystem::path &filePath)
 {
+    mSceneFilename = filePath.stem();
+
     // Current path is the current working directory, i.e., where the root CMakeLists.txt is
     std::filesystem::path basePath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets";
-    std::filesystem::path gltfPath = basePath / Sample::SampleObby;
+    std::filesystem::path gltfPath = basePath / filePath;
 
     // Define Light sources
     Light directionalLight;
@@ -250,19 +259,19 @@ void Scene::Initialise()
                         bodyCreationSettings.mIsSensor = entity->IsSensor();
 
                         // make the rigid body with the settings
-                        RigidBody entity_rigid_body = RigidBody(bodyCreationSettings);
+                        auto entity_rigid_body = std::make_unique<RigidBody>(bodyCreationSettings);
 
                         // initialise the body in the physics manager and do not activate it
-                        entity_rigid_body.Init(PhysicsManager::get(), false);
+                        entity_rigid_body->Init(PhysicsManager::get(), false);
 
                         if(entity->IsSensor())
                         {
                             // only do this part if its supposed to DO something when collided with (i.e. sensors)
-                            PhysicsManager::get().RegisterEntity(entity, entity_rigid_body.mBodyId);
+                            PhysicsManager::get().RegisterEntity(entity, entity_rigid_body->mBodyId);
                         }
                         
                         PhysicsManager::get().mPhysicsSystem.OptimizeBroadPhase();
-                        entity->AddRigidBody(std::make_unique<RigidBody>(entity_rigid_body));
+                        entity->AddRigidBody(std::move(entity_rigid_body));
                     }
                     else if(entity->GetPhysicsType() == PhysicsType::KINEMATIC)
                     {
@@ -303,18 +312,18 @@ void Scene::Initialise()
                         bodyCreationSettings.mIsSensor = entity->IsSensor();
 
                         // make the rigid body with the settings
-                        RigidBody entity_rigid_body = RigidBody(bodyCreationSettings);
+                        auto entity_rigid_body = std::make_unique<RigidBody>(bodyCreationSettings);
 
                         // initialise the body in the physics manager and activate it
-                        entity_rigid_body.Init(PhysicsManager::get(), true);
+                        entity_rigid_body->Init(PhysicsManager::get(), true);
 
                         if(entity->IsSensor())
                         {
                             // only do this part if its supposed to DO something when collided with (i.e. sensors)
-                            PhysicsManager::get().RegisterEntity(entity, entity_rigid_body.mBodyId);
+                            PhysicsManager::get().RegisterEntity(entity, entity_rigid_body->mBodyId);
                         }
                         PhysicsManager::get().mPhysicsSystem.OptimizeBroadPhase();
-                        entity->AddRigidBody(std::make_unique<RigidBody>(entity_rigid_body));
+                        entity->AddRigidBody(std::move(entity_rigid_body));
                     }
                     else if(entity->GetPhysicsType() == PhysicsType::DYNAMIC)
                     {
@@ -355,18 +364,18 @@ void Scene::Initialise()
                         bodyCreationSettings.mIsSensor = entity->IsSensor();
 
                         // make the rigid body with the settings
-                        RigidBody entity_rigid_body = RigidBody(bodyCreationSettings);
+                        auto entity_rigid_body = std::make_unique<RigidBody>(bodyCreationSettings);
 
                         // initialise the body in the physics manager and activate it
-                        entity_rigid_body.Init(PhysicsManager::get(), true);
+                        entity_rigid_body->Init(PhysicsManager::get(), true);
 
                         if(entity->IsSensor())
                         {
                             // only do this part if its supposed to DO something when collided with (i.e. sensors)
-                            PhysicsManager::get().RegisterEntity(entity, entity_rigid_body.mBodyId);
+                            PhysicsManager::get().RegisterEntity(entity, entity_rigid_body->mBodyId);
                         }
                         PhysicsManager::get().mPhysicsSystem.OptimizeBroadPhase();
-                        entity->AddRigidBody(std::make_unique<RigidBody>(entity_rigid_body));
+                        entity->AddRigidBody(std::move(entity_rigid_body));
                     }
 
                 }
@@ -387,8 +396,18 @@ void Scene::Awake()
     }
 }
 
-Scene::Scene(Context &context)
-    : context(context) {
+Scene::Scene(Context &context,
+             MaterialManager *materialManager,
+             MeshManager *meshManager,
+             TextureManager *textureManager)
+    : context(context),
+    mMaterialManager(materialManager),
+    mMeshManager(meshManager),
+    mTextureManager(textureManager)
+{
+}
+
+void Scene::StartUp() {
     m_LightUBO.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
     // Light uniform buffers
     for (auto &buffer : m_LightUBO) {
@@ -399,10 +418,6 @@ Scene::Scene(Context &context)
                                   VMA_ALLOCATION_CREATE_MAPPED_BIT);
     }
 
-    // create the mesh manager, material manager and texture manager
-    mMeshManager = new MeshManager(context);
-    mMaterialManager = new MaterialManager(context);
-    mTextureManager = new TextureManager(context);
     SetActiveScene(this);
 }
 

@@ -18,7 +18,7 @@ class GBuffer {
 
     GBuffer(Context &context, std::shared_ptr<Scene> &scene, std::shared_ptr<Camera> &camera);
     ~GBuffer();
-    void Execute(VkCommandBuffer cmd);
+    void Execute(VkCommandBuffer cmd) const;
     void Update();
 
     void Resize();
@@ -29,6 +29,7 @@ class GBuffer {
     void CreatePipeline();
     void CreateRenderPass();
     void CreateFramebuffer();
+    void BuildDescriptorSetLayouts();
     void BuildDescriptors();
 
     uint32_t m_width;

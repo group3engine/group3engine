@@ -38,6 +38,8 @@ Renderer::Renderer(Context &context, std::shared_ptr<Scene> scene)
 
     // GLFW callbacks
     glfwSetWindowUserPointer(context.mWindow, m_camera.get());
+
+    mFreedBuffers.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
 }
 
 void Renderer::CreateRenderPasses() {
@@ -53,9 +55,16 @@ void Renderer::CreateRenderPasses() {
     m_PresentPass = std::make_unique<PresentPass>(context, m_CompositePass->GetRenderTarget());
 
     // ImGui
-    ImGuiRenderer::Initialize(context, m_scene->GetTextureManager());
-    // TODO: This will cause a validation error if you re-size the window. Just needs to be updated when re-sized
+    ImGuiRenderer::Initialize(context);
+    std::filesystem::path path = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets" / "heart.png";
+    ImGuiRenderer::AddTextures(m_scene->GetTextureManager(), path, "heart");
+    // // TODO: This will cause a validation error if you re-size the window. Just needs to be updated when re-sized
     ImGuiRenderer::AddTexture(vkutil::clampToEdgeSamplerAniso, m_ShadowMap->GetRenderTarget().imageView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL);
+}
+
+void Renderer::RebuildSceneDescriptors() {
+    m_ShadowMap->RebuildDescriptors();
+    m_ForwardPass->RebuildDescriptors();
 }
 
 void Renderer::Destroy() {
@@ -100,6 +109,16 @@ void Renderer::Destroy() {
 
     for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; ++i) {
         TracyVkDestroy(context.tracyContexts[i]);
+    }
+
+    for (auto &freedBuffers : mFreedBuffers) {
+        for (auto &freedBuffer : freedBuffers) {
+            if (freedBuffer.buffer) {
+                assert(freedBuffer.allocator);
+                assert(freedBuffer.allocation);
+                vmaDestroyBuffer(freedBuffer.allocator, freedBuffer.buffer, freedBuffer.allocation);
+            }
+        }
     }
 }
 
@@ -183,19 +202,27 @@ void Renderer::AllocateCommandBuffers() {
     }
 }
 
-void Renderer::Render() {
+void Renderer::BeginFrame(VkCommandBuffer cmd) {
     {
         ZoneScopedN("vkWaitForFences");
 
         vkWaitForFences(context.device, 1, &m_Fences[vkutil::currentFrame], VK_TRUE, UINT64_MAX);
     }
 
-    uint32_t index;
+    for (auto &freedBuffer : mFreedBuffers[vkutil::currentFrame]) {
+        if (freedBuffer.buffer) {
+            assert(freedBuffer.allocator);
+            assert(freedBuffer.allocation);
+            vmaDestroyBuffer(freedBuffer.allocator, freedBuffer.buffer, freedBuffer.allocation);
+            freedBuffer = {nullptr, nullptr, nullptr};
+        }
+    }
+
     VkResult getImageIndex;
     {
         ZoneScopedN("vkAcquireNextImageKHR");
 
-        getImageIndex = vkAcquireNextImageKHR(context.device, context.swapchain, UINT64_MAX, m_imageAvailableSemaphores[vkutil::currentFrame], VK_NULL_HANDLE, &index);
+        getImageIndex = vkAcquireNextImageKHR(context.device, context.swapchain, UINT64_MAX, m_imageAvailableSemaphores[vkutil::currentFrame], VK_NULL_HANDLE, &mImageIndex);
     }
 
     if (getImageIndex == VK_ERROR_OUT_OF_DATE_KHR) {
@@ -227,8 +254,6 @@ void Renderer::Render() {
         vkResetCommandBuffer(m_commandBuffers[vkutil::currentFrame], 0);
     }
 
-    VkCommandBuffer &cmd = m_commandBuffers[vkutil::currentFrame];
-
     {
         ZoneScopedN("vk::Execute");
 
@@ -251,18 +276,75 @@ void Renderer::Render() {
                 }
             }
         }
+    }
+}
+
+void Renderer::EndFrame(VkCommandBuffer cmd) {
+    // Periodically collect the GPU events
+    TracyVkCollect(context.tracyContexts[vkutil::currentFrame], cmd);
+
+    vkEndCommandBuffer(cmd);
+
+    Submit();
+    Present(mImageIndex);
+
+    vkutil::currentFrame = (vkutil::currentFrame + 1) % vkutil::MAX_FRAMES_IN_FLIGHT;
+}
+
+void Renderer::RenderUIOnly()
+{
+    {
+        ZoneScopedN("vkWaitForFences");
+
+        vkWaitForFences(context.device, 1, &m_Fences[vkutil::currentFrame], VK_TRUE, UINT64_MAX);
+    }
+
+    uint32_t index;
+    VkResult getImageIndex;
+    {
+        ZoneScopedN("vkAcquireNextImageKHR");
+
+        getImageIndex = vkAcquireNextImageKHR(context.device, context.swapchain, UINT64_MAX, m_imageAvailableSemaphores[vkutil::currentFrame], VK_NULL_HANDLE, &index);
+    }
+
+
+
+    if (getImageIndex == VK_ERROR_OUT_OF_DATE_KHR) {
+        // Recreate swapchain
+        context.RecreateSwapchain();
+        m_PresentPass->Resize();
+
+    } else if (getImageIndex != VK_SUCCESS && getImageIndex != VK_SUBOPTIMAL_KHR) {
+        throw std::runtime_error("Failed to aquire swapchain image");
+    }
+
+    {
+        ZoneScopedN("vkResetFences");
+
+        vkResetFences(context.device, 1, &m_Fences[vkutil::currentFrame]);
+    }
+
+    {
+        ZoneScopedN("vkResetCommandBuffer");
+
+        vkResetCommandBuffer(m_commandBuffers[vkutil::currentFrame], 0);
+    }
+
+    VkCommandBuffer &cmd = m_commandBuffers[vkutil::currentFrame];
+
+
+    {
+        ZoneScopedN("vk::Execute");
+
+        VkCommandBufferBeginInfo beginInfo = {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+
+        VK_CHECK(vkBeginCommandBuffer(cmd, &beginInfo), "Failed to begin command buffer");
+
 
         {
             TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "vk::Frame", tracy::Color::Crimson);
 
-            m_ShadowMap->Execute(cmd);
-            m_DepthPrepass->Execute(cmd);
-            m_ForwardPass->Execute(cmd);
-            m_GBuffer->Execute(cmd);
-            m_SSAO->Execute(cmd);
-            m_SSR->Execute(cmd);
-            m_BloomPass->Execute(cmd);
-            m_CompositePass->Execute(cmd);
             m_PresentPass->Execute(cmd, index);
         }
 

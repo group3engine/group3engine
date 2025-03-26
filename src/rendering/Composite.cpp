@@ -114,7 +114,7 @@ void Composite::Resize() {
     }
 }
 
-void Composite::Execute(VkCommandBuffer cmd) {
+void Composite::Execute(VkCommandBuffer cmd) const {
     ZoneScopedN("Composite::Execute");
     TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "Composite", tracy::Color::Magenta);
 
