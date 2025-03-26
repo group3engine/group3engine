@@ -29,7 +29,7 @@ class DepthPrepass {
     void BuildDescriptors();
 
     Context &context;
-    Scene *scene;
+    Scene *m_Scene;
     Image m_DepthTarget;
 
     VkPipeline m_Pipeline;

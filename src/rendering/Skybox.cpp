@@ -8,8 +8,8 @@
 #include <stb_image.h>
 #include <stdexcept>
 
-Skybox::Skybox(Context& context, VkRenderPass renderpass) :
-	context{context}, m_RenderPass{renderpass}
+Skybox::Skybox(Context& context, Scene *scene, VkRenderPass renderpass) :
+	context{context}, m_Scene{scene}, m_RenderPass{renderpass}
 {
 	// When transitioning this image, the subresource in subresourceRange needs to be set to 6
 	// to transition all layers of the imag, otherwise you transition only the first
@@ -194,7 +194,7 @@ void Skybox::BuildDescriptors()
 	for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++)
 	{
 		VkDescriptorBufferInfo bufferInfo{};
-		bufferInfo.buffer = Scene::get().GetActiveScene()->GetCameraBuffers()[i].buffer;
+		bufferInfo.buffer = m_Scene->GetCameraBuffers()[i].buffer;
 		bufferInfo.offset = 0;
 		bufferInfo.range = sizeof(CameraTransform);
 		vkutil::UpdateDescriptorSet(context, 0, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);

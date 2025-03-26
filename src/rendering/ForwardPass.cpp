@@ -52,7 +52,7 @@ ForwardPass::ForwardPass(Context &context, Image &shadowMap, Image &depthPrepass
     CreateFramebuffer();
     CreatePipeline();
 
-    m_Skybox = std::make_unique<Skybox>(context, m_renderPass);
+    m_Skybox = std::make_unique<Skybox>(context, scene, m_renderPass);
 }
 
 ForwardPass::~ForwardPass() {
@@ -326,7 +326,7 @@ void ForwardPass::BuildDescriptors() {
     // Camera Transform UBO
     for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = Scene::get().GetActiveScene()->GetCameraBuffers()[i].buffer;
+        bufferInfo.buffer = scene->GetCameraBuffers()[i].buffer;
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(CameraTransform);
         vkutil::UpdateDescriptorSet(context, 0, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);

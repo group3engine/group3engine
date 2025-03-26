@@ -9,7 +9,7 @@ class Context;
 class SSR {
   public:
 
-    explicit SSR(Context &context, Image& depthBuffer, Image& renderedScene, Image& metallicRoughness, Image& skybox);
+    explicit SSR(Context &context, Scene *scene, Image& depthBuffer, Image& renderedScene, Image& metallicRoughness, Image& skybox);
     ~SSR();
     void Execute(VkCommandBuffer cmd) const;
     void Update();
@@ -24,6 +24,7 @@ class SSR {
     void CreateRenderPass();
 
     Context &context;
+    Scene *m_Scene;
     uint32_t m_width;
     uint32_t m_height;
     Image m_RenderTarget;

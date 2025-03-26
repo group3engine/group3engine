@@ -8,8 +8,9 @@
 #include "Utils.hpp"
 #include "Buffer.hpp"
 
-Composite::Composite(Context &context, Image &LightingPass, Image &BloomPass, Image &SSAO, Image &SSRImage)
+Composite::Composite(Context &context, Scene *scene, Image &LightingPass, Image &BloomPass, Image &SSAO, Image &SSRImage)
     : context{context},
+      m_Scene{scene},
       LightingPass{LightingPass},
       BloomPass{BloomPass},
       SSAO{SSAO},

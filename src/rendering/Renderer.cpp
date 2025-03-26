@@ -42,11 +42,11 @@ void Renderer::CreateRenderPasses() {
     m_DepthPrepass = std::make_unique<DepthPrepass>(context, m_scene);
     m_ForwardPass = std::make_unique<ForwardPass>(context, m_ShadowMap->GetRenderTarget(), m_DepthPrepass->GetRenderTarget(), m_scene);
     m_GBuffer = std::make_unique<GBuffer>(context, m_scene);
-    m_SSAO = std::make_unique<SSAO>(context, m_ForwardPass->GetDepthTarget(), m_ForwardPass->GetRenderTarget());
-    m_SSR = std::make_unique<SSR>(context, m_ForwardPass->GetDepthTarget(), m_ForwardPass->GetRenderTarget(), m_GBuffer->GetMetallicRoughnessTarget(), m_ForwardPass->GetSkybox()->GetSkyBoxImage());
-    m_BloomPass = std::make_unique<Bloom>(context, m_ForwardPass->GetBrightnessTarget());
-    m_CompositePass = std::make_unique<Composite>(context, m_ForwardPass->GetRenderTarget(), m_BloomPass->GetRenderTarget(), m_SSAO->GetRenderTarget(), m_SSR->GetRenderTarget());
-    m_PresentPass = std::make_unique<PresentPass>(context, m_CompositePass->GetRenderTarget());
+    m_SSAO = std::make_unique<SSAO>(context, m_scene, m_ForwardPass->GetDepthTarget(), m_ForwardPass->GetRenderTarget());
+    m_SSR = std::make_unique<SSR>(context, m_scene, m_ForwardPass->GetDepthTarget(), m_ForwardPass->GetRenderTarget(), m_GBuffer->GetMetallicRoughnessTarget(), m_ForwardPass->GetSkybox()->GetSkyBoxImage());
+    m_BloomPass = std::make_unique<Bloom>(context, m_scene, m_ForwardPass->GetBrightnessTarget());
+    m_CompositePass = std::make_unique<Composite>(context, m_scene, m_ForwardPass->GetRenderTarget(), m_BloomPass->GetRenderTarget(), m_SSAO->GetRenderTarget(), m_SSR->GetRenderTarget());
+    m_PresentPass = std::make_unique<PresentPass>(context, m_scene, m_CompositePass->GetRenderTarget());
 
     // ImGui
     ImGuiRenderer::Initialize(context);

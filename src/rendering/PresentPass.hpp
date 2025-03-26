@@ -9,7 +9,7 @@ class Buffer;
 
 class PresentPass {
   public:
-    PresentPass(Context &context, Image &renderedScene);
+    PresentPass(Context &context, Scene *scene, Image &renderedScene);
     ~PresentPass();
     void Execute(VkCommandBuffer cmd, uint32_t imageIndex) const;
     void Update();
@@ -20,8 +20,8 @@ class PresentPass {
     void BuildDescriptors();
 
     Context &context;
+    Scene *m_Scene;
     Image &renderedScene;
-    Scene *scene;
     Camera *camera;
 
     VkPipeline m_pipeline;

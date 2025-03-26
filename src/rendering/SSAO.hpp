@@ -19,7 +19,7 @@ class SSAO {
         glm::vec3 samples[64];
     };
 
-    explicit SSAO(Context &context, Image& depthBuffer, Image& renderedScene);
+    explicit SSAO(Context &context, Scene *scene, Image& depthBuffer, Image& renderedScene);
     ~SSAO();
     void Execute(VkCommandBuffer cmd) const;
     void Update();
@@ -42,6 +42,7 @@ class SSAO {
     }
 
     Context &context;
+    Scene *m_Scene;
     uint32_t m_width;
     uint32_t m_height;
     Image m_RenderTarget;

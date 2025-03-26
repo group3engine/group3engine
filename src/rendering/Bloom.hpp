@@ -6,10 +6,11 @@
 #include "Buffer.hpp"
 
 class Context;
+class Scene;
 
 class Bloom {
   public:
-    explicit Bloom(Context &context, Image &inputImage);
+    explicit Bloom(Context &context, Scene *scene, Image &inputImage);
     ~Bloom();
 
     void Execute(VkCommandBuffer cmd) const;
@@ -29,6 +30,7 @@ class Bloom {
     void RenderVerticalBlur(VkCommandBuffer cmd) const;
 
     Context &context;
+    Scene *m_Scene;
     Image m_BloomBlurXRT;
     Image m_BloomBlurYRT;
     Image &inputImage;

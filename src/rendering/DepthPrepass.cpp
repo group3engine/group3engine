@@ -11,7 +11,7 @@
 
 DepthPrepass::DepthPrepass(Context &context, Scene *scene)
     : context{context},
-      scene{scene},
+      m_Scene{scene},
       m_Pipeline{VK_NULL_HANDLE},
       m_PipelineLayout{VK_NULL_HANDLE},
       m_descriptorSetLayout{VK_NULL_HANDLE},
@@ -105,7 +105,7 @@ void DepthPrepass::Execute(VkCommandBuffer cmd) const {
 
     // Draw front freshes
     //
-    scene->DrawOpaque(cmd, m_PipelineLayout);
+    m_Scene->DrawOpaque(cmd, m_PipelineLayout);
 
     // scene->RenderFrontMeshes(cmd, m_PipelineLayout);
     //
@@ -183,7 +183,7 @@ void DepthPrepass::BuildDescriptors() {
     // Camera Transform UBO
     for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = Scene::get().GetActiveScene()->GetCameraBuffers()[i].buffer;
+        bufferInfo.buffer = m_Scene->GetCameraBuffers()[i].buffer;
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(CameraTransform);
         vkutil::UpdateDescriptorSet(context, 0, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
