@@ -128,6 +128,7 @@ void Engine::Shutdown() {
 
     mRenderer->Destroy();
     mRenderer.reset();
+    mScene->Unload();
     mScene->ShutDown();
 
     mMeshManager->Destroy();
