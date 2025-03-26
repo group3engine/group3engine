@@ -7,6 +7,8 @@
 #include <glm/ext.hpp>
 #include <spdlog/spdlog.h>
 
+#include "Utils.hpp"
+
 std::atomic<uint32_t> Entity::kEntityCount{0};
 
 
@@ -37,7 +39,7 @@ void Entity::UpdateWorldTransform()
     if (mHasCharacter) {
         mWorldTransform = glm::translate(mCharacterPositionOffset) * mParentTransform * mLocalTransform.getMatrix();
     }
-    else if (mIsKinematic && mHasRigidBody) {
+    else if ((GetPhysicsType() == PhysicsType::KINEMATIC || GetPhysicsType() == PhysicsType::DYNAMIC) && mHasRigidBody) {
         // also apply physics transformations
         auto physicsTransform = glm::transpose(mRigidBody->GetWorldTransform());
         // get the physicsTransform in the same space as the local transform
@@ -212,7 +214,7 @@ void Entity::RecordDrawSkinned(VkCommandBuffer aCmdBuff,
                                VK_SHADER_STAGE_FRAGMENT_BIT,
                            0, sizeof(glm::mat4), &mModelMatrix);
         // bind the joint descriptor set
-        mAnimator->BindDescriptorSet(aCmdBuff, aPipeLayout, 2);
+        mAnimator->BindDescriptorSet(aCmdBuff, aPipeLayout, 2, vkutil::currentFrame);
         // for each mesh primitive
         for (const auto &meshPrimitive : mMesh->meshPrimitives) {
             // bind the mesh primitives material
@@ -282,7 +284,7 @@ void Entity::BaseUpdate(double deltaTime) {
     if (mAnimator) {
         mAnimator->Update(deltaTime, this);
     }
-    if(mIsKinematic || mHasCharacter)
+    if(GetPhysicsType() == PhysicsType::KINEMATIC || GetPhysicsType() == PhysicsType::DYNAMIC || mHasCharacter)
     {
         UpdateWorldTransform();
         SetPhysicsTransform();

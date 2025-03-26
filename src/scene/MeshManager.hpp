@@ -12,13 +12,16 @@ class MeshManager {
     explicit MeshManager(Context &aContext)
         : mContext(aContext){};
 
-    ~MeshManager() {
+    void Destroy() {
         for (auto &meshGPU : mMeshesGPU) {
             meshGPU.mVertices.Destroy();
             meshGPU.mIndices.Destroy();
             meshGPU.mVertices = {};
             meshGPU.mIndices = {};
         }
+
+        mMeshes.clear();
+        mMeshesGPU.clear();
     }
 
     // reserve space for meshes

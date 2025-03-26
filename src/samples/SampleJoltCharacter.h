@@ -17,7 +17,7 @@ enum class EJumpState
 };
 
 // Simple test that test the CharacterVirtual class. Allows the user to move around with the arrow keys and jump with the J button.
-class CharacterVirtualTest : public CharacterBaseTest, public CharacterContactListener
+class SampleJoltCharacter : public CharacterBaseTest, public CharacterContactListener
 {
 public:
 	// Initialize the test
@@ -85,7 +85,7 @@ private:
 	static inline float		sPredictiveContactDistance = 0.1f;
 	static inline bool		sEnableWalkStairs = true;
 	static inline bool		sEnableStickToFloor = true;
-	static inline bool		sEnhancedInternalEdgeRemoval = false;
+	static inline bool		sEnhancedInternalEdgeRemoval = true;
 
 	// The 'player' character
 	Ref<CharacterVirtual>	mCharacter;

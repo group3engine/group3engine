@@ -319,6 +319,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
     for (size_t ni = 0; ni < data->nodes_count; ni++) {
         const auto &gltfNode = data->nodes[ni];
         std::string entityTypeName = "default";
+        std::string physicsTypeName = "static"; // default type is static
 
         // IDEA: Store parse data in this struct and use C-style char * so
         // we can use cgltf_parse_json_string. Then, we can store info
@@ -326,10 +327,10 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         // based on the char * string.
         struct group3_extras {
             char *entity_type = nullptr;
+            char *physics_type = nullptr;
             std::vector<std::string> tags;
             bool is_sensor = false;
             bool is_solid = true;
-            bool is_kinematic = false;
             bool is_invisible = false;
         } group3_extras;
 
@@ -376,6 +377,13 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                     i = cgltf_parse_json_string(&fixed_options, tokens, i + 1, json_chunk, &group3_extras.entity_type);
                 }
 
+                // check the physics type
+                else if (cgltf_json_strcmp(tokens + i, json_chunk, "physics_type") == 0) {
+                    // Parse token i + 1, e.g., token 2 (the value of the entity_type key)
+                    // Update i to i + 1, so we can continue parsing
+                    i = cgltf_parse_json_string(&fixed_options, tokens, i + 1, json_chunk, &group3_extras.physics_type);
+                }
+
                 // check the tags
                 else if (cgltf_json_strcmp(tokens + i, json_chunk, "tags") == 0) {
                     // Parse token i + 1, e.g., token 2 (the value of the tags key)
@@ -416,20 +424,10 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                     group3_extras.is_solid = is_solid;
                 }
 
-                // check for kinematic
-                else if (cgltf_json_strcmp(tokens + i, json_chunk, "is_kinematic") == 0) {
-                    // Parse token i + 1, e.g., token 2 (the value of the is_kinematic key)
-                    // Update i to i + 1, so we can continue parsing
-                    ++i;
-                    bool is_kinematic = cgltf_json_to_bool(tokens + i, json_chunk);
-                    ++i;
-                    group3_extras.is_kinematic = is_kinematic;
-                }
-
                 // check for invisible
                 else if  (cgltf_json_strcmp(tokens + i, json_chunk, "is_invisible") == 0)
                 {
-                    // Parse token i + 1, e.g., token 2 (the value of the is_kinematic key)
+                    // Parse token i + 1, e.g., token 2 (the value of the is_invisible key)
                     // Update i to i + 1, so we can continue parsing
                     ++i;
                     bool is_invisible = cgltf_json_to_bool(tokens + i, json_chunk);
@@ -437,12 +435,22 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                     group3_extras.is_invisible = is_invisible;
                 }
 
+                else {
+                    SPDLOG_ERROR("Unexpected token while parsing extras.");
+                    exit(EXIT_FAILURE);
+                }
 
             }
 
             if(group3_extras.entity_type != nullptr) {
                 entityTypeName = group3_extras.entity_type;
                 fixed_options.memory.free_func(fixed_options.memory.user_data, group3_extras.entity_type);
+
+            }
+
+            if(group3_extras.physics_type != nullptr) {
+                physicsTypeName = group3_extras.physics_type;
+                fixed_options.memory.free_func(fixed_options.memory.user_data, group3_extras.physics_type);
 
             }
 
@@ -453,6 +461,19 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         Entity* entityPtr = CreateNewEntity(entityTypeName);
         aEntities.emplace_back(entityPtr);
         Entity &entity = *entityPtr;
+
+        if(physicsTypeName == "static")
+        {
+            entity.SetPhysicsType(PhysicsType::STATIC);
+        }
+        else if(physicsTypeName == "kinematic")
+        {
+            entity.SetPhysicsType(PhysicsType::KINEMATIC);
+        }
+        else if(physicsTypeName == "dynamic")
+        {
+            entity.SetPhysicsType(PhysicsType::DYNAMIC);
+        }
 
         // set the name
         if (gltfNode.name) {
@@ -469,10 +490,6 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         // set the solid
         if (!group3_extras.is_solid) {
             entity.SetAsNotSolid();
-        }
-        // set the kinematic
-        if (group3_extras.is_kinematic) {
-            entity.SetAsKinematic();
         }
         // set the invisible
         if (group3_extras.is_invisible) {

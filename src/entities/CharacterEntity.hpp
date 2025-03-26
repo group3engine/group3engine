@@ -8,7 +8,7 @@
 #include <stack>
 
 #include "Entity.hpp"
-#include "CharacterVirtualTest.h"
+#include "SampleJoltCharacter.h"
 
 #include "ImGuiRenderer.hpp"
 
@@ -28,22 +28,19 @@ class CharacterEntity : public Entity {
     CharacterEntity();
     ~CharacterEntity() override;
 
-    void SetCharacterVirtual(unique_ptr<CharacterVirtualTest> &&uniquePtr);
-    void ProcessInput(const ProcessInputParams &inParams) {
-        mCharacterVirtual->ProcessInput(inParams);
-    }
-    void PrePhysicsUpdate(const PreUpdateParams &inParams) {
-        mCharacterVirtual->PrePhysicsUpdate(inParams);
-    }
+    void ProcessInput();
+    void PrePhysicsUpdate();
 
     Vec3 GetCharacterPosition() {
-        return mCharacterVirtual->GetCharacterPosition();
+        return mSampleJoltCharacter->GetCharacterPosition();
     }
 
     // update override
     void Update(double deltaTime) override;
 
     void UpdateUi(double deltaTime) override;
+
+    void CreateJoltCharacter();
 
     void Awake() override ;
 
@@ -59,7 +56,7 @@ class CharacterEntity : public Entity {
 
     // reset the character to the last checkpoint
     void Reset() {
-        mCharacterVirtual->SetCharacterPosition(RVec3(mLastCheckpoint.x,
+        mSampleJoltCharacter->SetCharacterPosition(RVec3(mLastCheckpoint.x,
                                                 mLastCheckpoint.y,
                                                 mLastCheckpoint.z));
     }
@@ -70,8 +67,12 @@ class CharacterEntity : public Entity {
         mCharacterPositionOffset = glm::vec3(x, y, z);
     }
 
-    void SetScene(Scene* input_scene){mScene = input_scene;}
     void MoveToSpawn();
+
+    void TeleportCallback(glm::vec3 aPosition) {
+        SetCheckpoint(aPosition);
+        Reset();
+    }
 
   private:
     void Save();
@@ -79,7 +80,7 @@ class CharacterEntity : public Entity {
 
   private:
     Transform mInitialTransform = {};
-    std::unique_ptr<CharacterVirtualTest> mCharacterVirtual;
+    std::unique_ptr<SampleJoltCharacter> mSampleJoltCharacter;
 
     glm::vec3 mLastCheckpoint = glm::vec3(0, 10.0f, 0);
     float ragdollTime = -10000.0f;
@@ -96,7 +97,6 @@ class CharacterEntity : public Entity {
     std::stack<InternalEvent> mInternalEvents;
     std::stack<InternalUiEvent> mInternalUiEvents;
     bool m_has_save = false;
-    Scene* mScene;
 };
 
 #endif // GROUP3ENGINE_CHARACTERENTITY_HPP

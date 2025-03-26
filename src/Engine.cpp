@@ -6,11 +6,17 @@
 #include <memory>
 #include <spdlog/spdlog.h>
 
+#include <tracy/Tracy.hpp>
+
 #include "Camera.hpp"
-#include "CharacterEntity.hpp"
+#include "Entity.hpp"
 #include "GLFW.hpp"
 #include "Image.hpp"
 #include "Input.hpp"
+#include "Jolt/Math/Vec3.h"
+#include "Jolt/Physics/Body/Body.h"
+#include "Jolt/Physics/Body/MotionType.h"
+#include "Jolt/Physics/Collision/Shape/SphereShape.h"
 #include "PhysicsHelpers.hpp"
 #include "PhysicsManager.hpp"
 #include "RigidBody.hpp"
@@ -21,7 +27,6 @@
 #include "glm/fwd.hpp"
 #include "glm/trigonometric.hpp"
 
-#include "CharacterVirtualTest.h"
 
 #include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
@@ -33,49 +38,39 @@
 #include <Jolt/Core/HashCombine.h>
 #include <Jolt/Geometry/IndexedTriangle.h>
 
+#include "imgui.h"
+
+#include "Config.hpp"
+
 #define TEMP_DISABLE_PHYSICS 0
+
+namespace {
+    // TODO: Improve this temporary scene switching mechanism
+
+    enum class SceneValue {
+        OBBY,
+        OBBY_TEST_SCENE
+    };
+
+    SceneValue sceneValue{SceneValue::OBBY_TEST_SCENE};
+
+    const std::filesystem::path &SwitchScene() {
+        if (sceneValue == SceneValue::OBBY) {
+            sceneValue = SceneValue::OBBY_TEST_SCENE;
+            return Sample::FallGuys;
+        } else if (sceneValue == SceneValue::OBBY_TEST_SCENE) {
+            sceneValue = SceneValue::OBBY;
+            return Sample::SampleObby;
+        } else {
+            SPDLOG_ERROR("Unaccounted for case.");
+            exit(EXIT_FAILURE);
+        }
+    }
+}
 
 Engine::Engine() {
     m_isRunning = false;
     m_lastFrameTime = 0.0;
-}
-
-void Engine::InitScene() {
-    // Current path is the current working directory, i.e., where the root CMakeLists.txt is
-    std::filesystem::path basePath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets";
-    std::filesystem::path gltfPath = basePath / Sample::FallGuys;
-
-    // Define Light sources
-    Light directionalLight;
-    directionalLight.Type = LightType::Directional;
-    directionalLight.position = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    directionalLight.colour = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-
-    std::vector<glm::vec4> spotLightPositions;
-
-    // Random spot light positions put side by side each other
-    for (size_t i = 0; i < 25; i++) {
-        spotLightPositions.push_back(glm::vec4(-9.0 + i * 0.8, 4.4f, 0.5f, 1.0f));
-    }
-
-    // Create the scene which will store models and lights
-    // Add GLTF to the scene
-    // Add a directional light source defined earlier
-    mScene->Load(gltfPath);
-    mScene->AddLightSource(directionalLight);
-
-    // Loop through the positions and instantiate a light
-    // and pass to the scene to add the lights to the scene
-    for (const auto &position : spotLightPositions) {
-        Light spotLight = {};
-        spotLight.Type = LightType::Spot;
-        spotLight.position = position;
-        spotLight.colour = glm::vec4(glm::linearRand(0.0f, 1.0f), glm::linearRand(0.0f, 1.f),
-                                     glm::linearRand(0.0f, 1.0f), 1.0f);
-        mScene->AddLightSource(spotLight);
-    }
-
-    SPDLOG_DEBUG("Number of Lights: {}", mScene->GetLights().size());
 }
 
 bool Engine::Initialize() {
@@ -89,162 +84,34 @@ bool Engine::Initialize() {
         m_isRunning = true;
     }
 
-    mScene = std::make_shared<Scene>(m_context);
+    mMaterialManager = std::make_unique<MaterialManager>(m_context);
+    mMaterialManager->Initialise();
+
+    // Don't need to reinitialise mMeshManager, data can just be added again
+    mMeshManager = std::make_unique<MeshManager>(m_context);
+
+    mTextureManager = std::make_unique<TextureManager>(m_context);
+    mTextureManager->Initialise();
+
+    mScene = std::make_shared<Scene>(m_context,
+                                     mMaterialManager.get(),
+                                     mMeshManager.get(),
+                                     mTextureManager.get());
+    mScene->StartUp();
 
     mRenderer = std::make_unique<Renderer>(m_context, mScene);
 
-    // NOTE: This has to come after the renderer has been initialised currently.
-    InitScene();
-
-    // NOTE: This has to happen after the scene has been initialised currently
-    // TODO: Not ideal having this as a separate public method just to be able
-    // to initialise the render passes correctly after the scene is initialised.
-    mRenderer->CreateRenderPasses();
-
     PhysicsManager::get().StartUp();
 
-    // ---PHYSICS TEST INITIALISATION---
+    mScene->Initialise(Sample::FallGuys);
 
-    // Add rigid body to the physics system
-    // NOTE: Doing this outside of the constructor gives us a bit more flexibility
-    // floor.Init(PhysicsManager::get());
-    // floor.SetPosition(glm::vec3(0.f, -0.5f, 0.f));
-    // floor.SetRotation(glm::quat(glm::angleAxis(glm::radians(4.0f), glm::vec3(0.0f, 0.f, 1.f))));
-
-
-    // --- Mesh shape for each entity ----------------------------------------
-
-    // Shapes are refcounted and can be shared between bodies
-    JPH::Ref<Shape> shape;
-
-    for (auto it = mScene->GetEntities().begin(); it != mScene->GetEntities().end(); ++it) {
-        const auto &entity = *it;
-
-
-        if (!entity->IsCharacter()) {
-
-            if (entity->HasAnimator()) {
-                SPDLOG_INFO("Skipping entity {}, as it has an animator", entity->GetName());
-                continue;
-            }
-
-            const auto *mesh = entity->GetMesh();
-
-            if (!mesh) {
-                SPDLOG_WARN("Entity {} does not have mesh", entity->GetName());
-                continue;
-            }
-
-            size_t totalVertices = 0;
-            size_t totalTriangles = 0;
-            // no physics to add if it isn't a sesnor or solid
-            if(entity->IsSensor() || entity->IsSolid()) {
-                // calculate the scaling matrix to apply to the vertices
-                glm::mat4 entityWorldTransform = entity->GetWorldTransform();
-                // decompose the world transform to get the scale
-                glm::vec3 position, scale;
-                glm::quat rotation;
-                glm::vec3 skew;
-                glm::vec4 perspective;
-                glm::decompose(entityWorldTransform, scale, rotation, position, skew, perspective);
-                // create a scaling matrix
-                glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f), scale);
-                for (const auto &primitive : mesh->meshPrimitives) {
-                    // Create an array of vertices
-                    VertexList vertices;
-                    for (const auto &vertex : primitive.vertices) {
-                        auto worldPos = scalingMatrix * glm::vec4(vertex.pos, 1.0f);
-                        vertices.emplace_back(worldPos.x, worldPos.y, worldPos.z);
-                        ++totalVertices;
-                    }
-
-                    IndexedTriangleList indexedTriangles;
-                    for (size_t i = 0; i < primitive.indices.size(); i += 3) {
-                        indexedTriangles.push_back(IndexedTriangle(primitive.indices[i],
-                                                                   primitive.indices[i + 1],
-                                                                   primitive.indices[i + 2]));
-                        ++totalTriangles;
-                    }
-
-                    assert(!vertices.empty());
-                    assert(!indexedTriangles.empty());
-
-                    // Create the settings object for a mesh shape
-                    JPH::MeshShapeSettings settings(vertices, indexedTriangles);
-
-                    // Create shape
-                    JPH::Shape::ShapeResult result = settings.Create();
-                    if (result.IsValid()) {
-                        shape = result.Get();
-                    } else {
-                        SPDLOG_ERROR("Shape result is invalid. {}", result.GetError());
-                    }
-
-                    Transform entity_transform = entity->GetWorldTransformComponents();
-                    EMotionType motionType = EMotionType::Static;
-                    if(entity->IsKinematic()) {
-                        motionType = EMotionType::Kinematic;
-                    }
-                    BodyCreationSettings bodyCreationSettings = {
-                        result.Get(), RVec3(entity_transform.translation.x, entity_transform.translation.y, entity_transform.translation.z), Quat(entity_transform.rotation.x, entity_transform.rotation.y, entity_transform.rotation.z, entity_transform.rotation.w),
-                        motionType, Layers::MOVING};
-                    bodyCreationSettings.mIsSensor = entity->IsSensor();
-                    if(entity->IsKinematic()) {
-                        bodyCreationSettings.mMassPropertiesOverride.mMass = 1.0f;
-                        bodyCreationSettings.mMassPropertiesOverride.mInertia =
-                            JPH::Mat44::sIdentity();
-                        bodyCreationSettings.mOverrideMassProperties =
-                            EOverrideMassProperties::MassAndInertiaProvided;
-                    }
-                    RigidBody entity_rigid_body = RigidBody(bodyCreationSettings);
-
-
-                    entity_rigid_body.Init(PhysicsManager::get());
-                    // only do this part if its supposed to DO something when collided with (i.e. sensors)
-                    PhysicsManager::get().RegisterEntity(entity, entity_rigid_body.mBodyId);
-                    PhysicsManager::get().mPhysicsSystem.OptimizeBroadPhase();
-                    entity->AddRigidBody(std::make_unique<RigidBody>(entity_rigid_body));
-
-                }
-            }
-
-            SPDLOG_INFO("total vertices {}", totalVertices);
-            SPDLOG_INFO("total triangles {}", totalTriangles);
-        } else {
-            SPDLOG_INFO("Skipping character");
-        }
-    }
-
-
-    // Find character
-    auto &entities = mScene->GetEntities();
-    auto it = std::find_if(entities.begin(), entities.end(),
-                           [](const auto &entity) { return entity->IsCharacter(); });
-
-    if (it != entities.end()) {
-        CharacterEntity* characterEntity = dynamic_cast<CharacterEntity*>(*it);
-        characterEntity->SetScene(mScene.get());
-
-        auto characterVirtual = std::make_unique<CharacterVirtualTest>();
-        characterVirtual->SetPhysicsSystem(&PhysicsManager::get().mPhysicsSystem);
-        characterVirtual->SetJobSystem(PhysicsManager::get().mJobSystem.get());
-        characterVirtual->SetTempAllocator(PhysicsManager::get().mTempAllocator.get());
-        characterVirtual->SetCustomContactListener(&PhysicsManager::get().mContactListener);
-        characterVirtual->Initialize();
-        PhysicsManager::get().RegisterEntity(characterEntity, characterVirtual->GetCharacter()->GetInnerBodyID());
-
-        mScene->CreateCharacter(characterEntity, std::move(characterVirtual));
-        mScene->SetHasCharacter(true);
-        
-        characterEntity->Reset();
-    }
-
-    
-
+    mRenderer->CreateRenderPasses();
     // call the scene awake function
     mScene->Awake();
 
-    // ---END OF PHYSICS TEST INITIALISATION---
+#ifdef JPH_DEBUG_RENDERER
+    mDebugRenderer = std::make_unique<DebugRendererImp>(mRenderer.get());
+#endif // JPH_DEBUG_RENDERER
 
     SPDLOG_DEBUG("Engine initialised.");
 
@@ -254,18 +121,35 @@ bool Engine::Initialize() {
 }
 
 void Engine::Shutdown() {
+#ifdef JPH_DEBUG_RENDERER
+    static_cast<DebugRendererImp*>(mDebugRenderer.get())->Destroy();
+#endif // JPH_DEBUG_RENDERER
+
     mRenderer->Destroy();
     mRenderer.reset();
     mScene->Destroy();
+
+    mMeshManager->Destroy();
+    mMaterialManager->Destroy();
+    mTextureManager->Destroy();
+
     m_context.Destroy(); // Free vulkan device, allocator, window
     Platform::get().ShutDown();
     PhysicsManager::get().ShutDown();
+}
+
+void Engine::ChangeScene(const std::filesystem::path &filePath)
+{
+    m_sceneNeedsChanging = true;
+    m_scenePath = filePath;
 }
 
 void Engine::Run() {
     auto camera = static_cast<Camera *>(glfwGetWindowUserPointer(Platform::get().window));
     camera->SetPhysics(&PhysicsManager::get());
     camera->SetScene(mScene.get());
+
+    m_lastFrameTime = glfwGetTime();
 
     while (m_isRunning && !glfwWindowShouldClose(m_context.mWindow)) {
         double currentFrameTime = glfwGetTime();
@@ -278,36 +162,21 @@ void Engine::Run() {
 
         PollInputEvents();
 
-        
-
-        ProcessInputParams processInputParams{};
-        auto cameraForward = camera->GetDirection();
-        processInputParams.mCameraState.mForward = {cameraForward.x, cameraForward.y, cameraForward.z};
-
-        if (mScene->HasCharacter()) {
-            mScene->GetCharacter().ProcessInput(processInputParams);
-        }
-
-        PreUpdateParams preUpdateParams{};
-        preUpdateParams.mDeltaTime = GlobalUtil::deltaTime;
-
-        if (mScene->HasCharacter()) {
-            mScene->GetCharacter().PrePhysicsUpdate(preUpdateParams);
-        }
-
-        if (mScene->HasCharacter()) {
-            auto characterVirtualPos = mScene->GetCharacter().GetCharacterPosition();
-            mScene->GetCharacter().SetCharacterPositionOffset(
-                characterVirtualPos.GetX(), characterVirtualPos.GetY(), characterVirtualPos.GetZ());
-
-            Update(GlobalUtil::deltaTime);
-        } else {
-            Update(GlobalUtil::deltaTime);
-        }
+        Update(GlobalUtil::deltaTime);
 
         ImGuiRenderer::EndFrame();
 
         Render();
+
+        if (m_sceneNeedsChanging)
+        {
+            ChangeSceneFR();
+            m_sceneNeedsChanging = false;
+        }
+
+
+
+        FrameMark;
     }
 
     Shutdown();
@@ -364,15 +233,152 @@ void Engine::UpdateLogic() {
     }
 }
 
+void Engine::ChangeSceneFR()
+{
+    // vkDestroyBuffer():  can't be called on VkBuffer that is currently in use by VkCommandBuffer
+    vkQueueWaitIdle(m_context.graphicsQueue);
+    vkQueueWaitIdle(m_context.presentQueue);
+
+
+
+
+
+
+    // Remove all UI textures as they were linked with the texture manager
+    ImGuiRenderer::RemoveTextures();
+
+    mScene->Destroy();
+    mMaterialManager->Destroy();
+    mMeshManager->Destroy();
+    mTextureManager->Destroy();
+
+    mMaterialManager->Initialise();
+
+    // Don't need to reinitialise mMeshManager, data can just be added again
+
+    mTextureManager->Initialise();
+
+    // load in heart
+    std::filesystem::path loadingPath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets" / "loadingImage.png";
+    ImGuiRenderer::AddTextures(mTextureManager.get(), loadingPath, "load");
+
+
+    m_isLoading = true;
+    m_progress = 0.f;
+    std::thread loadingScreen(&Engine::RenderLoadingScreen, this);
+
+
+
+#ifndef NDEBUG
+    // Check there are no physics bodies left after scene destruction
+    BodyIDVector bodyIds;
+    PhysicsManager::get().mPhysicsSystem.GetBodies(bodyIds);
+    assert(bodyIds.empty());
+#endif // #ifndef NDEBUG
+    m_progress = 25.f;
+    mScene->StartUp();
+    mScene->Initialise(m_scenePath);
+    m_progress = 75.f;
+
+    // Add back UI textures
+    std::filesystem::path path = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets" / "heart.png";
+    ImGuiRenderer::AddTextures(mTextureManager.get(), path, "heart");
+
+    mRenderer->RebuildSceneDescriptors();
+
+    mScene->Awake();
+    m_progress = 100.f;
+    // sleep for 1 second
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    // end the loading screen
+    m_isLoading = false;
+    // wait for loading screen thread to finish
+    while (!loadingScreen.joinable()) {}
+    loadingScreen.join();
+}
+
 void Engine::Update(double deltaTime) {
+    ZoneScopedN("Engine::Update");
+
     UpdateLogic();
     mScene->Update(deltaTime);
     mScene->UpdateUi(deltaTime);
+
+// Draw physics before physics update
+// TODO: Understand why Jolt does this
+#ifdef JPH_DEBUG_RENDERER
+    if (GlobalConfig::enablePhysicsDebugRenderer) {
+        auto cameraPos = mRenderer->GetCamera()->GetPosition();
+        mDebugRenderer.get()->SetCameraPos(RVec3{cameraPos.x, cameraPos.y, cameraPos.z});
+
+        // Create render primitives: vertex buffers, index buffers and store them for later
+        // Except for lines, we will create the primitives at draw time
+        DrawPhysics();
+    }
+#endif // JPH_DEBUG_RENDERER
+
     PhysicsManager::get().UpdatePhysics(deltaTime);
     mRenderer->Update(deltaTime);
-    
 }
 
+#ifdef JPH_DEBUG_RENDERER
+void Engine::DrawPhysics() {
+    ZoneScopedN("DrawPhysics");
+
+    JPH::BodyManager::DrawSettings bodyDrawSettings;
+    bodyDrawSettings.mDrawShape = true;
+    PhysicsManager::get().mPhysicsSystem.DrawBodies(bodyDrawSettings, mDebugRenderer.get());
+}
+#endif // JPH_DEBUG_RENDERER
+
 void Engine::Render() {
-    mRenderer->Render();
+    ZoneScopedN("Engine::Render");
+
+    mRenderer->BeginFrame(mRenderer->GetCommandBuffer());
+
+    {
+        mRenderer->GetShadowMap()->Execute(mRenderer->GetCommandBuffer());
+        mRenderer->GetDepthPrepass()->Execute(mRenderer->GetCommandBuffer());
+
+        mRenderer->GetForwardPass()->BeginExecute(mRenderer->GetCommandBuffer());
+
+#ifdef JPH_DEBUG_RENDERER
+        if (GlobalConfig::enablePhysicsDebugRenderer) {
+            static_cast<DebugRendererImp*>(mDebugRenderer.get())->Draw();
+        }
+#endif // JPH_DEBUG_RENDERER
+
+        mRenderer->GetForwardPass()->EndExecute(mRenderer->GetCommandBuffer());
+
+        mRenderer->GetGBuffer()->Execute(mRenderer->GetCommandBuffer());
+        mRenderer->GetSSAO()->Execute(mRenderer->GetCommandBuffer());
+        mRenderer->GetSSR()->Execute(mRenderer->GetCommandBuffer());
+
+        mRenderer->GetBloomPass()->Execute(mRenderer->GetCommandBuffer());
+        mRenderer->GetCompositePass()->Execute(mRenderer->GetCommandBuffer());
+        mRenderer->GetPresentPass()->Execute(mRenderer->GetCommandBuffer(), mRenderer->GetImageIndex());
+
+        mRenderer->EndFrame(mRenderer->GetCommandBuffer());
+    }
+}
+
+void Engine::RenderLoadingScreen()
+{
+    // load in a new image from assets/loadingImage.png
+
+    try
+    {
+        while (m_isLoading)
+        {
+            ImGuiRenderer::NewFrame();
+            ImGuiRenderer::Image("load", ImVec2{0,0}, ImVec2{1,1});
+            ImGuiRenderer::LoadingBar(m_progress, ImVec2(500, 500));
+            ImGuiRenderer::EndFrame();
+            // render some text with imgui
+            mRenderer->RenderUIOnly();
+        }
+    }catch (const std::exception& e) {
+        // Handle the exception
+        SPDLOG_ERROR(e.what());
+    }
 }

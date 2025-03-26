@@ -50,7 +50,10 @@ void MaterialManager::UploadLastMaterial() {
 }
 
 MaterialManager::MaterialManager(Context &aContext)
-    : mContext(aContext) {
+: mContext(aContext) {
+}
+
+void MaterialManager::Initialise() {
     vkutil::materialDescriptorSetLayout = create_material_descriptor_layout();
     // create the descriptor pool
     mDescriptorPool = VK_NULL_HANDLE;

@@ -1,8 +1,11 @@
+#include "DepthPrepass.hpp"
+
+#include <tracy/TracyVulkan.hpp>
+
 #include "Context.hpp"
 #include "Scene.hpp"
 #include "Image.hpp"
 #include "Camera.hpp"
-#include "DepthPrepass.hpp"
 #include "Pipeline.hpp"
 #include "RenderPass.hpp"
 
@@ -31,6 +34,7 @@ DepthPrepass::DepthPrepass(Context &context, std::shared_ptr<Scene> scene, std::
 
     CreateRenderPass();
     CreateFramebuffer();
+    BuildDescriptorSetLayouts();
     BuildDescriptors();
     CreatePipeline();
 }
@@ -63,7 +67,10 @@ void DepthPrepass::Resize() {
     CreateFramebuffer();
 }
 
-void DepthPrepass::Execute(VkCommandBuffer cmd) {
+void DepthPrepass::Execute(VkCommandBuffer cmd) const {
+    ZoneScopedN("DepthPrepass::Execute");
+    TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "DepthPrepass", tracy::Color::Crimson);
+
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "DepthPrepass");
 #endif // !DEBUG
@@ -162,17 +169,17 @@ void DepthPrepass::CreateFramebuffer() {
     VK_CHECK(vkCreateFramebuffer(context.device, &fbcInfo, nullptr, &m_framebuffer), "Failed to create depth pre-pass framebuffer.");
 }
 
+void DepthPrepass::BuildDescriptorSetLayouts() {
+    std::vector<VkDescriptorSetLayoutBinding> bindings = {
+        vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT),
+    };
+
+    m_descriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
+}
+
 void DepthPrepass::BuildDescriptors() {
     m_descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
-    {
-        std::vector<VkDescriptorSetLayoutBinding> bindings = {
-            vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT),
-        };
-
-        m_descriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
-
-        vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_descriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, m_descriptorSets);
-    }
+    vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_descriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, m_descriptorSets);
 
     // Camera Transform UBO
     for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {

@@ -74,6 +74,10 @@ add_subdirectory(extern/spdlog)
 add_subdirectory(extern/imgui)
 add_subdirectory(extern/volk)
 
+option(TRACY_ENABLE "" ON)
+option(TRACY_ON_DEMAND "" ON)
+add_subdirectory(extern/tracy)
+
 # Turn off rtti for Jolt
 set(INTERPROCEDURAL_OPTIMIZATION OFF CACHE BOOL "" FORCE)
 # Turn off all warnings in Jolt to stop -Werror build error in Release mode
@@ -102,15 +106,15 @@ target_compile_definitions(src PRIVATE GLFW_INCLUDE_NONE GLM_ENABLE_EXPERIMENTAL
 
 target_compile_definitions(src PRIVATE CMAKE_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 
-target_link_libraries(src PRIVATE cgltf glfw glm::glm-header-only Jolt spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32> stb_image volk_headers vma)
+target_link_libraries(src PRIVATE cgltf glfw glm::glm-header-only Jolt spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32> stb_image Tracy::TracyClient volk_headers vma)
 
 # Compiler warnings
 if ((CMAKE_CXX_COMPILER_ID STREQUAL "Clang") OR (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
   # Disable rtti with -fno-rtti to be compatible with Jolt
-  target_compile_options(src PRIVATE -Wall -Wextra -Wnon-virtual-dtor -pedantic -Wno-missing-field-initializers)
+  target_compile_options(src PRIVATE -fno-rtti -Wall -Wextra -Wnon-virtual-dtor -pedantic -Wno-missing-field-initializers)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   # Disable rtti with /GR- to be compatible with Jolt
-  target_compile_options(src PRIVATE /permissive- /W4 /w14640)
+  target_compile_options(src PRIVATE /GR- /permissive- /W4 /w14640)
 endif()
 
 file(GLOB_RECURSE GLSL_SOURCE_FILES "${CMAKE_SOURCE_DIR}/src/shaders/*.vert" "${CMAKE_SOURCE_DIR}/src/shaders/*.frag")

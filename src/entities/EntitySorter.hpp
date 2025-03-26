@@ -9,6 +9,7 @@
 #include "CharacterEntity.hpp"
 #include "RotatingPlatform.hpp"
 #include "RotateOnX.hpp"
+#include "SampleSecondaryEntity.hpp"
 // Add more includes here
 
 // an enum of all the different entity types
@@ -18,6 +19,7 @@ enum class EntityType {
     MOVING,
     ROTATING,
     SPINNINGONX,
+    SECONDCHARACTER,
     SPINNINGSLOW
     // Add more entity types here
 };
@@ -29,6 +31,7 @@ static const std::unordered_map<std::string, EntityType> entityTypeMap = {
     {"rotatingPlatform", EntityType::ROTATING},
     {"SpinningOnX", EntityType::SPINNINGONX},
     {"SpinningSlow", EntityType::SPINNINGSLOW},
+    {"second", EntityType::SECONDCHARACTER},
 };
 // a function to convert a string to an entity type
 EntityType GetEntityTypeFromString(const std::string& aTypeName) {
@@ -57,6 +60,8 @@ Entity* CreateNewEntity(const std::string& aEntityType)
         return new RotateOnX(10.f);
     case EntityType::SPINNINGSLOW:
         return new RotateOnX(1.f);
+    case EntityType::SECONDCHARACTER:
+        return new SampleSecondaryEntity();
 
     // Add more cases here
     default:

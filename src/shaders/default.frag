@@ -1,4 +1,7 @@
+#ifdef VERSION
 #version 450
+#define VERSION
+#endif
 
 layout(location = 0) in vec4 WorldPos;
 layout(location = 1) in vec2 uv;
@@ -55,44 +58,11 @@ layout (set = 1, binding = 2) uniform UNumbers
 
 #define PI 3.14159265359
 
-// Fresnel (shlick approx)
-vec3 Fresnel(vec3 halfVector, vec3 viewDir, vec3 baseColor, float metallic)
-{
-    vec3 F0 = vec3(0.04);
-    F0 = (1 - metallic) * F0 + (metallic * baseColor);
-    float HdotV = max(dot(halfVector, viewDir), 0.0);
-    vec3 schlick_approx = F0 + (1 - F0) * pow(clamp(1 - HdotV, 0.0, 1.0), 5);
-    return schlick_approx;
-}
-
-// Normal distribution function
-float BeckmannNormalDistribution(vec3 normal, vec3 halfVector, float roughness)
-{
-    float a = roughness * roughness;
-	float a2 = a * a; // alpha is roughness squared
-	float NdotH = max(dot(normal, halfVector), 0.001); // preventing divide by zero
-	float NdotHSquared = NdotH * NdotH;
-	float numerator = exp((NdotHSquared - 1.0) / (a2 * NdotHSquared));
-	float denominator = PI * a2 * (NdotHSquared * NdotHSquared); // pi * a2 * (n * h)^4
-
-	float D = numerator / denominator;
-	return D;
-}
-
-// Geometry term
-float GeometryTerm(vec3 normal, vec3 halfVector, vec3 lightDir, vec3 viewDir)
-{
-	float NdotH = max(dot(normal, halfVector), 0.0);
-	float NdotV = max(dot(normal, viewDir), 0.0);
-	float VdotH = max(dot(viewDir, halfVector), 0.0);
-	float NdotL = max(dot(normal, lightDir), 0.0);
-
-	float term1 = 2 * (NdotH * NdotV) / VdotH;
-	float term2 = 2 * (NdotH * NdotL) / VdotH;
-
-	float G = min(1, min(term1, term2));
-
-	return G;
+#define FRESNEL(halfVector, viewDir, baseColor, metallic, schlick_approx) { \
+    vec3 F0 = vec3(0.04); \
+    F0 = (1 - (metallic)) * F0 + ((metallic) * (baseColor)); \
+    float HdotV = max(dot((halfVector), (viewDir)), 0.0); \
+    schlick_approx = F0 + (1 - F0) * pow(clamp(1 - HdotV, 0.0, 1.0), 5); \
 }
 
 // ======================================================================
@@ -100,71 +70,52 @@ float GeometryTerm(vec3 normal, vec3 halfVector, vec3 lightDir, vec3 viewDir)
 // https://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
 // ======================================================================
 
-float GGXNormalDistributionFunction(vec3 N, vec3 H, float roughness)
-{
-	float a = roughness * roughness;
-	float a2 = a * a;
-	float NdotH = max(dot(N, H), 0.001);
-	float NdotH2 = NdotH * NdotH;
-
-	float numerator = a2;
-	float denominator = ((NdotH2) * (a2 - 1.0) + 1.0);
-	denominator = PI * denominator * denominator;
-
-	return numerator / max(denominator, 0.001);
+#define GGX_NORMAL_DISTRIBUTION_FUNCTION(N, H, roughness, D) { \
+    float a = (roughness) * (roughness); \
+    float a2 = a * a; \
+    float NdotH = max(dot((N), (H)), 0.001); \
+    float NdotH2 = NdotH * NdotH; \
+    float numerator = a2; \
+    float denominator = ((NdotH2) * (a2 - 1.0) + 1.0); \
+    denominator = PI * denominator * denominator; \
+    D = numerator / max(denominator, 0.001); \
 }
 
-float GGXGeometrySchlick(float NdotV, float roughness)
-{
-	float a = roughness * roughness;
-	float a2 = a * a;
-	float NdotV2 = NdotV * NdotV;
-
-	float numerator   = 2.0 * NdotV;
-	float denominator = NdotV + sqrt(a2 + (1.0 - a2) * NdotV2);
-
-	return numerator / max(denominator, 0.001);
+#define GGX_GEOMETRY_SCHLICK(NdotV, roughness, ggx) { \
+    float a = (roughness) * (roughness); \
+    float a2 = a * a; \
+    float NdotV2 = (NdotV) * (NdotV); \
+    float numerator = 2.0 * (NdotV); \
+    float denominator = (NdotV) + sqrt(a2 + (1.0 - a2) * NdotV2); \
+    ggx = numerator / max(denominator, 0.001); \
 }
 
-float GGXGeometrySmith(vec3 normal, vec3 lightDir, vec3 viewDir, float roughness)
-{
-	float NdotV = max(dot(normal, viewDir), 0.001);
-	float NdotL = max(dot(normal, lightDir), 0.001);
-
-	float ggx1 = GGXGeometrySchlick(NdotV, roughness);
-	float ggx2 = GGXGeometrySchlick(NdotL, roughness);
-
-	return ggx1 * ggx2;
+#define GGX_GEOMETRY_SMITH(normal, lightDir, viewDir, roughness, G) { \
+    float NdotV = max(dot((normal), (viewDir)), 0.001); \
+    float NdotL = max(dot((normal), (lightDir)), 0.001); \
+    float ggx1;\
+    float ggx2;\
+    GGX_GEOMETRY_SCHLICK(NdotV, (roughness), ggx1); \
+    GGX_GEOMETRY_SCHLICK(NdotL, (roughness), ggx2); \
+    G = ggx1 * ggx2; \
 }
 
 // Compute BRDF
-vec3 CookTorranceBRDF(vec3 normal, vec3 halfVector, vec3 viewDir, vec3 lightDir, float metallic, float roughness, vec3 baseColor, vec3 LightColour)
-{
-    vec3 F = Fresnel(halfVector, viewDir, baseColor, metallic);
-    float D = GGXNormalDistributionFunction(normal, halfVector, roughness);
-	float G = GGXGeometrySmith(normal, lightDir, viewDir, roughness);
-
-    vec3 L_Diffuse = (baseColor / PI) * (vec3(1.0) - F) * (1.0 - metallic);
-
-    float NdotV = max(dot(normal, viewDir), 0.001);
-	float NdotL = max(dot(normal, lightDir), 0.001);
-
-	vec3 numerator = D * G * F;
-	float denominator = (4 * NdotV * NdotL) + 0.001;
-
-	vec3 specular = numerator / denominator;
-
-    vec3 outLight = (L_Diffuse + specular) * NdotL;
-
-    return vec3(outLight);
-}
-
-float isInShadow(vec4 shadowMapPosition)
-{
-
-		// sample the shadow map with textureproj
-		return textureProj(shadowMap, shadowMapPosition);
-
+#define COOK_TORRENCE_BRDF(normal, halfVector, viewDir, lightDir, metallic, roughness, baseColor, LightColour, brdf) {\
+    vec3 F;\
+    FRESNEL(halfVector, viewDir, baseColor, metallic, F);\
+    float D;\
+    GGX_NORMAL_DISTRIBUTION_FUNCTION(normal, halfVector, roughness, D);\
+	float G;\
+    GGX_GEOMETRY_SMITH(normal, lightDir, viewDir, roughness, G);\
+    vec3 L_Diffuse = (baseColor / PI) * (vec3(1.0) - F) * (1.0 - metallic);\
+    float NdotV = max(dot(normal, viewDir), 0.001);\
+	float NdotL = max(dot(normal, lightDir), 0.001);\
+	vec3 numerator = D * G * F;\
+	float denominator = (4 * NdotV * NdotL) + 0.001;\
+	vec3 specular = numerator / denominator;\
+    vec3 outLight = (L_Diffuse + specular) * NdotL;\
+    brdf = vec3(outLight);\
 }
 
 const vec2 PCFFilter4x4[16] = vec2[](
@@ -181,7 +132,8 @@ float PCF(vec4 shadowMapPosition)
 	float shadow = 0.0;
 	for (int i = 0; i < 16; i++)
 	{
-		shadow += isInShadow(shadowMapPosition + vec4(PCFFilter4x4[i] * offset, 0.0, 0.0));
+        vec4 pcfShadowMapPosition = shadowMapPosition + vec4(PCFFilter4x4[i] * offset, 0.0, 0.0);
+        shadow += textureProj(shadowMap, shadowMapPosition);
 	}
 
 	return shadow / 16.0;
@@ -239,54 +191,58 @@ float myPCF(vec3 WorldPos)
 
 void main()
 {
-	vec3 color = texture(uTextureColour, uv).rgb * uNumbers.baseColour.rgb;
-	vec3 emissive = vec3(0.0);
+    #ifdef ALPHA
+    if (texture(uTextureColour, uv).a < uNumbers.alphaCutoff)
+        discard;
+    #endif
+    vec3 color = texture(uTextureColour, uv).rgb * uNumbers.baseColour.rgb;
+    vec3 emissive = vec3(0.0);
 
     // == Metal and Roughness ==
-	float roughness = texture(uTextureMetallicRoughness, uv).g * uNumbers.roughness;
-	float metallic = texture(uTextureMetallicRoughness, uv).b * uNumbers.metallness;
+    float roughness = texture(uTextureMetallicRoughness, uv).g * uNumbers.roughness;
+    float metallic = texture(uTextureMetallicRoughness, uv).b * uNumbers.metallness;
 
     vec3 outLight = vec3(0.0);
 
-	for(int i = 0; i < NUM_LIGHTS; i++)
-	{
-		vec3 lightDir = normalize(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
-		vec3 viewDir = normalize(ubo.cameraPosition.xyz - WorldPos.xyz);
-		vec3 halfVector = normalize(viewDir + lightDir);
+    {
+        int i = 0;
 
-		// is it a spot light?
-		vec3 LightColour = vec3(0.0);
-		bool isDirectional = lightData.lights[i].Type == 1 ? false : true;
+        vec3 lightDir = normalize(lightData.lights[i].LightPosition.xyz);
+        vec3 viewDir = normalize(ubo.cameraPosition.xyz - WorldPos.xyz);
+        vec3 halfVector = normalize(viewDir + lightDir);
 
-		if (!isDirectional)
-		{
-			float dist = length(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
-			float att = 1.0 / (dist * dist);
-			LightColour = lightData.lights[i].LightColour.xyz * att;
-		}
-		else
-		{
-			lightDir = normalize(lightData.lights[i].LightPosition.xyz);
-			LightColour = lightData.lights[i].LightColour.rgb;
-			halfVector = normalize(viewDir + lightDir);
-		}
+        vec3 LightColour = lightData.lights[i].LightColour.rgb;
 
-		float shadowTerm = 1.0;
-		if (isDirectional)
-		{
-			shadowTerm = 1.0 - myPCF(WorldPos.xyz);
-		}
+        float shadowTerm = 1.0 - myPCF(WorldPos.xyz);
 
-		vec3 brdf = CookTorranceBRDF(WorldNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour);
-		outLight += brdf * LightColour.xyz * shadowTerm;
-	}
+        vec3 brdf;
+        COOK_TORRENCE_BRDF(WorldNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour, brdf);
+        outLight += brdf * LightColour.xyz * shadowTerm;
+    }
 
-	vec3 ambient = vec3(0.02) * color;
-	fragColor = vec4(vec3(ambient + outLight), 1.0);
+    for (int i = 1; i < NUM_LIGHTS; i++)
+    {
+        vec3 lightDir = normalize(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
+        vec3 viewDir = normalize(ubo.cameraPosition.xyz - WorldPos.xyz);
+        vec3 halfVector = normalize(viewDir + lightDir);
 
-	float brightness = dot(fragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
-	if(brightness > 1.0)
-		brightColours = vec4(fragColor.rgb, 1.0);
-	else
-		brightColours = vec4(0.0, 0.0, 0.0, 1.0);
+        float dist = length(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
+        float att = 1.0 / (dist * dist);
+        vec3 LightColour = lightData.lights[i].LightColour.xyz * att;
+
+        float shadowTerm = 1.0;
+
+        vec3 brdf;
+        COOK_TORRENCE_BRDF(WorldNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour, brdf);
+        outLight += brdf * LightColour.xyz * shadowTerm;
+    }
+
+    vec3 ambient = vec3(0.02) * color;
+    fragColor = vec4(vec3(ambient + outLight), 1.0);
+
+    float brightness = dot(fragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+    if(brightness > 1.0)
+    brightColours = vec4(fragColor.rgb, 1.0);
+    else
+    brightColours = vec4(0.0, 0.0, 0.0, 1.0);
 }

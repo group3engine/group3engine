@@ -1,6 +1,8 @@
 #include "PhysicsManager.hpp"
 #include "spdlog/spdlog.h"
 
+#include <tracy/Tracy.hpp>
+
 void PhysicsManager::StartUp() {
     // Register allocation hook. In this example we'll just let Jolt use malloc / free but you can override these if you want (see Memory.h).
     // This needs to be done before any other Jolt function is called.
@@ -56,6 +58,8 @@ void PhysicsManager::StartUp() {
 }
 
 void PhysicsManager::UpdatePhysics(double delta_time) {
+    ZoneScoped;
+
     // Next step
     cDeltaTime = delta_time;
 
@@ -88,4 +92,18 @@ void PhysicsManager::ShutDown() {
 void PhysicsManager::RegisterEntity(Entity *entity, BodyID bodyId) {
     mContactListener.AddBodyEntityMapping(bodyId, entity);
 
+}
+
+void PhysicsManager::UnregisterBody(BodyID bodyId) {
+    mContactListener.RemoveBodyEntityMapping(bodyId);
+}
+
+void PhysicsManager::RemoveAndDestroyBody(BodyID bodyId) {
+    std::erase(mBodyIds, bodyId);
+
+    // Remove the body from the physics system. Note that the body itself keeps all of its state and can be re-added at any time.
+    mPhysicsSystem.GetBodyInterface().RemoveBody(bodyId);
+
+    // Destroy the body. After this the body  ID is no longer valid.
+    mPhysicsSystem.GetBodyInterface().DestroyBody(bodyId);
 }

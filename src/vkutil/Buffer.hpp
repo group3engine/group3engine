@@ -12,20 +12,23 @@ class Buffer {
 
     /* allocator  - Free buffer once done
             buffer	  - Initialized buffer
-            allocation - Associated memroy allocation for buffer
+            allocation - Associated memory allocation for buffer
     */
 
-    explicit Buffer(const std::string &name, VmaAllocator allocator, VkBuffer buffer, VmaAllocation allocation);
+    explicit Buffer(std::string name, VmaAllocator allocator, VkBuffer buffer, VmaAllocation allocation, VmaAllocationInfo allocInfo, VkMemoryPropertyFlags memPropFlags);
 
     /* Delete copy and copy assignment operator */
     Buffer(const Buffer &) = delete;            // You cannot copy a buffer object
     Buffer &operator=(const Buffer &) = delete; // You cannot assign a buffer to another buffer
 
     /* Allow moving of Buffer object, transfers ownership of resources */
-    Buffer(Buffer &&) noexcept;
-    Buffer &operator=(Buffer &&) noexcept;
+    Buffer(Buffer &&) noexcept = default;
+    Buffer &operator=(Buffer &&) noexcept = default;
 
     void Destroy();
+
+    void Update(const Context& context, const void *data, VkDeviceSize size_in_bytes); // update buffer with new data
+    void Upload(VkCommandBuffer cmdBuff, const void *data, VkDeviceSize size_in_bytes);
 
     template <typename T>
     void WriteToBuffer(const T &data, VkDeviceSize size_in_bytes) // write data to a buffer
@@ -48,10 +51,14 @@ class Buffer {
         }
     }
 
+    bool createdWithTransferBit = false;
+
     VkBuffer buffer = VK_NULL_HANDLE;
     VmaAllocation allocation = VK_NULL_HANDLE;
     VmaAllocator allocator = VK_NULL_HANDLE;
-    std::string name = "";
+    VmaAllocationInfo allocInfo = {};
+    std::string name;
+    VkMemoryPropertyFlags memPropFlags = 0;
 };
 
 Buffer CreateBuffer(const std::string &name, Context const &context, VkDeviceSize bSize, VkBufferUsageFlags usage, VmaAllocationCreateFlags memoryFlags, VmaMemoryUsage = VMA_MEMORY_USAGE_AUTO);

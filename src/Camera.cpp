@@ -10,6 +10,7 @@
 #include "Jolt/Physics/Collision/CastResult.h"
 #include "Jolt/Physics/Collision/NarrowPhaseQuery.h"
 #include "Jolt/Physics/Collision/RayCast.h"
+#include <Jolt/Physics/Collision/ObjectLayer.h>
 #include "PhysicsManager.hpp"
 #include "Utils.hpp"
 #include "Buffer.hpp"
@@ -36,7 +37,11 @@ Camera::Camera(Context &context, const glm::vec3 position, glm::vec3 direction, 
 
     m_cameraUBO.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
     for (auto &buffer : m_cameraUBO) {
-        buffer = CreateBuffer("cameraUBO", context, sizeof(CameraTransform), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+        buffer = CreateBuffer("cameraUBO", context, sizeof(CameraTransform),
+                              VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                              VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+                                  VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
+                                  VMA_ALLOCATION_CREATE_MAPPED_BIT);
     }
 
     // Set the main camera to this camera
@@ -53,12 +58,12 @@ void Camera::Update(uint32_t width, uint32_t height, [[maybe_unused]] double del
     UpdateCameraRotation(deltaTime);
     UpdateCameraMovement();
     UpdateTransforms(width, height);
+}
 
+void Camera::Upload(VkCommandBuffer cmdBuff) {
     // Write new data to the buffer to update uniform
     VkDeviceSize size = sizeof(CameraTransform);
-    m_cameraUBO[vkutil::currentFrame].WriteToBuffer(m_transform, size);
-
-
+    m_cameraUBO[vkutil::currentFrame].Upload(cmdBuff, &m_transform, size);
 }
 
 void Camera::UpdateTransforms(uint32_t width, uint32_t height) {
@@ -109,8 +114,8 @@ void Camera::UpdateCameraMovement() {
                               third_person_camera_offset.z);
 
         JPH::RayCastResult result;
-        bool hit =
-            m_physics_reference->get().mPhysicsSystem.GetNarrowPhaseQuery().CastRay(ray, result);
+        JPH::SpecifiedObjectLayerFilter objectLayerFilter{Layers::NON_MOVING};
+        bool hit = m_physics_reference->get().mPhysicsSystem.GetNarrowPhaseQuery().CastRay(ray, result, {}, objectLayerFilter, {});
 
         if (hit) {
             m_position = character_position + third_person_camera_offset * result.mFraction;
@@ -141,8 +146,10 @@ void Camera::UpdateCameraMovement() {
             m_position -= m_cameraSpeed * m_up;
         }
         if (inputMap[std::size_t(EInputState::TELEPORT)]) {
-            m_scene_pointer->GetCharacter().SetCheckpoint(m_position);
-            m_scene_pointer->GetCharacter().Reset();
+            // call the teleport callback
+            if (m_teleportCallback) {
+                m_teleportCallback(m_position);
+            }
         }
     }
 }

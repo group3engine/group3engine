@@ -8,17 +8,78 @@
 #include <fstream>
 #include <cstdlib>
 
+#include "Camera.hpp"
+#include "Engine.hpp"
+#include "SampleGLTFFilePaths.hpp"
 #include "Scene.hpp"
 
-void CharacterEntity::SetCharacterVirtual(unique_ptr<CharacterVirtualTest> &&uniquePtr) {
-    mCharacterVirtual = std::move(uniquePtr);
-
+namespace {
+    std::filesystem::path BuildSaveFilename() {
+        std::filesystem::path saveFilename = "save_";
+        saveFilename += Scene::GetActiveScene()->GetSceneFilename();
+        saveFilename += ".txt";
+        return saveFilename;
+    }
 }
-
 
 CharacterEntity::~CharacterEntity() {
 }
+
+void CharacterEntity::ProcessInput(){
+    glm::vec3 controlInput = glm::vec3(0.0f);
+    bool jump = false;
+    if(Camera::GetMainCamera()->isInFollowCharacterMode()) {
+        // Determine controller input
+        if (IsKeyDown(KEY::eA))
+            controlInput.z = -1;
+        if (IsKeyDown(KEY::eD))
+            controlInput.z = 1;
+        if (IsKeyDown(KEY::eW))
+            controlInput.x = 1;
+        if (IsKeyDown(KEY::eS))
+            controlInput.x = -1;
+        if (controlInput != glm::vec3(0.f))
+            controlInput = glm::normalize(controlInput);
+        if (abs(GetGamepadAxis(GAMEPAD_AXIS::eLEFT_Y)) > 0.1f)
+            controlInput.z = -GetGamepadAxis(GAMEPAD_AXIS::eLEFT_Y);
+        if (abs(GetGamepadAxis(GAMEPAD_AXIS::eLEFT_X)) > 0.1f)
+            controlInput.z = GetGamepadAxis(GAMEPAD_AXIS::eLEFT_X);
+
+        // Rotate controls to align with the camera
+        auto cameraForward = Camera::GetMainCamera()->GetDirection();
+        cameraForward.y = 0.0f;
+        cameraForward = glm::normalize(cameraForward);
+        glm::quat rotation = glm::rotation(glm::vec3(1.0f, 0.0f, 0.0f), cameraForward);
+        controlInput = rotation * controlInput;
+
+        // Check actions
+        jump = IsKeyPressed(KEY::eSPACE) || IsGamepadButtonPressed(GAMEPAD_BUTTON::eA);
+    }
+    mSampleJoltCharacter->ProcessInput(controlInput, jump);
+}
+
+void CharacterEntity::PrePhysicsUpdate() {
+    PreUpdateParams preUpdateParams{};
+    preUpdateParams.mDeltaTime = GlobalUtil::deltaTime;
+    mSampleJoltCharacter->PrePhysicsUpdate(preUpdateParams);
+}
+
 void CharacterEntity::Update(double deltaTime) {
+    // process the input
+    ProcessInput();
+    // pre physics update
+    PrePhysicsUpdate();
+    // update the character position offset
+    auto characterPhysicsPos = mSampleJoltCharacter->GetCharacterPosition();
+    SetCharacterPositionOffset(characterPhysicsPos.GetX(), characterPhysicsPos.GetY(), characterPhysicsPos.GetZ());
+
+    if (IsKeyPressed(KEY::eR))
+    {
+        Engine::get().ChangeScene(Sample::SampleObby);
+    }
+
+
+
     while (!mInternalEvents.empty()) {
         auto &event = mInternalEvents.top();
         mInternalEvents.pop();
@@ -39,9 +100,9 @@ void CharacterEntity::Update(double deltaTime) {
 
     // set the ragdoll mode to false if the ragdoll time has passed
     if(GetTotalTime() - ragdollTime > totalRagdollTime) {
-        mCharacterVirtual->SetRagdollMode(false);
+        mSampleJoltCharacter->SetRagdollMode(false);
     }
-    else if (mCharacterVirtual->GetRagdollMode())
+    else if (mSampleJoltCharacter->GetRagdollMode())
     {
         // set animation to hit
         for (auto &child : GetChildren()) {
@@ -55,7 +116,7 @@ void CharacterEntity::Update(double deltaTime) {
 
     // get the character state
     // calculate the delta velocity
-    Vec3 characterVelocityJolt = mCharacterVirtual->GetCharacterVelocity();
+    Vec3 characterVelocityJolt = mSampleJoltCharacter->GetCharacterVelocity();
     glm::vec3 characterVelocity = glm::vec3(characterVelocityJolt.GetX(), characterVelocityJolt.GetY(), characterVelocityJolt.GetZ());
     // set the character to face the direction of the velocity without the y component
     characterVelocity.y = 0;
@@ -75,7 +136,7 @@ void CharacterEntity::Update(double deltaTime) {
         timeScale = min(glm::length(characterVelocity) / 5.5f, 2.f);
     }
     // spdlog the current jump state
-    switch (mCharacterVirtual->GetJumpState()) {
+    switch (mSampleJoltCharacter->GetJumpState()) {
     case EJumpState::Start:
         activeAnimation = "jump up";
         playWholeAnimation = false;
@@ -140,6 +201,18 @@ void CharacterEntity::UpdateUi(double deltaTime) {
     ImGuiRenderer::NewFinishPopup(mGuiFinishPopupData);
 }
 
+void CharacterEntity::CreateJoltCharacter()
+{
+    mSampleJoltCharacter = std::make_unique<SampleJoltCharacter>();
+    mSampleJoltCharacter->SetPhysicsSystem(&PhysicsManager::get().mPhysicsSystem);
+    mSampleJoltCharacter->SetJobSystem(PhysicsManager::get().mJobSystem.get());
+    mSampleJoltCharacter->SetTempAllocator(PhysicsManager::get().mTempAllocator.get());
+    mSampleJoltCharacter->SetCustomContactListener(&PhysicsManager::get().mContactListener);
+    mSampleJoltCharacter->Initialize();
+    PhysicsManager::get().RegisterEntity(this, mSampleJoltCharacter->GetCharacter()->GetInnerBodyID());
+
+}
+
 CharacterEntity::CharacterEntity() {
     SetAsCharacter();
     Load();
@@ -160,7 +233,7 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
         SetCheckpoint(checkpointPosition);
     }
 
-    if(aOther->CompareTag("finishzone")) 
+    if(aOther->CompareTag("finishzone"))
     {
         // do finish zone things
         mInternalUiEvents.push(InternalUiEvent::eFinishPopup);
@@ -170,7 +243,7 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
 
     // if its a high impact object, set the charactervirtual to ragdoll
     if(aOther->CompareTag("highimpact")) {
-            mCharacterVirtual->SetRagdollMode(true);
+            mSampleJoltCharacter->SetRagdollMode(true);
             ragdollTime = GetTotalTime();
     }
 
@@ -181,7 +254,7 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
             glm::vec3  direction = characterPosition - otherPosition;
             direction = glm::normalize(direction);
             direction *= 70.f;
-            mCharacterVirtual->SetCharacterImpulse(Vec3(direction.x, direction.y, direction.z));
+            mSampleJoltCharacter->SetCharacterImpulse(Vec3(direction.x, direction.y, direction.z));
     }
 
 }
@@ -209,7 +282,7 @@ void CharacterEntity::Save() {
     }
 
     // Create the full file path
-    std::filesystem::path saveFile = savePath / "save.txt";
+    std::filesystem::path saveFile = savePath / BuildSaveFilename();
 
     // Open file for writing
     std::ofstream file(saveFile);
@@ -237,7 +310,7 @@ void CharacterEntity::Load() {
 
     // Path to save file
     std::filesystem::path savePath = homePath / "Documents" / "group3enginesaves";
-    std::filesystem::path saveFile = savePath / "save.txt";
+    std::filesystem::path saveFile = savePath / BuildSaveFilename();
 
     // Check if file exists
     if (!std::filesystem::exists(saveFile)) {
@@ -286,17 +359,27 @@ void CharacterEntity::Load() {
 
 void CharacterEntity::Awake() {
     mInitialTransform = GetLocalTransform();
+    // create the jolt character
+    CreateJoltCharacter();
+    // register the character with the scene
+    Scene::GetActiveScene()->SetMainCharacter(this);
+    // register the teleport callback
+    Camera::GetMainCamera()->SetTeleportCallbackFunction(std::bind(&CharacterEntity::TeleportCallback, this, std::placeholders::_1));
 
     // if there is no save
     if(!m_has_save)
     {
         MoveToSpawn();
     }
+    else
+    {
+        Reset();
+    }
 }
 
 void CharacterEntity::MoveToSpawn()
 {
-    for(auto &entity: mScene->GetEntities())
+    for(auto &entity: Scene::GetActiveScene()->GetEntities())
     {
         if(entity->CompareTag("spawnpoint"))
         {

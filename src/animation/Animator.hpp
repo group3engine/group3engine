@@ -33,7 +33,7 @@ class Animator {
     void Update(double aDeltaTime, Entity* aMesh);
     // bind the descriptor set (for use when rendering)
     void BindDescriptorSet(VkCommandBuffer aCmdBuff,
-                           VkPipelineLayout aPipelineLayout, int aSet);
+                           VkPipelineLayout aPipelineLayout, int aSet, size_t aCurrentFrame);
 
     void SetActiveAnimation(int index) { mActiveAnimation = index;
     }
@@ -41,6 +41,8 @@ class Animator {
     void SetActiveAnimation(const std::string& aName, float blendTime, bool lockForFirstLoop);
 
     void SetTimeScale(float aTimeScale);
+
+    void UploadJointBuffer(VkCommandBuffer cmdBuff);
 
   private:
     // update the joint buffer
@@ -58,11 +60,11 @@ class Animator {
     // descriptor set layout for the joint matrices
     VkDescriptorSetLayout mDescriptorSetLayout{};
     // descriptor set for the joint matrices
-    VkDescriptorSet mDescriptorSet{};
+    std::vector<VkDescriptorSet> mDescriptorSet;
     // descriptor pool for the joint matrices
     VkDescriptorPool mDescriptorPool{};
     // buffer for the joint matrices
-    Buffer mJointBuffer;
+    std::vector<Buffer> mJointBuffers;
 
     int mActiveAnimation = -1;
     int mLastAnimation = -1;
@@ -85,6 +87,8 @@ class Animator {
     double mTotalBlendTime = 0.f;
     double mCurrentBlendingTime = 0.f;
     std::string mCurrentAnimationName{};
+
+    std::vector<glm::mat4> mJoints;
 };
 
 #endif // GROUP3ENGINE_ANIMATOR_HPP

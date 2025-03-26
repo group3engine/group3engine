@@ -1,5 +1,8 @@
-#include "Context.hpp"
 #include "SSAO.hpp"
+
+#include <tracy/TracyVulkan.hpp>
+
+#include "Context.hpp"
 #include "Pipeline.hpp"
 #include "RenderPass.hpp"
 
@@ -112,8 +115,10 @@ void SSAO::Resize()
     CreateFramebuffer();
 }
 
-void SSAO::Execute(VkCommandBuffer cmd)
+void SSAO::Execute(VkCommandBuffer cmd) const
 {
+    ZoneScopedN("SSAO::Execute");
+    TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "SSAO", tracy::Color::Goldenrod);
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "SSAO");

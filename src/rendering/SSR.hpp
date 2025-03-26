@@ -11,7 +11,7 @@ class SSR {
 
     explicit SSR(Context &context, Image& depthBuffer, Image& renderedScene, Image& metallicRoughness, Image& skybox, std::shared_ptr<Camera> camera);
     ~SSR();
-    void Execute(VkCommandBuffer cmd);
+    void Execute(VkCommandBuffer cmd) const;
     void Update();
     void Resize();
 

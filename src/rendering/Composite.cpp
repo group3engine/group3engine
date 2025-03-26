@@ -1,5 +1,7 @@
 #include "Composite.hpp"
 
+#include <tracy/TracyVulkan.hpp>
+
 #include "Context.hpp"
 #include "Pipeline.hpp"
 #include "RenderPass.hpp"
@@ -112,7 +114,9 @@ void Composite::Resize() {
     }
 }
 
-void Composite::Execute(VkCommandBuffer cmd) {
+void Composite::Execute(VkCommandBuffer cmd) const {
+    ZoneScopedN("Composite::Execute");
+    TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "Composite", tracy::Color::Magenta);
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "Composite");

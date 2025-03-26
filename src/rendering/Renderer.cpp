@@ -4,6 +4,8 @@
 
 #include <glm/gtc/random.hpp>
 
+#include <tracy/TracyVulkan.hpp>
+
 #include "Context.hpp"
 #include "Light.hpp"
 #include "Utils.hpp"
@@ -36,6 +38,8 @@ Renderer::Renderer(Context &context, std::shared_ptr<Scene> scene)
 
     // GLFW callbacks
     glfwSetWindowUserPointer(context.mWindow, m_camera.get());
+
+    mFreedBuffers.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
 }
 
 void Renderer::CreateRenderPasses() {
@@ -51,9 +55,16 @@ void Renderer::CreateRenderPasses() {
     m_PresentPass = std::make_unique<PresentPass>(context, m_CompositePass->GetRenderTarget());
 
     // ImGui
-    ImGuiRenderer::Initialize(context, m_scene->GetTextureManager());
-    // TODO: This will cause a validation error if you re-size the window. Just needs to be updated when re-sized
+    ImGuiRenderer::Initialize(context);
+    std::filesystem::path path = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets" / "heart.png";
+    ImGuiRenderer::AddTextures(m_scene->GetTextureManager(), path, "heart");
+    // // TODO: This will cause a validation error if you re-size the window. Just needs to be updated when re-sized
     ImGuiRenderer::AddTexture(vkutil::clampToEdgeSamplerAniso, m_ShadowMap->GetRenderTarget().imageView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL);
+}
+
+void Renderer::RebuildSceneDescriptors() {
+    m_ShadowMap->RebuildDescriptors();
+    m_ForwardPass->RebuildDescriptors();
 }
 
 void Renderer::Destroy() {
@@ -94,6 +105,20 @@ void Renderer::Destroy() {
 
     for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         vkDestroyCommandPool(context.device, m_commandPool[i], nullptr);
+    }
+
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; ++i) {
+        TracyVkDestroy(context.tracyContexts[i]);
+    }
+
+    for (auto &freedBuffers : mFreedBuffers) {
+        for (auto &freedBuffer : freedBuffers) {
+            if (freedBuffer.buffer) {
+                assert(freedBuffer.allocator);
+                assert(freedBuffer.allocation);
+                vmaDestroyBuffer(freedBuffer.allocator, freedBuffer.buffer, freedBuffer.allocation);
+            }
+        }
     }
 }
 
@@ -164,14 +189,41 @@ void Renderer::AllocateCommandBuffers() {
         VkCommandBuffer cmd = VK_NULL_HANDLE;
         VK_CHECK(vkAllocateCommandBuffers(context.device, &cmdAlloc, &cmd), "Failed to allocate command buffer");
         m_commandBuffers.push_back(cmd);
+
+        // Calibrated context function pointers
+        auto pfnVkGetPhysicalDeviceCalibrateableTimeDomainsEXT = vkGetPhysicalDeviceCalibrateableTimeDomainsEXT;
+        auto pfnVkGetCalibratedTimestampsEXT = vkGetCalibratedTimestampsEXT;
+
+        auto *tracyContext = TracyVkContextCalibrated(
+            context.pDevice, context.device, context.graphicsQueue, cmd,
+            pfnVkGetPhysicalDeviceCalibrateableTimeDomainsEXT, pfnVkGetCalibratedTimestampsEXT);
+
+        context.tracyContexts.push_back(tracyContext);
     }
 }
 
-void Renderer::Render() {
-    vkWaitForFences(context.device, 1, &m_Fences[vkutil::currentFrame], VK_TRUE, UINT64_MAX);
+void Renderer::BeginFrame(VkCommandBuffer cmd) {
+    {
+        ZoneScopedN("vkWaitForFences");
 
-    uint32_t index;
-    VkResult getImageIndex = vkAcquireNextImageKHR(context.device, context.swapchain, UINT64_MAX, m_imageAvailableSemaphores[vkutil::currentFrame], VK_NULL_HANDLE, &index);
+        vkWaitForFences(context.device, 1, &m_Fences[vkutil::currentFrame], VK_TRUE, UINT64_MAX);
+    }
+
+    for (auto &freedBuffer : mFreedBuffers[vkutil::currentFrame]) {
+        if (freedBuffer.buffer) {
+            assert(freedBuffer.allocator);
+            assert(freedBuffer.allocation);
+            vmaDestroyBuffer(freedBuffer.allocator, freedBuffer.buffer, freedBuffer.allocation);
+            freedBuffer = {nullptr, nullptr, nullptr};
+        }
+    }
+
+    VkResult getImageIndex;
+    {
+        ZoneScopedN("vkAcquireNextImageKHR");
+
+        getImageIndex = vkAcquireNextImageKHR(context.device, context.swapchain, UINT64_MAX, m_imageAvailableSemaphores[vkutil::currentFrame], VK_NULL_HANDLE, &mImageIndex);
+    }
 
     if (getImageIndex == VK_ERROR_OUT_OF_DATE_KHR) {
         // Recreate swapchain
@@ -190,26 +242,114 @@ void Renderer::Render() {
         throw std::runtime_error("Failed to aquire swapchain image");
     }
 
-    vkResetFences(context.device, 1, &m_Fences[vkutil::currentFrame]);
-    vkResetCommandBuffer(m_commandBuffers[vkutil::currentFrame], 0);
+    {
+        ZoneScopedN("vkResetFences");
 
-    VkCommandBuffer &cmd = m_commandBuffers[vkutil::currentFrame];
+        vkResetFences(context.device, 1, &m_Fences[vkutil::currentFrame]);
+    }
 
     {
+        ZoneScopedN("vkResetCommandBuffer");
+
+        vkResetCommandBuffer(m_commandBuffers[vkutil::currentFrame], 0);
+    }
+
+    {
+        ZoneScopedN("vk::Execute");
+
         VkCommandBufferBeginInfo beginInfo = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
 
         VK_CHECK(vkBeginCommandBuffer(cmd, &beginInfo), "Failed to begin command buffer");
 
-        m_ShadowMap->Execute(cmd);
-        m_DepthPrepass->Execute(cmd);
-        m_ForwardPass->Execute(cmd);
-        m_GBuffer->Execute(cmd);
-        m_SSAO->Execute(cmd);
-        m_SSR->Execute(cmd);
-        m_BloomPass->Execute(cmd);
-        m_CompositePass->Execute(cmd);
-        m_PresentPass->Execute(cmd, index);
+        {
+            ZoneScopedN("vk::Upload");
+
+            m_camera->Upload(cmd);
+
+            m_scene->UploadLights(cmd);
+
+            // Upload animation data to GPU
+            for (auto *entity : m_scene->GetEntities()) {
+                if (entity->HasAnimator()) {
+                    entity->GetAnimator().UploadJointBuffer(cmd);
+                }
+            }
+        }
+    }
+}
+
+void Renderer::EndFrame(VkCommandBuffer cmd) {
+    // Periodically collect the GPU events
+    TracyVkCollect(context.tracyContexts[vkutil::currentFrame], cmd);
+
+    vkEndCommandBuffer(cmd);
+
+    Submit();
+    Present(mImageIndex);
+
+    vkutil::currentFrame = (vkutil::currentFrame + 1) % vkutil::MAX_FRAMES_IN_FLIGHT;
+}
+
+void Renderer::RenderUIOnly()
+{
+    {
+        ZoneScopedN("vkWaitForFences");
+
+        vkWaitForFences(context.device, 1, &m_Fences[vkutil::currentFrame], VK_TRUE, UINT64_MAX);
+    }
+
+    uint32_t index;
+    VkResult getImageIndex;
+    {
+        ZoneScopedN("vkAcquireNextImageKHR");
+
+        getImageIndex = vkAcquireNextImageKHR(context.device, context.swapchain, UINT64_MAX, m_imageAvailableSemaphores[vkutil::currentFrame], VK_NULL_HANDLE, &index);
+    }
+
+
+
+    if (getImageIndex == VK_ERROR_OUT_OF_DATE_KHR) {
+        // Recreate swapchain
+        context.RecreateSwapchain();
+        m_PresentPass->Resize();
+
+    } else if (getImageIndex != VK_SUCCESS && getImageIndex != VK_SUBOPTIMAL_KHR) {
+        throw std::runtime_error("Failed to aquire swapchain image");
+    }
+
+    {
+        ZoneScopedN("vkResetFences");
+
+        vkResetFences(context.device, 1, &m_Fences[vkutil::currentFrame]);
+    }
+
+    {
+        ZoneScopedN("vkResetCommandBuffer");
+
+        vkResetCommandBuffer(m_commandBuffers[vkutil::currentFrame], 0);
+    }
+
+    VkCommandBuffer &cmd = m_commandBuffers[vkutil::currentFrame];
+
+
+    {
+        ZoneScopedN("vk::Execute");
+
+        VkCommandBufferBeginInfo beginInfo = {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+
+        VK_CHECK(vkBeginCommandBuffer(cmd, &beginInfo), "Failed to begin command buffer");
+
+
+        {
+            TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "vk::Frame", tracy::Color::Crimson);
+
+            m_PresentPass->Execute(cmd, index);
+        }
+
+        // Periodically collect the GPU events
+        TracyVkCollect(context.tracyContexts[vkutil::currentFrame], cmd);
 
         vkEndCommandBuffer(cmd);
     }
@@ -221,6 +361,9 @@ void Renderer::Render() {
 }
 
 void Renderer::Submit() {
+    ZoneScopedN("Renderer::Submit");
+    ZoneValue(vkutil::currentFrame);
+
     VkPipelineStageFlags waitStage = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 
     VkSubmitInfo subtmitInfo = {
@@ -241,6 +384,8 @@ void Renderer::Submit() {
 }
 
 void Renderer::Present(uint32_t imageIndex) {
+    ZoneScopedN("Renderer::Present");
+
     VkPresentInfoKHR presentInfo = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .waitSemaphoreCount = 1,
@@ -268,6 +413,8 @@ void Renderer::Present(uint32_t imageIndex) {
 }
 
 void Renderer::Update(double deltaTime) {
+    ZoneScopedN("Renderer::Update");
+
     m_camera->Update(context.extent.width, context.extent.height, deltaTime);
 
     ImGuiRenderer::Update(m_scene, m_camera);

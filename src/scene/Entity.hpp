@@ -14,6 +14,11 @@
 
 #include <atomic>
 
+enum class PhysicsType {
+    STATIC,
+    KINEMATIC,
+    DYNAMIC
+};
 
 /// The base class for all entities in the scene. Custom entities all have this as their base class
 class Entity {
@@ -118,15 +123,16 @@ class Entity {
     /// Query if the entity is solid (collides with other entities)
     [[nodiscard]] bool IsSolid() const { return mIsSolid; }
 
-    /// Query if the entity is kinematic (uses physics but is not affected by forces)
-    [[nodiscard]] bool IsKinematic() const { return mIsKinematic; }
-
     /// Query if the entity is invisible
     [[nodiscard]] bool IsVisible() const { return mIsVisible; }
     /// Set the entity as invisible
     void SetAsInvisible() { mIsVisible = false; }
     /// Set the entity as visible
     void SetAsVisible() { mIsVisible = true; }
+
+    void SetPhysicsType(PhysicsType input_physics_type) { mPhysicsType = input_physics_type; }
+
+    PhysicsType GetPhysicsType() const { return mPhysicsType; }
 
     /// Get the number of frames that have passed since the entity was created
     [[nodiscard]] size_t GetFrameNumber() const {return mFrameNumber;}
@@ -156,12 +162,12 @@ class Entity {
   public:
     // functions used by the engine, the user should not call these
     void BaseUpdate(double deltaTime);
+
     void RecordDrawOpaque(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout) const;
 
     void RecordDrawShadow(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout) const;
 
     void RecordDrawCutout(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout) const;
-
 
     void RecordDrawSkinned(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipeLayout) const;
     // move an animator to the entity
@@ -188,12 +194,8 @@ class Entity {
     void SetAsNotSolid() { mIsSolid = false; }
     // set the entity as a sensor
     void SetAsSensor() { mIsSensor = true; }
-    // set the entity as kinematic
-    void SetAsKinematic() { mIsKinematic = true; }
-
     // set the parent transform
     void SetParentTransform(glm::mat4 aParentTransform);
-
 
 
   private:
@@ -225,6 +227,8 @@ class Entity {
 
     vector<std::string> mTags;
 
+    PhysicsType mPhysicsType = PhysicsType::STATIC;
+
 
     bool mHasMesh = false;
     bool mHasCharacter = false;
@@ -242,8 +246,6 @@ class Entity {
     bool mIsSolid = true;
 
     bool mIsVisible = true;
-
-    bool mIsKinematic = false;
 
     float mTotalTime = 0.0f;
 

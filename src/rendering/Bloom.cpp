@@ -1,5 +1,8 @@
-#include "Context.hpp"
 #include "Bloom.hpp"
+
+#include <tracy/TracyVulkan.hpp>
+
+#include "Context.hpp"
 #include "Pipeline.hpp"
 #include "RenderPass.hpp"
 
@@ -121,12 +124,17 @@ void Bloom::CreateRenderPass() {
 }
 
 // dstStage is where other operations will begin once srcStage is finished
-void Bloom::Execute(VkCommandBuffer cmd) {
+void Bloom::Execute(VkCommandBuffer cmd) const {
+    ZoneScopedN("Bloom::Execute");
+
     RenderHorizontalBlur(cmd);
     RenderVerticalBlur(cmd);
 }
 
-void Bloom::RenderHorizontalBlur(VkCommandBuffer cmd) {
+void Bloom::RenderHorizontalBlur(VkCommandBuffer cmd) const {
+    ZoneScopedN("Bloom::RenderHorizontalBlur");
+    TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "BloomHorizontalBlur", tracy::Color::LimeGreen);
+
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "BloomHorizontalBlur");
 #endif
@@ -170,7 +178,9 @@ void Bloom::RenderHorizontalBlur(VkCommandBuffer cmd) {
 #endif // !DEBUG
 }
 
-void Bloom::RenderVerticalBlur(VkCommandBuffer cmd) {
+void Bloom::RenderVerticalBlur(VkCommandBuffer cmd) const {
+    ZoneScopedN("Bloom::RenderVerticalBlur");
+    TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "BloomVerticalBlur", tracy::Color::Blue);
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "BloomVerticalBlur");
