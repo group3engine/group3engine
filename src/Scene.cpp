@@ -92,11 +92,6 @@ void Scene::UpdateUi(double aDeltaTime) {
 
 void Scene::Unload()
 {
-	for (auto& buffer : m_LightUBO)
-	{
-		buffer.Destroy();
-	}
-
     // delete the entities
     for (auto &entity : m_Entities) {
         delete entity;
