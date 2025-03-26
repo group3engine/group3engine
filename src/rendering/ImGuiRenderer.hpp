@@ -85,6 +85,10 @@ namespace ImGuiRenderer
 
     void Image(std::string const &imageName, ImVec2 position, ImVec2 size);
 
+    void Text(std::string const &text, ImVec2 position);
+
+
+
     void Initialize(const Context &context);
     void Shutdown(const Context &context);
     void NewFrame();

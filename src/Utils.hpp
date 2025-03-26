@@ -95,6 +95,7 @@ inline VkDescriptorSetLayout materialDescriptorSetLayout;
 
 namespace GlobalUtil {
 inline double deltaTime;
+inline double unscaledDeltaTime;
 }
 
 namespace vkutil {

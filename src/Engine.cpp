@@ -153,7 +153,8 @@ void Engine::Run() {
 
     while (m_isRunning && !glfwWindowShouldClose(m_context.mWindow)) {
         double currentFrameTime = glfwGetTime();
-        GlobalUtil::deltaTime = currentFrameTime - m_lastFrameTime;
+        GlobalUtil::unscaledDeltaTime = currentFrameTime - m_lastFrameTime;
+        GlobalUtil::deltaTime = GlobalUtil::unscaledDeltaTime * m_timeScale;
         m_lastFrameTime = currentFrameTime;
 
         // See imgui.cpp
@@ -183,7 +184,7 @@ void Engine::Run() {
 }
 
 void Engine::UpdateLogic() {
-    if (IsKeyDown(KEY::eESCAPE)) {
+    if (m_shouldQuit) {
         glfwSetWindowShouldClose(Platform::get().window, GLFW_TRUE);
     }
 

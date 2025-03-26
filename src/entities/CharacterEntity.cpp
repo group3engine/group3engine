@@ -10,6 +10,7 @@
 
 #include "Camera.hpp"
 #include "Engine.hpp"
+#include "imgui.h"
 #include "SampleGLTFFilePaths.hpp"
 #include "Scene.hpp"
 
@@ -77,6 +78,12 @@ void CharacterEntity::Update(double deltaTime) {
     {
         Engine::get().ChangeScene(Sample::SampleObby);
     }
+    if (IsKeyPressed(KEY::eESCAPE))
+    {
+        // Engine::get().Quit();
+        Engine::get().SetTimeScale(0.f);
+    }
+
 
 
 
@@ -147,6 +154,22 @@ void CharacterEntity::Update(double deltaTime) {
     }
 }
 
+void UnPause()
+{
+    Engine::get().SetTimeScale(1.f);
+}
+
+void CharacterEntity::UnscaledUpdate(double deltaTime)
+{
+    if (Engine::get().GetTimeScale() == 0.f)
+    {
+        if (IsKeyPressed(KEY::eESCAPE))
+        {
+            Engine::get().SetTimeScale(1.f);
+        }
+        ImGuiRenderer::Text("paused", ImVec2{0.5, 0.75});
+    }
+}
 void CharacterEntity::UpdateUi(double deltaTime) {
     while (!mInternalUiEvents.empty()) {
         auto &event = mInternalUiEvents.top();

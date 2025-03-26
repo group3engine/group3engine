@@ -142,20 +142,25 @@ class Entity {
 
   public:
     // the following functions are overridable by the user
-    // called on the first frame of a collision
+    /// called on the first frame of a collision
     virtual void OnCollisionStart(Entity *aOther) {}
 
-    // called on any frame except the first frame of a collision - note there is no function provided for the last frame of a collision
+    /// called on any frame except the first frame of a collision - note there is no function provided for the last frame of a collision
     virtual void OnCollisionStay(Entity *aOther) {}
 
-    // called for each entity after update has been called on all entities
+    /// called for each entity after update has been called on all entities
     virtual void LateUpdate(double deltaTime) {}
 
-    // called after the entire scene has been loaded, once only
+
+
+    /// called after the entire scene has been loaded, once only
     virtual void Awake() {}
 
     /// called every frame, after physics has been updated
     virtual void Update(double deltaTime) {}
+
+    /// called every frame even if timescale is set to 0, deltaTime is not multiplied by timescale
+    virtual void UnscaledUpdate(double deltaTime){}
 
     virtual void UpdateUi(double deltaTime) {}
 

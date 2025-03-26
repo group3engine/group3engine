@@ -434,6 +434,56 @@ void ImGuiRenderer::Image(std::string const &imageName, ImVec2 position, ImVec2 
     ImGui::End();
 }
 
+void ImGuiRenderer::Text(std::string const &text, ImVec2 position)
+{
+    // flip position 0-1 to 1-0
+    position = ImVec2{1.f - position.x, 1.f - position.y};
+    size_t sv = 0;
+    // convert the position and size from relative (0-1) coordinates, to pixel coordinates
+    // get the window size
+    // Get the main viewport to determine screen dimensions
+    const ImGuiViewport* viewport = ImGui::GetMainViewport();
+
+    // Calculate position at the bottom of the screen (ignoring the passed position parameter)
+    ImVec2 windowSize = ImVec2(viewport->Size.x, viewport->Size.y);
+    position = ImVec2(position.x * windowSize.x, position.y * windowSize.y);
+    ImVec2 textSize = ImGui::CalcTextSize(text.c_str(), nullptr, true);
+    // offset the position by half the text size
+    position = ImVec2(position.x - textSize.x * 0.5f, position.y - textSize.y * 0.5f);
+
+
+    float windowBorderSize = 0.0f;
+    if (enableTextWindowBorder) {
+        // Display a window border for debug purposes
+        windowBorderSize = ImGui::GetStyle().WindowBorderSize;
+    } else {
+        // No window border
+        sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); });
+    }
+
+    // Make the window fit the heart exactly
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(0, 0)); });
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0)); });
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); });
+
+    ImGui::SetNextWindowSize(textSize);
+    ImGui::SetNextWindowPos(ImVec2(position.x - windowBorderSize, position.y - windowBorderSize));
+    ImGui::SetNextWindowBgAlpha(0.0f);
+
+    // Flags to get a non-interactable blank window to draw on
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                             ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+                             ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
+
+    ImGui::Begin("text rendering", nullptr, flags);
+    ImGui::Text(text.c_str());
+
+    ImGui::PopStyleVar(sv);
+
+    ImGui::End();
+}
+
+
 void ImGuiRenderer::NewFrame() {
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();

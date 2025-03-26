@@ -40,6 +40,8 @@ class CharacterEntity : public Entity {
 
     void UpdateUi(double deltaTime) override;
 
+    void UnscaledUpdate(double deltaTime) override;
+
     void CreateJoltCharacter();
 
     void Awake() override ;
@@ -96,5 +98,7 @@ class CharacterEntity : public Entity {
     std::stack<InternalUiEvent> mInternalUiEvents;
     bool m_has_save = false;
 };
+
+void UnPause();
 
 #endif // GROUP3ENGINE_CHARACTERENTITY_HPP

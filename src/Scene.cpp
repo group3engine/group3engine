@@ -4,6 +4,7 @@
 
 #include <tracy/Tracy.hpp>
 
+#include "Engine.hpp"
 #include "Jolt/Physics/Collision/Shape/ConvexHullShape.h"
 #include "Jolt/Physics/Collision/Shape/MeshShape.h"
 #include "ResourceManager.hpp"
@@ -19,15 +20,22 @@ void Scene::AddLightSource(Light &LightSource) {
 
 void Scene::Update(double aDeltaTime) {
     ZoneScopedN("Scene::Update");
-
-    // update the entities
+    float timeScale = Engine::get().GetTimeScale();
+    // unscaled update the entities
     for(auto &entity : m_Entities) {
-        entity->BaseUpdate(aDeltaTime);
-        entity->Update(aDeltaTime);
+        entity->UnscaledUpdate(GlobalUtil::unscaledDeltaTime);
     }
-    // late update the entities
-    for(auto &entity : m_Entities) {
-        entity->LateUpdate(aDeltaTime);
+    // update the entities, if timescale is more than 0
+    if (timeScale > 0.f)
+    {
+        for(auto &entity : m_Entities) {
+            entity->BaseUpdate(aDeltaTime);
+            entity->Update(aDeltaTime);
+        }
+        // late update the entities
+        for(auto &entity : m_Entities) {
+            entity->LateUpdate(aDeltaTime);
+        }
     }
 
     for (auto& light : m_Lights)
