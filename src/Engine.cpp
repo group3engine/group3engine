@@ -191,48 +191,12 @@ void Engine::UpdateLogic() {
         glfwSetWindowShouldClose(Platform::get().window, GLFW_TRUE);
     }
 
-    auto *camera = mScene->GetActiveCamera();
-
-    camera->SetInput(EInputState::FORWARD, IsKeyDown(KEY::eW));
-    camera->SetInput(EInputState::BACKWARD, IsKeyDown(KEY::eS));
-    camera->SetInput(EInputState::LEFT, IsKeyDown(KEY::eA));
-    camera->SetInput(EInputState::RIGHT, IsKeyDown(KEY::eD));
-
-    camera->SetInput(EInputState::DOWN, IsKeyDown(KEY::eQ));
-    camera->SetInput(EInputState::UP, IsKeyDown(KEY::eE));
-
-    camera->SetInput(EInputState::FAST, IsKeyDown(KEY::eLEFT_SHIFT));
-    camera->SetInput(EInputState::SLOW, IsKeyDown(KEY::eLEFT_CONTROL));
-
-    camera->SetInput(EInputState::SWITCHVIEW, IsKeyPressed(KEY::eV));
-
-    camera->SetInput(EInputState::TELEPORT, IsKeyPressed(KEY::eT));
-
-    camera->SetInput(EInputState::ZOOM_IN, IsKeyPressed(KEY::eY));
-    camera->SetInput(EInputState::ZOOM_OUT, IsKeyPressed(KEY::eU));
-
     if (IsKeyPressed(KEY::e5)) {
         vkutil::postProcessSettings.Enable = vkutil::postProcessSettings.Enable == true ? false : true;
 
         const std::string result = vkutil::postProcessSettings.Enable == true ? "Enabled" : "Disabled";
 
         SPDLOG_INFO("Post process: {}", result);
-    }
-
-    if (IsMouseButtonPressed(MOUSE_BUTTON::eRIGHT)) {
-        auto &flag = camera->inputMap[std::size_t(EInputState::MOUSING)];
-        flag = !flag;
-
-        if (flag) {
-            glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        } else {
-            glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-        }
-    }
-
-    if(IsKeyPressed(KEY::eP))
-    {
-        SPDLOG_INFO("Camera Location: {}", glm::to_string(camera->GetPosition()));
     }
 }
 

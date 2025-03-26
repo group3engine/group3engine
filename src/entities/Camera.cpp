@@ -26,16 +26,7 @@ Camera::Camera(const glm::vec3 position, glm::vec3 direction, glm::vec3 up)
     m_cameraSpeed = defaultSpeed;
 }
 
-void Camera::Update(double deltaTime) {
-    UpdateCameraRotation(deltaTime);
-    UpdateCameraMovement();
-}
-
-void Camera::UpdateCameraMovement() {
-    Transform character_transform{};
-    if (Scene::get().GetActiveScene()->HasCharacter()) {
-        character_transform = Scene::get().GetActiveScene()->GetCharacter().GetWorldTransformComponents();
-    }
+void Camera::UpdateCameraMovement(const Transform &character_transform) {
     glm::vec3 character_position = character_transform.translation;
 
     if(inputMap[std::size_t(EInputState::SWITCHVIEW)] == true)

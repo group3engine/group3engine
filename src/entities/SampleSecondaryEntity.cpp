@@ -9,6 +9,7 @@
 #include <cstdlib>
 
 #include "Camera.hpp"
+#include "GLFW.hpp"
 #include "Scene.hpp"
 
 
@@ -17,9 +18,38 @@ SampleSecondaryEntity::~SampleSecondaryEntity() {
 }
 
 void SampleSecondaryEntity::ProcessInput(){
+    mCamera->SetInput(EInputState::FORWARD, IsKeyDown(KEY::eUP));
+    mCamera->SetInput(EInputState::BACKWARD, IsKeyDown(KEY::eDOWN));
+    mCamera->SetInput(EInputState::LEFT, IsKeyDown(KEY::eLEFT));
+    mCamera->SetInput(EInputState::RIGHT, IsKeyDown(KEY::eRIGHT));
+
+    mCamera->SetInput(EInputState::DOWN, IsKeyDown(KEY::eQ));
+    mCamera->SetInput(EInputState::UP, IsKeyDown(KEY::eE));
+
+    mCamera->SetInput(EInputState::FAST, IsKeyDown(KEY::eLEFT_SHIFT));
+    mCamera->SetInput(EInputState::SLOW, IsKeyDown(KEY::eLEFT_CONTROL));
+
+    mCamera->SetInput(EInputState::SWITCHVIEW, IsKeyPressed(KEY::eV));
+
+    mCamera->SetInput(EInputState::TELEPORT, IsKeyPressed(KEY::eT));
+
+    mCamera->SetInput(EInputState::ZOOM_IN, IsKeyPressed(KEY::eY));
+    mCamera->SetInput(EInputState::ZOOM_OUT, IsKeyPressed(KEY::eU));
+
+    if (IsMouseButtonPressed(MOUSE_BUTTON::eRIGHT)) {
+        auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
+        flag = !flag;
+
+        if (flag) {
+            glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        } else {
+            glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        }
+    }
+
     glm::vec3 controlInput = glm::vec3(0.0f);
     bool jump = false;
-    if(GetCamera()->isInFollowCharacterMode()) {
+    if(mCamera->isInFollowCharacterMode()) {
         // Determine controller input
         if (IsKeyDown(KEY::eLEFT))
             controlInput.z = -1;
@@ -33,7 +63,7 @@ void SampleSecondaryEntity::ProcessInput(){
             controlInput = glm::normalize(controlInput);
 
         // Rotate controls to align with the camera
-        auto cameraForward = GetCamera()->GetDirection();
+        auto cameraForward = mCamera->GetDirection();
         cameraForward.y = 0.0f;
         cameraForward = glm::normalize(cameraForward);
         glm::quat rotation = glm::rotation(glm::vec3(1.0f, 0.0f, 0.0f), cameraForward);
@@ -112,6 +142,9 @@ void SampleSecondaryEntity::Update(double deltaTime) {
                 child->GetAnimator().SetTimeScale(timeScale);
             }
     }
+
+    mCamera->UpdateCameraRotation(deltaTime);
+    mCamera->UpdateCameraMovement(GetWorldTransformComponents());
 }
 
 void SampleSecondaryEntity::CreateJoltCharacter()

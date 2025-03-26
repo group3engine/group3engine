@@ -10,6 +10,7 @@
 
 #include "Camera.hpp"
 #include "Engine.hpp"
+#include "GLFW.hpp"
 #include "SampleGLTFFilePaths.hpp"
 #include "Scene.hpp"
 
@@ -26,9 +27,38 @@ CharacterEntity::~CharacterEntity() {
 }
 
 void CharacterEntity::ProcessInput(){
+    mCamera->SetInput(EInputState::FORWARD, IsKeyDown(KEY::eW));
+    mCamera->SetInput(EInputState::BACKWARD, IsKeyDown(KEY::eS));
+    mCamera->SetInput(EInputState::LEFT, IsKeyDown(KEY::eA));
+    mCamera->SetInput(EInputState::RIGHT, IsKeyDown(KEY::eD));
+
+    mCamera->SetInput(EInputState::DOWN, IsKeyDown(KEY::eQ));
+    mCamera->SetInput(EInputState::UP, IsKeyDown(KEY::eE));
+
+    mCamera->SetInput(EInputState::FAST, IsKeyDown(KEY::eLEFT_SHIFT));
+    mCamera->SetInput(EInputState::SLOW, IsKeyDown(KEY::eLEFT_CONTROL));
+
+    mCamera->SetInput(EInputState::SWITCHVIEW, IsKeyPressed(KEY::eV));
+
+    mCamera->SetInput(EInputState::TELEPORT, IsKeyPressed(KEY::eT));
+
+    mCamera->SetInput(EInputState::ZOOM_IN, IsKeyPressed(KEY::eY));
+    mCamera->SetInput(EInputState::ZOOM_OUT, IsKeyPressed(KEY::eU));
+
+    if (IsMouseButtonPressed(MOUSE_BUTTON::eRIGHT)) {
+        auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
+        flag = !flag;
+
+        if (flag) {
+            glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        } else {
+            glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        }
+    }
+
     glm::vec3 controlInput = glm::vec3(0.0f);
     bool jump = false;
-    if(GetCamera()->isInFollowCharacterMode()) {
+    if(mCamera->isInFollowCharacterMode()) {
         // Determine controller input
         if (IsKeyDown(KEY::eA))
             controlInput.z = -1;
@@ -46,7 +76,7 @@ void CharacterEntity::ProcessInput(){
             controlInput.z = GetGamepadAxis(GAMEPAD_AXIS::eLEFT_X);
 
         // Rotate controls to align with the camera
-        auto cameraForward = GetCamera()->GetDirection();
+        auto cameraForward = mCamera->GetDirection();
         cameraForward.y = 0.0f;
         cameraForward = glm::normalize(cameraForward);
         glm::quat rotation = glm::rotation(glm::vec3(1.0f, 0.0f, 0.0f), cameraForward);
@@ -145,6 +175,9 @@ void CharacterEntity::Update(double deltaTime) {
                 child->GetAnimator().SetTimeScale(timeScale);
             }
     }
+
+    mCamera->UpdateCameraRotation(deltaTime);
+    mCamera->UpdateCameraMovement(GetWorldTransformComponents());
 }
 
 void CharacterEntity::UpdateUi(double deltaTime) {
@@ -342,7 +375,7 @@ void CharacterEntity::Awake() {
     Scene::get().GetActiveScene()->AddCamera(mCamera);
 
     // register the teleport callback
-    GetCamera()->SetTeleportCallbackFunction(std::bind(&CharacterEntity::TeleportCallback, this, std::placeholders::_1));
+    mCamera->SetTeleportCallbackFunction(std::bind(&CharacterEntity::TeleportCallback, this, std::placeholders::_1));
 
     // if there is no save
     if(!m_has_save)
