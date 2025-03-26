@@ -8,9 +8,10 @@
 #include "Utils.hpp"
 #include "Buffer.hpp"
 #include "RenderPass.hpp"
+#include "Scene.hpp"
 #include "Camera.hpp"
 
-GBuffer::GBuffer(Context& context, std::shared_ptr<Scene>& scene, std::shared_ptr<Camera>& camera) : context{ context }, scene{ scene }, camera{ camera }
+GBuffer::GBuffer(Context& context, Scene *scene) : context{ context }, scene{ scene }
 {
     m_width = context.extent.width;
     m_height = context.extent.height;
@@ -263,7 +264,7 @@ void GBuffer::BuildDescriptors()
     for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
     {
         VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = camera->GetBuffers()[i].buffer;
+        bufferInfo.buffer = Scene::get().GetActiveScene()->GetCameraBuffers()[i].buffer;
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(CameraTransform);
         vkutil::UpdateDescriptorSet(context, 0, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);

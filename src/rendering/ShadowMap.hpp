@@ -10,7 +10,7 @@ class Buffer;
 
 class ShadowMap {
   public:
-    ShadowMap(Context &context, std::shared_ptr<Scene> &scene);
+    ShadowMap(Context &context, Scene *scene);
     ~ShadowMap();
     void Execute(VkCommandBuffer cmd) const;
     void Update();
@@ -18,15 +18,12 @@ class ShadowMap {
 
     Image &GetRenderTarget() { return m_ShadowMap; }
 
-    void RebuildDescriptors();
-
   private:
     void CreatePipeline();
     void CreateRenderPass();
     void CreateFramebuffer();
     void BuildDescriptorSetLayouts();
     void BuildDescriptors();
-    void DestroyDescriptors();
 
     VkRenderPass m_renderPass;
     VkFramebuffer m_framebuffer;
@@ -36,7 +33,7 @@ class ShadowMap {
     uint32_t m_width;
     uint32_t m_height;
 
-    std::shared_ptr<Scene> scene;
+    Scene *scene;
     std::vector<VkDescriptorSet> m_descriptorSets;
     VkDescriptorSetLayout m_descriptorSetLayout;
     VkDescriptorSetLayout skinDescriptorSetLayout;

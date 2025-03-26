@@ -67,6 +67,8 @@ class CharacterEntity : public Entity {
         mCharacterPositionOffset = glm::vec3(x, y, z);
     }
 
+    Camera *GetCamera() const { return mCamera; }
+
     void MoveToSpawn();
 
     void TeleportCallback(glm::vec3 aPosition) {
@@ -77,6 +79,9 @@ class CharacterEntity : public Entity {
   private:
     void Save();
     void Load();
+
+  protected:
+    Camera *mCamera = nullptr;
 
   private:
     Transform mInitialTransform = {};

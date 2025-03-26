@@ -19,7 +19,7 @@ SampleSecondaryEntity::~SampleSecondaryEntity() {
 void SampleSecondaryEntity::ProcessInput(){
     glm::vec3 controlInput = glm::vec3(0.0f);
     bool jump = false;
-    if(Camera::GetMainCamera()->isInFollowCharacterMode()) {
+    if(GetCamera()->isInFollowCharacterMode()) {
         // Determine controller input
         if (IsKeyDown(KEY::eLEFT))
             controlInput.z = -1;
@@ -33,7 +33,7 @@ void SampleSecondaryEntity::ProcessInput(){
             controlInput = glm::normalize(controlInput);
 
         // Rotate controls to align with the camera
-        auto cameraForward = Camera::GetMainCamera()->GetDirection();
+        auto cameraForward = GetCamera()->GetDirection();
         cameraForward.y = 0.0f;
         cameraForward = glm::normalize(cameraForward);
         glm::quat rotation = glm::rotation(glm::vec3(1.0f, 0.0f, 0.0f), cameraForward);
@@ -137,13 +137,24 @@ void SampleSecondaryEntity::Awake() {
     mInitialTransform = GetLocalTransform();
     // create the jolt character
     CreateJoltCharacter();
+
+    // m_camera = std::make_shared<Camera>(context, cameraPos, glm::normalize(cameraPos + cameraDir), up, context.extent.width / (float)context.extent.height);
+    JPH::Vec3 joltPos = GetCharacterPosition();
+    glm::vec3 pos = glm::vec3(joltPos.GetX(), joltPos.GetY(), joltPos.GetZ());
+    glm::vec3 dir = glm::vec3(1.0f, 1.0f, -1.0f);
+    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0);
+    mCamera = new Camera(pos, dir, up);
+
+    Scene::get().GetActiveScene()->AddCamera(mCamera);
+
+
     // move to spawn
     MoveToSpawn();
 }
 
 void SampleSecondaryEntity::MoveToSpawn()
 {
-    for(auto &entity: Scene::GetActiveScene()->GetEntities())
+    for(auto &entity: Scene::get().GetActiveScene()->GetEntities())
     {
         if(entity->CompareTag("spawnpoint"))
         {

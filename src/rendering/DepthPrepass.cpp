@@ -9,10 +9,9 @@
 #include "Pipeline.hpp"
 #include "RenderPass.hpp"
 
-DepthPrepass::DepthPrepass(Context &context, std::shared_ptr<Scene> scene, std::shared_ptr<Camera> camera)
+DepthPrepass::DepthPrepass(Context &context, Scene *scene)
     : context{context},
       scene{scene},
-      camera{camera},
       m_Pipeline{VK_NULL_HANDLE},
       m_PipelineLayout{VK_NULL_HANDLE},
       m_descriptorSetLayout{VK_NULL_HANDLE},
@@ -184,7 +183,7 @@ void DepthPrepass::BuildDescriptors() {
     // Camera Transform UBO
     for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = camera->GetBuffers()[i].buffer;
+        bufferInfo.buffer = Scene::get().GetActiveScene()->GetCameraBuffers()[i].buffer;
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(CameraTransform);
         vkutil::UpdateDescriptorSet(context, 0, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);

@@ -91,21 +91,24 @@ bool Engine::Initialize() {
     mTextureManager = std::make_unique<TextureManager>(m_context);
     mTextureManager->Initialise();
 
-    mScene = std::make_shared<Scene>(m_context,
-                                     mMaterialManager.get(),
-                                     mMeshManager.get(),
-                                     mTextureManager.get());
-    mScene->StartUp();
+    Scene::get().StartUp(&m_context,
+                         mMaterialManager.get(),
+                         mMeshManager.get(),
+                         mTextureManager.get());
+
+    mScene = Scene::get().GetActiveScene();
 
     mRenderer = std::make_unique<Renderer>(m_context, mScene);
     
     PhysicsManager::get().StartUp();
 
-    mScene->Initialise(Sample::SampleObbyTestScene);
+    mScene->Load(Sample::SampleObbyTestScene);
 
     mRenderer->CreateRenderPasses();
     // call the scene awake function
     mScene->Awake();
+
+    mRenderer->AddCameras();
 
 #ifdef JPH_DEBUG_RENDERER
     mDebugRenderer = std::make_unique<DebugRendererImp>(mRenderer.get());
@@ -125,7 +128,7 @@ void Engine::Shutdown() {
 
     mRenderer->Destroy();
     mRenderer.reset();
-    mScene->Destroy();
+    mScene->ShutDown();
 
     mMeshManager->Destroy();
     mMaterialManager->Destroy();
@@ -145,7 +148,7 @@ void Engine::ChangeScene(const std::filesystem::path &filePath)
 void Engine::Run() {
     auto camera = static_cast<Camera *>(glfwGetWindowUserPointer(Platform::get().window));
     camera->SetPhysics(&PhysicsManager::get());
-    camera->SetScene(mScene.get());
+    camera->SetScene(mScene);
 
     m_lastFrameTime = glfwGetTime();
 
@@ -172,6 +175,9 @@ void Engine::Run() {
             m_sceneNeedsChanging = false;
         }
 
+        if (IsKeyPressed(KEY::eC)) {
+            mScene->SwitchCamera();
+        }
 
 
         FrameMark;
@@ -237,7 +243,7 @@ void Engine::ChangeSceneFR()
     vkQueueWaitIdle(m_context.graphicsQueue);
     vkQueueWaitIdle(m_context.presentQueue);
 
-    mScene->Destroy();
+    mScene->Unload();
     mMaterialManager->Destroy();
     mMeshManager->Destroy();
     mTextureManager->Destroy();
@@ -258,13 +264,10 @@ void Engine::ChangeSceneFR()
     assert(bodyIds.empty());
 #endif // #ifndef NDEBUG
 
-    mScene->StartUp();
-    mScene->Initialise(m_scenePath);
+    mScene->Load(m_scenePath);
 
     // Add back UI textures
     ImGuiRenderer::AddTextures(mTextureManager.get());
-
-    mRenderer->RebuildSceneDescriptors();
 
     mScene->Awake();
 }

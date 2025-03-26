@@ -28,7 +28,7 @@ struct FreedBuffer {
 
 class Renderer {
   public:
-    Renderer(Context &context, std::shared_ptr<Scene> scene);
+    Renderer(Context &context, Scene *scene);
 
     void CreateRenderPasses();
 
@@ -38,7 +38,7 @@ class Renderer {
     void EndFrame(VkCommandBuffer cmd);
     void Update(double deltaTime);
 
-    std::shared_ptr<Scene> m_scene;
+    Scene *m_scene;
 
 
     // TODO: Check if we are calling this from within a frame
@@ -56,11 +56,11 @@ class Renderer {
     const Composite *GetCompositePass() const { return m_CompositePass.get(); }
     const PresentPass *GetPresentPass() const { return m_PresentPass.get(); }
 
-    const Camera *GetCamera() const { return m_camera.get(); }
+    Camera *GetCamera() const { return Scene::get().GetActiveScene()->GetActiveCamera(); }
+
+    void AddCameras();
 
     uint32_t GetImageIndex() const { return mImageIndex; }
-
-    void RebuildSceneDescriptors();
 
   private:
     void CreateResources();
@@ -93,7 +93,7 @@ class Renderer {
     std::unique_ptr<Composite> m_CompositePass;
     std::unique_ptr<PresentPass> m_PresentPass;
 
-    std::shared_ptr<Camera> m_camera;
+    std::vector<Camera *> m_cameras;
 
     uint32_t mImageIndex = 0;
 };

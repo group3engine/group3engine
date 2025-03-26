@@ -21,7 +21,7 @@ class Buffer;
 
 class ForwardPass {
   public:
-    ForwardPass(Context &context, Image &shadowMap, Image &depthPrepass, std::shared_ptr<Scene> &scene, std::shared_ptr<Camera> &camera);
+    ForwardPass(Context &context, Image &shadowMap, Image &depthPrepass, Scene *scene);
     ~ForwardPass();
 
     VkRenderPass Get() const { return m_renderPass; }
@@ -37,15 +37,12 @@ class ForwardPass {
 
     Skybox* GetSkybox() { return m_Skybox.get(); }
 
-    void RebuildDescriptors();
-
   private:
     void CreatePipeline();
     void CreateRenderPass();
     void CreateFramebuffer();
     void BuildDescriptorSetLayouts();
     void BuildDescriptors();
-    void DestroyDescriptors();
 
     Image m_RenderTarget;
     Image m_DepthTarget;
@@ -59,8 +56,7 @@ class ForwardPass {
     Context &context;
     Image &shadowMap;
     Image &depthPrepass;
-    std::shared_ptr<Scene> scene;
-    std::shared_ptr<Camera> camera;
+    Scene *scene;
     std::vector<VkDescriptorSet> m_descriptorSets;
     std::pair<VkPipeline, VkPipelineLayout> m_opaquePipeline;
     std::pair<VkPipeline, VkPipelineLayout> m_alphaMaskPipeline;

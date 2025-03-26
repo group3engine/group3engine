@@ -85,7 +85,7 @@ namespace ImGuiRenderer
     void Initialize(const Context &context);
     void Shutdown(const Context &context);
     void NewFrame();
-    void Update(const std::shared_ptr<Scene>& scene, const std::shared_ptr<Camera>& camera);
+    void Update(Scene *scene, Camera *camera);
     void EndFrame();
     void Render(VkCommandBuffer cmd, const Context& context, uint32_t imageIndex);
 

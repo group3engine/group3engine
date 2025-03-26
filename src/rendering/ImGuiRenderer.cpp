@@ -365,7 +365,7 @@ void ImGuiRenderer::EndFrame() {
     ImGui::EndFrame();
 }
 
-void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::shared_ptr<Camera>& camera)
+void ImGuiRenderer::Update(Scene *scene, Camera *camera)
 {
     ZoneScopedN("ImGuiRenderer::Update");
 

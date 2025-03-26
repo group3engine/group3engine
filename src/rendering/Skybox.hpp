@@ -8,8 +8,7 @@
 class Context;
 class Skybox {
   public:
-    Skybox(Context &context, std::shared_ptr<Camera> camera,
-           VkRenderPass renderpass);
+    Skybox(Context &context, VkRenderPass renderpass);
     ~Skybox();
 
     void Execute(VkCommandBuffer cmd);
@@ -24,7 +23,6 @@ class Skybox {
     void LoadCubemapFace(std::filesystem::path facePath, char **pixelData);
 
     Context &context;
-    std::shared_ptr<Camera> camera;
     Image m_Skybox;
 
     Image m_RenderTarget;

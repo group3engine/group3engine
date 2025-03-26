@@ -40,7 +40,7 @@ DebugRendererImp::DebugRendererImp(Renderer *renderer) : mRenderer(renderer) {
     //     // Camera UBO
     //     for (size_t i = 0; i < std::size_t(vkutil::MAX_FRAMES_IN_FLIGHT); i++) {
     //         VkDescriptorBufferInfo bufferInfo{};
-    //         bufferInfo.buffer = camera->GetBuffers()[i].buffer;
+    //         bufferInfo.buffer = Scene::get().GetActiveScene()->GetCameraBuffers()[i].buffer;
     //         bufferInfo.offset = 0;
     //         bufferInfo.range = sizeof(CameraTransform);
     //         vkutil::UpdateDescriptorSet(context, 0, bufferInfo, mDescriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
@@ -78,7 +78,7 @@ DebugRendererImp::DebugRendererImp(Renderer *renderer) : mRenderer(renderer) {
         // Camera UBO
         for (size_t i = 0; i < std::size_t(vkutil::MAX_FRAMES_IN_FLIGHT); i++) {
             VkDescriptorBufferInfo bufferInfo{};
-            bufferInfo.buffer = camera->GetBuffers()[i].buffer;
+            bufferInfo.buffer = Scene::get().GetActiveScene()->GetCameraBuffers()[i].buffer;
             bufferInfo.offset = 0;
             bufferInfo.range = sizeof(CameraTransform);
             vkutil::UpdateDescriptorSet(context, 0, bufferInfo, mDescriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);

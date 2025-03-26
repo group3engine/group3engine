@@ -21,8 +21,8 @@ class PresentPass {
 
     Context &context;
     Image &renderedScene;
-    std::shared_ptr<Scene> scene;
-    std::shared_ptr<Camera> camera;
+    Scene *scene;
+    Camera *camera;
 
     VkPipeline m_pipeline;
     VkPipelineLayout m_pipelineLayout;

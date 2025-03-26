@@ -56,7 +56,7 @@ class Engine {
     void DrawPhysics();
 #endif // JPH_DEBUG_RENDERER
 
-    std::shared_ptr<Scene> mScene;
+    Scene *mScene;
     std::unique_ptr<Renderer> mRenderer;
 
 #ifdef JPH_DEBUG_RENDERER

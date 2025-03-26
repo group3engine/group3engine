@@ -9,7 +9,7 @@ class Context;
 class SSR {
   public:
 
-    explicit SSR(Context &context, Image& depthBuffer, Image& renderedScene, Image& metallicRoughness, Image& skybox, std::shared_ptr<Camera> camera);
+    explicit SSR(Context &context, Image& depthBuffer, Image& renderedScene, Image& metallicRoughness, Image& skybox);
     ~SSR();
     void Execute(VkCommandBuffer cmd) const;
     void Update();
@@ -31,7 +31,6 @@ class SSR {
     Image& renderedScene;
     Image& metallicRoughness;
     Image& skybox;
-    std::shared_ptr<Camera> camera;
 
     VkPipeline m_Pipeline;
     VkPipelineLayout m_PipelineLayout;

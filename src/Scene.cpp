@@ -4,14 +4,14 @@
 
 #include <tracy/Tracy.hpp>
 
+#include <glm/vec3.hpp>
+
 #include "Jolt/Physics/Collision/Shape/ConvexHullShape.h"
 #include "Jolt/Physics/Collision/Shape/MeshShape.h"
 #include "ResourceManager.hpp"
 
 #include "ImGuiRenderer.hpp"
 #include "SampleGLTFFilePaths.hpp"
-
-Scene* Scene::sActiveScene = nullptr;
 
 void Scene::AddLightSource(Light &LightSource) {
     m_Lights.push_back(std::move(LightSource));
@@ -45,6 +45,32 @@ void Scene::Update(double aDeltaTime) {
         m_LightBuffer.lights[i].LightSpaceMatrix = m_Lights[i].LightSpaceMatrix;
     }
 
+    UpdateCameraTransforms();
+}
+
+void Scene::UpdateCameraTransforms() {
+    auto width = mContext->extent.width;
+    auto height = mContext->extent.height;
+
+    auto *camera = GetActiveCamera();
+    const auto &pos = camera->GetPosition();
+    const auto &dir = camera->GetDirection();
+    const auto &up = camera->GetUp();
+
+    m_transform.view = glm::lookAt(pos, pos + dir, up);
+    m_transform.projection = glm::perspective(m_transform.fov, width / (float)height, m_transform.nearPlane, m_transform.farPlane);
+    m_transform.projection[1][1] *= -1;
+    m_transform.cameraPosition = glm::vec4(pos.x, pos.y, pos.z, 1.0);
+    m_transform.viewportSize = glm::vec2(width, height);
+    m_transform.nearPlane = m_transform.nearPlane;
+    m_transform.farPlane = m_transform.farPlane;
+    m_transform.fov = m_transform.fov;
+}
+
+void Scene::UploadCameras(VkCommandBuffer cmdBuff) {
+    // Write new data to the buffer to update uniform
+    VkDeviceSize size = sizeof(CameraTransform);
+    m_cameraUBO[vkutil::currentFrame].Upload(cmdBuff, &m_transform, size);
 }
 
 void Scene::UploadLights(VkCommandBuffer cmdBuff) {
@@ -64,13 +90,12 @@ void Scene::UpdateUi(double aDeltaTime) {
     }
 }
 
-void Scene::Destroy()
+void Scene::Unload()
 {
 	for (auto& buffer : m_LightUBO)
 	{
 		buffer.Destroy();
 	}
-    m_LightUBO.clear();
 
     // delete the entities
     for (auto &entity : m_Entities) {
@@ -89,14 +114,14 @@ void Scene::Destroy()
     mCharacter = nullptr;
 }
 
-void Scene::Load(const std::filesystem::path &aFilepath) {
+void Scene::LoadGLTF(const std::filesystem::path &aFilepath) {
     // Load the GLTF file
-    LoadGLTF(aFilepath, *mMeshManager, *mMaterialManager, *mTextureManager,
-             m_Entities, false, m_Animations, m_Skins);
-
+    ResourceLoader::LoadGLTF(aFilepath, *mMeshManager, *mMaterialManager,
+                             *mTextureManager, m_Entities, false, m_Animations,
+                             m_Skins);
 }
 
-void Scene::Initialise(const std::filesystem::path &filePath)
+void Scene::Load(const std::filesystem::path &filePath)
 {
     mSceneFilename = filePath.stem();
 
@@ -120,7 +145,7 @@ void Scene::Initialise(const std::filesystem::path &filePath)
     // Create the scene which will store models and lights
     // Add GLTF to the scene
     // Add a directional light source defined earlier
-    Load(gltfPath);
+    LoadGLTF(gltfPath);
     AddLightSource(directionalLight);
 
     // Loop through the positions and instantiate a light
@@ -394,31 +419,104 @@ void Scene::Awake()
     for (auto &entity : m_Entities) {
         entity->Awake();
     }
+
+    m_transform.nearPlane = 0.1f;
+    m_transform.farPlane = 100.0f;
+    m_transform.fov = 45.0f;
+
+    bool hasSetActive = false;
+    for (auto &entity : m_Entities) {
+        if (entity->IsCharacter()) {
+            auto *character = static_cast<CharacterEntity*>(entity);
+            Camera *camera = character->GetCamera();
+
+            if (!hasSetActive) {
+                camera->SetIsActive(true);
+                hasSetActive = true;
+            }
+
+            Entity *cameraEntity = static_cast<Entity*>(camera);
+            m_Entities.push_back(cameraEntity);
+        }
+    }
 }
 
-Scene::Scene(Context &context,
-             MaterialManager *materialManager,
-             MeshManager *meshManager,
-             TextureManager *textureManager)
-    : context(context),
-    mMaterialManager(materialManager),
-    mMeshManager(meshManager),
-    mTextureManager(textureManager)
-{
+Camera *Scene::GetActiveCamera() {
+    for (auto &entity : m_Entities) {
+        if (entity->IsCharacter()) {
+            auto *character = static_cast<CharacterEntity*>(entity);
+            Camera *camera = character->GetCamera();
+
+            if (camera->IsActive()) {
+                SPDLOG_INFO("Active camera of {}", GetCharacter().GetName());
+                return camera;
+            }
+        }
+    }
+
+    SPDLOG_ERROR("Active camera not found.");
+    std::exit(EXIT_FAILURE);
 }
 
-void Scene::StartUp() {
-    m_LightUBO.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
-    // Light uniform buffers
-    for (auto &buffer : m_LightUBO) {
-        buffer = CreateBuffer("LightUBO", context, sizeof(vkutil::LightBuffer),
+void Scene::SwitchCamera() {
+    CharacterEntity *activeCharacter = nullptr;
+    CharacterEntity *inactiveCharacter = nullptr;
+    for (auto &entity : m_Entities) {
+        if (entity->IsCharacter()) {
+            auto *character = static_cast<CharacterEntity*>(entity);
+            Camera *camera = character->GetCamera();
+
+            if (camera->IsActive()) {
+                activeCharacter = character;
+            } else {
+                inactiveCharacter = character;
+            }
+        }
+    }
+
+    activeCharacter->GetCamera()->SetIsActive(false);
+    inactiveCharacter->GetCamera()->SetIsActive(true);
+    mCharacter = inactiveCharacter;
+    glfwSetWindowUserPointer(mContext->mWindow, inactiveCharacter->GetCamera());
+}
+
+void Scene::StartUp(Context *context, MaterialManager *materialManager,
+                    MeshManager *meshManager, TextureManager *textureManager) {
+    mContext = context;
+    mMaterialManager = materialManager;
+    mMeshManager = meshManager;
+    mTextureManager = textureManager;
+
+    m_cameraUBO.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+    for (auto &buffer : m_cameraUBO) {
+        buffer = CreateBuffer("cameraUBO", *mContext, sizeof(CameraTransform),
                               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                               VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
                                   VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
                                   VMA_ALLOCATION_CREATE_MAPPED_BIT);
     }
 
-    SetActiveScene(this);
+    m_LightUBO.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+    // Light uniform buffers
+    for (auto &buffer : m_LightUBO) {
+        buffer = CreateBuffer("LightUBO", *mContext, sizeof(vkutil::LightBuffer),
+                              VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                              VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+                                  VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
+                                  VMA_ALLOCATION_CREATE_MAPPED_BIT);
+    }
+
+    mCurrentScene = this;
+}
+
+void Scene::ShutDown() {
+    for (auto &buffer : m_cameraUBO) {
+        buffer.Destroy();
+    }
+
+    for (auto &buffer : m_LightUBO) {
+        buffer.Destroy();
+    }
 }
 
 void Scene::DrawOpaque(VkCommandBuffer cmd,

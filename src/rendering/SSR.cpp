@@ -6,12 +6,13 @@
 #include <array>
 #include "Pipeline.hpp"
 #include "RenderPass.hpp"
+#include "Scene.hpp"
 #include "Utils.hpp"
 
-SSR::SSR(Context &context, Image &depthBuffer, Image& renderedScene, Image& metallicRoughness, Image& skybox, std::shared_ptr<Camera> camera) :
+SSR::SSR(Context &context, Image &depthBuffer, Image& renderedScene, Image& metallicRoughness, Image& skybox) :
 
     context{context}, depthBuffer{depthBuffer}, renderedScene{renderedScene},
-      metallicRoughness{metallicRoughness}, skybox{skybox}, camera{camera} {
+      metallicRoughness{metallicRoughness}, skybox{skybox} {
 
     m_width = context.extent.width;
     m_height = context.extent.height;
@@ -80,7 +81,7 @@ void SSR::Resize()
     for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
     {
         VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = camera->GetBuffers()[i].buffer;
+        bufferInfo.buffer = Scene::get().GetActiveScene()->GetCameraBuffers()[i].buffer;
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(CameraTransform);
         vkutil::UpdateDescriptorSet(context, 0, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
@@ -245,7 +246,7 @@ void SSR::BuildDescriptors()
     for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
     {
         VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = camera->GetBuffers()[i].buffer;
+        bufferInfo.buffer = Scene::get().GetActiveScene()->GetCameraBuffers()[i].buffer;
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(CameraTransform);
         vkutil::UpdateDescriptorSet(context, 0, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);

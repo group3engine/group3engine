@@ -13,7 +13,7 @@ class Camera;
 
 class DepthPrepass {
   public:
-    explicit DepthPrepass(Context &context, std::shared_ptr<Scene> scene, std::shared_ptr<Camera> camera);
+    explicit DepthPrepass(Context &context, Scene *scene);
     ~DepthPrepass();
 
     void Execute(VkCommandBuffer cmd) const;
@@ -29,8 +29,7 @@ class DepthPrepass {
     void BuildDescriptors();
 
     Context &context;
-    std::shared_ptr<Scene> scene;
-    std::shared_ptr<Camera> camera;
+    Scene *scene;
     Image m_DepthTarget;
 
     VkPipeline m_Pipeline;

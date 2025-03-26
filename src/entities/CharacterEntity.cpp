@@ -16,7 +16,7 @@
 namespace {
     std::filesystem::path BuildSaveFilename() {
         std::filesystem::path saveFilename = "save_";
-        saveFilename += Scene::GetActiveScene()->GetSceneFilename();
+        saveFilename += Scene::get().GetActiveScene()->GetSceneFilename();
         saveFilename += ".txt";
         return saveFilename;
     }
@@ -28,7 +28,7 @@ CharacterEntity::~CharacterEntity() {
 void CharacterEntity::ProcessInput(){
     glm::vec3 controlInput = glm::vec3(0.0f);
     bool jump = false;
-    if(Camera::GetMainCamera()->isInFollowCharacterMode()) {
+    if(GetCamera()->isInFollowCharacterMode()) {
         // Determine controller input
         if (IsKeyDown(KEY::eA))
             controlInput.z = -1;
@@ -46,7 +46,7 @@ void CharacterEntity::ProcessInput(){
             controlInput.z = GetGamepadAxis(GAMEPAD_AXIS::eLEFT_X);
 
         // Rotate controls to align with the camera
-        auto cameraForward = Camera::GetMainCamera()->GetDirection();
+        auto cameraForward = GetCamera()->GetDirection();
         cameraForward.y = 0.0f;
         cameraForward = glm::normalize(cameraForward);
         glm::quat rotation = glm::rotation(glm::vec3(1.0f, 0.0f, 0.0f), cameraForward);
@@ -330,9 +330,19 @@ void CharacterEntity::Awake() {
     // create the jolt character
     CreateJoltCharacter();
     // register the character with the scene
-    Scene::GetActiveScene()->SetMainCharacter(this);
+    Scene::get().GetActiveScene()->SetMainCharacter(this);
+
+    // m_camera = std::make_shared<Camera>(context, cameraPos, glm::normalize(cameraPos + cameraDir), up, context.extent.width / (float)context.extent.height);
+    JPH::Vec3 joltPos = GetCharacterPosition();
+    glm::vec3 pos = glm::vec3(joltPos.GetX(), joltPos.GetY(), joltPos.GetZ());
+    glm::vec3 dir = glm::vec3(1.0f, 1.0f, -1.0f);
+    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0);
+    mCamera = new Camera(pos, dir, up);
+
+    Scene::get().GetActiveScene()->AddCamera(mCamera);
+
     // register the teleport callback
-    Camera::GetMainCamera()->SetTeleportCallbackFunction(std::bind(&CharacterEntity::TeleportCallback, this, std::placeholders::_1));
+    GetCamera()->SetTeleportCallbackFunction(std::bind(&CharacterEntity::TeleportCallback, this, std::placeholders::_1));
 
     // if there is no save
     if(!m_has_save)
@@ -347,7 +357,7 @@ void CharacterEntity::Awake() {
 
 void CharacterEntity::MoveToSpawn()
 {
-    for(auto &entity: Scene::GetActiveScene()->GetEntities())
+    for(auto &entity: Scene::get().GetActiveScene()->GetEntities())
     {
         if(entity->CompareTag("spawnpoint"))
         {

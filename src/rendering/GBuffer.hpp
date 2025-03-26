@@ -16,7 +16,7 @@ class Buffer;
 class GBuffer {
   public:
 
-    GBuffer(Context &context, std::shared_ptr<Scene> &scene, std::shared_ptr<Camera> &camera);
+    GBuffer(Context &context, Scene *scene);
     ~GBuffer();
     void Execute(VkCommandBuffer cmd) const;
     void Update();
@@ -41,8 +41,7 @@ class GBuffer {
     VkFramebuffer m_framebuffer;
 
     Context &context;
-    std::shared_ptr<Scene> scene;
-    std::shared_ptr<Camera> camera;
+    Scene *scene;
     std::vector<VkDescriptorSet> m_descriptorSets;
     VkDescriptorSetLayout m_descriptorSetLayout;
 

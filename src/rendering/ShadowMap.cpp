@@ -12,7 +12,7 @@
 
 #define RESOLUTION 2048
 
-ShadowMap::ShadowMap(Context &context, std::shared_ptr<Scene> &scene)
+ShadowMap::ShadowMap(Context &context, Scene *scene)
     : context{context}, scene{scene} {
     assert(!scene->GetLights().empty());
 
@@ -226,15 +226,6 @@ void ShadowMap::BuildDescriptors() {
         bufferInfo.range = sizeof(vkutil::LightUBO) * scene->GetLights().size();
         vkutil::UpdateDescriptorSet(context, 0, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
     }
-}
-
-void ShadowMap::DestroyDescriptors() {
-    vkFreeDescriptorSets(context.device, context.descriptorPool, m_descriptorSets.size(), m_descriptorSets.data());
-}
-
-void ShadowMap::RebuildDescriptors() {
-    DestroyDescriptors();
-    BuildDescriptors();
 }
 
 void ShadowMap::Update() {

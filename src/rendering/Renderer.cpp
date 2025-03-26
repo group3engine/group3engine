@@ -21,7 +21,7 @@ constexpr glm::vec3 cameraDir = glm::vec3(1.0f, 1.0f, -1.0f);
 constexpr glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0);
 } // namespace
 
-Renderer::Renderer(Context &context, std::shared_ptr<Scene> scene)
+Renderer::Renderer(Context &context, Scene *scene)
     : m_scene(scene), context{context} {
     std::printf("Launching Renderer\n");
     vkutil::renderType = vkutil::RenderType::FORWARD;
@@ -33,23 +33,17 @@ Renderer::Renderer(Context &context, std::shared_ptr<Scene> scene)
     vkutil::repeatSampler = vkutil::CreateSampler(context, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL);
     vkutil::clampToEdgeSamplerAniso = vkutil::CreateSampler(context, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_FALSE, VK_COMPARE_OP_GREATER);
 
-    // Camera
-    m_camera = std::make_shared<Camera>(context, cameraPos, glm::normalize(cameraPos + cameraDir), up, context.extent.width / (float)context.extent.height);
-
-    // GLFW callbacks
-    glfwSetWindowUserPointer(context.mWindow, m_camera.get());
-
     mFreedBuffers.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
 }
 
 void Renderer::CreateRenderPasses() {
     // Renderer passes
     m_ShadowMap = std::make_unique<ShadowMap>(context, m_scene);
-    m_DepthPrepass = std::make_unique<DepthPrepass>(context, m_scene, m_camera);
-    m_ForwardPass = std::make_unique<ForwardPass>(context, m_ShadowMap->GetRenderTarget(), m_DepthPrepass->GetRenderTarget(), m_scene, m_camera);
-    m_GBuffer = std::make_unique<GBuffer>(context, m_scene, m_camera);
-    m_SSAO = std::make_unique<SSAO>(context, m_ForwardPass->GetDepthTarget(), m_ForwardPass->GetRenderTarget(), m_camera);
-    m_SSR = std::make_unique<SSR>(context, m_ForwardPass->GetDepthTarget(), m_ForwardPass->GetRenderTarget(), m_GBuffer->GetMetallicRoughnessTarget(), m_ForwardPass->GetSkybox()->GetSkyBoxImage(), m_camera);
+    m_DepthPrepass = std::make_unique<DepthPrepass>(context, m_scene);
+    m_ForwardPass = std::make_unique<ForwardPass>(context, m_ShadowMap->GetRenderTarget(), m_DepthPrepass->GetRenderTarget(), m_scene);
+    m_GBuffer = std::make_unique<GBuffer>(context, m_scene);
+    m_SSAO = std::make_unique<SSAO>(context, m_ForwardPass->GetDepthTarget(), m_ForwardPass->GetRenderTarget());
+    m_SSR = std::make_unique<SSR>(context, m_ForwardPass->GetDepthTarget(), m_ForwardPass->GetRenderTarget(), m_GBuffer->GetMetallicRoughnessTarget(), m_ForwardPass->GetSkybox()->GetSkyBoxImage());
     m_BloomPass = std::make_unique<Bloom>(context, m_ForwardPass->GetBrightnessTarget());
     m_CompositePass = std::make_unique<Composite>(context, m_ForwardPass->GetRenderTarget(), m_BloomPass->GetRenderTarget(), m_SSAO->GetRenderTarget(), m_SSR->GetRenderTarget());
     m_PresentPass = std::make_unique<PresentPass>(context, m_CompositePass->GetRenderTarget());
@@ -59,11 +53,6 @@ void Renderer::CreateRenderPasses() {
     ImGuiRenderer::AddTextures(m_scene->GetTextureManager());
     // // TODO: This will cause a validation error if you re-size the window. Just needs to be updated when re-sized
     ImGuiRenderer::AddTexture(vkutil::clampToEdgeSamplerAniso, m_ShadowMap->GetRenderTarget().imageView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL);
-}
-
-void Renderer::RebuildSceneDescriptors() {
-    m_ShadowMap->RebuildDescriptors();
-    m_ForwardPass->RebuildDescriptors();
 }
 
 void Renderer::Destroy() {
@@ -80,7 +69,7 @@ void Renderer::Destroy() {
     m_SSAO.reset();
     m_SSR.reset();
     m_PresentPass.reset();
-    m_camera.reset();
+    // m_camera.reset();
 
     vkDestroySampler(context.device, vkutil::repeatSamplerAniso, nullptr);
     vkDestroySampler(context.device, vkutil::repeatSampler, nullptr);
@@ -264,7 +253,7 @@ void Renderer::BeginFrame(VkCommandBuffer cmd) {
         {
             ZoneScopedN("vk::Upload");
 
-            m_camera->Upload(cmd);
+            m_scene->UploadCameras(cmd);
 
             m_scene->UploadLights(cmd);
 
@@ -345,9 +334,9 @@ void Renderer::Present(uint32_t imageIndex) {
 void Renderer::Update(double deltaTime) {
     ZoneScopedN("Renderer::Update");
 
-    m_camera->Update(context.extent.width, context.extent.height, deltaTime);
+    // m_camera->Update(deltaTime);
 
-    ImGuiRenderer::Update(m_scene, m_camera);
+    ImGuiRenderer::Update(m_scene, GetCamera());
 
     m_SSAO->Update();
     m_SSR->Update();
@@ -355,4 +344,12 @@ void Renderer::Update(double deltaTime) {
     m_ShadowMap->Update();
     m_ForwardPass->Update();
     m_PresentPass->Update();
+}
+
+void Renderer::AddCameras() {
+    // Find camera(s) in scene
+    m_cameras = Scene::get().GetActiveScene()->GetCameras();
+
+    // GLFW callbacks
+    glfwSetWindowUserPointer(context.mWindow, Scene::get().GetActiveScene()->GetActiveCamera());
 }

@@ -22,6 +22,17 @@ NOTES
 - However, the "scene" UBO stores camera information (view, projection, ...).
   None of this information is scene information
 
+- Going to need a vector of descriptor sets for split screen multiplayer in
+  DebugRenderer.cpp. One for each camera. (Since the only descriptor sets used
+  in DebugRenderer at the moment are the camera UBOs.)
+- Similarly, the renderer (and everywhere else) should store shared_ptr's to
+  all the cameras
+
+- Slight problem with shared_ptr's to camera entities is that we store a vector
+  of raw pointers to the Entity base class inside of scene. So all of these
+  would have to be shared_ptr's too. However, we can just make the camera
+  entity pointers everywhere raw pointers
+
 TODO
 
 - Remove static Camera* kMainCamera and add a per camera mIsActive
@@ -29,3 +40,7 @@ TODO
 - Remove model matrix from scene (camera) UBO
 
 - Rename scene UBO to camera UBO
+
+- Remove UpdateTransforms and Upload from Camera as we don't want to add
+  Context randomly everywhere. Camera is created inside of CharacterEntity and
+  CharacterEntity doesn't hold a Context to pass to the Camera constructor

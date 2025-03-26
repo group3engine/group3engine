@@ -19,7 +19,7 @@ class SSAO {
         glm::vec3 samples[64];
     };
 
-    explicit SSAO(Context &context, Image& depthBuffer, Image& renderedScene, std::shared_ptr<Camera> camera);
+    explicit SSAO(Context &context, Image& depthBuffer, Image& renderedScene);
     ~SSAO();
     void Execute(VkCommandBuffer cmd) const;
     void Update();
@@ -48,7 +48,6 @@ class SSAO {
     Image& depthBuffer;
     Image &renderedScene;
     Image m_NoiseTexture;
-    std::shared_ptr<Camera> camera;
 
     VkPipeline m_Pipeline;
     VkPipelineLayout m_PipelineLayout;

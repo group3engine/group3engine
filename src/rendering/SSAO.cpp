@@ -5,12 +5,13 @@
 #include "Context.hpp"
 #include "Pipeline.hpp"
 #include "RenderPass.hpp"
+#include "Scene.hpp"
 
 #include <array>
 #include <random>
 
-SSAO::SSAO(Context &context, Image &depthBuffer, Image& renderedScene, std::shared_ptr<Camera> camera) :
-    context{context}, depthBuffer{depthBuffer}, renderedScene{renderedScene}, camera{camera} {
+SSAO::SSAO(Context &context, Image &depthBuffer, Image& renderedScene) :
+    context{context}, depthBuffer{depthBuffer}, renderedScene{renderedScene} {
 
     m_width = context.extent.width;
     m_height = context.extent.height;
@@ -83,7 +84,7 @@ void SSAO::Resize()
     for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
     {
         VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = camera->GetBuffers()[i].buffer;
+        bufferInfo.buffer = Scene::get().GetActiveScene()->GetCameraBuffers()[i].buffer;
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(CameraTransform);
         vkutil::UpdateDescriptorSet(context, 0, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
@@ -228,7 +229,7 @@ void SSAO::BuildDescriptors()
     for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
     {
         VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = camera->GetBuffers()[i].buffer;
+        bufferInfo.buffer = Scene::get().GetActiveScene()->GetCameraBuffers()[i].buffer;
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(CameraTransform);
         vkutil::UpdateDescriptorSet(context, 0, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);

@@ -10,12 +10,11 @@
 #include "Utils.hpp"
 #include "Buffer.hpp"
 
-ForwardPass::ForwardPass(Context &context, Image &shadowMap, Image &depthPrepass, std::shared_ptr<Scene> &scene, std::shared_ptr<Camera> &camera)
+ForwardPass::ForwardPass(Context &context, Image &shadowMap, Image &depthPrepass, Scene *scene)
     : context{context},
       shadowMap{shadowMap},
       depthPrepass{depthPrepass},
-      scene{scene},
-      camera{camera} {
+      scene{scene} {
 
     m_RenderTarget = CreateImageTexture2D(
         "ForwardPassRT",
@@ -53,7 +52,7 @@ ForwardPass::ForwardPass(Context &context, Image &shadowMap, Image &depthPrepass
     CreateFramebuffer();
     CreatePipeline();
 
-    m_Skybox = std::make_unique<Skybox>(context, camera, m_renderPass);
+    m_Skybox = std::make_unique<Skybox>(context, m_renderPass);
 }
 
 ForwardPass::~ForwardPass() {
@@ -327,7 +326,7 @@ void ForwardPass::BuildDescriptors() {
     // Camera Transform UBO
     for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = camera->GetBuffers()[i].buffer;
+        bufferInfo.buffer = Scene::get().GetActiveScene()->GetCameraBuffers()[i].buffer;
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(CameraTransform);
         vkutil::UpdateDescriptorSet(context, 0, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
@@ -350,15 +349,6 @@ void ForwardPass::BuildDescriptors() {
 
         vkutil::UpdateDescriptorSet(context, 2, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     }
-}
-
-void ForwardPass::DestroyDescriptors() {
-    vkFreeDescriptorSets(context.device, context.descriptorPool, m_descriptorSets.size(), m_descriptorSets.data());
-}
-
-void ForwardPass::RebuildDescriptors() {
-    DestroyDescriptors();
-    BuildDescriptors();
 }
 
 void ForwardPass::Update() {

@@ -21,6 +21,8 @@
 
 #include <spdlog/spdlog.h>
 
+namespace ResourceLoader {
+
 Material LoadMaterialDefault() {
     PBRMetallicRoughnessMaterial pbrMetallicRoughness{
         nullptr, nullptr, {{1, 1, 1, 1}, 0.0f, 1.0f, 0.0f}, "", ""};
@@ -47,7 +49,7 @@ std::string DecodeURI(std::string_view uri, std::string_view gltfPath) {
 
 int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
              MaterialManager &aMaterialManager, TextureManager &aTextureManager,
-             std::vector<Entity*> &aEntities, bool aIsDebug,
+             std::vector<Entity *> &aEntities, bool aIsDebug,
              std::vector<Animation> &aAnimations, std::vector<Skin> &aSkins) {
     // Convert directory separators to preferred directory separator
     // Slight try at cross-platform for Windows
@@ -751,3 +753,5 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
 
     return GLTF_LOAD_SUCCESS;
 }
+
+} // namespace ResourceLoader
