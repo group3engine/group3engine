@@ -22,7 +22,6 @@ class PresentPass {
     Context &context;
     Scene *m_Scene;
     Image &renderedScene;
-    Camera *camera;
 
     VkPipeline m_pipeline;
     VkPipelineLayout m_pipelineLayout;

@@ -365,7 +365,7 @@ void ImGuiRenderer::EndFrame() {
     ImGui::EndFrame();
 }
 
-void ImGuiRenderer::Update(Scene *scene, Camera *camera)
+void ImGuiRenderer::Update(Scene *scene)
 {
     ZoneScopedN("ImGuiRenderer::Update");
 
@@ -377,9 +377,9 @@ void ImGuiRenderer::Update(Scene *scene, Camera *camera)
 
     // Add camera position
     ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)",
-        camera->GetPosition().x,
-        camera->GetPosition().y,
-        camera->GetPosition().z
+        scene->GetActiveCamera()->GetPosition().x,
+        scene->GetActiveCamera()->GetPosition().y,
+        scene->GetActiveCamera()->GetPosition().z
     );
 
    ImGui::Text("Directional Light: (%.2f, %.2f, %.2f)",

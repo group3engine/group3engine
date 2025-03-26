@@ -336,7 +336,7 @@ void Renderer::Update(double deltaTime) {
 
     // m_camera->Update(deltaTime);
 
-    ImGuiRenderer::Update(m_scene, GetCamera());
+    ImGuiRenderer::Update(m_scene);
 
     m_SSAO->Update();
     m_SSR->Update();

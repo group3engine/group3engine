@@ -9,7 +9,6 @@
 class Context;
 class Scene;
 class Image;
-class Camera;
 
 class DepthPrepass {
   public:
