@@ -472,7 +472,6 @@ void Scene::SwitchCamera() {
     activeCharacter->GetCamera()->SetIsActive(false);
     inactiveCharacter->GetCamera()->SetIsActive(true);
     mCharacter = inactiveCharacter;
-    glfwSetWindowUserPointer(mContext->mWindow, inactiveCharacter->GetCamera());
 }
 
 void Scene::StartUp(Context *context, MaterialManager *materialManager,

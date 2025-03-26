@@ -349,7 +349,4 @@ void Renderer::Update(double deltaTime) {
 void Renderer::AddCameras() {
     // Find camera(s) in scene
     m_cameras = m_scene->GetCameras();
-
-    // GLFW callbacks
-    glfwSetWindowUserPointer(context.mWindow, m_scene->GetActiveCamera());
 }

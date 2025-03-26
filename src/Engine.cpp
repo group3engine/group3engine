@@ -146,7 +146,7 @@ void Engine::ChangeScene(const std::filesystem::path &filePath)
 }
 
 void Engine::Run() {
-    auto camera = static_cast<Camera *>(glfwGetWindowUserPointer(Platform::get().window));
+    auto *camera = mScene->GetActiveCamera();
     camera->SetPhysics(&PhysicsManager::get());
     camera->SetScene(mScene);
 
@@ -191,8 +191,7 @@ void Engine::UpdateLogic() {
         glfwSetWindowShouldClose(Platform::get().window, GLFW_TRUE);
     }
 
-    auto camera = static_cast<Camera *>(glfwGetWindowUserPointer(Platform::get().window));
-    assert(camera);
+    auto *camera = mScene->GetActiveCamera();
 
     camera->SetInput(EInputState::FORWARD, IsKeyDown(KEY::eW));
     camera->SetInput(EInputState::BACKWARD, IsKeyDown(KEY::eS));
