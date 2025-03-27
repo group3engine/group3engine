@@ -365,7 +365,6 @@ void CharacterEntity::Awake() {
     // register the character with the scene
     Scene::get().GetActiveScene()->SetMainCharacter(this);
 
-    // m_camera = std::make_shared<Camera>(context, cameraPos, glm::normalize(cameraPos + cameraDir), up, context.extent.width / (float)context.extent.height);
     JPH::Vec3 joltPos = GetCharacterPosition();
     glm::vec3 pos = glm::vec3(joltPos.GetX(), joltPos.GetY(), joltPos.GetZ());
     glm::vec3 dir = glm::vec3(1.0f, 1.0f, -1.0f);

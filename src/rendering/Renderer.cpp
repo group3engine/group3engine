@@ -70,7 +70,6 @@ void Renderer::Destroy() {
     m_SSAO.reset();
     m_SSR.reset();
     m_PresentPass.reset();
-    // m_camera.reset();
 
     vkDestroySampler(context.device, vkutil::repeatSamplerAniso, nullptr);
     vkDestroySampler(context.device, vkutil::repeatSampler, nullptr);
@@ -403,8 +402,6 @@ void Renderer::Present(uint32_t imageIndex) {
 
 void Renderer::Update(double deltaTime) {
     ZoneScopedN("Renderer::Update");
-
-    // m_camera->Update(deltaTime);
 
     ImGuiRenderer::Update(m_scene);
 
