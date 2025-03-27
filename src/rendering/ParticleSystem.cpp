@@ -4,10 +4,8 @@
 
 #include "ParticleSystem.hpp"
 
-#include "Pipeline.hpp"
 #include "Utils.hpp"
 
-VkRenderPass ParticleSystem::kRenderPass = VK_NULL_HANDLE;
 std::vector<ParticleSystem*> ParticleSystem::systems {};
 
 
@@ -20,14 +18,13 @@ ParticleSystem::ParticleSystem(Context &aContext, ParticleSystemSettings const &
     // allocate the particles array
     mParticles = new Particle[maxParticles] {};
     mParticleGPU = new ParticleGPU[maxParticles] {};
-    // TODO: change the buffer allocation bits to be device only, we want to be updating this only in compute shaders
     mParticlesBuffer = CreateBuffer("particle system buffer", aContext, sizeof(ParticleGPU) * maxParticles,
-                                    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                                    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
                                     VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
                                     VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
                                     VMA_ALLOCATION_CREATE_MAPPED_BIT);
     std::vector<VkDescriptorSetLayoutBinding> bindings = {
-        vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT),
+        vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT),
     };
 
     mDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(mContext, bindings);
@@ -36,51 +33,8 @@ ParticleSystem::ParticleSystem(Context &aContext, ParticleSystemSettings const &
     bufferInfo.buffer = mParticlesBuffer.buffer;
     bufferInfo.offset = 0;
     bufferInfo.range = sizeof(ParticleGPU) * maxParticles;
-    vkutil::UpdateDescriptorSet(mContext, 0, bufferInfo, mDescriptorSet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-    // TODO: create the pipeline
+    vkutil::UpdateDescriptorSet(mContext, 0, bufferInfo, mDescriptorSet, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 
-    // TO TOMMY: FOUND THIS IN ANOTHER THING, SO CHANGE THIS WITH THE PARTICLE StUFF XOXOXOXOO<3 from zach
-    std::filesystem::path vertexShaderPath;
-    switch (mSettings.renderSettings.type)
-    {
-        case ParticleMeshType::Billboard:
-            vertexShaderPath = PARTICLE_BILLBOARD_VERTEX_SHADER;
-            break;
-        case ParticleMeshType::Mesh:
-            vertexShaderPath = PARTICLE_MESH_VERTEX_SHADER;
-            break;
-        default:
-            assert(false);
-    }
-    std::filesystem::path fragmentShaderPath;
-    switch (mSettings.renderSettings.shadingType)
-    {
-        case ParticleShadingType::PBR:
-            fragmentShaderPath = PARTICLE_SHADER_PBR_FRAGMENT;
-            break;
-        case ParticleShadingType::Simple:
-            fragmentShaderPath = PARTICLE_SHADER_SIMPLE_FRAGMENT;
-            break;
-        case ParticleShadingType::Unlit:
-            fragmentShaderPath = PARTICLE_SHADER_UNLIT_FRAGMENT;
-            break;
-        default:
-            assert(false);
-    }
-    VkCullModeFlagBits cullMode = mSettings.renderSettings.renderBackFaces ? VK_CULL_MODE_NONE : VK_CULL_MODE_BACK_BIT;
-    mPipeline = PipelineBuilder(mContext.device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
-            .AddShader(vertexShaderPath, ShaderType::VERTEX)
-            .AddShader(fragmentShaderPath, ShaderType::FRAGMENT)
-            .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-            .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}})
-            .SetRasterizationState(VK_POLYGON_MODE_FILL, cullMode, VK_FRONT_FACE_COUNTER_CLOCKWISE)
-            .SetPipelineLayout({mDescriptorSetLayout, vkutil::materialDescriptorSetLayout})
-            .SetSampling(VK_SAMPLE_COUNT_1_BIT)
-            .AddBlendAttachmentState()
-            .AddBlendAttachmentState()
-            .SetDepthState(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL)
-            .SetRenderPass(kRenderPass)
-            .Build();
 
     // compute the time step which we release particles
     mTimeStepToEmit = 1.0 / aSettings.emission.rateOverTime;
@@ -89,15 +43,18 @@ ParticleSystem::ParticleSystem(Context &aContext, ParticleSystemSettings const &
     mDistanceStepToEmit = mDistanceStepToEmit * mDistanceStepToEmit;
 }
 
-void ParticleSystem::RegisterRenderPass(VkRenderPass aRenderPass)
-{
-    kRenderPass = aRenderPass;
-}
-
 ParticleSystem::~ParticleSystem()
 {
     // delete the particles array
     delete[] mParticles;
+    // delete the particle gpu array
+    delete[] mParticleGPU;
+    // destroy the buffer
+    mParticlesBuffer.Destroy();
+    // destroy the descriptor set layout
+    vkDestroyDescriptorSetLayout(mContext.device, mDescriptorSetLayout, nullptr);
+    // remove this from the systems list
+    systems.erase(std::remove(systems.begin(), systems.end(), this), systems.end());
 }
 
 void ParticleSystem::Emit()
@@ -107,13 +64,13 @@ void ParticleSystem::Emit()
     switch (mSettings.emissionShape.type)
     {
         case ShapeType::Sphere:
-            emission = SphereParticleSpawn(seed++, mSettings.emissionShape.shape);
+            emission = SphereParticleSpawn(seed, mSettings.emissionShape.shape);
             break;
         case ShapeType::Cone:
-            emission = ConeParticleSpawn(seed++, mSettings.emissionShape.shape);
+            emission = ConeParticleSpawn(seed, mSettings.emissionShape.shape);
             break;
         case ShapeType::Box:
-            emission = BoxParticleSpawn(seed++, mSettings.emissionShape.shape);
+            emission = BoxParticleSpawn(seed, mSettings.emissionShape.shape);
         default:
             assert(false);
     }
@@ -137,7 +94,7 @@ Transform ParticleSystem::GenerateTransform(Emission const &aEmission) const
     // the Emission.position, the Emission.velocity, the startSize, the startRotation, emissionshape.alignToDirection
     Transform resultingTransform {};
     // first off, the translation of the resulting transform is just the emission.position
-    resultingTransform.translation = aEmission.Position;
+    resultingTransform.translation = aEmission.Position + mSettings.attachedEntity->GetWorldTransformComponents().translation;
     // the scale of the transform is just the startSize
     resultingTransform.scale = mSettings.startSize;
     // the rotation is the alignToDirection rotation * the startRotation
@@ -216,21 +173,20 @@ void ParticleSystem::Update(double aDeltaTime, glm::vec3 aNewPosition)
     UpdateParticles(aDeltaTime);
 }
 
-void ParticleSystem::DrawAll(VkCommandBuffer cmd)
+void ParticleSystem::DrawAll(VkCommandBuffer cmd, VkPipelineLayout aLayout)
 {
     for (ParticleSystem* sys : systems)
     {
-        sys->Render(cmd);
+        sys->Render(cmd, aLayout);
     }
 }
 
-void ParticleSystem::Render(VkCommandBuffer cmd)
+void ParticleSystem::Render(VkCommandBuffer cmd, VkPipelineLayout aLayout)
 {
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline.first);
     // bind the particle descriptor
-    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline.second, 0, 1, &mDescriptorSet, 0, nullptr);
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, aLayout, 2, 1, &mDescriptorSet, 0, nullptr);
     // bind the material
-    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline.second, 1,
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, aLayout, 1,
                             1, &mSettings.material->descriptorSet, 0, nullptr);
 
     // bind the vertex buffers - positions, texcoords, normals
@@ -244,14 +200,14 @@ void ParticleSystem::Render(VkCommandBuffer cmd)
                          VK_INDEX_TYPE_UINT32);
 
     // draw the mesh
-    vkCmdDrawIndexed(cmd, mSettings.renderSettings.mesh->meshPrimitives[0].meshGPU->mIndexCount, 1, mSettings.maxParticles, 0, 0);
+    vkCmdDrawIndexed(cmd, mSettings.renderSettings.mesh->meshPrimitives[0].meshGPU->mIndexCount, mSettings.maxParticles, 0, 0, 0);
 }
 
 
 
 
 
-Emission SphereParticleSpawn(size_t seed, EmitterShape const &sphereShape)
+Emission SphereParticleSpawn(size_t& seed, EmitterShape const &sphereShape)
 {
     Emission returnValue{};
     do
@@ -277,7 +233,7 @@ Emission SphereParticleSpawn(size_t seed, EmitterShape const &sphereShape)
     assert(false);
 }
 
-Emission BoxParticleSpawn(size_t seed, EmitterShape const &boxShape)
+Emission BoxParticleSpawn(size_t &seed, EmitterShape const &boxShape)
 {
     assert(boxShape.box.emitFrom == EmitFrom::Volume);
     Emission returnValue{};
@@ -290,7 +246,7 @@ Emission BoxParticleSpawn(size_t seed, EmitterShape const &boxShape)
     return returnValue;
 }
 
-Emission ConeParticleSpawn(size_t seed, EmitterShape const &coneShape)
+Emission ConeParticleSpawn(size_t &seed, EmitterShape const &coneShape)
 {
     // get the radius of the cone at the top - the bottom radius + the height * tan(angle)
     float tanTheta = glm::tan(coneShape.cone.angle);

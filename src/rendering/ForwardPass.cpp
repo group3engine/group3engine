@@ -69,6 +69,9 @@ ForwardPass::~ForwardPass() {
     vkDestroyPipelineLayout(context.device, m_alphaMaskPipeline.second, nullptr);
     vkDestroyPipeline(context.device, m_skinnedPipeline.first, nullptr);
     vkDestroyPipelineLayout(context.device, m_skinnedPipeline.second, nullptr);
+    vkDestroyPipeline(context.device, m_particlePipeline.first, nullptr);
+    vkDestroyPipelineLayout(context.device, m_particlePipeline.second, nullptr);
+
 
     vkDestroyFramebuffer(context.device, m_framebuffer, nullptr);
     vkDestroyRenderPass(context.device, m_renderPass, nullptr);
@@ -78,6 +81,11 @@ ForwardPass::~ForwardPass() {
 
     if(skinDescriptorSetLayout != VK_NULL_HANDLE) {
         vkDestroyDescriptorSetLayout(context.device, skinDescriptorSetLayout, nullptr);
+    }
+
+    if(particleDescriptorSetLayout != VK_NULL_HANDLE)
+    {
+        vkDestroyDescriptorSetLayout(context.device, particleDescriptorSetLayout, nullptr);
     }
 }
 
@@ -184,7 +192,10 @@ void ForwardPass::BeginExecute(VkCommandBuffer cmd) const {
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_alphaMaskPipeline.first);
     scene->DrawAlphaMasked(cmd, m_alphaMaskPipeline.second);
 
-    ParticleSystem::DrawAll(cmd);
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_particlePipeline.second, 0, 1, &m_descriptorSets[vkutil::currentFrame], 0, nullptr);
+
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_particlePipeline.first);
+    ParticleSystem::DrawAll(cmd, m_particlePipeline.second);
 }
 
 void ForwardPass::EndExecute(VkCommandBuffer cmd) const {
@@ -253,6 +264,21 @@ void ForwardPass::CreatePipeline() {
         .Build();
 
     m_skinnedPipeline = skinnedPipeline;
+
+    m_particlePipeline = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
+            .AddShader(PARTICLE_MESH_VERTEX_SHADER, ShaderType::VERTEX)
+            .AddShader(PARTICLE_SHADER_UNLIT_FRAGMENT, ShaderType::FRAGMENT)
+            .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+            .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}})
+            .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE)
+            .SetPipelineLayout({meshDescriptorSetLayout, vkutil::materialDescriptorSetLayout, particleDescriptorSetLayout})
+            .SetSampling(VK_SAMPLE_COUNT_1_BIT)
+            .AddBlendAttachmentState()
+            .AddBlendAttachmentState()
+            .SetDepthState(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL)
+            .SetRenderPass(m_renderPass)
+            .Build();
+
 }
 
 void ForwardPass::CreateRenderPass() {
@@ -295,9 +321,6 @@ void ForwardPass::CreateRenderPass() {
         // 0 -> External : Depth
         .AddDependency(0, VK_SUBPASS_EXTERNAL,VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT)
         .Build();
-
-    // register the render pass with the particle system
-    ParticleSystem::RegisterRenderPass(m_renderPass);
 }
 
 void ForwardPass::CreateFramebuffer() {
@@ -324,6 +347,7 @@ void ForwardPass::BuildDescriptorSetLayouts() {
     meshDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
 
     skinDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}});
+    particleDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, {{0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}});
 }
 
 void ForwardPass::BuildDescriptors() {

@@ -5,6 +5,7 @@ struct Particle{
     vec3 colour;
     int isEnabled;
 };
+
 layout(set = 0, binding = 0) uniform SceneUniform
 {
     mat4 model;
@@ -17,14 +18,16 @@ layout(set = 0, binding = 0) uniform SceneUniform
     float farPlane;
 } ubo;
 
-layout(set = 2, binding = 0) uniform ParticleUniform
+layout (set = 2, binding = 0) readonly buffer ParticleUniform
 {
-Particle particles[];
+    Particle particles[];
 } pUBO;
+
 
 layout(location = 0) in vec3 pos;
 layout(location = 1) in vec2 tex;
 layout(location = 2) in vec3 normal;
+
 
 layout(location = 0) out vec4 WorldPos;
 layout(location = 1) out vec2 uv;
@@ -38,6 +41,7 @@ mat3 adjugate( in mat4 m )
     cross(m[0].xyz, m[1].xyz));
 }
 
+
 void main()
 {
     // get the particle index from the instance id
@@ -50,7 +54,10 @@ void main()
     }
     else
     {
-        position = vec4(pUBO.particles[particleIndex].transform * pos, 1.0);
+        position = pUBO.particles[particleIndex].transform * vec4( pos, 1.0);
     }
-    gl_Position = position;
+    WorldNormal = normalize(adjugate(pUBO.particles[particleIndex].transform) * normal);
+    uv = tex;
+    WorldPos = position;
+    gl_Position = ubo.projection * ubo.view * position;
 }

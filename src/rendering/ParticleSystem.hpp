@@ -8,6 +8,7 @@
 #include <glm/gtc/quaternion.hpp>
 
 #include "GLTFImportStructs.hpp"
+#include "Entity.hpp"
 
 #define SHADER_DIR std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/"
 #define PARTICLE_BILLBOARD_VERTEX_SHADER (SHADER_DIR / "billboardParticle.vert.spv")
@@ -83,11 +84,11 @@ union EmitterShape{
 // the functions to randomly choose a particle spawn location
 // we will do these with the method where you choose a random point in the bounding box and repeat until it is inside the sphere
 // sphere
-Emission SphereParticleSpawn(size_t seed, EmitterShape const &sphereShape);
+Emission SphereParticleSpawn(size_t &seed, EmitterShape const &sphereShape);
 // box
-Emission BoxParticleSpawn(size_t seed, EmitterShape const &boxShape);
+Emission BoxParticleSpawn(size_t &seed, EmitterShape const &boxShape);
 // cone
-Emission ConeParticleSpawn(size_t seed, EmitterShape const &coneShape);
+Emission ConeParticleSpawn(size_t &seed, EmitterShape const &coneShape);
 
 
 /// The type of shape
@@ -178,6 +179,8 @@ struct ParticleSystemSettings
     /// The space in which the simulation is done.
     // TODO: support more than just world
     SimulationSpace simulationSpace = SimulationSpace::World;
+    /// The entity that the particles are attached to.
+    Entity* attachedEntity = nullptr;
     /// The speed of the simulation.
     float simulationSpeed = 1.0f;
     /// Whether to play the particle system on creation.
@@ -244,7 +247,11 @@ class ParticleSystem {
     // I am sorry for these static guys one day I will atone for my sins
 public:
     static void RegisterRenderPass(VkRenderPass aRenderPass);
-    static void DrawAll(VkCommandBuffer cmd);
+    static void DrawAll(VkCommandBuffer cmd, VkPipelineLayout aLayout);
+
+// update function
+void Update(double aDeltaTime, glm::vec3 aNewPosition);
+
 private:
     static VkRenderPass kRenderPass;
     static std::vector<ParticleSystem*> systems;
@@ -258,7 +265,7 @@ public:
 
     void Destroy();
 
-    void Render(VkCommandBuffer cmd);
+    void Render(VkCommandBuffer cmd, VkPipelineLayout aLayout);
 
 
 private:
@@ -267,11 +274,8 @@ private:
 
     void UpdateParticles(double aDeltaTme);
 
-    // update function
-    void Update(double aDeltaTime, glm::vec3 aNewPosition);
 
-
-    private:
+private:
     bool mIsPlaying = false;
     ParticleSystemSettings mSettings = ParticleSystemSettings();
     glm::vec3 mPosition = glm::vec3(0.0f);

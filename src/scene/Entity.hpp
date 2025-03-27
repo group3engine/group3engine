@@ -97,7 +97,7 @@ class Entity {
     [[nodiscard]] Transform GetWorldTransformComponents() const;
 
     /// Get the #Mesh of the entity
-    [[nodiscard]] const Mesh *GetMesh() const { return mMesh; }
+    [[nodiscard]] Mesh *GetMesh() const { return mMesh; }
 
     /// Query if this entity is a character
     [[nodiscard]] bool IsCharacter() const;

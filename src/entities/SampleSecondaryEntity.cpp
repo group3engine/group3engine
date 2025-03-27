@@ -62,7 +62,6 @@ void SampleSecondaryEntity::Update(double deltaTime) {
 
 
 
-
     Entity::Update(deltaTime);
 
 
@@ -128,6 +127,7 @@ void SampleSecondaryEntity::CreateJoltCharacter()
 
 SampleSecondaryEntity::SampleSecondaryEntity() {
     SetAsCharacter();
+
 }
 void SampleSecondaryEntity::OnCollisionStart(Entity *aOther) {
 

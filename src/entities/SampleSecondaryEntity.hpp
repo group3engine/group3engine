@@ -51,6 +51,7 @@ class SampleSecondaryEntity : public Entity {
     Transform mInitialTransform = {};
     std::unique_ptr<SampleJoltCharacter> mSampleJoltCharacter;
 
+
 };
 
 #endif //SAMPLENPCENTITY_HPP

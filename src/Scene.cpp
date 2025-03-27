@@ -434,6 +434,8 @@ void Scene::DrawAlphaMasked(VkCommandBuffer cmd,
         entity->RecordDrawCutout(cmd, pipelineLayout);
     }
 }
+
+
 void Scene::DrawShadowMap(VkCommandBuffer cmd,
                           VkPipelineLayout pipelineLayout) {
     for (auto& entity : m_Entities) {
