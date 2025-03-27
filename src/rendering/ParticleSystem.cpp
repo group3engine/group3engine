@@ -41,6 +41,13 @@ ParticleSystem::ParticleSystem(Context &aContext, ParticleSystemSettings const &
     mDistanceStepToEmit = 1.0 / aSettings.emission.rateOverTime;
     // square the distance step
     mDistanceStepToEmit = mDistanceStepToEmit * mDistanceStepToEmit;
+
+    if(mSettings.attachedEntity != nullptr)
+        mAttachedWorldTranslation = mSettings.attachedEntity->GetWorldTransformComponents().translation;
+    else
+        mAttachedWorldTranslation = glm::vec3(0.f);
+    mPosition = mAttachedWorldTranslation;
+    mPreviousPosition = mAttachedWorldTranslation;
 }
 
 ParticleSystem::~ParticleSystem()
@@ -94,7 +101,7 @@ Transform ParticleSystem::GenerateTransform(Emission const &aEmission) const
     // the Emission.position, the Emission.velocity, the startSize, the startRotation, emissionshape.alignToDirection
     Transform resultingTransform {};
     // first off, the translation of the resulting transform is just the emission.position
-    resultingTransform.translation = aEmission.Position + mSettings.attachedEntity->GetWorldTransformComponents().translation;
+    resultingTransform.translation = aEmission.Position + mAttachedWorldTranslation;
     // the scale of the transform is just the startSize
     resultingTransform.scale = mSettings.startSize;
     // the rotation is the alignToDirection rotation * the startRotation
@@ -146,8 +153,13 @@ void ParticleSystem::UpdateParticles(double aDeltaTime)
     mParticlesBuffer.Update(mContext, mParticleGPU, mSettings.maxParticles * sizeof(ParticleGPU));
 }
 
-void ParticleSystem::Update(double aDeltaTime, glm::vec3 aNewPosition)
+void ParticleSystem::Update(double aDeltaTime)
 {
+    // get the attached entities translation
+    if(mSettings.attachedEntity != nullptr)
+        mAttachedWorldTranslation = mSettings.attachedEntity->GetWorldTransformComponents().translation;
+    else
+        mAttachedWorldTranslation = glm::vec3(0.f);
     // first, lets multiply deltaTime by the simulation speed
     aDeltaTime *= mSettings.simulationSpeed;
     // now, lets work out how many particles we need to spawn
@@ -157,9 +169,10 @@ void ParticleSystem::Update(double aDeltaTime, glm::vec3 aNewPosition)
     // round mPreviousTime up to the next multiple of mTimeStepToEmit, and count the number of time steps we pass
     for (double roundedUpTime = ceil(mPreviousTime / mTimeStepToEmit) * mTimeStepToEmit; roundedUpTime < mTime; roundedUpTime += mTimeStepToEmit)
     { numberOfParticlesToEmit++;}
+    numberOfParticlesToEmit = std::min(numberOfParticlesToEmit, mSettings.maxParticles);
     // calculate the new distance moved
     mPreviousPosition = mPosition;
-    mPosition = aNewPosition;
+    mPosition = mAttachedWorldTranslation;
     mPreviousDistance = mDistanceMoved;
     mDistanceMoved += glm::distance2(mPreviousPosition, mPosition);
     // round previous distance up to the next multiple of mDistanceStep, and count the number of distance steps we pass

@@ -14,8 +14,8 @@
 #define PARTICLE_BILLBOARD_VERTEX_SHADER (SHADER_DIR / "billboardParticle.vert.spv")
 #define PARTICLE_MESH_VERTEX_SHADER (SHADER_DIR / "defaultParticle.vert.spv")
 #define PARTICLE_SHADER_PBR_FRAGMENT (SHADER_DIR / "alpha_masking.frag.spv")
-#define PARTICLE_SHADER_SIMPLE_FRAGMENT (SHADER_DIR / "default.frag.spv")
-#define PARTICLE_SHADER_UNLIT_FRAGMENT (SHADER_DIR / "default.frag.spv")
+#define PARTICLE_SHADER_SIMPLE_FRAGMENT (SHADER_DIR / "alpha_masking.frag.spv")
+#define PARTICLE_SHADER_UNLIT_FRAGMENT (SHADER_DIR / "alpha_masking.frag.spv")
 
 // alias colour to vec4
 using Colour = glm::vec4;
@@ -250,7 +250,7 @@ public:
     static void DrawAll(VkCommandBuffer cmd, VkPipelineLayout aLayout);
 
 // update function
-void Update(double aDeltaTime, glm::vec3 aNewPosition);
+    void Update(double aDeltaTime);
 
 private:
     static VkRenderPass kRenderPass;
@@ -298,6 +298,7 @@ private:
     VkDescriptorSetLayout mDescriptorSetLayout = VK_NULL_HANDLE;
     VkDescriptorSet mDescriptorSet = VK_NULL_HANDLE;
     std::pair<VkPipeline, VkPipelineLayout> mPipeline;
+    glm::vec3 mAttachedWorldTranslation {};
 };
 
 

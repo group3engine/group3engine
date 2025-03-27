@@ -10,7 +10,7 @@ ParticleCube::ParticleCube() {
 
 void ParticleCube::Update(double deltaTime)
 {
-    mParticleSystem->Update(deltaTime, GetWorldTransformComponents().translation);
+    mParticleSystem->Update(deltaTime);
 }
 
 void ParticleCube::Awake()
@@ -24,6 +24,7 @@ void ParticleCube::Awake()
     pSettings.emissionShape.shape.cone.height = 1.f;
     pSettings.emissionShape.alignToDirection = true;
     pSettings.attachedEntity = this;
+    pSettings.emission.rateOverTime = 20.f;
     mParticleSystem = new ParticleSystem(Context::get(), pSettings);
 }
 
