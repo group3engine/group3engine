@@ -50,7 +50,8 @@ void Renderer::CreateRenderPasses() {
 
     // ImGui
     ImGuiRenderer::Initialize(context);
-    ImGuiRenderer::AddTextures(m_scene->GetTextureManager());
+    std::filesystem::path path = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets" / "heart.png";
+    ImGuiRenderer::AddTextures(m_scene->GetTextureManager(), path, "heart");
     // // TODO: This will cause a validation error if you re-size the window. Just needs to be updated when re-sized
     ImGuiRenderer::AddTexture(vkutil::clampToEdgeSamplerAniso, m_ShadowMap->GetRenderTarget().imageView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL);
 }
@@ -275,6 +276,75 @@ void Renderer::EndFrame(VkCommandBuffer cmd) {
 
     Submit();
     Present(mImageIndex);
+
+    vkutil::currentFrame = (vkutil::currentFrame + 1) % vkutil::MAX_FRAMES_IN_FLIGHT;
+}
+
+void Renderer::RenderUIOnly()
+{
+    {
+        ZoneScopedN("vkWaitForFences");
+
+        vkWaitForFences(context.device, 1, &m_Fences[vkutil::currentFrame], VK_TRUE, UINT64_MAX);
+    }
+
+    uint32_t index;
+    VkResult getImageIndex;
+    {
+        ZoneScopedN("vkAcquireNextImageKHR");
+
+        getImageIndex = vkAcquireNextImageKHR(context.device, context.swapchain, UINT64_MAX, m_imageAvailableSemaphores[vkutil::currentFrame], VK_NULL_HANDLE, &index);
+    }
+
+
+
+    if (getImageIndex == VK_ERROR_OUT_OF_DATE_KHR) {
+        // Recreate swapchain
+        context.RecreateSwapchain();
+        m_PresentPass->Resize();
+
+    } else if (getImageIndex != VK_SUCCESS && getImageIndex != VK_SUBOPTIMAL_KHR) {
+        throw std::runtime_error("Failed to aquire swapchain image");
+    }
+
+    {
+        ZoneScopedN("vkResetFences");
+
+        vkResetFences(context.device, 1, &m_Fences[vkutil::currentFrame]);
+    }
+
+    {
+        ZoneScopedN("vkResetCommandBuffer");
+
+        vkResetCommandBuffer(m_commandBuffers[vkutil::currentFrame], 0);
+    }
+
+    VkCommandBuffer &cmd = m_commandBuffers[vkutil::currentFrame];
+
+
+    {
+        ZoneScopedN("vk::Execute");
+
+        VkCommandBufferBeginInfo beginInfo = {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+
+        VK_CHECK(vkBeginCommandBuffer(cmd, &beginInfo), "Failed to begin command buffer");
+
+
+        {
+            TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "vk::Frame", tracy::Color::Crimson);
+
+            m_PresentPass->Execute(cmd, index);
+        }
+
+        // Periodically collect the GPU events
+        TracyVkCollect(context.tracyContexts[vkutil::currentFrame], cmd);
+
+        vkEndCommandBuffer(cmd);
+    }
+
+    Submit();
+    Present(index);
 
     vkutil::currentFrame = (vkutil::currentFrame + 1) % vkutil::MAX_FRAMES_IN_FLIGHT;
 }

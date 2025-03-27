@@ -41,6 +41,8 @@ class Engine {
     Context m_context;
     bool m_isRunning;
     double m_lastFrameTime;
+    bool m_isLoading = false;
+    float m_progress = 0.0f;
 
     bool m_sceneNeedsChanging = false;
     std::filesystem::path m_scenePath;
@@ -51,6 +53,8 @@ class Engine {
 
     void Update(double deltaTime);
     void Render();
+
+    void RenderLoadingScreen();
 
 #ifdef JPH_DEBUG_RENDERER
     void DrawPhysics();

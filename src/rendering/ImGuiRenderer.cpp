@@ -64,11 +64,9 @@ void ImGuiRenderer::Initialize(const Context &context) {
     io.Fonts->AddFontDefault();
 }
 
-void ImGuiRenderer::AddTextures(TextureManager *textureManager) {
+void ImGuiRenderer::AddTextures(TextureManager *textureManager, const std::filesystem::path &path, std::string textureName) {
     // TODO: Cleanup
     {
-        std::filesystem::path path = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets" / "heart.png";
-        std::string textureName = "heart";
 
         // TODO: Return a pointer to the newly created texture?
         textureManager->addTexture(path, textureName);
@@ -76,12 +74,14 @@ void ImGuiRenderer::AddTextures(TextureManager *textureManager) {
         Texture *texture = textureManager->GetTexture(textureName);
 
         // Create Descriptor Set using ImGUI's implementation
-        myTexData.DS =
+        MyTextureData &texData = textureDatas[textureName];
+        texData.DS =
             ImGui_ImplVulkan_AddTexture(vkutil::clampToEdgeSamplerAniso, texture->image.imageView,
                                         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-        myTexData.Width = texture->image.mWidth;
-        myTexData.Height = texture->image.mHeight;
+        texData.Width = texture->image.mWidth;
+        texData.Height = texture->image.mHeight;
+        // move tex data to th
         SPDLOG_INFO("ImGui loaded {} with, width {} height {}", textureName, texture->image.mWidth, texture->image.mHeight);
     }
 }
@@ -101,11 +101,17 @@ void ImGuiRenderer::RemoveTextures() {
     // TextureManager and selectively remove textures from it.
 
     // Free the descriptor set associated with the texture
-    ImGui_ImplVulkan_RemoveTexture(myTexData.DS);
+    // for each texture data in textureDatas
+    for (auto& [key, myTexData] : textureDatas)
+    {
+        ImGui_ImplVulkan_RemoveTexture(myTexData.DS);
+    }
+    textureDatas.clear();
 }
 
 void ImGuiRenderer::NewHeartSprite(const ImVec2 &offset) {
     // TODO: Remove hardcoded image size
+    MyTextureData &myTexData = textureDatas["heart"];
     ImVec2 imageSize = ImVec2(myTexData.Width * 0.02f, myTexData.Height * 0.02f);
 
     size_t sv = 0;
@@ -355,6 +361,79 @@ void ImGuiRenderer::NewTimer(const gui::TimerData &data) {
     ImGui::End();
 }
 
+void ImGuiRenderer::LoadingBar(float progress, ImVec2 position)
+{
+    // Get the main viewport to determine screen dimensions
+    const ImGuiViewport* viewport = ImGui::GetMainViewport();
+
+    // Calculate position at the bottom of the screen (ignoring the passed position parameter)
+    ImVec2 windowPos = ImVec2(viewport->WorkPos.x, viewport->WorkPos.y + viewport->WorkSize.y - 100.0f);
+    ImVec2 windowSize = ImVec2(viewport->WorkSize.x, 100.0f);
+
+    // Size for the progress bar to fit full width with some padding
+    ImVec2 progressBarSize = ImVec2(windowSize.x - 20.0f, 20.0f);
+
+    // Flags to get a non-interactable blank window to draw on
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                             ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+                             ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
+    ImGui::SetNextWindowPos(windowPos);
+    ImGui::SetNextWindowSize(windowSize);
+    ImGui::Begin("Loading", nullptr, flags);
+    // Display a progress bar; progress value should be in the range [0.0f, 1.0f]
+    ImGui::ProgressBar(progress / 100.f, progressBarSize);
+    ImGui::Text("Loading... %.0f%%", progress);
+    ImGui::End();
+}
+
+void ImGuiRenderer::Image(std::string const &imageName, ImVec2 position, ImVec2 size)
+{
+    MyTextureData &myTexData = textureDatas[imageName];
+    // flip position 0-1 to 1-0
+    position = ImVec2{1.f - position.x, 1.f - position.y};
+    size_t sv = 0;
+    // convert the position and size from relative (0-1) coordinates, to pixel coordinates
+    // get the window size
+    // Get the main viewport to determine screen dimensions
+    const ImGuiViewport* viewport = ImGui::GetMainViewport();
+
+    // Calculate position at the bottom of the screen (ignoring the passed position parameter)
+    ImVec2 windowSize = ImVec2(viewport->Size.x, viewport->Size.y);
+    position = ImVec2(position.x * windowSize.x, position.y * windowSize.y);
+    size = ImVec2(size.x * windowSize.x, size.y * windowSize.y);
+
+
+    float windowBorderSize = 0.0f;
+    if (enableTextWindowBorder) {
+        // Display a window border for debug purposes
+        windowBorderSize = ImGui::GetStyle().WindowBorderSize;
+    } else {
+        // No window border
+        sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); });
+    }
+
+    // Make the window fit the heart exactly
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(0, 0)); });
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0)); });
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); });
+
+    ImGui::SetNextWindowSize(size);
+    ImGui::SetNextWindowPos(ImVec2(position.x - windowBorderSize - size.x, position.y - windowBorderSize - size.y));
+    ImGui::SetNextWindowBgAlpha(0.0f);
+
+    // Flags to get a non-interactable blank window to draw on
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                             ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+                             ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
+
+    ImGui::Begin((imageName + "image render").c_str(), nullptr, flags);
+    ImGui::Image((ImTextureID)myTexData.DS, size);
+
+    ImGui::PopStyleVar(sv);
+
+    ImGui::End();
+}
+
 void ImGuiRenderer::NewFrame() {
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -420,7 +499,6 @@ void ImGuiRenderer::Update(Scene *scene)
     sunLight.position.x = x;
     sunLight.position.y = y;
     sunLight.position.z = z;
-    sunLight.position = sunLight.position;
 
     if (ImGui::CollapsingHeader("Directional Light"))
     {
@@ -502,7 +580,9 @@ void ImGuiRenderer::Render(VkCommandBuffer cmd, const Context &context, uint32_t
 
 void ImGuiRenderer::Shutdown(const Context& context)
 {
-    ImGui_ImplVulkan_RemoveTexture(myTexData.DS);
+    // for each texture, remove
+
+    RemoveTextures();
 
     ImGui_ImplVulkan_Shutdown();
     vkDestroyDescriptorPool(context.device, imGuiDescriptorPool, nullptr);

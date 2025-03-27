@@ -34,6 +34,8 @@ class Renderer {
 
     void Destroy();
 
+    void Render();
+    void RenderUIOnly();
     void BeginFrame(VkCommandBuffer cmd);
     void EndFrame(VkCommandBuffer cmd);
     void Update(double deltaTime);
