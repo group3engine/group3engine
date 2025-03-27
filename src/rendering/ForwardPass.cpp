@@ -9,6 +9,7 @@
 #include "Scene.hpp"
 #include "Utils.hpp"
 #include "Buffer.hpp"
+#include "ParticleSystem.hpp"
 
 ForwardPass::ForwardPass(Context &context, Image &shadowMap, Image &depthPrepass, std::shared_ptr<Scene> &scene, std::shared_ptr<Camera> &camera)
     : context{context},
@@ -182,6 +183,8 @@ void ForwardPass::BeginExecute(VkCommandBuffer cmd) const {
 
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_alphaMaskPipeline.first);
     scene->DrawAlphaMasked(cmd, m_alphaMaskPipeline.second);
+
+    ParticleSystem::DrawAll(cmd);
 }
 
 void ForwardPass::EndExecute(VkCommandBuffer cmd) const {
@@ -292,6 +295,9 @@ void ForwardPass::CreateRenderPass() {
         // 0 -> External : Depth
         .AddDependency(0, VK_SUBPASS_EXTERNAL,VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT)
         .Build();
+
+    // register the render pass with the particle system
+    ParticleSystem::RegisterRenderPass(m_renderPass);
 }
 
 void ForwardPass::CreateFramebuffer() {

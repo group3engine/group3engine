@@ -9,6 +9,13 @@
 
 #include "GLTFImportStructs.hpp"
 
+#define SHADER_DIR std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/"
+#define PARTICLE_BILLBOARD_VERTEX_SHADER (SHADER_DIR / "billboardParticle.vert.spv")
+#define PARTICLE_MESH_VERTEX_SHADER (SHADER_DIR / "defaultParticle.vert.spv")
+#define PARTICLE_SHADER_PBR_FRAGMENT (SHADER_DIR / "alpha_masking.frag.spv")
+#define PARTICLE_SHADER_SIMPLE_FRAGMENT (SHADER_DIR / "default.frag.spv")
+#define PARTICLE_SHADER_UNLIT_FRAGMENT (SHADER_DIR / "default.frag.spv")
+
 // alias colour to vec4
 using Colour = glm::vec4;
 // alias size to vec3
@@ -45,7 +52,7 @@ enum class EmitFrom {
     Surface,
 };
 /// union of shapes a particle can be emitted from
-union Shape{
+union EmitterShape{
     /// a sphere shape
     struct {
         /// the radius of the sphere
@@ -76,11 +83,11 @@ union Shape{
 // the functions to randomly choose a particle spawn location
 // we will do these with the method where you choose a random point in the bounding box and repeat until it is inside the sphere
 // sphere
-Emission SphereParticleSpawn(size_t seed, Shape const &sphereShape);
+Emission SphereParticleSpawn(size_t seed, EmitterShape const &sphereShape);
 // box
-Emission BoxParticleSpawn(size_t seed, Shape const &boxShape);
+Emission BoxParticleSpawn(size_t seed, EmitterShape const &boxShape);
 // cone
-Emission ConeParticleSpawn(size_t seed, Shape const &coneShape);
+Emission ConeParticleSpawn(size_t seed, EmitterShape const &coneShape);
 
 
 /// The type of shape
@@ -95,11 +102,11 @@ struct ParticleSystemEmissionShape
 {
 
     /// The location of the shape
-    Transform transform = ZEROTRANSFORM;
+    Transform transform {};
     /// The type of shape
     ShapeType type = ShapeType::Cone;
     /// The shape of the emission
-    Shape shape = Shape{};
+    EmitterShape shape = EmitterShape{};
     /// Whether to align the particles to the direction when emitted
     bool alignToDirection = false;
 
@@ -178,7 +185,7 @@ struct ParticleSystemSettings
     /// Whether to add the owner entities velocity to the particles.
     bool useOwnerVelocity = false;
     /// The maximum number of particles that can exist at one time. If the particle system tries to create more than this number, the oldest particles will be destroyed.
-    int maxParticles = 1000;
+    size_t maxParticles = 1000;
     /// Whether to randomly seed the particle system each time it is played / looped.
     bool isRandomlySeeded = true;
     /// The random seed of the particle system. Only used if isRandomlySeeded is false.
@@ -203,7 +210,7 @@ inline float get_hash(uint seed)
     return float(seed) / float(0xffffffffu);
 }
 // function to get random from -1 to 1
-inline float get_random(int seed)
+inline float get_random(size_t seed)
 {
     return get_hash(seed++) * 2.0f - 1.0f;
 }
@@ -213,7 +220,9 @@ struct alignas(16) ParticleGPU
 {
     // the transform is only really going to be used for those particles that are mesh particles
     glm::mat4 transform; // 4 * 16 bytes
-    glm::vec4 colour; // 12 bytes
+    glm::vec3 colour; // 12 bytes
+    int isEnabled = 0;
+
 };
 // total size: 48 bytes, 16 * 3
 // The particle struct used by the current particles
@@ -224,7 +233,7 @@ struct Particle
     // the velocity of the particle
     glm::vec3 velocity;
     // the time remaining of the particle
-    double lifetime;
+    double lifetime = 0.f;
     // the colour of the particle
     Colour colour;
 };
@@ -232,7 +241,14 @@ struct Particle
 
 
 class ParticleSystem {
-    public:
+    // I am sorry for these static guys one day I will atone for my sins
+public:
+    static void RegisterRenderPass(VkRenderPass aRenderPass);
+    static void DrawAll(VkCommandBuffer cmd);
+private:
+    static VkRenderPass kRenderPass;
+    static std::vector<ParticleSystem*> systems;
+public:
     ParticleSystem(Context &aContext, ParticleSystemSettings const &aSettings);
     ~ParticleSystem();
 
@@ -241,9 +257,13 @@ class ParticleSystem {
     void Stop();
 
     void Destroy();
-    private:
+
+    void Render(VkCommandBuffer cmd);
+
+
+private:
     void Emit();
-    Transform GenerateTransform(Emission const & aEmission);
+    Transform GenerateTransform(Emission const & aEmission) const;
 
     void UpdateParticles(double aDeltaTme);
 
@@ -264,11 +284,16 @@ class ParticleSystem {
     double mPreviousTime = 0.0f;
 
     Particle* mParticles = nullptr;
+    ParticleGPU* mParticleGPU = nullptr;
     size_t backOfParticleBuffer = 0;
     Buffer mParticlesBuffer;
     double mTimeStepToEmit;
     double mDistanceStepToEmit;
     size_t seed = 0.f;
+    Context &mContext;
+    VkDescriptorSetLayout mDescriptorSetLayout = VK_NULL_HANDLE;
+    VkDescriptorSet mDescriptorSet = VK_NULL_HANDLE;
+    std::pair<VkPipeline, VkPipelineLayout> mPipeline;
 };
 
 
