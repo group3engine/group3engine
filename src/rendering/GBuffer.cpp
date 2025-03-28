@@ -173,7 +173,7 @@ void GBuffer::CreatePipeline()
         .SetRenderPass(m_renderPass)
         .Build();
 
-    m_Pipeline		 = gBufferPipelineRes.first;
+    m_Pipeline       = gBufferPipelineRes.first;
     m_PipelineLayout = gBufferPipelineRes.second;
 
     // G-Buffer alpha masking
@@ -191,7 +191,7 @@ void GBuffer::CreatePipeline()
         .SetRenderPass(m_renderPass)
         .Build();
 
-    m_AlphaMaskingPipeline		 = gBufferAlphaMaskingPipelineRes.first;
+    m_AlphaMaskingPipeline       = gBufferAlphaMaskingPipelineRes.first;
     m_AlphaMaskingPipelineLayout = gBufferAlphaMaskingPipelineRes.second;
 }
 

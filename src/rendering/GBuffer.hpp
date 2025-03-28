@@ -6,7 +6,7 @@
 #include "Camera.hpp"
 
 /*
-*	This is a thin g-buffer required for post-processing such as SSAO and SSR
+* This is a thin g-buffer required for post-processing such as SSAO and SSR
 */
 
 class Context;

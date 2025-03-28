@@ -594,5 +594,5 @@ void ImGuiRenderer::Shutdown(const Context& context)
 void ImGuiRenderer::AddTexture(VkSampler sampler, VkImageView imageView, VkImageLayout imageLayout)
 {
     ImTextureID textureID = ImGui_ImplVulkan_AddTexture(sampler, imageView, imageLayout);
-	textureIDs.push_back(static_cast<void*>(textureID));
+    textureIDs.push_back(static_cast<void*>(textureID));
 }
