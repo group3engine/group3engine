@@ -14,6 +14,8 @@
 
 #include <atomic>
 
+class Scene;
+
 enum class PhysicsType {
     STATIC,
     KINEMATIC,
@@ -97,7 +99,7 @@ class Entity {
     [[nodiscard]] Transform GetWorldTransformComponents() const;
 
     /// Get the #Mesh of the entity
-    [[nodiscard]] const Mesh *GetMesh() const { return mMesh; }
+    [[nodiscard]] Mesh *GetMesh() const { return mMesh; }
 
     /// Query if this entity is a character
     [[nodiscard]] bool IsCharacter() const;
@@ -197,6 +199,11 @@ class Entity {
     // set the parent transform
     void SetParentTransform(glm::mat4 aParentTransform);
 
+    // TODO: Make friend class with Scene
+    void SetScene(Scene *scene) { mScene = scene; }
+
+  protected:
+    Scene *GetScene() const { return mScene; }
 
   private:
     void SetPhysicsTransform();
@@ -249,5 +256,6 @@ class Entity {
 
     float mTotalTime = 0.0f;
 
+    Scene *mScene = nullptr;
 };
 #endif // SCENE_ENTITY_HPP

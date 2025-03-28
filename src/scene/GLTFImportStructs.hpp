@@ -161,11 +161,11 @@ enum class AlphaMode { eOpaque, eMask, eBlend };
 /// A transformation, stored as a translation, rotation, and scale
 struct Transform {
     /// The translation of the transform
-    glm::vec3 translation;
+    glm::vec3 translation = glm::vec3(0.0f);
     /// The rotation of the transform, stored as a quaternion (x, y, z, w)
-    glm::quat rotation;
+    glm::quat rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
     /// The scale of the transform
-    glm::vec3 scale;
+    glm::vec3 scale = glm::vec3(1.f);
 
     glm::mat4 matrix{};
 
