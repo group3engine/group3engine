@@ -83,18 +83,17 @@ void SSAO::Resize()
         1
     );
 
-    size_t id = 0;
-    for (auto &descriptorSets : mPlayerDescriptorSets) {
+    for (size_t playerId = 0; playerId < GlobalConfig::maxPlayers; ++playerId) {
+        auto &descriptorSets = mPlayerDescriptorSets[playerId];
+
         for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
             VkDescriptorBufferInfo bufferInfo{};
-            bufferInfo.buffer = m_Scene->GetCameraBuffers(id)[i].buffer;
+            bufferInfo.buffer = m_Scene->GetCameraBuffers(playerId)[i].buffer;
             bufferInfo.offset = 0;
             bufferInfo.range = sizeof(CameraTransform);
             vkutil::UpdateDescriptorSet(context, 0, bufferInfo, descriptorSets[i],
                                         VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
         }
-
-        ++id;
     }
 
     for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
@@ -262,23 +261,22 @@ void SSAO::BuildDescriptorSetLayouts() {
 
 void SSAO::BuildDescriptors()
 {
-    size_t id = 0;
     // Build player descriptors
-    for (auto &descriptorSets : mPlayerDescriptorSets) {
+    for (size_t playerId = 0; playerId < GlobalConfig::maxPlayers; ++playerId) {
+        auto &descriptorSets = mPlayerDescriptorSets[playerId];
+
         descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
         vkutil::AllocateDescriptorSets(context, context.descriptorPool, mPlayerDescriptorSetLayout,
                                        vkutil::MAX_FRAMES_IN_FLIGHT, descriptorSets);
 
         for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
             VkDescriptorBufferInfo bufferInfo{};
-            bufferInfo.buffer = m_Scene->GetCameraBuffers(id)[i].buffer;
+            bufferInfo.buffer = m_Scene->GetCameraBuffers(playerId)[i].buffer;
             bufferInfo.offset = 0;
             bufferInfo.range = sizeof(CameraTransform);
             vkutil::UpdateDescriptorSet(context, 0, bufferInfo, descriptorSets[i],
                                         VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
         }
-
-        ++id;
     }
 
     // Build descriptors

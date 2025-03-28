@@ -326,8 +326,9 @@ void ForwardPass::BuildDescriptorSetLayouts() {
 }
 
 void ForwardPass::BuildDescriptors() {
-    size_t id = 0;
-    for (auto &descriptorSets : mPlayerDescriptorSets) {
+    for (size_t playerId = 0; playerId < GlobalConfig::maxPlayers; ++playerId) {
+        auto &descriptorSets = mPlayerDescriptorSets[playerId];
+
         descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
         vkutil::AllocateDescriptorSets(context, context.descriptorPool, meshDescriptorSetLayout,
                                        vkutil::MAX_FRAMES_IN_FLIGHT, descriptorSets);
@@ -335,7 +336,7 @@ void ForwardPass::BuildDescriptors() {
         // Camera Transform UBO
         for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
             VkDescriptorBufferInfo bufferInfo{};
-            bufferInfo.buffer = scene->GetCameraBuffers(id)[i].buffer;
+            bufferInfo.buffer = scene->GetCameraBuffers(playerId)[i].buffer;
             bufferInfo.offset = 0;
             bufferInfo.range = sizeof(CameraTransform);
             vkutil::UpdateDescriptorSet(context, 0, bufferInfo, descriptorSets[i],
@@ -365,8 +366,6 @@ void ForwardPass::BuildDescriptors() {
             vkutil::UpdateDescriptorSet(context, 2, imageInfo, descriptorSets[i],
                                         VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
         }
-
-        ++id;
     }
 }
 

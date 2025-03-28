@@ -222,8 +222,9 @@ void Skybox::BuildDescriptorSetLayouts() {
 
 void Skybox::BuildDescriptors()
 {
-    size_t id = 0;
-    for (auto &descriptorSets : mPlayerDescriptorSets) {
+    for (size_t playerId = 0; playerId < GlobalConfig::maxPlayers; ++playerId) {
+        auto &descriptorSets = mPlayerDescriptorSets[playerId];
+
         descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
         vkutil::AllocateDescriptorSets(context, context.descriptorPool, mPlayerDescriptorSetLayout,
                                        vkutil::MAX_FRAMES_IN_FLIGHT, descriptorSets);
@@ -231,14 +232,12 @@ void Skybox::BuildDescriptors()
         // Camera Transform UBO
         for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
             VkDescriptorBufferInfo bufferInfo{};
-            bufferInfo.buffer = m_Scene->GetCameraBuffers(id)[i].buffer;
+            bufferInfo.buffer = m_Scene->GetCameraBuffers(playerId)[i].buffer;
             bufferInfo.offset = 0;
             bufferInfo.range = sizeof(CameraTransform);
             vkutil::UpdateDescriptorSet(context, 0, bufferInfo, descriptorSets[i],
                                         VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
         }
-
-        ++id;
     }
 
     {
