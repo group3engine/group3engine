@@ -27,6 +27,8 @@ struct Vertex {
     glm::vec2 tex;
     /// The normal of the vertex
     glm::vec3 normal;
+    /// The tangent of the vertex, w is the bitangent mirror factor
+    glm::vec4 tangent;
     /// The joints of the vertex (integer indices)
     glm::vec4 joints;
     /// The weights of the vertex

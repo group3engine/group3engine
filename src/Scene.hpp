@@ -127,7 +127,7 @@ class Scene {
     bool mHasCharacter = false;
     CharacterEntity *mCharacter;
 
-    size_t mPlayerCount = 2;
+    size_t mPlayerCount = 1;
     std::vector<Camera *> mCameras;
     std::array<CameraTransform, GlobalConfig::maxPlayers> mPlayerCameraTransforms;
     std::array<std::vector<Buffer>, GlobalConfig::maxPlayers> mPlayerCameraUbos;

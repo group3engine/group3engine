@@ -212,6 +212,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             // temporary positions, normals, texcoords
             std::vector<float> positions;
             std::vector<float> normals;
+            std::vector<float> tangents;
             std::vector<float> texcoords;
             std::vector<float> joints;
             std::vector<float> weights;
@@ -232,6 +233,15 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 normals.resize(count);
                 assert(cgltf_num_components(nrm->type) == 3);
                 cgltf_accessor_unpack_floats(nrm, normals.data(), count);
+            }
+
+            // tangents
+            if (const cgltf_accessor *tngent = cgltf_find_accessor(
+                    &gltfPrimitive, cgltf_attribute_type_tangent, 0)) {
+                size_t count = tngent->count * 4;
+                tangents.resize(count);
+                assert(cgltf_num_components(tngent->type) == 4);
+                cgltf_accessor_unpack_floats(tngent, tangents.data(), count);
             }
 
             // Texcoords
@@ -277,6 +287,15 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                     normals[i * 3], normals[i * 3 + 1], normals[i * 3 + 2]};
                 meshPrimitive.vertices[i].tex = {texcoords[i * 2],
                                                  texcoords[i * 2 + 1]};
+                // if the mesh has tangents
+                if (!tangents.empty()){
+                    meshPrimitive.vertices[i].tangent = {
+                            tangents[i * 4],
+                            tangents[i * 4 + 1],
+                            tangents[i * 4 + 2],
+                            tangents[i * 4 + 3]
+                    };
+                }
                 // if the mesh has joints and weights
                 if (!joints.empty() && !weights.empty()) {
                     meshPrimitive.vertices[i].joints = {joints[i * 4],
