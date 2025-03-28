@@ -36,6 +36,12 @@ class RigidBody {
         Vec3 velocity(glm_velocity.x, glm_velocity.y, glm_velocity.z);
         PhysicsManager::get().mPhysicsSystem.GetBodyInterface().SetLinearVelocity(mBodyId, velocity);
     }
+
+    void AddLinearImpulse(glm::vec3 glm_impulse) const {
+        Vec3 impulse(glm_impulse.x, glm_impulse.y, glm_impulse.z);
+        PhysicsManager::get().mPhysicsSystem.GetBodyInterface().AddImpulse(mBodyId, impulse);
+    }
+
     void SetAngularVelocity(glm::vec3 glm_velocity) const {
         Vec3 velocity(glm_velocity.x, glm_velocity.y, glm_velocity.z);
         PhysicsManager::get().mPhysicsSystem.GetBodyInterface().SetAngularVelocity(mBodyId, velocity);

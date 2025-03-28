@@ -67,6 +67,11 @@ class CharacterEntity : public Entity {
         mCharacterPositionOffset = glm::vec3(x, y, z);
     }
 
+    void SetLinearVelocity(glm::vec3 glm_velocity) {
+        Vec3 velocity(glm_velocity.x, glm_velocity.y, glm_velocity.z);
+        // TODO: ACTUALLY FINISH THIS
+    }
+
     void MoveToSpawn();
 
     void TeleportCallback(glm::vec3 aPosition) {
@@ -77,6 +82,9 @@ class CharacterEntity : public Entity {
   private:
     void Save();
     void Load();
+
+  protected:
+    std::string mType = "character";
 
   private:
     Transform mInitialTransform = {};

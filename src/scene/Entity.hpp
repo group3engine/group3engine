@@ -1,6 +1,7 @@
 #ifndef SCENE_ENTITY_HPP
 #define SCENE_ENTITY_HPP
 
+#include <string>
 #include <utility>
 
 #include <glm/glm.hpp>
@@ -140,6 +141,9 @@ class Entity {
     /// Get the total time that has passed since the entity was created
     [[nodiscard]] double GetTotalTime() const {return mTotalTime;}
 
+    /// Compares the entity's type with the provided string
+    [[nodiscard]] bool CompareType(std::string const& aCompareType) {return aCompareType == mType;}
+
   public:
     // the following functions are overridable by the user
     // called on the first frame of a collision
@@ -207,6 +211,9 @@ class Entity {
 
   protected:
     glm::vec3 mCharacterPositionOffset{};
+
+    /// the Type of entity this is, overwrite in inherited classes
+    std::string mType = "default";
   private:
     
     std::string mName{};
