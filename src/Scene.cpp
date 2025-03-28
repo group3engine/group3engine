@@ -459,7 +459,6 @@ Camera *Scene::GetActiveCamera() {
             Camera *camera = character->GetCamera();
 
             if (camera->IsActive()) {
-                SPDLOG_INFO("Active camera of {}", GetCharacter().GetName());
                 return camera;
             }
         }
