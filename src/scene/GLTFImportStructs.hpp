@@ -111,19 +111,15 @@ struct Material {
     std::string name;
     bool hasPBRMetallicRoughness;
     PBRMetallicRoughnessMaterial pbrMetallicRoughness;
+    Texture *normalTexture;
+    std::string normalTextureName;
     VkDescriptorSet descriptorSet;
     Buffer materialBuffer;
     bool alphaCutout;
     float alphaCutoff;
 
     // move constructor
-    Material(Material &&aOther) noexcept
-        : name(std::move(aOther.name)),
-          hasPBRMetallicRoughness(aOther.hasPBRMetallicRoughness),
-          pbrMetallicRoughness(aOther.pbrMetallicRoughness),
-          descriptorSet(aOther.descriptorSet),
-          materialBuffer(std::move(aOther.materialBuffer)),
-          alphaCutout(aOther.alphaCutout), alphaCutoff(aOther.alphaCutoff) {}
+    Material(Material &&aOther) = default;
 
     // constructor
     Material() = default;

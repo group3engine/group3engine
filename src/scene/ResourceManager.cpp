@@ -100,6 +100,8 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
     defaultMaterial.name = "default";
     defaultMaterial.pbrMetallicRoughness.baseColorTextureName = "white";
     defaultMaterial.pbrMetallicRoughness.metallicRoughnessTextureName = "white";
+    defaultMaterial.normalTexture = aTextureManager.GetTexture("normal");
+    defaultMaterial.normalTextureName = "normal";
 
     aMaterialManager.AddMaterial(defaultMaterial);
 
@@ -185,6 +187,26 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 gltfMaterial.pbr_metallic_roughness.roughness_factor;
         } else {
             material.hasPBRMetallicRoughness = false;
+        }
+        // load the normal map if there is one
+        if (gltfMaterial.normal_texture.texture) {
+            std::string normalFileName =
+                    gltfMaterial.normal_texture.texture->image->uri;
+            std::string normalName = DecodeURI(
+                    normalFileName, aFilepath.string());
+
+            aTextureManager.addTexture(normalName,
+                                       normalFileName);
+            material.normalTexture =
+                    aTextureManager.GetTexture(normalFileName);
+
+            material.normalTextureName =
+                    normalFileName;
+        }
+        else
+        {
+            material.normalTexture = aTextureManager.GetTexture("normal");
+            material.normalTextureName = "normal";
         }
         // TODO: create material descriptor set
         aMaterialManager.AddMaterial(material);

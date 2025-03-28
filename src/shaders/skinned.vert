@@ -30,7 +30,7 @@ layout(location = 5) in vec4 weights;
 
 layout(location = 0) out vec4 WorldPos;
 layout(location = 1) out vec2 uv;
-layout(location = 2) out vec3 WorldNormal;
+layout(location = 2) out mat3 TBNFrame;
 
 // source: https://www.shadertoy.com/view/3s33zj
 mat3 adjugate( in mat4 m )
@@ -58,6 +58,6 @@ void main()
 
 	WorldPos = skinMat * vec4(pos, 1.0);
 	gl_Position = ubo.projection * ubo.view * WorldPos;
-
-	WorldNormal = adjugate(skinMat) * normal;
+    vec3 biTangent = cross(normalize(normal), normalize(tangent.xyz)) * tangent.w;
+    TBNFrame = adjugate(pc.ModelMatrix) * mat3(normalize(tangent.xyz), normalize(biTangent), normalize(normal));
 }
