@@ -91,19 +91,24 @@ void ShadowMap::Execute(VkCommandBuffer cmd) {
 
     vkCmdBeginRenderPass(cmd, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    size_t playerCount = scene->GetPlayerCount();
-    for (size_t playerId = 0; playerId < playerCount; ++playerId) {
-        VkViewport viewport = CalcViewport(context.extent, playerCount, playerId);
+        VkViewport viewport{};
+        viewport.x = 0;
+        viewport.y = 0;
+        viewport.width = m_width;
+        viewport.height = m_height;
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
         vkCmdSetViewport(cmd, 0, 1, &viewport);
 
         VkRect2D scissor{};
-        scissor.offset = {static_cast<int32_t>(viewport.x), static_cast<int32_t>(viewport.y)};
-        scissor.extent = {static_cast<uint32_t>(viewport.width),
-                          static_cast<uint32_t>(viewport.height)};
+        scissor.offset = {0,0};
+        scissor.extent.width = m_width;
+        scissor.extent.height = m_height;
+
         vkCmdSetScissor(cmd, 0, 1, &scissor);
 
         vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1,
-                                &mPlayerDescriptorSets[playerId][vkutil::currentFrame], 0, nullptr);
+                                &mPlayerDescriptorSets[0][vkutil::currentFrame], 0, nullptr);
 
         vkCmdSetDepthBias(cmd, vkutil::ShadowBias, 0.0f, vkutil::ShadowSlope);
 
@@ -121,7 +126,7 @@ void ShadowMap::Execute(VkCommandBuffer cmd) {
         // REST OF THE SCENE
         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
         scene->DrawShadowMap(cmd, m_PipelineLayout);
-    }
+
 
     // END RENDER PASS
     vkCmdEndRenderPass(cmd);
