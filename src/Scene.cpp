@@ -49,20 +49,24 @@ void Scene::Update(double aDeltaTime) {
 }
 
 void Scene::UpdateCameraTransforms() {
-    auto width = mContext->extent.width;
-    auto height = mContext->extent.height;
-
     for (size_t i = 0; i < mPlayerCount; ++i) {
+        float width = static_cast<float>(mContext->extent.width);
+        float height = static_cast<float>(mContext->extent.height);
+
         auto *camera = mCameras[i];
         const auto &pos = camera->GetPosition();
         const auto &dir = camera->GetDirection();
         const auto &up = camera->GetUp();
 
+        if (mPlayerCount == 2) {
+            width = static_cast<float>(width) / mPlayerCount;
+            height = static_cast<float>(height);
+        }
+
         auto &playerCameraTransform = mPlayerCameraTransforms[i];
         playerCameraTransform.view = glm::lookAt(pos, pos + dir, up);
-        // TODO: Fix projection for proper 2 player split screen
         playerCameraTransform.projection =
-            glm::perspective(playerCameraTransform.fov, width / (float)height,
+            glm::perspective(playerCameraTransform.fov, width / height,
                              playerCameraTransform.nearPlane, playerCameraTransform.farPlane);
         playerCameraTransform.projection[1][1] *= -1;
         playerCameraTransform.cameraPosition = glm::vec4(pos.x, pos.y, pos.z, 1.0);
