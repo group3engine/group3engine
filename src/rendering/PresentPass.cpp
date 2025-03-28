@@ -14,8 +14,9 @@
         This pass will just take the forward pass shading image and present it
 */
 
-PresentPass::PresentPass(Context &context, Image &renderedScene)
+PresentPass::PresentPass(Context &context, Scene *scene, Image &renderedScene)
     : context{context},
+      m_Scene{scene},
       renderedScene{renderedScene},
       m_pipeline{VK_NULL_HANDLE},
       m_pipelineLayout{VK_NULL_HANDLE},

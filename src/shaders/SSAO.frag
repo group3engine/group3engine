@@ -3,9 +3,8 @@
 layout(location = 0) in vec2 uv;
 layout(location = 0) out vec4 fragColour;
 
-layout(set = 0, binding = 0) uniform SceneUniform
+layout(set = 0, binding = 0) uniform CameraUBO
 {
-	mat4 model;
 	mat4 view;
 	mat4 projection;
     vec4 cameraPosition;
@@ -16,7 +15,7 @@ layout(set = 0, binding = 0) uniform SceneUniform
 } ubo;
 
 
-layout(set = 0, binding = 2) uniform SSAOSettings
+layout(set = 1, binding = 1) uniform SSAOSettings
 {
 	int NumDirections;
 	int NumSteps;
@@ -26,14 +25,14 @@ layout(set = 0, binding = 2) uniform SSAOSettings
 }ssao;
 
 
-layout(set = 0, binding = 5) uniform SSAOSamples
+layout(set = 1, binding = 4) uniform SSAOSamples
 {
 	vec3 samples[64];
 }ssaoSamples;
 
-layout (set = 0, binding = 1) uniform sampler2D depthBuffer;
-layout (set = 0, binding = 3) uniform sampler2D renderedScene;
-layout (set = 0, binding = 4) uniform sampler2D NoiseTexture;
+layout (set = 1, binding = 0) uniform sampler2D depthBuffer;
+layout (set = 1, binding = 2) uniform sampler2D renderedScene;
+layout (set = 1, binding = 3) uniform sampler2D NoiseTexture;
 
 vec4 DepthToPosition(vec2 uv)
 {

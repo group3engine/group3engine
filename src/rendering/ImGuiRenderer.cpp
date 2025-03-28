@@ -444,7 +444,7 @@ void ImGuiRenderer::EndFrame() {
     ImGui::EndFrame();
 }
 
-void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::shared_ptr<Camera>& camera)
+void ImGuiRenderer::Update(Scene *scene)
 {
     ZoneScopedN("ImGuiRenderer::Update");
 
@@ -456,9 +456,9 @@ void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::share
 
     // Add camera position
     ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)",
-        camera->GetPosition().x,
-        camera->GetPosition().y,
-        camera->GetPosition().z
+        scene->GetActiveCamera()->GetPosition().x,
+        scene->GetActiveCamera()->GetPosition().y,
+        scene->GetActiveCamera()->GetPosition().z
     );
 
    ImGui::Text("Directional Light: (%.2f, %.2f, %.2f)",
@@ -594,5 +594,5 @@ void ImGuiRenderer::Shutdown(const Context& context)
 void ImGuiRenderer::AddTexture(VkSampler sampler, VkImageView imageView, VkImageLayout imageLayout)
 {
     ImTextureID textureID = ImGui_ImplVulkan_AddTexture(sampler, imageView, imageLayout);
-	textureIDs.push_back(static_cast<void*>(textureID));
+    textureIDs.push_back(static_cast<void*>(textureID));
 }

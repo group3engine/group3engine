@@ -93,24 +93,27 @@ bool Engine::Initialize() {
     mTextureManager = std::make_unique<TextureManager>(m_context);
     mTextureManager->Initialise();
 
-    mScene = std::make_shared<Scene>(m_context,
-                                     mMaterialManager.get(),
-                                     mMeshManager.get(),
-                                     mTextureManager.get());
-    mScene->StartUp();
+    Scene::get().StartUp(&m_context,
+                         mMaterialManager.get(),
+                         mMeshManager.get(),
+                         mTextureManager.get());
+
+    mScene = Scene::get().GetActiveScene();
 
     mRenderer = std::make_unique<Renderer>(m_context, mScene);
     
     PhysicsManager::get().StartUp();
 
-    mScene->Initialise(Sample::SampleObbyTestScene);
+    mScene->Load(Sample::SampleObbyTestScene);
 
     mRenderer->CreateRenderPasses();
     // call the scene awake function
     mScene->Awake();
 
+    mRenderer->AddCameras();
+
 #ifdef JPH_DEBUG_RENDERER
-    mDebugRenderer = std::make_unique<DebugRendererImp>(mRenderer.get());
+    mDebugRenderer = std::make_unique<DebugRendererImp>(mRenderer.get(), mScene);
 #endif // JPH_DEBUG_RENDERER
 
     SPDLOG_DEBUG("Engine initialised.");
@@ -127,7 +130,8 @@ void Engine::Shutdown() {
 
     mRenderer->Destroy();
     mRenderer.reset();
-    mScene->Destroy();
+    mScene->Unload();
+    mScene->ShutDown();
 
     mMeshManager->Destroy();
     mMaterialManager->Destroy();
@@ -145,9 +149,10 @@ void Engine::ChangeScene(const std::filesystem::path &filePath)
 }
 
 void Engine::Run() {
-    auto camera = static_cast<Camera *>(glfwGetWindowUserPointer(Platform::get().window));
-    camera->SetPhysics(&PhysicsManager::get());
-    camera->SetScene(mScene.get());
+    for (auto *camera : mScene->GetCameras()) {
+        camera->SetPhysics(&PhysicsManager::get());
+        camera->SetScene(mScene);
+    }
 
     m_lastFrameTime = glfwGetTime();
 
@@ -174,6 +179,9 @@ void Engine::Run() {
             m_sceneNeedsChanging = false;
         }
 
+        if (IsKeyPressed(KEY::eC)) {
+            mScene->SwitchCamera();
+        }
 
 
         FrameMark;
@@ -187,49 +195,12 @@ void Engine::UpdateLogic() {
         glfwSetWindowShouldClose(Platform::get().window, GLFW_TRUE);
     }
 
-    auto camera = static_cast<Camera *>(glfwGetWindowUserPointer(Platform::get().window));
-    assert(camera);
-
-    camera->SetInput(EInputState::FORWARD, IsKeyDown(KEY::eW));
-    camera->SetInput(EInputState::BACKWARD, IsKeyDown(KEY::eS));
-    camera->SetInput(EInputState::LEFT, IsKeyDown(KEY::eA));
-    camera->SetInput(EInputState::RIGHT, IsKeyDown(KEY::eD));
-
-    camera->SetInput(EInputState::DOWN, IsKeyDown(KEY::eQ));
-    camera->SetInput(EInputState::UP, IsKeyDown(KEY::eE));
-
-    camera->SetInput(EInputState::FAST, IsKeyDown(KEY::eLEFT_SHIFT));
-    camera->SetInput(EInputState::SLOW, IsKeyDown(KEY::eLEFT_CONTROL));
-
-    camera->SetInput(EInputState::SWITCHVIEW, IsKeyPressed(KEY::eV));
-
-    camera->SetInput(EInputState::TELEPORT, IsKeyPressed(KEY::eT));
-
-    camera->SetInput(EInputState::ZOOM_IN, IsKeyPressed(KEY::eY));
-    camera->SetInput(EInputState::ZOOM_OUT, IsKeyPressed(KEY::eU));
-
     if (IsKeyPressed(KEY::e5)) {
         vkutil::postProcessSettings.Enable = vkutil::postProcessSettings.Enable == true ? false : true;
 
         const std::string result = vkutil::postProcessSettings.Enable == true ? "Enabled" : "Disabled";
 
         SPDLOG_INFO("Post process: {}", result);
-    }
-
-    if (IsMouseButtonPressed(MOUSE_BUTTON::eRIGHT)) {
-        auto &flag = camera->inputMap[std::size_t(EInputState::MOUSING)];
-        flag = !flag;
-
-        if (flag) {
-            glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        } else {
-            glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-        }
-    }
-
-    if(IsKeyPressed(KEY::eP))
-    {
-        SPDLOG_INFO("Camera Location: {}", glm::to_string(camera->GetPosition()));
     }
 }
 
@@ -239,15 +210,10 @@ void Engine::ChangeSceneFR()
     vkQueueWaitIdle(m_context.graphicsQueue);
     vkQueueWaitIdle(m_context.presentQueue);
 
-
-
-
-
-
     // Remove all UI textures as they were linked with the texture manager
     ImGuiRenderer::RemoveTextures();
 
-    mScene->Destroy();
+    mScene->Unload();
     mMaterialManager->Destroy();
     mMeshManager->Destroy();
     mTextureManager->Destroy();
@@ -276,15 +242,12 @@ void Engine::ChangeSceneFR()
     assert(bodyIds.empty());
 #endif // #ifndef NDEBUG
     m_progress = 25.f;
-    mScene->StartUp();
-    mScene->Initialise(m_scenePath);
+    mScene->Load(m_scenePath);
     m_progress = 75.f;
 
     // Add back UI textures
     std::filesystem::path path = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets" / "heart.png";
     ImGuiRenderer::AddTextures(mTextureManager.get(), path, "heart");
-
-    mRenderer->RebuildSceneDescriptors();
 
     mScene->Awake();
     m_progress = 100.f;
@@ -308,7 +271,7 @@ void Engine::Update(double deltaTime) {
 // TODO: Understand why Jolt does this
 #ifdef JPH_DEBUG_RENDERER
     if (GlobalConfig::enablePhysicsDebugRenderer) {
-        auto cameraPos = mRenderer->GetCamera()->GetPosition();
+        auto cameraPos = mScene->GetActiveCamera()->GetPosition();
         mDebugRenderer.get()->SetCameraPos(RVec3{cameraPos.x, cameraPos.y, cameraPos.z});
 
         // Create render primitives: vertex buffers, index buffers and store them for later

@@ -10,13 +10,14 @@
 
 #include "Camera.hpp"
 #include "Engine.hpp"
+#include "GLFW.hpp"
 #include "SampleGLTFFilePaths.hpp"
 #include "Scene.hpp"
 
 namespace {
     std::filesystem::path BuildSaveFilename() {
         std::filesystem::path saveFilename = "save_";
-        saveFilename += Scene::GetActiveScene()->GetSceneFilename();
+        saveFilename += Scene::get().GetActiveScene()->GetSceneFilename();
         saveFilename += ".txt";
         return saveFilename;
     }
@@ -26,9 +27,42 @@ CharacterEntity::~CharacterEntity() {
 }
 
 void CharacterEntity::ProcessInput(){
+    mCamera->SetInput(EInputState::FORWARD, IsKeyDown(KEY::eW));
+    mCamera->SetInput(EInputState::BACKWARD, IsKeyDown(KEY::eS));
+    mCamera->SetInput(EInputState::LEFT, IsKeyDown(KEY::eA));
+    mCamera->SetInput(EInputState::RIGHT, IsKeyDown(KEY::eD));
+
+    mCamera->SetInput(EInputState::DOWN, IsKeyDown(KEY::eQ));
+    mCamera->SetInput(EInputState::UP, IsKeyDown(KEY::eE));
+
+    mCamera->SetInput(EInputState::FAST, IsKeyDown(KEY::eLEFT_SHIFT));
+    mCamera->SetInput(EInputState::SLOW, IsKeyDown(KEY::eLEFT_CONTROL));
+
+    mCamera->SetInput(EInputState::SWITCHVIEW, IsKeyPressed(KEY::eV));
+
+    mCamera->SetInput(EInputState::TELEPORT, IsKeyPressed(KEY::eT));
+
+    mCamera->SetInput(EInputState::ZOOM_IN, IsKeyPressed(KEY::eY));
+    mCamera->SetInput(EInputState::ZOOM_OUT, IsKeyPressed(KEY::eU));
+
+    if (IsMouseButtonPressed(MOUSE_BUTTON::eLEFT)) {
+        auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
+        flag = !flag;
+
+        if (flag) {
+            glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        } else {
+            glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        }
+    }
+    if (IsMouseButtonPressed(MOUSE_BUTTON::eRIGHT)) {
+        auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
+        flag = false;
+    }
+
     glm::vec3 controlInput = glm::vec3(0.0f);
     bool jump = false;
-    if(Camera::GetMainCamera()->isInFollowCharacterMode()) {
+    if(mCamera->isInFollowCharacterMode()) {
         // Determine controller input
         if (IsKeyDown(KEY::eA))
             controlInput.z = -1;
@@ -46,7 +80,7 @@ void CharacterEntity::ProcessInput(){
             controlInput.z = GetGamepadAxis(GAMEPAD_AXIS::eLEFT_X);
 
         // Rotate controls to align with the camera
-        auto cameraForward = Camera::GetMainCamera()->GetDirection();
+        auto cameraForward = mCamera->GetDirection();
         cameraForward.y = 0.0f;
         cameraForward = glm::normalize(cameraForward);
         glm::quat rotation = glm::rotation(glm::vec3(1.0f, 0.0f, 0.0f), cameraForward);
@@ -145,6 +179,9 @@ void CharacterEntity::Update(double deltaTime) {
                 child->GetAnimator().SetTimeScale(timeScale);
             }
     }
+
+    mCamera->UpdateCameraRotation(deltaTime);
+    mCamera->UpdateCameraMovement(GetWorldTransformComponents());
 }
 
 void CharacterEntity::UpdateUi(double deltaTime) {
@@ -330,9 +367,18 @@ void CharacterEntity::Awake() {
     // create the jolt character
     CreateJoltCharacter();
     // register the character with the scene
-    Scene::GetActiveScene()->SetMainCharacter(this);
+    Scene::get().GetActiveScene()->SetMainCharacter(this);
+
+    JPH::Vec3 joltPos = GetCharacterPosition();
+    glm::vec3 pos = glm::vec3(joltPos.GetX(), joltPos.GetY(), joltPos.GetZ());
+    glm::vec3 dir = glm::vec3(1.0f, 1.0f, -1.0f);
+    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0);
+    mCamera = new Camera(pos, dir, up);
+
+    Scene::get().GetActiveScene()->AddCamera(mCamera);
+
     // register the teleport callback
-    Camera::GetMainCamera()->SetTeleportCallbackFunction(std::bind(&CharacterEntity::TeleportCallback, this, std::placeholders::_1));
+    mCamera->SetTeleportCallbackFunction(std::bind(&CharacterEntity::TeleportCallback, this, std::placeholders::_1));
 
     // if there is no save
     if(!m_has_save)
@@ -347,7 +393,7 @@ void CharacterEntity::Awake() {
 
 void CharacterEntity::MoveToSpawn()
 {
-    for(auto &entity: Scene::GetActiveScene()->GetEntities())
+    for(auto &entity: Scene::get().GetActiveScene()->GetEntities())
     {
         if(entity->CompareTag("spawnpoint"))
         {

@@ -5,6 +5,7 @@
 #include "Camera.hpp"
 #include "Skybox.hpp"
 
+#include "Config.hpp"
 
 // This is disgusting whoever did it lol
 #define SHADER_DIR std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/"
@@ -21,13 +22,13 @@ class Buffer;
 
 class ForwardPass {
   public:
-    ForwardPass(Context &context, Image &shadowMap, Image &depthPrepass, std::shared_ptr<Scene> &scene, std::shared_ptr<Camera> &camera);
+    ForwardPass(Context &context, Image &shadowMap, Image &depthPrepass, Scene *scene);
     ~ForwardPass();
 
     VkRenderPass Get() const { return m_renderPass; }
 
-    void BeginExecute(VkCommandBuffer cmd) const;
-    void EndExecute(VkCommandBuffer cmd) const;
+    void BeginExecute(VkCommandBuffer cmd);
+    void EndExecute(VkCommandBuffer cmd);
     void Update();
 
     void Resize();
@@ -37,15 +38,12 @@ class ForwardPass {
 
     Skybox* GetSkybox() { return m_Skybox.get(); }
 
-    void RebuildDescriptors();
-
   private:
     void CreatePipeline();
     void CreateRenderPass();
     void CreateFramebuffer();
     void BuildDescriptorSetLayouts();
     void BuildDescriptors();
-    void DestroyDescriptors();
 
     Image m_RenderTarget;
     Image m_DepthTarget;
@@ -59,9 +57,10 @@ class ForwardPass {
     Context &context;
     Image &shadowMap;
     Image &depthPrepass;
-    std::shared_ptr<Scene> scene;
-    std::shared_ptr<Camera> camera;
-    std::vector<VkDescriptorSet> m_descriptorSets;
+    Scene *scene;
+
+    std::array<std::vector<VkDescriptorSet>, GlobalConfig::maxPlayers> mPlayerDescriptorSets;
+
     std::pair<VkPipeline, VkPipelineLayout> m_opaquePipeline;
     std::pair<VkPipeline, VkPipelineLayout> m_alphaMaskPipeline;
     std::pair<VkPipeline, VkPipelineLayout> m_skinnedPipeline;

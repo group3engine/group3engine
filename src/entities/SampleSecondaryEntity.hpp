@@ -6,13 +6,13 @@
 #define SAMPLENPCENTITY_HPP
 
 
-
+#include "CharacterEntity.hpp"
 #include "Entity.hpp"
 #include "SampleJoltCharacter.h"
 
 
 
-class SampleSecondaryEntity : public Entity {
+class SampleSecondaryEntity : public CharacterEntity {
   public:
     SampleSecondaryEntity();
     ~SampleSecondaryEntity() override;

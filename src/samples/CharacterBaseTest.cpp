@@ -18,7 +18,7 @@
 
 #include "../physics/PhysicsHelpers.hpp"
 
-#include "../Camera.hpp"
+#include "Camera.hpp"
 
 using namespace JPH;
 

@@ -11,6 +11,7 @@
 #include "Buffer.hpp"
 #include "Pipeline.hpp"
 #include "Renderer.hpp"
+#include "RenderPassCommon.hpp"
 
 namespace {
     #define SHADER_DIR std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/"
@@ -20,27 +21,27 @@ namespace {
     #define TRIANGLE_FRAGMENT_SHADER SHADER_DIR / "triangle.frag.spv"
 }
 
-DebugRendererImp::DebugRendererImp(Renderer *renderer) : mRenderer(renderer) {
+DebugRendererImp::DebugRendererImp(Renderer *renderer, Scene *scene)
+    : mRenderer(renderer), mScene(scene) {
     mVertexBuffers.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
-    mDescriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
 
     // TODO: Fix vertex attribute description to work with Line struct
     // {
     //     std::vector<VkDescriptorSetLayoutBinding> bindings = {
-    //         // SceneUBO (projection, view etc.)
+    //         // CameraUBO (projection, view etc.)
     //         vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)};
 
     //     auto &context = mRenderer->GetContext();
-    //     const auto *camera = mRenderer->GetCamera();
+    //     const auto *camera = mScene->GetActiveCamera();
 
     //     mUboLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
 
     //     vkutil::AllocateDescriptorSets(context, context.descriptorPool, mUboLayout, vkutil::MAX_FRAMES_IN_FLIGHT, mDescriptorSets);
 
-    //     // Scene UBO
+    //     // Camera UBO
     //     for (size_t i = 0; i < std::size_t(vkutil::MAX_FRAMES_IN_FLIGHT); i++) {
     //         VkDescriptorBufferInfo bufferInfo{};
-    //         bufferInfo.buffer = camera->GetBuffers()[i].buffer;
+    //         bufferInfo.buffer = mScene->GetCameraBuffers(0)[i].buffer;
     //         bufferInfo.offset = 0;
     //         bufferInfo.range = sizeof(CameraTransform);
     //         vkutil::UpdateDescriptorSet(context, 0, bufferInfo, mDescriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
@@ -65,23 +66,29 @@ DebugRendererImp::DebugRendererImp(Renderer *renderer) : mRenderer(renderer) {
     // The Vertex struct used elsewhere is larger than needed here.
     {
         std::vector<VkDescriptorSetLayoutBinding> bindings = {
-            // SceneUBO (projection, view etc.)
+            // CameraUBO (projection, view etc.)
             vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)};
 
         auto &context = mRenderer->GetContext();
-        const auto *camera = mRenderer->GetCamera();
 
         mUboLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
 
-        vkutil::AllocateDescriptorSets(context, context.descriptorPool, mUboLayout, vkutil::MAX_FRAMES_IN_FLIGHT, mDescriptorSets);
+        for (size_t playerId = 0; playerId < GlobalConfig::maxPlayers; ++playerId) {
+            auto &descriptorSets = mDescriptorSets[playerId];
 
-        // Scene UBO
-        for (size_t i = 0; i < std::size_t(vkutil::MAX_FRAMES_IN_FLIGHT); i++) {
-            VkDescriptorBufferInfo bufferInfo{};
-            bufferInfo.buffer = camera->GetBuffers()[i].buffer;
-            bufferInfo.offset = 0;
-            bufferInfo.range = sizeof(CameraTransform);
-            vkutil::UpdateDescriptorSet(context, 0, bufferInfo, mDescriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+            descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+            vkutil::AllocateDescriptorSets(context, context.descriptorPool, mUboLayout,
+                                           vkutil::MAX_FRAMES_IN_FLIGHT, descriptorSets);
+
+            // Camera UBO
+            for (size_t i = 0; i < std::size_t(vkutil::MAX_FRAMES_IN_FLIGHT); i++) {
+                VkDescriptorBufferInfo bufferInfo{};
+                bufferInfo.buffer = mScene->GetCameraBuffers(playerId)[i].buffer;
+                bufferInfo.offset = 0;
+                bufferInfo.range = sizeof(CameraTransform);
+                vkutil::UpdateDescriptorSet(context, 0, bufferInfo, descriptorSets[i],
+                                            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+            }
         }
 
         // NOTE: Wireframe triangles
@@ -169,10 +176,26 @@ void DebugRendererImp::DrawLines() {
 
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, linePipeline);
 
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, linePipelineLayout,
-                                0, 1, &mDescriptorSets[vkutil::currentFrame], 0, nullptr);
+        size_t playerCount = mScene->GetPlayerCount();
+        for (size_t playerId = 0; playerId < playerCount; ++playerId) {
+            auto &descriptorSets = mDescriptorSets[playerId];
 
-        vkCmdDraw(commandBuffer, mLines.size(), 1, 0, 0);
+            VkViewport viewport =
+                CalcViewport(mRenderer->GetContext().extent, playerCount, playerId);
+            vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+
+            VkRect2D scissor{};
+            scissor.offset = {static_cast<int32_t>(viewport.x), static_cast<int32_t>(viewport.y)};
+            scissor.extent = {static_cast<uint32_t>(viewport.width),
+                              static_cast<uint32_t>(viewport.height)};
+            vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                    linePipelineLayout, 0, 1, &descriptorSets[vkutil::currentFrame],
+                                    0, nullptr);
+
+            vkCmdDraw(commandBuffer, mLines.size(), 1, 0, 0);
+        }
     }
 
     mLines.clear();
@@ -212,10 +235,26 @@ void DebugRendererImp::DrawTriangles() {
 
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, linePipeline);
 
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, linePipelineLayout,
-                                0, 1, &mDescriptorSets[vkutil::currentFrame], 0, nullptr);
+        size_t playerCount = mScene->GetPlayerCount();
+        for (size_t playerId = 0; playerId < playerCount; ++playerId) {
+            auto &descriptorSets = mDescriptorSets[playerId];
 
-        vkCmdDraw(commandBuffer, mVertices.size(), 1, 0, 0);
+            VkViewport viewport =
+                CalcViewport(mRenderer->GetContext().extent, playerCount, playerId);
+            vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+
+            VkRect2D scissor{};
+            scissor.offset = {static_cast<int32_t>(viewport.x), static_cast<int32_t>(viewport.y)};
+            scissor.extent = {static_cast<uint32_t>(viewport.width),
+                              static_cast<uint32_t>(viewport.height)};
+            vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                    linePipelineLayout, 0, 1, &descriptorSets[vkutil::currentFrame],
+                                    0, nullptr);
+
+            vkCmdDraw(commandBuffer, mVertices.size(), 1, 0, 0);
+        }
     }
 
     mVertices.clear();

@@ -5,7 +5,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 
-#include "Context.hpp"
 #include "Jolt/Math/Vec3.h"
 #include "Jolt/Physics/Collision/CastResult.h"
 #include "Jolt/Physics/Collision/NarrowPhaseQuery.h"
@@ -14,75 +13,20 @@
 #include "PhysicsManager.hpp"
 #include "Utils.hpp"
 #include "Buffer.hpp"
+#include "Scene.hpp"
 
 #include "Input.hpp"
 #include "glm/fwd.hpp"
 
-Camera* Camera::kMainCamera = nullptr;
-
-Camera::Camera(Context &context, const glm::vec3 position, glm::vec3 direction, glm::vec3 up, float aspect)
-    : context{context}, m_position{position}, m_direction{direction}, m_up{up} {
+Camera::Camera(const glm::vec3 position, glm::vec3 direction, glm::vec3 up)
+    : m_position{position}, m_direction{direction}, m_up{up} {
     m_mouseSensitivity = 0.1f;
     m_controllerSensitivity = 100.f;
     m_increaseSpeed = 0.0f;
-    m_transform.view = glm::lookAt(position, position + direction, up);
-    m_transform.projection = glm::perspective(m_transform.fov, aspect, m_transform.nearPlane, m_transform.farPlane);
-    m_transform.projection[1][1] *= -1;
-    m_transform.cameraPosition = glm::vec4(m_position.x, m_position.y, m_position.z, 1.0);
-    m_transform.viewportSize = glm::vec2(context.extent.width, context.extent.height);
-    m_transform.nearPlane = 0.1f;
-    m_transform.farPlane = 100.0f;
-    m_transform.fov = 45.0f;
     m_cameraSpeed = defaultSpeed;
-
-    m_cameraUBO.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
-    for (auto &buffer : m_cameraUBO) {
-        buffer = CreateBuffer("cameraUBO", context, sizeof(CameraTransform),
-                              VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                              VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
-                                  VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
-                                  VMA_ALLOCATION_CREATE_MAPPED_BIT);
-    }
-
-    // Set the main camera to this camera
-    kMainCamera = this;
 }
 
-Camera::~Camera() {
-    for (auto &buffer : m_cameraUBO) {
-        buffer.Destroy();
-    }
-}
-
-void Camera::Update(uint32_t width, uint32_t height, [[maybe_unused]] double deltaTime) {
-    UpdateCameraRotation(deltaTime);
-    UpdateCameraMovement();
-    UpdateTransforms(width, height);
-}
-
-void Camera::Upload(VkCommandBuffer cmdBuff) {
-    // Write new data to the buffer to update uniform
-    VkDeviceSize size = sizeof(CameraTransform);
-    m_cameraUBO[vkutil::currentFrame].Upload(cmdBuff, &m_transform, size);
-}
-
-void Camera::UpdateTransforms(uint32_t width, uint32_t height) {
-    m_transform.model = glm::mat4(1.0f);
-    m_transform.view = glm::lookAt(m_position, m_position + m_direction, m_up);
-    m_transform.projection = glm::perspective(m_transform.fov, width / (float)height, m_transform.nearPlane, m_transform.farPlane);
-    m_transform.projection[1][1] *= -1;
-    m_transform.cameraPosition = glm::vec4(m_position.x, m_position.y, m_position.z, 1.0);
-    m_transform.viewportSize = glm::vec2(width, height);
-    m_transform.nearPlane = m_transform.nearPlane;
-    m_transform.farPlane = m_transform.farPlane;
-    m_transform.fov = m_transform.fov;
-}
-
-void Camera::UpdateCameraMovement() {
-    Transform character_transform{};
-    if (m_scene_pointer->HasCharacter()) {
-        character_transform = m_scene_pointer->GetCharacter().GetWorldTransformComponents();
-    }
+void Camera::UpdateCameraMovement(const Transform &character_transform) {
     glm::vec3 character_position = character_transform.translation;
 
     if(inputMap[std::size_t(EInputState::SWITCHVIEW)] == true)
@@ -106,7 +50,7 @@ void Camera::UpdateCameraMovement() {
         }
 
         glm::vec3 third_person_camera_offset =
-            ((-2.f * forward) + (1.0f * m_up) + (0.5f * rightVector)) * zoom_level;
+            ((-2.f * forward) + (1.0f * m_up) + (0.25f * rightVector)) * zoom_level;
 
         RRayCast ray;
         ray.mOrigin = Vec3(character_position.x, character_position.y, character_position.z);

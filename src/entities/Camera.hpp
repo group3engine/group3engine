@@ -5,28 +5,18 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 
-#include "Context.hpp"
+#include "Entity.hpp"
 #include "PhysicsManager.hpp"
-#include "Scene.hpp"
 #include "Utils.hpp"
 #include "Buffer.hpp"
+
+class Scene;
 
 constexpr float m_speedIncreaseAmount = 15.0f;
 constexpr float m_speedDecreaseAmount = 8.0f;
 constexpr float maxSpeed = 100.0;
 constexpr float minSpeed = 1.0f;
 constexpr float defaultSpeed = 3.0f;
-
-struct CameraTransform {
-    alignas(16) glm::mat4 model;
-    alignas(16) glm::mat4 view;
-    alignas(16) glm::mat4 projection;
-    alignas(16) glm::vec4 cameraPosition;
-    alignas(8) glm::vec2 viewportSize;
-    alignas(4) float fov;
-    alignas(4) float nearPlane;
-    alignas(4) float farPlane;
-};
 
 enum class EInputState {
     FORWARD,
@@ -48,31 +38,20 @@ enum class InputType {
     FollowCharacter,
     FreeCamera
 };
-class Camera {
+class Camera : public Entity {
   public:
-    static Camera* GetMainCamera() { return kMainCamera; }
-  private:
-    static Camera* kMainCamera;
-  public:
-    Camera(Context &context, const glm::vec3 position, glm::vec3 direction, glm::vec3 up, float aspect);
-    ~Camera();
+    Camera(const glm::vec3 position, glm::vec3 direction, glm::vec3 up);
+
+    bool IsActive() const { return m_isActive; }
+    void SetIsActive(bool isActive) { m_isActive = isActive; }
 
     void SetSpeed(float speed) { m_cameraSpeed = speed; }
     void SetPosition(glm::vec3 newpos) { m_position = newpos; }
     void SetDirection(glm::vec3 newdir) { m_direction = newdir; }
-    void SetFoV(float fov) { m_transform.fov = fov; }
-    void SetNearPlane(float nearPlane) { m_transform.nearPlane = nearPlane; }
-    void SetFarPlane(float farPlane) { m_transform.farPlane = farPlane; }
     void SetPhysics(PhysicsManager* input_physics_reference) {m_physics_reference = input_physics_reference; }
     void SetScene(Scene* input_scene_pointer) {m_scene_pointer = input_scene_pointer; }
 
-    const CameraTransform &GetCameraTransform() const { return m_transform; }
-    const std::vector<Buffer> &GetBuffers() const { return m_cameraUBO; }
-
-    void Update(uint32_t width, uint32_t height, double deltaTime);
-    void Upload(VkCommandBuffer cmdBuff);
-    void UpdateTransforms(uint32_t width, uint32_t height);
-    void UpdateCameraMovement();
+    void UpdateCameraMovement(const Transform &character_transform);
     void UpdateCameraRotation(double deltaTime);
     void UpdateCameraAngles(const glm::vec2 &offset);
 
@@ -88,8 +67,6 @@ class Camera {
     glm::vec3 GetPosition() const { return m_position; }
     glm::vec3 GetDirection() const { return m_direction; }
     glm::vec3 GetUp() const { return m_up; }
-
-    float GetFoV() { return m_transform.fov; }
 
     void SetInput(EInputState inputState, bool state) {
         inputMap[static_cast<size_t>(inputState)] = state;
@@ -119,10 +96,6 @@ class Camera {
 
 
   private:
-    Context &context;
-    CameraTransform m_transform;
-    std::vector<Buffer> m_cameraUBO;
-
     glm::vec3 m_position;
     glm::vec3 m_direction;
     glm::vec3 m_up;
@@ -141,4 +114,6 @@ class Camera {
 
 
     InputType m_inputType = InputType::FollowCharacter;
+
+    bool m_isActive = false;
 };

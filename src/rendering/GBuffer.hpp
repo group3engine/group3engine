@@ -5,8 +5,10 @@
 #include <unordered_map>
 #include "Camera.hpp"
 
+#include "Config.hpp"
+
 /*
-*	This is a thin g-buffer required for post-processing such as SSAO and SSR
+* This is a thin g-buffer required for post-processing such as SSAO and SSR
 */
 
 class Context;
@@ -16,9 +18,9 @@ class Buffer;
 class GBuffer {
   public:
 
-    GBuffer(Context &context, std::shared_ptr<Scene> &scene, std::shared_ptr<Camera> &camera);
+    GBuffer(Context &context, Scene *scene);
     ~GBuffer();
-    void Execute(VkCommandBuffer cmd) const;
+    void Execute(VkCommandBuffer cmd);
     void Update();
 
     void Resize();
@@ -41,10 +43,9 @@ class GBuffer {
     VkFramebuffer m_framebuffer;
 
     Context &context;
-    std::shared_ptr<Scene> scene;
-    std::shared_ptr<Camera> camera;
-    std::vector<VkDescriptorSet> m_descriptorSets;
-    VkDescriptorSetLayout m_descriptorSetLayout;
+    Scene *scene;
+    std::array<std::vector<VkDescriptorSet>, GlobalConfig::maxPlayers> mPlayerDescriptorSets;
+    VkDescriptorSetLayout mPlayerDescriptorSetLayout;
 
     VkPipeline m_Pipeline;
     VkPipelineLayout m_PipelineLayout;
