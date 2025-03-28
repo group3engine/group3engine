@@ -4,6 +4,8 @@
 #include "Image.hpp"
 #include "Volk.hpp"
 
+#include "Config.hpp"
+
 // Skybox
 class Context;
 class Skybox {
@@ -18,6 +20,7 @@ class Skybox {
 
   private:
     void CreatePipeline();
+    void BuildDescriptorSetLayouts();
     void BuildDescriptors();
     void CreateFramebuffer();
     void LoadCubemapFace(std::filesystem::path facePath, char **pixelData);
@@ -32,8 +35,12 @@ class Skybox {
     VkPipelineLayout m_PipelineLayout;
     VkRenderPass m_RenderPass;
     VkFramebuffer m_Framebuffer;
-    VkDescriptorSetLayout m_DescriptorSetLayout;
-    std::vector<VkDescriptorSet> m_descriptorSets;
+
+    VkDescriptorSetLayout mPlayerDescriptorSetLayout;
+    std::array<std::vector<VkDescriptorSet>, GlobalConfig::maxPlayers> mPlayerDescriptorSets;
+
+    VkDescriptorSetLayout mDescriptorSetLayout;
+    std::vector<VkDescriptorSet> mDescriptorSets;
 
     Buffer m_vertexBuffer;
 };

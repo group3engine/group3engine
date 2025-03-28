@@ -4,6 +4,8 @@
 #include <unordered_map>
 #include "Camera.hpp"
 
+#include "Config.hpp"
+
 class Context;
 class Scene;
 class Buffer;
@@ -12,7 +14,7 @@ class ShadowMap {
   public:
     ShadowMap(Context &context, Scene *scene);
     ~ShadowMap();
-    void Execute(VkCommandBuffer cmd) const;
+    void Execute(VkCommandBuffer cmd);
     void Update();
     void Resize();
 
@@ -34,8 +36,8 @@ class ShadowMap {
     uint32_t m_height;
 
     Scene *scene;
-    std::vector<VkDescriptorSet> m_descriptorSets;
-    VkDescriptorSetLayout m_descriptorSetLayout;
+    std::array<std::vector<VkDescriptorSet>, GlobalConfig::maxPlayers> mPlayerDescriptorSets;
+    VkDescriptorSetLayout mPlayerDescriptorSetLayout;
     VkDescriptorSetLayout skinDescriptorSetLayout;
 
     VkPipeline m_Pipeline;

@@ -21,6 +21,8 @@
 
 #include "ImGuiRenderer.hpp"
 
+#include "Config.hpp"
+
 struct CameraTransform {
     alignas(16) glm::mat4 view;
     alignas(16) glm::mat4 projection;
@@ -84,7 +86,7 @@ class Scene {
 
     const std::vector<Camera *> &GetCameras() const { return mCameras; }
 
-    const std::vector<Buffer> &GetCameraBuffers() const { return m_cameraUBO; }
+    const std::vector<Buffer> &GetCameraBuffers(size_t playerId) const { return mPlayerCameraUbos[playerId]; }
 
     void AddCamera(Camera *camera) { mCameras.push_back(camera); }
 
@@ -102,6 +104,8 @@ class Scene {
     Camera *GetActiveCamera();
 
     void SwitchCamera();
+
+    size_t GetPlayerCount() const { return mPlayerCount; }
 
   private:
     Scene *mCurrentScene = nullptr;
@@ -123,9 +127,10 @@ class Scene {
     bool mHasCharacter = false;
     CharacterEntity *mCharacter;
 
+    size_t mPlayerCount = 2;
     std::vector<Camera *> mCameras;
-    CameraTransform m_transform;
-    std::vector<Buffer> m_cameraUBO;
+    std::array<CameraTransform, GlobalConfig::maxPlayers> mPlayerCameraTransforms;
+    std::array<std::vector<Buffer>, GlobalConfig::maxPlayers> mPlayerCameraUbos;
 
     gui::TimerData mGuiTimerData{};
 

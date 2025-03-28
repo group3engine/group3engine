@@ -149,9 +149,10 @@ void Engine::ChangeScene(const std::filesystem::path &filePath)
 }
 
 void Engine::Run() {
-    auto *camera = mScene->GetActiveCamera();
-    camera->SetPhysics(&PhysicsManager::get());
-    camera->SetScene(mScene);
+    for (auto *camera : mScene->GetCameras()) {
+        camera->SetPhysics(&PhysicsManager::get());
+        camera->SetScene(mScene);
+    }
 
     m_lastFrameTime = glfwGetTime();
 
@@ -270,7 +271,7 @@ void Engine::Update(double deltaTime) {
 // TODO: Understand why Jolt does this
 #ifdef JPH_DEBUG_RENDERER
     if (GlobalConfig::enablePhysicsDebugRenderer) {
-        auto cameraPos = mRenderer->GetCamera()->GetPosition();
+        auto cameraPos = mScene->GetActiveCamera()->GetPosition();
         mDebugRenderer.get()->SetCameraPos(RVec3{cameraPos.x, cameraPos.y, cameraPos.z});
 
         // Create render primitives: vertex buffers, index buffers and store them for later
@@ -299,6 +300,7 @@ void Engine::Render() {
     mRenderer->BeginFrame(mRenderer->GetCommandBuffer());
 
     {
+        // TODO: Fix shadow pass, it does not need to be done per player
         mRenderer->GetShadowMap()->Execute(mRenderer->GetCommandBuffer());
         mRenderer->GetDepthPrepass()->Execute(mRenderer->GetCommandBuffer());
 

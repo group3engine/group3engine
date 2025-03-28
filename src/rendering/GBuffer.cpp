@@ -11,6 +11,8 @@
 #include "Scene.hpp"
 #include "Camera.hpp"
 
+#include "RenderPassCommon.hpp"
+
 GBuffer::GBuffer(Context& context, Scene *scene) : context{ context }, scene{ scene }
 {
     m_width = context.extent.width;
@@ -58,7 +60,7 @@ GBuffer::~GBuffer()
 
     vkDestroyFramebuffer(context.device, m_framebuffer, nullptr);
     vkDestroyRenderPass(context.device, m_renderPass, nullptr);
-    vkDestroyDescriptorSetLayout(context.device, m_descriptorSetLayout, nullptr);
+    vkDestroyDescriptorSetLayout(context.device, mPlayerDescriptorSetLayout, nullptr);
 }
 
 void GBuffer::Resize()
@@ -97,7 +99,7 @@ void GBuffer::Resize()
     CreateFramebuffer();
 }
 
-void GBuffer::Execute(VkCommandBuffer cmd) const
+void GBuffer::Execute(VkCommandBuffer cmd)
 {
     ZoneScopedN("GBuffer::Execute");
     TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "Thin-G-Buffer", tracy::Color::Coral);
@@ -118,30 +120,30 @@ void GBuffer::Execute(VkCommandBuffer cmd) const
     beginInfo.clearValueCount = 2;
     beginInfo.pClearValues = clearValues;
 
-    VkViewport viewport{};
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.width = (float)context.extent.width;
-    viewport.height = (float)context.extent.height;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-    vkCmdSetViewport(cmd, 0, 1, &viewport);
-
-    VkRect2D scissor{};
-    scissor.offset = { 0,0 };
-    scissor.extent = { context.extent.width, context.extent.height };
-    vkCmdSetScissor(cmd, 0, 1, &scissor);
-
     vkCmdBeginRenderPass(cmd, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
-    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_descriptorSets[vkutil::currentFrame], 0, nullptr);
 
-    // Draw front freshes
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
-    scene->DrawOpaque(cmd, m_PipelineLayout);
+    size_t playerCount = scene->GetPlayerCount();
+    for (size_t playerId = 0; playerId < playerCount; ++playerId) {
+        VkViewport viewport = CalcViewport(context.extent, playerCount, playerId);
+        vkCmdSetViewport(cmd, 0, 1, &viewport);
 
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_AlphaMaskingPipeline);
-    scene->DrawAlphaMasked(cmd, m_AlphaMaskingPipelineLayout);
+        VkRect2D scissor{};
+        scissor.offset = {static_cast<int32_t>(viewport.x), static_cast<int32_t>(viewport.y)};
+        scissor.extent = {static_cast<uint32_t>(viewport.width),
+                          static_cast<uint32_t>(viewport.height)};
+        vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
+        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1,
+                                &mPlayerDescriptorSets[playerId][vkutil::currentFrame], 0, nullptr);
+
+        // Draw front freshes
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
+        scene->DrawOpaque(cmd, m_PipelineLayout);
+
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_AlphaMaskingPipeline);
+        scene->DrawAlphaMasked(cmd, m_AlphaMaskingPipelineLayout);
+    }
 
     vkCmdEndRenderPass(cmd);
 
@@ -166,7 +168,7 @@ void GBuffer::CreatePipeline()
         .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
         .SetDynamicState({ {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR} })
         .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE)
-        .SetPipelineLayout({ {m_descriptorSetLayout, vkutil::materialDescriptorSetLayout} }, pushConstantRange)
+        .SetPipelineLayout({ {mPlayerDescriptorSetLayout, vkutil::materialDescriptorSetLayout} }, pushConstantRange)
         .SetSampling(VK_SAMPLE_COUNT_1_BIT)
         .AddBlendAttachmentState()
         .SetDepthState(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL)
@@ -184,7 +186,7 @@ void GBuffer::CreatePipeline()
         .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
         .SetDynamicState({ {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR} })
         .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE)
-        .SetPipelineLayout({ {m_descriptorSetLayout, vkutil::materialDescriptorSetLayout} }, pushConstantRange)
+        .SetPipelineLayout({ {mPlayerDescriptorSetLayout, vkutil::materialDescriptorSetLayout} }, pushConstantRange)
         .SetSampling(VK_SAMPLE_COUNT_1_BIT)
         .AddBlendAttachmentState()
         .SetDepthState(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL)
@@ -252,22 +254,28 @@ void GBuffer::BuildDescriptorSetLayouts() {
         vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT) // CameraUBO (projection, view etc..)
     };
 
-    m_descriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
+    mPlayerDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
 }
 
 void GBuffer::BuildDescriptors()
 {
-    m_descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
-    vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_descriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, m_descriptorSets);
+    size_t id = 0;
+    for (auto &descriptorSets : mPlayerDescriptorSets) {
+        descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+        vkutil::AllocateDescriptorSets(context, context.descriptorPool, mPlayerDescriptorSetLayout,
+                                       vkutil::MAX_FRAMES_IN_FLIGHT, descriptorSets);
 
-    // Camera Transform UBO
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
-    {
-        VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = scene->GetCameraBuffers()[i].buffer;
-        bufferInfo.offset = 0;
-        bufferInfo.range = sizeof(CameraTransform);
-        vkutil::UpdateDescriptorSet(context, 0, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+        // Camera Transform UBO
+        for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+            VkDescriptorBufferInfo bufferInfo{};
+            bufferInfo.buffer = scene->GetCameraBuffers(id)[i].buffer;
+            bufferInfo.offset = 0;
+            bufferInfo.range = sizeof(CameraTransform);
+            vkutil::UpdateDescriptorSet(context, 0, bufferInfo, descriptorSets[i],
+                                        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+        }
+
+        ++id;
     }
 }
 

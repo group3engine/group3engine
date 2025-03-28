@@ -5,6 +5,7 @@
 #include "Camera.hpp"
 #include "Skybox.hpp"
 
+#include "Config.hpp"
 
 // This is disgusting whoever did it lol
 #define SHADER_DIR std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/"
@@ -26,8 +27,8 @@ class ForwardPass {
 
     VkRenderPass Get() const { return m_renderPass; }
 
-    void BeginExecute(VkCommandBuffer cmd) const;
-    void EndExecute(VkCommandBuffer cmd) const;
+    void BeginExecute(VkCommandBuffer cmd);
+    void EndExecute(VkCommandBuffer cmd);
     void Update();
 
     void Resize();
@@ -57,7 +58,9 @@ class ForwardPass {
     Image &shadowMap;
     Image &depthPrepass;
     Scene *scene;
-    std::vector<VkDescriptorSet> m_descriptorSets;
+
+    std::array<std::vector<VkDescriptorSet>, GlobalConfig::maxPlayers> mPlayerDescriptorSets;
+
     std::pair<VkPipeline, VkPipelineLayout> m_opaquePipeline;
     std::pair<VkPipeline, VkPipelineLayout> m_alphaMaskPipeline;
     std::pair<VkPipeline, VkPipelineLayout> m_skinnedPipeline;

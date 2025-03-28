@@ -10,6 +10,8 @@
 #include "Utils.hpp"
 #include "Buffer.hpp"
 
+#include "RenderPassCommon.hpp"
+
 ForwardPass::ForwardPass(Context &context, Image &shadowMap, Image &depthPrepass, Scene *scene)
     : context{context},
       shadowMap{shadowMap},
@@ -120,19 +122,22 @@ void ForwardPass::Resize() {
         VK_IMAGE_ASPECT_COLOR_BIT,
         1);
 
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
-        VkDescriptorImageInfo imageInfo = {
-            .sampler = vkutil::clampToEdgeSamplerAniso,
-            .imageView = shadowMap.imageView,
-            .imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL};
+    for (auto &descriptorSets : mPlayerDescriptorSets) {
+        for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+            VkDescriptorImageInfo imageInfo = {
+                .sampler = vkutil::clampToEdgeSamplerAniso,
+                .imageView = shadowMap.imageView,
+                .imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL};
 
-        vkutil::UpdateDescriptorSet(context, 2, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+            vkutil::UpdateDescriptorSet(context, 2, imageInfo, descriptorSets[i],
+                                        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+        }
     }
 
     CreateFramebuffer();
 }
 
-void ForwardPass::BeginExecute(VkCommandBuffer cmd) const {
+void ForwardPass::BeginExecute(VkCommandBuffer cmd) {
     ZoneScopedN("ForwardPass::Execute");
     TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "ForwardPass::BeginExecute", tracy::Color::Tomato);
 
@@ -153,37 +158,38 @@ void ForwardPass::BeginExecute(VkCommandBuffer cmd) const {
     beginInfo.clearValueCount = 3;
     beginInfo.pClearValues = clearValues;
 
-    VkViewport viewport{};
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.width = (float)context.extent.width;
-    viewport.height = (float)context.extent.height;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-    vkCmdSetViewport(cmd, 0, 1, &viewport);
-
-    VkRect2D scissor{};
-    scissor.offset = {0, 0};
-    scissor.extent = {context.extent.width, context.extent.height};
-    vkCmdSetScissor(cmd, 0, 1, &scissor);
-
     vkCmdBeginRenderPass(cmd, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    m_Skybox->Execute(cmd);
+    size_t playerCount = scene->GetPlayerCount();
+    for (size_t playerId = 0; playerId < playerCount; ++playerId) {
+        m_Skybox->Execute(cmd);
 
-    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_opaquePipeline.second, 0, 1, &m_descriptorSets[vkutil::currentFrame], 0, nullptr);
+        // NOTE: Viewport and scissor needs to be set again after executing skybox pass
+        // TODO: Investigate more
+        VkViewport viewport = CalcViewport(context.extent, playerCount, playerId);
+        vkCmdSetViewport(cmd, 0, 1, &viewport);
 
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_skinnedPipeline.first);
-    scene->DrawSkinned(cmd, m_skinnedPipeline.second);
+        VkRect2D scissor{};
+        scissor.offset = {static_cast<int32_t>(viewport.x), static_cast<int32_t>(viewport.y)};
+        scissor.extent = {static_cast<uint32_t>(viewport.width),
+                          static_cast<uint32_t>(viewport.height)};
+        vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_opaquePipeline.first);
-    scene->DrawOpaque(cmd, m_opaquePipeline.second);
+        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_opaquePipeline.second, 0, 1,
+                                &mPlayerDescriptorSets[playerId][vkutil::currentFrame], 0, nullptr);
 
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_alphaMaskPipeline.first);
-    scene->DrawAlphaMasked(cmd, m_alphaMaskPipeline.second);
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_skinnedPipeline.first);
+        scene->DrawSkinned(cmd, m_skinnedPipeline.second);
+
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_opaquePipeline.first);
+        scene->DrawOpaque(cmd, m_opaquePipeline.second);
+
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_alphaMaskPipeline.first);
+        scene->DrawAlphaMasked(cmd, m_alphaMaskPipeline.second);
+    }
 }
 
-void ForwardPass::EndExecute(VkCommandBuffer cmd) const {
+void ForwardPass::EndExecute(VkCommandBuffer cmd) {
     TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "ForwardPass::EndExecute", tracy::Color::Tomato);
 
     vkCmdEndRenderPass(cmd);
@@ -320,34 +326,47 @@ void ForwardPass::BuildDescriptorSetLayouts() {
 }
 
 void ForwardPass::BuildDescriptors() {
-    m_descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
-    vkutil::AllocateDescriptorSets(context, context.descriptorPool, meshDescriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, m_descriptorSets);
+    size_t id = 0;
+    for (auto &descriptorSets : mPlayerDescriptorSets) {
+        descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+        vkutil::AllocateDescriptorSets(context, context.descriptorPool, meshDescriptorSetLayout,
+                                       vkutil::MAX_FRAMES_IN_FLIGHT, descriptorSets);
 
-    // Camera Transform UBO
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
-        VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = scene->GetCameraBuffers()[i].buffer;
-        bufferInfo.offset = 0;
-        bufferInfo.range = sizeof(CameraTransform);
-        vkutil::UpdateDescriptorSet(context, 0, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-    }
+        // Camera Transform UBO
+        for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+            VkDescriptorBufferInfo bufferInfo{};
+            bufferInfo.buffer = scene->GetCameraBuffers(id)[i].buffer;
+            bufferInfo.offset = 0;
+            bufferInfo.range = sizeof(CameraTransform);
+            vkutil::UpdateDescriptorSet(context, 0, bufferInfo, descriptorSets[i],
+                                        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+        }
 
-    // Light UBO
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
-        VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = scene->GetLightsUBO()[i].buffer;
-        bufferInfo.offset = 0;
-        bufferInfo.range = sizeof(vkutil::LightBuffer);
-        vkutil::UpdateDescriptorSet(context, 1, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-    }
+        // NOTE: At the moments the lights UBO and shadow map are not per player. However, with
+        // light culling and cascaded shadow maps they will be per player
 
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
-        VkDescriptorImageInfo imageInfo = {
-            .sampler = vkutil::clampToEdgeSamplerAniso,
-            .imageView = shadowMap.imageView,
-            .imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL};
+        // Light UBO
+        for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+            VkDescriptorBufferInfo bufferInfo{};
+            bufferInfo.buffer = scene->GetLightsUBO()[i].buffer;
+            bufferInfo.offset = 0;
+            bufferInfo.range = sizeof(vkutil::LightBuffer);
+            vkutil::UpdateDescriptorSet(context, 1, bufferInfo, descriptorSets[i],
+                                        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+        }
 
-        vkutil::UpdateDescriptorSet(context, 2, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+        // Shadow map descriptor
+        for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+            VkDescriptorImageInfo imageInfo = {
+                .sampler = vkutil::clampToEdgeSamplerAniso,
+                .imageView = shadowMap.imageView,
+                .imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL};
+
+            vkutil::UpdateDescriptorSet(context, 2, imageInfo, descriptorSets[i],
+                                        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+        }
+
+        ++id;
     }
 }
 

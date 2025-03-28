@@ -46,6 +46,10 @@ void SampleSecondaryEntity::ProcessInput(){
             glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         }
     }
+    if (IsMouseButtonPressed(MOUSE_BUTTON::eLEFT)) {
+        auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
+        flag = false;
+    }
 
     glm::vec3 controlInput = glm::vec3(0.0f);
     bool jump = false;

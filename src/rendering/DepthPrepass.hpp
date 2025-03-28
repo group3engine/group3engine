@@ -1,10 +1,13 @@
 #pragma once
 
 #include <memory>
+#include <array>
 #include <vector>
 
 #include "Image.hpp"
 #include "Volk.hpp"
+
+#include "Config.hpp"
 
 class Context;
 class Scene;
@@ -15,7 +18,7 @@ class DepthPrepass {
     explicit DepthPrepass(Context &context, Scene *scene);
     ~DepthPrepass();
 
-    void Execute(VkCommandBuffer cmd) const;
+    void Execute(VkCommandBuffer cmd);
     void Resize();
 
     Image &GetRenderTarget() { return m_DepthTarget; };
@@ -33,8 +36,13 @@ class DepthPrepass {
 
     VkPipeline m_Pipeline;
     VkPipelineLayout m_PipelineLayout;
-    VkDescriptorSetLayout m_descriptorSetLayout;
-    std::vector<VkDescriptorSet> m_descriptorSets;
+
+    VkDescriptorSetLayout mPlayerDescriptorSetLayout;
+    std::array<std::vector<VkDescriptorSet>, GlobalConfig::maxPlayers> mPlayerDescriptorSets;
+
+    // Create descriptor sets that are not per player here if needed
+    // std::vector<VkDescriptorSet> mDescriptorSets;
+
     VkRenderPass m_renderPass;
     VkFramebuffer m_framebuffer;
 

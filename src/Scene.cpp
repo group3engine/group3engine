@@ -52,25 +52,35 @@ void Scene::UpdateCameraTransforms() {
     auto width = mContext->extent.width;
     auto height = mContext->extent.height;
 
-    auto *camera = GetActiveCamera();
-    const auto &pos = camera->GetPosition();
-    const auto &dir = camera->GetDirection();
-    const auto &up = camera->GetUp();
+    for (size_t i = 0; i < mPlayerCount; ++i) {
+        auto *camera = mCameras[i];
+        const auto &pos = camera->GetPosition();
+        const auto &dir = camera->GetDirection();
+        const auto &up = camera->GetUp();
 
-    m_transform.view = glm::lookAt(pos, pos + dir, up);
-    m_transform.projection = glm::perspective(m_transform.fov, width / (float)height, m_transform.nearPlane, m_transform.farPlane);
-    m_transform.projection[1][1] *= -1;
-    m_transform.cameraPosition = glm::vec4(pos.x, pos.y, pos.z, 1.0);
-    m_transform.viewportSize = glm::vec2(width, height);
-    m_transform.nearPlane = m_transform.nearPlane;
-    m_transform.farPlane = m_transform.farPlane;
-    m_transform.fov = m_transform.fov;
+        auto &playerCameraTransform = mPlayerCameraTransforms[i];
+        playerCameraTransform.view = glm::lookAt(pos, pos + dir, up);
+        // TODO: Fix projection for proper 2 player split screen
+        playerCameraTransform.projection =
+            glm::perspective(playerCameraTransform.fov, width / (float)height,
+                             playerCameraTransform.nearPlane, playerCameraTransform.farPlane);
+        playerCameraTransform.projection[1][1] *= -1;
+        playerCameraTransform.cameraPosition = glm::vec4(pos.x, pos.y, pos.z, 1.0);
+        playerCameraTransform.viewportSize = glm::vec2(width, height);
+        playerCameraTransform.nearPlane = playerCameraTransform.nearPlane;
+        playerCameraTransform.farPlane = playerCameraTransform.farPlane;
+        playerCameraTransform.fov = playerCameraTransform.fov;
+    }
 }
 
 void Scene::UploadCameras(VkCommandBuffer cmdBuff) {
     // Write new data to the buffer to update uniform
     VkDeviceSize size = sizeof(CameraTransform);
-    m_cameraUBO[vkutil::currentFrame].Upload(cmdBuff, &m_transform, size);
+
+    for (size_t i = 0; i < mPlayerCount; ++i) {
+        auto &cameraUBO = mPlayerCameraUbos[i];
+        cameraUBO[vkutil::currentFrame].Upload(cmdBuff, &mPlayerCameraTransforms[i], size);
+    }
 }
 
 void Scene::UploadLights(VkCommandBuffer cmdBuff) {
@@ -415,9 +425,11 @@ void Scene::Awake()
         entity->Awake();
     }
 
-    m_transform.nearPlane = 0.1f;
-    m_transform.farPlane = 100.0f;
-    m_transform.fov = 45.0f;
+    for (auto &playerCameraTransform : mPlayerCameraTransforms) {
+        playerCameraTransform.nearPlane = 0.1f;
+        playerCameraTransform.farPlane = 100.0f;
+        playerCameraTransform.fov = 45.0f;
+    }
 
     bool hasSetActive = false;
     for (auto &entity : m_Entities) {
@@ -481,13 +493,15 @@ void Scene::StartUp(Context *context, MaterialManager *materialManager,
     mMeshManager = meshManager;
     mTextureManager = textureManager;
 
-    m_cameraUBO.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
-    for (auto &buffer : m_cameraUBO) {
-        buffer = CreateBuffer("cameraUBO", *mContext, sizeof(CameraTransform),
-                              VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                              VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
-                                  VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
-                                  VMA_ALLOCATION_CREATE_MAPPED_BIT);
+    for (auto &cameraUBO : mPlayerCameraUbos) {
+        cameraUBO.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+        for (auto &buffer : cameraUBO) {
+            buffer = CreateBuffer("cameraUBO", *mContext, sizeof(CameraTransform),
+                                  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                                  VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+                                      VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
+                                      VMA_ALLOCATION_CREATE_MAPPED_BIT);
+        }
     }
 
     m_LightUBO.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
@@ -504,8 +518,10 @@ void Scene::StartUp(Context *context, MaterialManager *materialManager,
 }
 
 void Scene::ShutDown() {
-    for (auto &buffer : m_cameraUBO) {
-        buffer.Destroy();
+    for (auto &cameraUBO : mPlayerCameraUbos) {
+        for (auto &buffer : cameraUBO) {
+            buffer.Destroy();
+        }
     }
 
     for (auto &buffer : m_LightUBO) {

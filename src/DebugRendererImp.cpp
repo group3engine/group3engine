@@ -32,7 +32,7 @@ DebugRendererImp::DebugRendererImp(Renderer *renderer, Scene *scene)
     //         vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)};
 
     //     auto &context = mRenderer->GetContext();
-    //     const auto *camera = mRenderer->GetCamera();
+    //     const auto *camera = mScene->GetActiveCamera();
 
     //     mUboLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
 
@@ -41,7 +41,7 @@ DebugRendererImp::DebugRendererImp(Renderer *renderer, Scene *scene)
     //     // Camera UBO
     //     for (size_t i = 0; i < std::size_t(vkutil::MAX_FRAMES_IN_FLIGHT); i++) {
     //         VkDescriptorBufferInfo bufferInfo{};
-    //         bufferInfo.buffer = mScene->GetCameraBuffers()[i].buffer;
+    //         bufferInfo.buffer = mScene->GetCameraBuffers(0)[i].buffer;
     //         bufferInfo.offset = 0;
     //         bufferInfo.range = sizeof(CameraTransform);
     //         vkutil::UpdateDescriptorSet(context, 0, bufferInfo, mDescriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
@@ -70,7 +70,7 @@ DebugRendererImp::DebugRendererImp(Renderer *renderer, Scene *scene)
             vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)};
 
         auto &context = mRenderer->GetContext();
-        const auto *camera = mRenderer->GetCamera();
+        const auto *camera = mScene->GetActiveCamera();
 
         mUboLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
 
@@ -79,7 +79,7 @@ DebugRendererImp::DebugRendererImp(Renderer *renderer, Scene *scene)
         // Camera UBO
         for (size_t i = 0; i < std::size_t(vkutil::MAX_FRAMES_IN_FLIGHT); i++) {
             VkDescriptorBufferInfo bufferInfo{};
-            bufferInfo.buffer = mScene->GetCameraBuffers()[i].buffer;
+            bufferInfo.buffer = mScene->GetCameraBuffers(0)[i].buffer;
             bufferInfo.offset = 0;
             bufferInfo.range = sizeof(CameraTransform);
             vkutil::UpdateDescriptorSet(context, 0, bufferInfo, mDescriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);

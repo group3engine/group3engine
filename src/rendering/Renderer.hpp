@@ -48,17 +48,15 @@ class Renderer {
 
     Context &GetContext() const { return context; }
 
-    const DepthPrepass *GetDepthPrepass() const { return m_DepthPrepass.get(); }
-    const ShadowMap *GetShadowMap() const { return m_ShadowMap.get(); }
-    const ForwardPass *GetForwardPass() const { return m_ForwardPass.get(); }
-    const GBuffer *GetGBuffer() const { return m_GBuffer.get(); }
-    const SSAO *GetSSAO() const { return m_SSAO.get(); }
-    const SSR *GetSSR() const { return m_SSR.get(); }
-    const Bloom *GetBloomPass() const { return m_BloomPass.get(); }
-    const Composite *GetCompositePass() const { return m_CompositePass.get(); }
-    const PresentPass *GetPresentPass() const { return m_PresentPass.get(); }
-
-    Camera *GetCamera() const { return m_scene->GetActiveCamera(); }
+    DepthPrepass *GetDepthPrepass() const { return m_DepthPrepass.get(); }
+    ShadowMap *GetShadowMap() const { return m_ShadowMap.get(); }
+    ForwardPass *GetForwardPass() const { return m_ForwardPass.get(); }
+    GBuffer *GetGBuffer() const { return m_GBuffer.get(); }
+    SSAO *GetSSAO() const { return m_SSAO.get(); }
+    SSR *GetSSR() const { return m_SSR.get(); }
+    Bloom *GetBloomPass() const { return m_BloomPass.get(); }
+    Composite *GetCompositePass() const { return m_CompositePass.get(); }
+    PresentPass *GetPresentPass() const { return m_PresentPass.get(); }
 
     void AddCameras();
 

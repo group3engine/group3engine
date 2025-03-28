@@ -15,7 +15,7 @@ layout(set = 0, binding = 0) uniform CameraUBO
 } ubo;
 
 
-layout(set = 0, binding = 2) uniform SSRSettings
+layout(set = 1, binding = 1) uniform SSRSettings
 {
     int MaxSteps;
     int BinarySearchIterations;
@@ -25,10 +25,10 @@ layout(set = 0, binding = 2) uniform SSRSettings
 	float time;
 }ssr;
 
-layout (set = 0, binding = 1) uniform sampler2D depthBuffer;
-layout (set = 0, binding = 3) uniform sampler2D renderedScene;
-layout (set = 0, binding = 4) uniform sampler2D MetallicRoughness; // r = metallic, g = roughness
-layout (set = 0, binding = 5) uniform samplerCube skybox;
+layout (set = 1, binding = 0) uniform sampler2D depthBuffer;
+layout (set = 1, binding = 2) uniform sampler2D renderedScene;
+layout (set = 1, binding = 3) uniform sampler2D MetallicRoughness; // r = metallic, g = roughness
+layout (set = 1, binding = 4) uniform samplerCube skybox;
 
 vec4 DepthToPosition(vec2 uv)
 {

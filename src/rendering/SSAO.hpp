@@ -4,6 +4,8 @@
 #include "Buffer.hpp"
 #include "Camera.hpp"
 
+#include "Config.hpp"
+
 /* SSAO needs to be blurred
     currently the composite pass is taking a non-blurred version which may appear a bit noisy
     in the final image
@@ -21,7 +23,7 @@ class SSAO {
 
     explicit SSAO(Context &context, Scene *scene, Image& depthBuffer, Image& renderedScene);
     ~SSAO();
-    void Execute(VkCommandBuffer cmd) const;
+    void Execute(VkCommandBuffer cmd);
     void Update();
     void Resize();
 
@@ -29,6 +31,7 @@ class SSAO {
 
   private:
     void CreatePipeline();
+    void BuildDescriptorSetLayouts();
     void BuildDescriptors();
     void CreateFramebuffer();
     void CreateRenderPass();
@@ -52,8 +55,13 @@ class SSAO {
 
     VkPipeline m_Pipeline;
     VkPipelineLayout m_PipelineLayout;
-    VkDescriptorSetLayout m_DescriptorSetLayout;
-    std::vector<VkDescriptorSet> m_descriptorSets;
+
+    VkDescriptorSetLayout mPlayerDescriptorSetLayout;
+    std::array<std::vector<VkDescriptorSet>, GlobalConfig::maxPlayers> mPlayerDescriptorSets;
+
+    VkDescriptorSetLayout mDescriptorSetLayout;
+    std::vector<VkDescriptorSet> mDescriptorSets;
+
     VkRenderPass m_RenderPass;
     VkFramebuffer m_Framebuffer;
     std::vector<Buffer> m_SSAOUniform;

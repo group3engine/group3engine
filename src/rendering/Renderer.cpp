@@ -87,11 +87,11 @@ void Renderer::Destroy() {
         vkDestroySemaphore(context.device, semaphore, nullptr);
     }
 
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         vkFreeCommandBuffers(context.device, m_commandPool[i], 1, &m_commandBuffers[i]);
     }
 
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         vkDestroyCommandPool(context.device, m_commandPool[i], nullptr);
     }
 
@@ -118,7 +118,7 @@ void Renderer::CreateResources() {
 }
 
 void Renderer::CreateFences() {
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         // Fence
         VkFenceCreateInfo fenceInfo{
             .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
@@ -132,7 +132,7 @@ void Renderer::CreateFences() {
 
 void Renderer::CreateSemaphores() {
     // Image available semaphore
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkSemaphoreCreateInfo semaphoreInfo = {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
 
@@ -142,7 +142,7 @@ void Renderer::CreateSemaphores() {
     }
 
     // Render finished sempahore
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkSemaphoreCreateInfo semaphoreInfo = {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
 
@@ -153,7 +153,7 @@ void Renderer::CreateSemaphores() {
 }
 
 void Renderer::CreateCommandPool() {
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkCommandPoolCreateInfo cmdPool{};
         cmdPool.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         cmdPool.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
@@ -166,7 +166,7 @@ void Renderer::CreateCommandPool() {
 }
 
 void Renderer::AllocateCommandBuffers() {
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         // Allocate command buffers from command pool
         VkCommandBufferAllocateInfo cmdAlloc{};
         cmdAlloc.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;

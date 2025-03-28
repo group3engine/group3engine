@@ -45,7 +45,7 @@ void CharacterEntity::ProcessInput(){
     mCamera->SetInput(EInputState::ZOOM_IN, IsKeyPressed(KEY::eY));
     mCamera->SetInput(EInputState::ZOOM_OUT, IsKeyPressed(KEY::eU));
 
-    if (IsMouseButtonPressed(MOUSE_BUTTON::eRIGHT)) {
+    if (IsMouseButtonPressed(MOUSE_BUTTON::eLEFT)) {
         auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
         flag = !flag;
 
@@ -54,6 +54,10 @@ void CharacterEntity::ProcessInput(){
         } else {
             glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         }
+    }
+    if (IsMouseButtonPressed(MOUSE_BUTTON::eRIGHT)) {
+        auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
+        flag = false;
     }
 
     glm::vec3 controlInput = glm::vec3(0.0f);
