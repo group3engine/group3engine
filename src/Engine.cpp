@@ -300,7 +300,6 @@ void Engine::Render() {
     mRenderer->BeginFrame(mRenderer->GetCommandBuffer());
 
     {
-        // TODO: Fix shadow pass, it does not need to be done per player
         mRenderer->GetShadowMap()->Execute(mRenderer->GetCommandBuffer());
         mRenderer->GetDepthPrepass()->Execute(mRenderer->GetCommandBuffer());
 
