@@ -426,6 +426,7 @@ void Scene::Awake()
 {
     // call the awake function on all entities
     for (auto &entity : m_Entities) {
+        entity->SetScene(this);
         entity->Awake();
     }
 
