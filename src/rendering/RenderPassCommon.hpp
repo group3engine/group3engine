@@ -12,7 +12,10 @@ inline VkViewport CalcViewport(VkExtent2D extent, size_t playerCount, size_t pla
     float width = 0.0f;
     float height = 0.0f;
 
-    if (playerCount == 2) {
+    if (playerCount == 1) {
+        width = static_cast<float>(extent.width);
+        height = static_cast<float>(extent.height);
+    } else if (playerCount == 2) {
         width = static_cast<float>(extent.width) / playerCount;
         height = static_cast<float>(extent.height);
     }
