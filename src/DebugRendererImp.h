@@ -23,6 +23,7 @@
 #include <volk.h>
 
 #include "Buffer.hpp"
+#include "Config.hpp"
 #include "GLTFImportStructs.hpp"
 
 class Renderer;
@@ -59,7 +60,7 @@ class DebugRendererImp final : public JPH::DebugRendererSimple {
     std::pair<VkPipeline, VkPipelineLayout> mLinePipeline = {nullptr, nullptr};
 
     std::vector<Buffer> mVertexBuffers;
-    std::vector<VkDescriptorSet> mDescriptorSets;
+    std::array<std::vector<VkDescriptorSet>, GlobalConfig::maxPlayers> mDescriptorSets;
 
     /// A single line segment
     struct Line {
