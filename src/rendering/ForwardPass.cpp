@@ -1,4 +1,4 @@
-﻿#include "ForwardPass.hpp"
+#include "ForwardPass.hpp"
 
 #include <tracy/TracyVulkan.hpp>
 
@@ -162,7 +162,7 @@ void ForwardPass::BeginExecute(VkCommandBuffer cmd) {
 
     size_t playerCount = scene->GetPlayerCount();
     for (size_t playerId = 0; playerId < playerCount; ++playerId) {
-        m_Skybox->Execute(cmd);
+        m_Skybox->Execute(cmd, playerCount, playerId);
 
         // NOTE: Viewport and scissor needs to be set again after executing skybox pass
         // TODO: Investigate more

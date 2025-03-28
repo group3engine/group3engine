@@ -13,7 +13,7 @@ class Skybox {
     Skybox(Context &context, Scene *scene, VkRenderPass renderpass);
     ~Skybox();
 
-    void Execute(VkCommandBuffer cmd);
+    void Execute(VkCommandBuffer cmd, size_t playerCount, size_t playerId);
     void Resize();
 
     Image& GetSkyBoxImage() { return m_Skybox; }

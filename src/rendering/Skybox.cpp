@@ -130,7 +130,7 @@ Skybox::~Skybox()
     vkDestroyDescriptorSetLayout(context.device, mDescriptorSetLayout, nullptr);
 }
 
-void Skybox::Execute(VkCommandBuffer cmd)
+void Skybox::Execute(VkCommandBuffer cmd, size_t playerCount, size_t playerId)
 {
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "Skybox");
@@ -138,36 +138,32 @@ void Skybox::Execute(VkCommandBuffer cmd)
 
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
 
-    // TODO: Can move more stuff out of these loops
-    size_t playerCount = m_Scene->GetPlayerCount();
-    for (size_t playerId = 0; playerId < playerCount; ++playerId) {
-        VkViewport viewport = CalcViewport(context.extent, playerCount, playerId);
-        vkCmdSetViewport(cmd, 0, 1, &viewport);
+    VkViewport viewport = CalcViewport(context.extent, playerCount, playerId);
+    vkCmdSetViewport(cmd, 0, 1, &viewport);
 
-        VkRect2D scissor{};
-        scissor.offset = {static_cast<int32_t>(viewport.x), static_cast<int32_t>(viewport.y)};
-        scissor.extent = {static_cast<uint32_t>(viewport.width),
-                          static_cast<uint32_t>(viewport.height)};
-        vkCmdSetScissor(cmd, 0, 1, &scissor);
+    VkRect2D scissor{};
+    scissor.offset = {static_cast<int32_t>(viewport.x), static_cast<int32_t>(viewport.y)};
+    scissor.extent = {static_cast<uint32_t>(viewport.width),
+                        static_cast<uint32_t>(viewport.height)};
+    vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1,
-                                &mPlayerDescriptorSets[playerId][vkutil::currentFrame], 0, nullptr);
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1,
+                            &mPlayerDescriptorSets[playerId][vkutil::currentFrame], 0, nullptr);
 
-        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 1, 1,
-                                &mDescriptorSets[vkutil::currentFrame], 0, nullptr);
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 1, 1,
+                            &mDescriptorSets[vkutil::currentFrame], 0, nullptr);
 
-        vkutil::MeshPushConstants pc = {};
-        pc.ModelMatrix = glm::mat4(1.0f);
-        vkCmdPushConstants(cmd, m_PipelineLayout,
-                           VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT |
-                               VK_SHADER_STAGE_GEOMETRY_BIT,
-                           0, sizeof(vkutil::MeshPushConstants), &pc);
+    vkutil::MeshPushConstants pc = {};
+    pc.ModelMatrix = glm::mat4(1.0f);
+    vkCmdPushConstants(cmd, m_PipelineLayout,
+                        VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT |
+                            VK_SHADER_STAGE_GEOMETRY_BIT,
+                        0, sizeof(vkutil::MeshPushConstants), &pc);
 
-        // Set up push constants
-        VkDeviceSize offset[] = {0};
-        vkCmdBindVertexBuffers(cmd, 0, 1, &m_vertexBuffer.buffer, offset);
-        vkCmdDraw(cmd, 36, 1, 0, 0);
-    }
+    // Set up push constants
+    VkDeviceSize offset[] = {0};
+    vkCmdBindVertexBuffers(cmd, 0, 1, &m_vertexBuffer.buffer, offset);
+    vkCmdDraw(cmd, 36, 1, 0, 0);
 
 #ifdef _DEBUG
     vkutil::EndRenderPassLabel(cmd);
