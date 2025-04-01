@@ -14,7 +14,7 @@ void Bouncepad::OnCollisionStart(Entity *aOther)
     }
     else if(aOther->CompareType("character"))
     {
-        static_cast<CharacterEntity*>(aOther)->SetLinearVelocity(glm::vec3(0.0, 10.0, 0.0));
+        static_cast<CharacterEntity *>(aOther)->AddImpulse(glm::vec3(0.0, 10.0, 0.0));
     }
 
     

@@ -67,9 +67,9 @@ class CharacterEntity : public Entity {
         mCharacterPositionOffset = glm::vec3(x, y, z);
     }
 
-    void SetLinearVelocity(glm::vec3 glm_velocity) {
-        Vec3 velocity(glm_velocity.x, glm_velocity.y, glm_velocity.z);
-        mSampleJoltCharacter->SetCharacterVelocity(velocity);
+    void AddImpulse(glm::vec3 glm_impulse) {
+        Vec3 impulse(glm_impulse.x, glm_impulse.y, glm_impulse.z);
+        mSampleJoltCharacter->AddImpulse(impulse);
     }
 
     void MoveToSpawn();
@@ -87,7 +87,6 @@ class CharacterEntity : public Entity {
 
   protected:
     Camera *mCamera = nullptr;
-    std::string mType = "character";
 
 
 private:
