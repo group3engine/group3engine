@@ -142,10 +142,10 @@ void Engine::Shutdown() {
     PhysicsManager::get().ShutDown();
 }
 
-void Engine::ChangeScene(const std::filesystem::path &filePath)
+void Engine::ChangeScene()
 {
     m_sceneNeedsChanging = true;
-    m_scenePath = filePath;
+    m_scenePath = SwitchScene();
 }
 
 void Engine::Run() {
@@ -178,11 +178,6 @@ void Engine::Run() {
             ChangeSceneFR();
             m_sceneNeedsChanging = false;
         }
-
-        if (IsKeyPressed(KEY::eC)) {
-            mScene->SwitchCamera();
-        }
-
 
         FrameMark;
     }
@@ -231,7 +226,7 @@ void Engine::ChangeSceneFR()
 
     m_isLoading = true;
     m_progress = 0.f;
-    std::thread loadingScreen(&Engine::RenderLoadingScreen, this);
+    // std::thread loadingScreen(&Engine::RenderLoadingScreen, this);
 
 
 
@@ -252,12 +247,12 @@ void Engine::ChangeSceneFR()
     mScene->Awake();
     m_progress = 100.f;
     // sleep for 1 second
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    // std::this_thread::sleep_for(std::chrono::seconds(1));
     // end the loading screen
     m_isLoading = false;
     // wait for loading screen thread to finish
-    while (!loadingScreen.joinable()) {}
-    loadingScreen.join();
+    // while (!loadingScreen.joinable()) {}
+    // loadingScreen.join();
 }
 
 void Engine::Update(double deltaTime) {
@@ -333,12 +328,12 @@ void Engine::RenderLoadingScreen()
     {
         while (m_isLoading)
         {
-            ImGuiRenderer::NewFrame();
-            ImGuiRenderer::Image("load", ImVec2{0,0}, ImVec2{1,1});
-            ImGuiRenderer::LoadingBar(m_progress, ImVec2(500, 500));
-            ImGuiRenderer::EndFrame();
-            // render some text with imgui
-            mRenderer->RenderUIOnly();
+            // ImGuiRenderer::NewFrame();
+            // ImGuiRenderer::Image("load", ImVec2{0,0}, ImVec2{1,1});
+            // ImGuiRenderer::LoadingBar(m_progress, ImVec2(500, 500));
+            // ImGuiRenderer::EndFrame();
+            // // render some text with imgui
+            // mRenderer->RenderUIOnly();
         }
     }catch (const std::exception& e) {
         // Handle the exception

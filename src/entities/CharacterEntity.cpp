@@ -45,7 +45,7 @@ void CharacterEntity::ProcessInput(){
     mCamera->SetInput(EInputState::ZOOM_IN, IsKeyPressed(KEY::eY));
     mCamera->SetInput(EInputState::ZOOM_OUT, IsKeyPressed(KEY::eU));
 
-    if (IsMouseButtonPressed(MOUSE_BUTTON::eLEFT)) {
+    if (IsKeyDown(KEY::eLEFT_SHIFT) && IsMouseButtonPressed(MOUSE_BUTTON::eLEFT)) {
         auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
         flag = !flag;
 
@@ -109,7 +109,7 @@ void CharacterEntity::Update(double deltaTime) {
 
     if (IsKeyPressed(KEY::eR))
     {
-        Engine::get().ChangeScene(Sample::SampleObby);
+        Engine::get().ChangeScene();
     }
 
 
@@ -366,8 +366,6 @@ void CharacterEntity::Awake() {
     mInitialTransform = GetLocalTransform();
     // create the jolt character
     CreateJoltCharacter();
-    // register the character with the scene
-    Scene::get().GetActiveScene()->SetMainCharacter(this);
 
     JPH::Vec3 joltPos = GetCharacterPosition();
     glm::vec3 pos = glm::vec3(joltPos.GetX(), joltPos.GetY(), joltPos.GetZ());

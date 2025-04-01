@@ -37,6 +37,13 @@ struct FinishPopupData {
 struct TimerData {
     float time;
 };
+
+namespace Settings {
+struct ActivePlayerCountOverride {
+    std::vector<const char *> items = {"INACTIVE", "1", "2", "3", "4"};
+    const char *activeItem = nullptr;
+};
+} // namespace Settings
 } // namespace gui
 
 namespace ImGuiRenderer
@@ -84,6 +91,8 @@ namespace ImGuiRenderer
     void LoadingBar(float progress, ImVec2 position);
 
     void Image(std::string const &imageName, ImVec2 position, ImVec2 size);
+
+    void NewActivePlayerCountOverride(Scene *scene, gui::Settings::ActivePlayerCountOverride &settings);
 
     void Initialize(const Context &context);
     void Shutdown(const Context &context);

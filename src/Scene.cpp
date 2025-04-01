@@ -13,6 +13,7 @@
 #include "ImGuiRenderer.hpp"
 #include "SampleGLTFFilePaths.hpp"
 
+#include "RenderPassCommon.hpp"
 
 void Scene::Update(double aDeltaTime) {
     ZoneScopedN("Scene::Update");
@@ -32,19 +33,17 @@ void Scene::Update(double aDeltaTime) {
 }
 
 void Scene::UpdateCameraTransforms() {
-    for (size_t i = 0; i < mPlayerCount; ++i) {
-        float width = static_cast<float>(mContext->extent.width);
-        float height = static_cast<float>(mContext->extent.height);
+    size_t activePlayerCount = GetActivePlayerCount();
+    for (size_t i = 0; i < activePlayerCount; ++i) {
+        ViewportSize viewportSize = CalcViewportSize(mContext->extent, activePlayerCount, i);
+
+        float width = viewportSize.width;
+        float height = viewportSize.height;
 
         auto *camera = mCameras[i];
         const auto &pos = camera->GetPosition();
         const auto &dir = camera->GetDirection();
         const auto &up = camera->GetUp();
-
-        if (mPlayerCount == 2) {
-            width = static_cast<float>(width) / mPlayerCount;
-            height = static_cast<float>(height);
-        }
 
         auto &playerCameraTransform = mPlayerCameraTransforms[i];
         playerCameraTransform.view = glm::lookAt(pos, pos + dir, up);
@@ -64,7 +63,7 @@ void Scene::UploadCameras(VkCommandBuffer cmdBuff) {
     // Write new data to the buffer to update uniform
     VkDeviceSize size = sizeof(CameraTransform);
 
-    for (size_t i = 0; i < mPlayerCount; ++i) {
+    for (size_t i = 0; i < GetActivePlayerCount(); ++i) {
         auto &cameraUBO = mPlayerCameraUbos[i];
         cameraUBO[vkutil::currentFrame].Upload(cmdBuff, &mPlayerCameraTransforms[i], size);
     }
@@ -81,6 +80,9 @@ void Scene::UpdateUi(double aDeltaTime) {
     for (auto &entity : m_Entities) {
         entity->UpdateUi(aDeltaTime);
     }
+
+    ImGuiRenderer::NewActivePlayerCountOverride(GetActiveScene(),
+                                                mGuiActivePlayerCountOverride);
 }
 
 void Scene::Unload()
@@ -97,8 +99,19 @@ void Scene::Unload()
     m_Animations.clear();
     m_Skins.clear();
 
-    mHasCharacter = false;
-    mCharacter = nullptr;
+    mActivePlayerCount = 0;
+    mActivePlayerCountOverride = {Override::INACTIVE, 1};
+
+    mCameras.clear();
+
+    // Zero out camera transforms for safety
+    for (auto &cameraTransform : mPlayerCameraTransforms) {
+        cameraTransform = {};
+    }
+
+    mSceneFilename = "";
+
+    mGuiActivePlayerCountOverride = {};
 }
 
 void Scene::LoadGLTF(const std::filesystem::path &aFilepath) {
@@ -386,12 +399,15 @@ void Scene::Awake()
         playerCameraTransform.fov = 45.0f;
     }
 
+    size_t scenePlayerCount = 0;
+
     bool hasSetActive = false;
     for (auto &entity : m_Entities) {
         if (entity->IsCharacter()) {
             auto *character = static_cast<CharacterEntity*>(entity);
             Camera *camera = character->GetCamera();
 
+            // TODO: Set one active camera for now
             if (!hasSetActive) {
                 camera->SetIsActive(true);
                 hasSetActive = true;
@@ -399,11 +415,18 @@ void Scene::Awake()
 
             Entity *cameraEntity = static_cast<Entity*>(camera);
             m_Entities.push_back(cameraEntity);
+
+            ++scenePlayerCount;
         }
     }
+
+    // TODO: Set the active player count to be the number of characters in the scene.
+    // This can change in the future to be 1 at first and then players join in
+    SetActivePlayerCount(scenePlayerCount);
 }
 
 Camera *Scene::GetActiveCamera() {
+    // Find the first active camera
     for (auto &entity : m_Entities) {
         if (entity->IsCharacter()) {
             auto *character = static_cast<CharacterEntity*>(entity);
@@ -417,27 +440,6 @@ Camera *Scene::GetActiveCamera() {
 
     SPDLOG_ERROR("Active camera not found.");
     std::exit(EXIT_FAILURE);
-}
-
-void Scene::SwitchCamera() {
-    CharacterEntity *activeCharacter = nullptr;
-    CharacterEntity *inactiveCharacter = nullptr;
-    for (auto &entity : m_Entities) {
-        if (entity->IsCharacter()) {
-            auto *character = static_cast<CharacterEntity*>(entity);
-            Camera *camera = character->GetCamera();
-
-            if (camera->IsActive()) {
-                activeCharacter = character;
-            } else {
-                inactiveCharacter = character;
-            }
-        }
-    }
-
-    activeCharacter->GetCamera()->SetIsActive(false);
-    inactiveCharacter->GetCamera()->SetIsActive(true);
-    mCharacter = inactiveCharacter;
 }
 
 void Scene::StartUp(Context *context, MaterialManager *materialManager,
@@ -473,8 +475,6 @@ void Scene::ShutDown() {
 
     // call shutdown on the light manager
     LightManager::getInstance().Destroy();
-    // remove the cameras
-    mCameras.clear();
 }
 
 void Scene::DrawOpaque(VkCommandBuffer cmd,

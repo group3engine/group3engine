@@ -46,7 +46,7 @@ void SampleSecondaryEntity::ProcessInput(){
             glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         }
     }
-    if (IsMouseButtonPressed(MOUSE_BUTTON::eLEFT)) {
+    if (IsKeyDown(KEY::eLEFT_SHIFT) && IsMouseButtonPressed(MOUSE_BUTTON::eLEFT)) {
         auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
         flag = false;
     }

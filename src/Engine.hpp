@@ -35,7 +35,7 @@ class Engine {
     bool Initialize();
     void Run();
     void Shutdown();
-    void ChangeScene(const std::filesystem::path &filePath);
+    void ChangeScene();
 
   private:
     Context m_context;

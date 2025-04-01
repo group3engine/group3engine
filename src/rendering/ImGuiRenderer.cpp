@@ -434,6 +434,36 @@ void ImGuiRenderer::Image(std::string const &imageName, ImVec2 position, ImVec2 
     ImGui::End();
 }
 
+void ImGuiRenderer::NewActivePlayerCountOverride(
+    Scene *scene, gui::Settings::ActivePlayerCountOverride &settings) {
+    ImGui::Text("Active Player Count Override");
+    if (ImGui::BeginCombo("##Active Player Count Override", settings.activeItem)) {
+        for (size_t i = 0; i < settings.items.size(); ++i) {
+            bool isSelected = settings.activeItem == settings.items[i];
+
+            if (ImGui::Selectable(settings.items[i], isSelected)) {
+                settings.activeItem = settings.items[i];
+            }
+
+            if (isSelected) {
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+
+        ImGui::EndCombo();
+    }
+
+    if (settings.activeItem) {
+        if (strcmp(settings.activeItem, "INACTIVE") == 0) {
+            scene->SetActivePlayerCountOverrideInactive();
+        } else {
+            size_t playerCount = 0;
+            assert(sscanf(settings.activeItem, "%zu", &playerCount));
+            scene->SetActivePlayerCountOverride(playerCount);
+        }
+    }
+}
+
 void ImGuiRenderer::NewFrame() {
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
