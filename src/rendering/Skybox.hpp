@@ -4,27 +4,29 @@
 #include "Image.hpp"
 #include "Volk.hpp"
 
+#include "Config.hpp"
+
 // Skybox
 class Context;
 class Skybox {
   public:
-    Skybox(Context &context, std::shared_ptr<Camera> camera,
-           VkRenderPass renderpass);
+    Skybox(Context &context, Scene *scene, VkRenderPass renderpass);
     ~Skybox();
 
-    void Execute(VkCommandBuffer cmd);
+    void Execute(VkCommandBuffer cmd, size_t playerCount, size_t playerId);
     void Resize();
 
     Image& GetSkyBoxImage() { return m_Skybox; }
 
   private:
     void CreatePipeline();
+    void BuildDescriptorSetLayouts();
     void BuildDescriptors();
     void CreateFramebuffer();
     void LoadCubemapFace(std::filesystem::path facePath, char **pixelData);
 
     Context &context;
-    std::shared_ptr<Camera> camera;
+    Scene *m_Scene;
     Image m_Skybox;
 
     Image m_RenderTarget;
@@ -33,8 +35,12 @@ class Skybox {
     VkPipelineLayout m_PipelineLayout;
     VkRenderPass m_RenderPass;
     VkFramebuffer m_Framebuffer;
-    VkDescriptorSetLayout m_DescriptorSetLayout;
-    std::vector<VkDescriptorSet> m_descriptorSets;
+
+    VkDescriptorSetLayout mPlayerDescriptorSetLayout;
+    std::array<std::vector<VkDescriptorSet>, GlobalConfig::maxPlayers> mPlayerDescriptorSets;
+
+    VkDescriptorSetLayout mDescriptorSetLayout;
+    std::vector<VkDescriptorSet> mDescriptorSets;
 
     Buffer m_vertexBuffer;
 };

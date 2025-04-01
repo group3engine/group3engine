@@ -44,6 +44,9 @@ public:
         // Get velocity of the character (used for animation, don't include ground velocity)
         virtual Vec3			GetCharacterVelocity() const				{ return mCharacter->GetLinearVelocity() - mCharacter->GetGroundVelocity(); }
 
+        // set the velocity of the character
+        virtual void			SetCharacterVelocity(Vec3Arg inVelocity)	{ mCharacter->SetLinearVelocity(inVelocity); }
+
 	void SetCharacterPosition(RVec3 pos) { mCharacter->SetPosition(pos); }
 
     // Set the custom contact listener

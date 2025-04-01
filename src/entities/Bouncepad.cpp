@@ -8,24 +8,15 @@
 void Bouncepad::OnCollisionStart(Entity *aOther)
 {
     SPDLOG_INFO("bouncepad triggered!");
-    colliding = true;
-    colliding_entity = aOther;
+    if(aOther->GetPhysicsType() == PhysicsType::KINEMATIC || aOther->GetPhysicsType() == PhysicsType::DYNAMIC)
+    {
+        aOther->GetRigidBody().AddLinearImpulse(glm::vec3(0.0, 10.0, 0.0));
+    }
+    else if(aOther->CompareType("character"))
+    {
+        static_cast<CharacterEntity*>(aOther)->SetLinearVelocity(glm::vec3(0.0, 10.0, 0.0));
+    }
 
     
 }
 
-void Bouncepad::Update(double deltaTime)
-{
-    if(colliding)
-    {
-        if(colliding_entity->GetPhysicsType() == PhysicsType::KINEMATIC || colliding_entity->GetPhysicsType() == PhysicsType::DYNAMIC)
-        {
-            colliding_entity->GetRigidBody().AddLinearImpulse(glm::vec3(0.0, 10.0, 0.0));
-        }
-        else if(colliding_entity->CompareType("character"))
-        {
-            static_cast<CharacterEntity*>(colliding_entity)->SetLinearVelocity(glm::vec3(0.0, 10.0, 0.0));
-        }
-        colliding = false;
-    }
-}

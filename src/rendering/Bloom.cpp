@@ -12,8 +12,9 @@
 #include <array>
 #include "Utils.hpp"
 
-Bloom::Bloom(Context &context, Image &inputImage)
+Bloom::Bloom(Context &context, Scene *scene, Image &inputImage)
     : context{context},
+      m_Scene{scene},
       inputImage{inputImage},
       m_renderPass{VK_NULL_HANDLE},
       m_HorizontalBlurFramebuffer{VK_NULL_HANDLE},

@@ -444,7 +444,7 @@ void ImGuiRenderer::EndFrame() {
     ImGui::EndFrame();
 }
 
-void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::shared_ptr<Camera>& camera)
+void ImGuiRenderer::Update(Scene *scene)
 {
     ZoneScopedN("ImGuiRenderer::Update");
 
@@ -456,15 +456,15 @@ void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::share
 
     // Add camera position
     ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)",
-        camera->GetPosition().x,
-        camera->GetPosition().y,
-        camera->GetPosition().z
+        scene->GetActiveCamera()->GetPosition().x,
+        scene->GetActiveCamera()->GetPosition().y,
+        scene->GetActiveCamera()->GetPosition().z
     );
 
    ImGui::Text("Directional Light: (%.2f, %.2f, %.2f)",
-        scene->GetLights()[0].position.x,
-        scene->GetLights()[0].position.y,
-        scene->GetLights()[0].position.z
+        LightManager::getInstance()->GetLights()[0]->position.x,
+        LightManager::getInstance()->GetLights()[0]->position.y,
+        LightManager::getInstance()->GetLights()[0]->position.z
     );
 
     static bool initialized = false;
@@ -472,33 +472,20 @@ void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::share
     static float SunAzimuthal = 0.0f;
     static const float distance = 1.0f;
 
-    auto &lights = scene->GetLights();
+    auto lights = LightManager::getInstance()->GetLights();
     if (lights.empty())
         return;
 
-    auto &sunLight = lights[0];
+    auto *sunLight = lights[0];
 
     if (!initialized) {
-        SunElevation = 0.89f; // default elevation // -21
-        SunAzimuthal = 0.0f; // default azimuth // 45
-        sunLight.view = -43.0f;
-        sunLight.far = 50.0f;
-        sunLight.near = -125.0f;
+        sunLight->view = -43.0f;
+        sunLight->far = 50.0f;
+        sunLight->near = -125.0f;
         initialized = true;
     }
 
-    // Phis is elevation
-    // Theta is azimuthal
-    const float ElevationPhi = (SunElevation);
-    const float AzimuthalTheta = (SunAzimuthal);
 
-    const float x = cosf(ElevationPhi) * cosf(AzimuthalTheta) * distance;
-    const float y = sinf(ElevationPhi) * distance;
-    const float z = cosf(ElevationPhi) * sinf(AzimuthalTheta) * distance;
-
-    sunLight.position.x = x;
-    sunLight.position.y = y;
-    sunLight.position.z = z;
 
     if (ImGui::CollapsingHeader("Directional Light"))
     {
@@ -507,20 +494,20 @@ void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::share
         ImGui::SliderFloat("Azimuthal - Theta", &SunAzimuthal, -3.141f, 3.141f, "%.2f");
 
         ImGui::Text("Light Camera Settings");
-        ImGui::SliderFloat("View", &sunLight.view, -200.0f, 200.0f, "%.2f");
-        ImGui::SliderFloat("Near", &sunLight.near, -200.0f, 1.0f, "%.2f");
-        ImGui::SliderFloat("Far", &sunLight.far, 0.0f, 50.0f, "%.2f");
+        ImGui::SliderFloat("View", &sunLight->view, -200.0f, 200.0f, "%.2f");
+        ImGui::SliderFloat("Near", &sunLight->near, -200.0f, 1.0f, "%.2f");
+        ImGui::SliderFloat("Far", &sunLight->far, 0.0f, 50.0f, "%.2f");
 
         ImGui::SliderFloat("Shadow bias: ", &vkutil::ShadowBias, 0.0f, 10.0f);
         ImGui::SliderFloat("Shadow slope: ", &vkutil::ShadowSlope, 0.0f, 10.0f);
     }
 
     if (ImGui::CollapsingHeader("Lights")) {
-        auto &lights = scene->GetLights();
+        auto lights = LightManager::getInstance()->GetLights();
         for (size_t i = 1; i < lights.size() - 1; ++i) {
-            if (lights[i].Type != LightType::Directional) {
+            if (lights[i]->Type != LightType::Directional) {
                 std::string label = "Light " + std::to_string(i) + " Position";
-                ImGui::SliderFloat3(label.c_str(), &lights[i].position.x, -10.0f, 10.0f, "%.2f");
+                ImGui::SliderFloat3(label.c_str(), &lights[i]->position.x, -10.0f, 10.0f, "%.2f");
             }
         }
     }
@@ -594,5 +581,5 @@ void ImGuiRenderer::Shutdown(const Context& context)
 void ImGuiRenderer::AddTexture(VkSampler sampler, VkImageView imageView, VkImageLayout imageLayout)
 {
     ImTextureID textureID = ImGui_ImplVulkan_AddTexture(sampler, imageView, imageLayout);
-	textureIDs.push_back(static_cast<void*>(textureID));
+    textureIDs.push_back(static_cast<void*>(textureID));
 }

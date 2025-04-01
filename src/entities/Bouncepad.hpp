@@ -9,11 +9,7 @@ class Bouncepad : public Entity{
         Bouncepad() = default;
 
         void OnCollisionStart(Entity *aOther) override;
-        void Update(double deltaTime) override;
-    
-    private:
-        bool colliding = false;
-        Entity *colliding_entity;
+
 };
 
 #endif // GROUP3ENGINE_BOUNEPAD_HPP

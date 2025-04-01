@@ -294,6 +294,9 @@ VkRenderPass CreateSwapchainRenderPass(VkDevice device, VkFormat format) {
 }
 } // namespace
 
+
+Context* Context::kcontext = nullptr;
+
 Context::Context()
     : mWindow(nullptr),
       instance(VK_NULL_HANDLE),
@@ -318,6 +321,7 @@ Context::Context()
       transientCommandPool(VK_NULL_HANDLE),
       descriptorPool(VK_NULL_HANDLE),
       vkSetDebugUtilsObjectNameEXT(VK_NULL_HANDLE) {
+    kcontext = this;
 }
 
 void Context::Destroy() {

@@ -69,7 +69,7 @@ class CharacterEntity : public Entity {
 
     void SetLinearVelocity(glm::vec3 glm_velocity) {
         Vec3 velocity(glm_velocity.x, glm_velocity.y, glm_velocity.z);
-        // TODO: ACTUALLY FINISH THIS
+        mSampleJoltCharacter->SetCharacterVelocity(velocity);
     }
 
     void MoveToSpawn();
@@ -79,14 +79,18 @@ class CharacterEntity : public Entity {
         Reset();
     }
 
+    [[nodiscard]] Camera* GetCamera(){return mCamera;}
+
   private:
     void Save();
     void Load();
 
   protected:
+    Camera *mCamera = nullptr;
     std::string mType = "character";
 
-  private:
+
+private:
     Transform mInitialTransform = {};
     std::unique_ptr<SampleJoltCharacter> mSampleJoltCharacter;
 
