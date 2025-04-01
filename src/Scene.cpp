@@ -473,6 +473,8 @@ void Scene::ShutDown() {
 
     // call shutdown on the light manager
     LightManager::getInstance()->Destroy();
+    // remove the cameras
+    mCameras.clear();
 }
 
 void Scene::DrawOpaque(VkCommandBuffer cmd,
