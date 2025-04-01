@@ -59,5 +59,5 @@ void main()
 	WorldPos = skinMat * vec4(pos, 1.0);
 	gl_Position = ubo.projection * ubo.view * WorldPos;
     vec3 biTangent = cross(normalize(normal), normalize(tangent.xyz)) * tangent.w;
-    TBNFrame = adjugate(pc.ModelMatrix) * mat3(normalize(tangent.xyz), normalize(biTangent), normalize(normal));
+    TBNFrame = adjugate(skinMat) * mat3(normalize(tangent.xyz), normalize(biTangent), normalize(normal));
 }
