@@ -1,4 +1,4 @@
-﻿#include "ForwardPass.hpp"
+#include "ForwardPass.hpp"
 
 #include <tracy/TracyVulkan.hpp>
 
@@ -9,6 +9,7 @@
 #include "Scene.hpp"
 #include "Utils.hpp"
 #include "Buffer.hpp"
+#include "ParticleSystem.hpp"
 
 #include "RenderPassCommon.hpp"
 
@@ -69,6 +70,9 @@ ForwardPass::~ForwardPass() {
     vkDestroyPipelineLayout(context.device, m_alphaMaskPipeline.second, nullptr);
     vkDestroyPipeline(context.device, m_skinnedPipeline.first, nullptr);
     vkDestroyPipelineLayout(context.device, m_skinnedPipeline.second, nullptr);
+    vkDestroyPipeline(context.device, m_particlePipeline.first, nullptr);
+    vkDestroyPipelineLayout(context.device, m_particlePipeline.second, nullptr);
+
 
     vkDestroyFramebuffer(context.device, m_framebuffer, nullptr);
     vkDestroyRenderPass(context.device, m_renderPass, nullptr);
@@ -78,6 +82,11 @@ ForwardPass::~ForwardPass() {
 
     if(skinDescriptorSetLayout != VK_NULL_HANDLE) {
         vkDestroyDescriptorSetLayout(context.device, skinDescriptorSetLayout, nullptr);
+    }
+
+    if(particleDescriptorSetLayout != VK_NULL_HANDLE)
+    {
+        vkDestroyDescriptorSetLayout(context.device, particleDescriptorSetLayout, nullptr);
     }
 }
 
@@ -162,7 +171,7 @@ void ForwardPass::BeginExecute(VkCommandBuffer cmd) {
 
     size_t playerCount = scene->GetPlayerCount();
     for (size_t playerId = 0; playerId < playerCount; ++playerId) {
-        m_Skybox->Execute(cmd);
+        m_Skybox->Execute(cmd, playerCount, playerId);
 
         // NOTE: Viewport and scissor needs to be set again after executing skybox pass
         // TODO: Investigate more
@@ -187,6 +196,9 @@ void ForwardPass::BeginExecute(VkCommandBuffer cmd) {
         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_alphaMaskPipeline.first);
         scene->DrawAlphaMasked(cmd, m_alphaMaskPipeline.second);
     }
+
+    // Also drawn per player but per player logic is inside of the particle system
+    ParticleSystem::DrawAll(cmd, m_particlePipeline.first, m_particlePipeline.second, mPlayerDescriptorSets);
 }
 
 void ForwardPass::EndExecute(VkCommandBuffer cmd) {
@@ -255,6 +267,21 @@ void ForwardPass::CreatePipeline() {
         .Build();
 
     m_skinnedPipeline = skinnedPipeline;
+
+    m_particlePipeline = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
+            .AddShader(PARTICLE_MESH_VERTEX_SHADER, ShaderType::VERTEX)
+            .AddShader(PARTICLE_SHADER_UNLIT_FRAGMENT, ShaderType::FRAGMENT)
+            .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+            .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}})
+            .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE)
+            .SetPipelineLayout({meshDescriptorSetLayout, vkutil::materialDescriptorSetLayout, particleDescriptorSetLayout})
+            .SetSampling(VK_SAMPLE_COUNT_1_BIT)
+            .AddBlendAttachmentState()
+            .AddBlendAttachmentState()
+            .SetDepthState(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL)
+            .SetRenderPass(m_renderPass)
+            .Build();
+
 }
 
 void ForwardPass::CreateRenderPass() {
@@ -323,11 +350,13 @@ void ForwardPass::BuildDescriptorSetLayouts() {
     meshDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
 
     skinDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}});
+    particleDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, {{0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}});
 }
 
 void ForwardPass::BuildDescriptors() {
-    size_t id = 0;
-    for (auto &descriptorSets : mPlayerDescriptorSets) {
+    for (size_t playerId = 0; playerId < GlobalConfig::maxPlayers; ++playerId) {
+        auto &descriptorSets = mPlayerDescriptorSets[playerId];
+
         descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
         vkutil::AllocateDescriptorSets(context, context.descriptorPool, meshDescriptorSetLayout,
                                        vkutil::MAX_FRAMES_IN_FLIGHT, descriptorSets);
@@ -335,7 +364,7 @@ void ForwardPass::BuildDescriptors() {
         // Camera Transform UBO
         for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
             VkDescriptorBufferInfo bufferInfo{};
-            bufferInfo.buffer = scene->GetCameraBuffers(id)[i].buffer;
+            bufferInfo.buffer = scene->GetCameraBuffers(playerId)[i].buffer;
             bufferInfo.offset = 0;
             bufferInfo.range = sizeof(CameraTransform);
             vkutil::UpdateDescriptorSet(context, 0, bufferInfo, descriptorSets[i],
@@ -365,8 +394,6 @@ void ForwardPass::BuildDescriptors() {
             vkutil::UpdateDescriptorSet(context, 2, imageInfo, descriptorSets[i],
                                         VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
         }
-
-        ++id;
     }
 }
 

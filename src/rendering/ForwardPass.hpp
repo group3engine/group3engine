@@ -53,6 +53,7 @@ class ForwardPass {
     VkFramebuffer m_framebuffer;
     VkDescriptorSetLayout meshDescriptorSetLayout;
     VkDescriptorSetLayout skinDescriptorSetLayout;
+    VkDescriptorSetLayout particleDescriptorSetLayout;
 
     Context &context;
     Image &shadowMap;
@@ -64,6 +65,7 @@ class ForwardPass {
     std::pair<VkPipeline, VkPipelineLayout> m_opaquePipeline;
     std::pair<VkPipeline, VkPipelineLayout> m_alphaMaskPipeline;
     std::pair<VkPipeline, VkPipelineLayout> m_skinnedPipeline;
+    std::pair<VkPipeline, VkPipelineLayout> m_particlePipeline;
 
     std::unique_ptr<Skybox> m_Skybox;
 };

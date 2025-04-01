@@ -259,8 +259,9 @@ void GBuffer::BuildDescriptorSetLayouts() {
 
 void GBuffer::BuildDescriptors()
 {
-    size_t id = 0;
-    for (auto &descriptorSets : mPlayerDescriptorSets) {
+    for (size_t playerId = 0; playerId < GlobalConfig::maxPlayers; ++playerId) {
+        auto &descriptorSets = mPlayerDescriptorSets[playerId];
+
         descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
         vkutil::AllocateDescriptorSets(context, context.descriptorPool, mPlayerDescriptorSetLayout,
                                        vkutil::MAX_FRAMES_IN_FLIGHT, descriptorSets);
@@ -268,14 +269,12 @@ void GBuffer::BuildDescriptors()
         // Camera Transform UBO
         for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
             VkDescriptorBufferInfo bufferInfo{};
-            bufferInfo.buffer = scene->GetCameraBuffers(id)[i].buffer;
+            bufferInfo.buffer = scene->GetCameraBuffers(playerId)[i].buffer;
             bufferInfo.offset = 0;
             bufferInfo.range = sizeof(CameraTransform);
             vkutil::UpdateDescriptorSet(context, 0, bufferInfo, descriptorSets[i],
                                         VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
         }
-
-        ++id;
     }
 }
 

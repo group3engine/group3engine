@@ -9,8 +9,16 @@
 #include "Config.hpp"
 
 inline VkViewport CalcViewport(VkExtent2D extent, size_t playerCount, size_t playerId) {
-    float width = static_cast<float>(extent.width) / playerCount;
-    float height = static_cast<float>(extent.height) / playerCount;
+    float width = 0.0f;
+    float height = 0.0f;
+
+    if (playerCount == 1) {
+        width = static_cast<float>(extent.width);
+        height = static_cast<float>(extent.height);
+    } else if (playerCount == 2) {
+        width = static_cast<float>(extent.width) / playerCount;
+        height = static_cast<float>(extent.height);
+    }
 
     float offsetX = 0.0f;
     float offsetY = 0.0f;
@@ -19,7 +27,6 @@ inline VkViewport CalcViewport(VkExtent2D extent, size_t playerCount, size_t pla
         offsetY = 0.0f;
     } else if (playerId == 1) {
         offsetX = width;
-        offsetY = height;
     }
 
     VkViewport viewport{};
