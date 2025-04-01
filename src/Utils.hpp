@@ -17,7 +17,6 @@ class Context;
 
 #define ERROR(message) std::cout << "[ERROR]: " << message << std::endl;
 
-constexpr int NUM_LIGHTS = 26;
 
 namespace vkutil {
 enum class RenderType {
@@ -53,9 +52,7 @@ struct PostProcessing {
     alignas(1) bool Enable;
 };
 
-struct LightBuffer {
-    LightUBO lights[NUM_LIGHTS];
-};
+
 
 struct GuassianWeightsBuffer {
     float weights[22];

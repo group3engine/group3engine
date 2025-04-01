@@ -10,6 +10,7 @@
 #include "Light.hpp"
 #include "Utils.hpp"
 #include "SampleGLTFFilePaths.hpp"
+#include "LightManager.hpp"
 #include <imgui.h>
 
 namespace {
@@ -255,7 +256,7 @@ void Renderer::BeginFrame(VkCommandBuffer cmd) {
 
             m_scene->UploadCameras(cmd);
 
-            m_scene->UploadLights(cmd);
+            LightManager::getInstance()->UploadLights(cmd);
 
             // Upload animation data to GPU
             for (auto *entity : m_scene->GetEntities()) {

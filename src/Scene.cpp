@@ -13,9 +13,6 @@
 #include "ImGuiRenderer.hpp"
 #include "SampleGLTFFilePaths.hpp"
 
-void Scene::AddLightSource(Light &LightSource) {
-    m_Lights.push_back(std::move(LightSource));
-}
 
 void Scene::Update(double aDeltaTime) {
     ZoneScopedN("Scene::Update");
@@ -30,21 +27,7 @@ void Scene::Update(double aDeltaTime) {
         entity->LateUpdate(aDeltaTime);
     }
 
-    for (auto& light : m_Lights)
-    {
-        glm::mat4 ortho = glm::ortho(-light.view, light.view, -light.view, light.view, light.near, light.far);
-        glm::mat4 view = glm::lookAt(glm::vec3(light.position), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0));
-        light.LightSpaceMatrix = ortho * view;
-    }
-
-    // Fill GPU Data with data defined for the scene
-    for (size_t i = 0; i < m_Lights.size(); i++) {
-        m_LightBuffer.lights[i].type = static_cast<int>(m_Lights[i].Type);
-        m_LightBuffer.lights[i].LightPosition = m_Lights[i].position;
-        m_LightBuffer.lights[i].LightColour = m_Lights[i].colour;
-        m_LightBuffer.lights[i].LightSpaceMatrix = m_Lights[i].LightSpaceMatrix;
-    }
-
+    LightManager::getInstance()->Update();
     UpdateCameraTransforms();
 }
 
@@ -87,10 +70,6 @@ void Scene::UploadCameras(VkCommandBuffer cmdBuff) {
     }
 }
 
-void Scene::UploadLights(VkCommandBuffer cmdBuff) {
-    // Pass the light data to the GPU to update all light properties
-    m_LightUBO[vkutil::currentFrame].Upload(cmdBuff, &m_LightBuffer, sizeof(vkutil::LightBuffer));
-}
 
 void Scene::UpdateUi(double aDeltaTime) {
     ZoneScopedN("Scene::UpdateUi");
@@ -114,7 +93,6 @@ void Scene::Unload()
 
     m_FrontMeshes.clear();
     m_BackMeshes.clear();
-    m_Lights.clear();
     m_Entities.clear();
     m_Animations.clear();
     m_Skins.clear();
@@ -144,28 +122,28 @@ void Scene::Load(const std::filesystem::path &filePath)
     directionalLight.position = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
     directionalLight.colour = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
-    std::vector<glm::vec4> spotLightPositions;
+    std::vector<glm::vec4> pointLightPositions;
 
-    // Random spot light positions put side by side each other
+    // Random point light positions put side by side each other
     for (size_t i = 0; i < 25; i++) {
-        spotLightPositions.push_back(glm::vec4(-9.0 + i * 0.8, 4.4f, 0.5f, 1.0f));
+        pointLightPositions.push_back(glm::vec4(-9.0 + i * 0.8, 4.4f, 0.5f, 1.0f));
     }
 
     // Create the scene which will store models and lights
     // Add GLTF to the scene
     // Add a directional light source defined earlier
     LoadGLTF(gltfPath);
-    AddLightSource(directionalLight);
+    LightManager::getInstance()->SetDirectionalLight(&directionalLight);
 
     // Loop through the positions and instantiate a light
     // and pass to the scene to add the lights to the scene
-    for (const auto &position : spotLightPositions) {
-        Light spotLight = {};
-        spotLight.Type = LightType::Spot;
-        spotLight.position = position;
-        spotLight.colour = glm::vec4(glm::linearRand(0.0f, 1.0f), glm::linearRand(0.0f, 1.f),
+    for (const auto &position : pointLightPositions) {
+        Light pointLight = {};
+        pointLight.Type = LightType::Point;
+        pointLight.position = position;
+        pointLight.colour = glm::vec4(glm::linearRand(0.0f, 1.0f), glm::linearRand(0.0f, 1.f),
                                      glm::linearRand(0.0f, 1.0f), 1.0f);
-        AddLightSource(spotLight);
+        LightManager::getInstance()->SetPointLight(&pointLight);
     }
 
     SPDLOG_DEBUG("Number of Lights: {}", GetLights().size());
@@ -508,15 +486,8 @@ void Scene::StartUp(Context *context, MaterialManager *materialManager,
         }
     }
 
-    m_LightUBO.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
-    // Light uniform buffers
-    for (auto &buffer : m_LightUBO) {
-        buffer = CreateBuffer("LightUBO", *mContext, sizeof(vkutil::LightBuffer),
-                              VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                              VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
-                                  VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
-                                  VMA_ALLOCATION_CREATE_MAPPED_BIT);
-    }
+    // call startup on the light manager
+    LightManager::getInstance()->StartUp(*mContext);
 
     mCurrentScene = this;
 }
@@ -528,9 +499,8 @@ void Scene::ShutDown() {
         }
     }
 
-    for (auto &buffer : m_LightUBO) {
-        buffer.Destroy();
-    }
+    // call shutdown on the light manager
+    LightManager::getInstance()->Destroy();
 }
 
 void Scene::DrawOpaque(VkCommandBuffer cmd,
