@@ -12,11 +12,11 @@
 #include "Entity.hpp"
 #include "CharacterEntity.hpp"
 #include "Image.hpp"
-#include "Light.hpp"
 #include "MaterialManager.hpp"
 #include "MeshManager.hpp"
 #include "TextureManager.hpp"
 #include "Utils.hpp"
+#include "LightManager.hpp"
 
 
 #include "ImGuiRenderer.hpp"
@@ -56,7 +56,6 @@ class Scene {
     void DrawAlphaMasked(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
     void DrawShadowMap(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
     void DrawSkinned(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
-    void AddLightSource(Light& LightSource);
     void Update(double aDeltaTime);
     void UpdateUi(double aDeltaTime);
 
@@ -71,9 +70,6 @@ class Scene {
 
     TextureManager *GetTextureManager() const { return mTextureManager; }
 
-    std::vector<Light> &GetLights() { return m_Lights; }
-
-    std::vector<Buffer> &GetLightsUBO() { return m_LightUBO; }
 
     std::vector<Entity *>& GetEntities() { return m_Entities; }
 
@@ -99,7 +95,6 @@ class Scene {
 
     void UploadCameras(VkCommandBuffer cmdBuff);
 
-    void UploadLights(VkCommandBuffer cmdBuff);
 
     Camera *GetActiveCamera();
 
@@ -117,9 +112,6 @@ class Scene {
 
     std::vector<size_t> m_FrontMeshes;
     std::vector<size_t> m_BackMeshes;
-    std::vector<Light>  m_Lights;
-    vkutil::LightBuffer m_LightBuffer;
-    std::vector<Buffer> m_LightUBO;
     std::vector<Entity *> m_Entities;
     std::vector<Animation> m_Animations;
     std::vector<Skin> m_Skins;
