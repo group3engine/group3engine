@@ -479,26 +479,13 @@ void ImGuiRenderer::Update(Scene *scene)
     auto *sunLight = lights[0];
 
     if (!initialized) {
-        SunElevation = 0.89f; // default elevation // -21
-        SunAzimuthal = 0.0f; // default azimuth // 45
         sunLight->view = -43.0f;
         sunLight->far = 50.0f;
         sunLight->near = -125.0f;
         initialized = true;
     }
 
-    // Phis is elevation
-    // Theta is azimuthal
-    const float ElevationPhi = (SunElevation);
-    const float AzimuthalTheta = (SunAzimuthal);
 
-    const float x = cosf(ElevationPhi) * cosf(AzimuthalTheta) * distance;
-    const float y = sinf(ElevationPhi) * distance;
-    const float z = cosf(ElevationPhi) * sinf(AzimuthalTheta) * distance;
-
-    sunLight->position.x = x;
-    sunLight->position.y = y;
-    sunLight->position.z = z;
 
     if (ImGui::CollapsingHeader("Directional Light"))
     {

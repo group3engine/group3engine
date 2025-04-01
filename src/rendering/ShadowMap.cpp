@@ -16,7 +16,6 @@
 
 ShadowMap::ShadowMap(Context &context, Scene *scene)
     : context{context}, scene{scene} {
-    assert(!LightManager::getInstance()->GetLights().empty());
 
     // 128, 256, 512, 1024, 2048, 4096
     m_width = RESOLUTION;

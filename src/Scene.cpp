@@ -116,35 +116,7 @@ void Scene::Load(const std::filesystem::path &filePath)
     std::filesystem::path basePath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets";
     std::filesystem::path gltfPath = basePath / filePath;
 
-    // Define Light sources
-    Light directionalLight;
-    directionalLight.Type = LightType::Directional;
-    directionalLight.position = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    directionalLight.colour = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-
-    std::vector<glm::vec4> pointLightPositions;
-
-    // Random point light positions put side by side each other
-    for (size_t i = 0; i < 25; i++) {
-        pointLightPositions.push_back(glm::vec4(-9.0 + i * 0.8, 4.4f, 0.5f, 1.0f));
-    }
-
-    // Create the scene which will store models and lights
-    // Add GLTF to the scene
-    // Add a directional light source defined earlier
     LoadGLTF(gltfPath);
-    LightManager::getInstance()->SetDirectionalLight(&directionalLight);
-
-    // Loop through the positions and instantiate a light
-    // and pass to the scene to add the lights to the scene
-    for (const auto &position : pointLightPositions) {
-        Light pointLight = {};
-        pointLight.Type = LightType::Point;
-        pointLight.position = position;
-        pointLight.colour = glm::vec4(glm::linearRand(0.0f, 1.0f), glm::linearRand(0.0f, 1.f),
-                                     glm::linearRand(0.0f, 1.0f), 1.0f);
-        LightManager::getInstance()->SetPointLight(&pointLight);
-    }
 
     SPDLOG_DEBUG("Number of Lights: {}", GetLights().size());
 
