@@ -45,16 +45,15 @@ glm::vec4 RigidBody::GetPosition() const {
     return returnPosition;
 }
 
-void RigidBody::SetPosition(glm::vec3 glm_position) const {
-    RVec3 position(glm_position.x, glm_position.y, glm_position.z);
-
-    PhysicsManager::get().mPhysicsSystem.GetBodyInterface().SetPosition(mBodyId, position, EActivation::DontActivate);
+void RigidBody::SetPosition(glm::vec3 glm_position) {
+    mNewPosition = RVec3(glm_position.x, glm_position.y, glm_position.z);
+    updatePosition = true;
 }
 
-void RigidBody::SetRotation(glm::quat glm_rotation) const {
+void RigidBody::SetRotation(glm::quat glm_rotation) {
     
-    Quat rotation(glm_rotation.x, glm_rotation.y, glm_rotation.z, glm_rotation.w);
-    PhysicsManager::get().mPhysicsSystem.GetBodyInterface().SetRotation(mBodyId, rotation, EActivation::DontActivate);
+    mNewRotation = Quat(glm_rotation.x, glm_rotation.y, glm_rotation.z, glm_rotation.w);
+    updateRotation = true;
 }
 
 glm::vec4 RigidBody::GetVelocity() const {
@@ -79,4 +78,30 @@ glm::mat4 RigidBody::GetWorldTransform() const {
     }
 
     return returnWorldTransform;
+}
+
+void RigidBody::PrePhysicsUpdate(double deltaTime)
+{
+    if(updateVelocity)
+    {
+        updateVelocity = false;
+        PhysicsManager::get().mPhysicsSystem.GetBodyInterface().SetLinearVelocity(mBodyId, mNewVelocity);
+    }
+    if(updateAngularVelocity)
+    {
+        updateAngularVelocity = false;
+        PhysicsManager::get().mPhysicsSystem.GetBodyInterface().SetAngularVelocity(mBodyId, mNewAngularVelocity);
+    }
+    if(updatePosition)
+    {
+        updatePosition = false;
+        PhysicsManager::get().mPhysicsSystem.GetBodyInterface().SetPosition(mBodyId, mNewPosition, EActivation::DontActivate);
+    }
+    if(updateRotation)
+    {
+        updateRotation = false;
+        PhysicsManager::get().mPhysicsSystem.GetBodyInterface().SetRotation(mBodyId, mNewRotation, EActivation::DontActivate);
+    }
+
+
 }

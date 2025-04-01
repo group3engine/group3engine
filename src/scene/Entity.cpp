@@ -290,6 +290,10 @@ void Entity::BaseUpdate(double deltaTime) {
         SetPhysicsTransform();
         UpdateChildrenTransform();
     }
+    if(mHasRigidBody)
+    {
+        mRigidBody->PrePhysicsUpdate(deltaTime);
+    }
 }
 void Entity::UpdateChildrenTransform() {
     for (auto &child : mChildren) {

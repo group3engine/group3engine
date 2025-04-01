@@ -10,7 +10,7 @@ namespace GlobalConfig {
 extern bool enablePhysicsDebugRenderer;
 #endif // JPH_DEBUG_RENDERER
 
-constexpr size_t maxPlayers = 2;
+constexpr size_t maxPlayers = 1;
 
 } // namespace GlobalConfig
 
