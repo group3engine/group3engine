@@ -45,6 +45,11 @@ void MaterialManager::UploadLastMaterial() {
         material.pbrMetallicRoughness.baseColorTexture->image.imageView);
     imageViews.emplace_back(material.pbrMetallicRoughness
                                 .metallicRoughnessTexture->image.imageView);
+    if(material.normalTexture != nullptr) {
+        imageViews.emplace_back(material.normalTexture->image.imageView);
+    } else {
+        imageViews.emplace_back(VK_NULL_HANDLE);
+    }
     material.descriptorSet =
         create_material_descriptor_set(imageViews, material.materialBuffer);
 }
@@ -63,15 +68,16 @@ void MaterialManager::Initialise() {
 VkDescriptorSet MaterialManager::create_material_descriptor_set(
     std::vector<VkImageView> const &aImageViews,
     Buffer const &aMaterialBuffer) {
+    assert(aImageViews.size() == 3);
     // allocate the descriptor set for this material
     VkDescriptorSet set = VK_NULL_HANDLE;
     vkutil::AllocateDescriptorSet(mContext, mDescriptorPool, vkutil::materialDescriptorSetLayout, 1,
                                   set);
     // write the descriptor set
-    VkWriteDescriptorSet desc[3]{};
+    VkWriteDescriptorSet desc[4]{};
     VkDescriptorImageInfo textureInfo[3]{};
     // write the texture infos
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 3; i++) {
         textureInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         if (i < static_cast<int>(aImageViews.size()) &&
             aImageViews[i] != VK_NULL_HANDLE) {
@@ -82,7 +88,7 @@ VkDescriptorSet MaterialManager::create_material_descriptor_set(
         textureInfo[i].sampler = vkutil::repeatSamplerAniso;
     }
     // write the descriptor sets
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 3; i++) {
         desc[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         desc[i].dstSet = set;
         desc[i].dstBinding = i;
@@ -97,12 +103,12 @@ VkDescriptorSet MaterialManager::create_material_descriptor_set(
     aMaterialBufferInfo.offset = 0;
     aMaterialBufferInfo.range = VK_WHOLE_SIZE;
 
-    desc[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    desc[2].dstSet = set;
-    desc[2].dstBinding = 2;
-    desc[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    desc[2].descriptorCount = 1;
-    desc[2].pBufferInfo = &aMaterialBufferInfo;
+    desc[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    desc[3].dstSet = set;
+    desc[3].dstBinding = 3;
+    desc[3].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    desc[3].descriptorCount = 1;
+    desc[3].pBufferInfo = &aMaterialBufferInfo;
     // update the descriptor sets
     constexpr auto numSets = sizeof(desc) / sizeof(desc[0]);
     vkUpdateDescriptorSets(mContext.device, numSets, desc, 0, nullptr);
@@ -112,7 +118,7 @@ VkDescriptorSet MaterialManager::create_material_descriptor_set(
 
 VkDescriptorSetLayout MaterialManager::create_material_descriptor_layout() const {
     // base colour, roughness, metalness, and material numbers
-    VkDescriptorSetLayoutBinding bindings[3]{};
+    VkDescriptorSetLayoutBinding bindings[4]{};
     // base colour
     bindings[0].binding = 0; // this must match the binding in the shader
     bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -123,11 +129,16 @@ VkDescriptorSetLayout MaterialManager::create_material_descriptor_layout() const
     bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     bindings[1].descriptorCount = 1;
     bindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    // material numbers
+    // normal map
     bindings[2].binding = 2; // this must match the binding in the shader
-    bindings[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    bindings[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     bindings[2].descriptorCount = 1;
     bindings[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    // material numbers
+    bindings[3].binding = 3; // this must match the binding in the shader
+    bindings[3].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    bindings[3].descriptorCount = 1;
+    bindings[3].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
     VkDescriptorSetLayoutCreateInfo layoutInfo{};
     layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;

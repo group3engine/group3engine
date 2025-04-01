@@ -26,11 +26,12 @@ layout (set = 2, binding = 0) readonly buffer ParticleUniform
 layout(location = 0) in vec3 pos;
 layout(location = 1) in vec2 tex;
 layout(location = 2) in vec3 normal;
+layout(location = 3) in vec4 tangent;
 
 
 layout(location = 0) out vec4 WorldPos;
 layout(location = 1) out vec2 uv;
-layout(location = 2) out vec3 WorldNormal;
+layout(location = 2) out mat3 TBNFrame;
 
 // source: https://www.shadertoy.com/view/3s33zj
 mat3 adjugate( in mat4 m )
@@ -55,7 +56,8 @@ void main()
     {
         position = pUBO.particles[particleIndex].transform * vec4( pos, 1.0);
     }
-    WorldNormal = normalize(adjugate(pUBO.particles[particleIndex].transform) * normal);
+    vec3 biTangent = cross(normalize(normal), normalize(tangent.xyz)) * tangent.w;
+    TBNFrame = adjugate(pUBO.particles[particleIndex].transform) * mat3(normalize(tangent.xyz), normalize(biTangent), normalize(normal));
     uv = tex;
     WorldPos = position;
     gl_Position = ubo.projection * ubo.view * position;
