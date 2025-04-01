@@ -13,9 +13,16 @@
 /// The LightManager class is responsible for managing the lights in the scene.
 /// The LightManager class is a singleton
 class LightManager {
+private:
+    LightManager() = default;
+    ~LightManager() = default;
+
 public:
+    LightManager(const LightManager &) = delete;
+    LightManager &operator=(const LightManager &) = delete;
+
     /// returns a pointer to the singleton instance of the LightManager
-    static LightManager& getInstance() {
+    static LightManager &getInstance() {
         static LightManager instance;
         return instance;
     }
@@ -51,10 +58,6 @@ public:
     std::vector<Buffer> &GetLightsUBO() { return m_LightUBO; }
     std::vector<Light*> GetLights();
 
-
-private:
-    LightManager() = default;
-    ~LightManager() = default;
 private:
     // the directional lights
     Light mDirectionalLights[NUM_DIRECTIONAL_LIGHTS];
