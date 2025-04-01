@@ -7,7 +7,6 @@
 #include "LightManager.hpp"
 #include "Utils.hpp"
 
-LightManager* LightManager::instance = nullptr;
 
 std::tuple<Light *, int> LightManager::GetDirectionalLight()
 {

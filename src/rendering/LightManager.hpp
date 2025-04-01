@@ -15,17 +15,10 @@
 class LightManager {
 public:
     /// returns a pointer to the singleton instance of the LightManager
-    static LightManager* getInstance() {
-        if (instance == nullptr) {
-            if (instance == nullptr) {
-                instance = new LightManager();
-            }
-        }
+    static LightManager& getInstance() {
+        static LightManager instance;
         return instance;
     }
-
-private:
-    static LightManager* instance;
 
 public:
     /// returns a pointer to the first available light, and the index of the light, used when returning the light to the pool

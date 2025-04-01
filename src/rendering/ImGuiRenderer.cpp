@@ -462,9 +462,9 @@ void ImGuiRenderer::Update(Scene *scene)
     );
 
    ImGui::Text("Directional Light: (%.2f, %.2f, %.2f)",
-        LightManager::getInstance()->GetLights()[0]->position.x,
-        LightManager::getInstance()->GetLights()[0]->position.y,
-        LightManager::getInstance()->GetLights()[0]->position.z
+        LightManager::getInstance().GetLights()[0]->position.x,
+        LightManager::getInstance().GetLights()[0]->position.y,
+        LightManager::getInstance().GetLights()[0]->position.z
     );
 
     static bool initialized = false;
@@ -472,7 +472,7 @@ void ImGuiRenderer::Update(Scene *scene)
     static float SunAzimuthal = 0.0f;
     static const float distance = 1.0f;
 
-    auto lights = LightManager::getInstance()->GetLights();
+    auto lights = LightManager::getInstance().GetLights();
     if (lights.empty())
         return;
 
@@ -503,7 +503,7 @@ void ImGuiRenderer::Update(Scene *scene)
     }
 
     if (ImGui::CollapsingHeader("Lights")) {
-        auto lights = LightManager::getInstance()->GetLights();
+        auto lights = LightManager::getInstance().GetLights();
         for (size_t i = 1; i < lights.size() - 1; ++i) {
             if (lights[i]->Type != LightType::Directional) {
                 std::string label = "Light " + std::to_string(i) + " Position";

@@ -256,7 +256,7 @@ void Renderer::BeginFrame(VkCommandBuffer cmd) {
 
             m_scene->UploadCameras(cmd);
 
-            LightManager::getInstance()->UploadLights(cmd);
+            LightManager::getInstance().UploadLights(cmd);
 
             // Upload animation data to GPU
             for (auto *entity : m_scene->GetEntities()) {

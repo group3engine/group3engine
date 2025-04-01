@@ -27,7 +27,7 @@ void Scene::Update(double aDeltaTime) {
         entity->LateUpdate(aDeltaTime);
     }
 
-    LightManager::getInstance()->Update();
+    LightManager::getInstance().Update();
     UpdateCameraTransforms();
 }
 
@@ -459,7 +459,7 @@ void Scene::StartUp(Context *context, MaterialManager *materialManager,
     }
 
     // call startup on the light manager
-    LightManager::getInstance()->StartUp(*mContext);
+    LightManager::getInstance().StartUp(*mContext);
 
     mCurrentScene = this;
 }
@@ -472,7 +472,7 @@ void Scene::ShutDown() {
     }
 
     // call shutdown on the light manager
-    LightManager::getInstance()->Destroy();
+    LightManager::getInstance().Destroy();
     // remove the cameras
     mCameras.clear();
 }

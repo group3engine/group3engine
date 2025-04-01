@@ -595,7 +595,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 pointLight.Type = LightType::Point;
                 pointLight.position = lightLocation;
                 pointLight.colour = lightColor;
-                LightManager::getInstance()->SetPointLight(&pointLight);
+                LightManager::getInstance().SetPointLight(&pointLight);
             }
                 // if its a directional light
             else if (gltfNode.light->type ==
@@ -617,7 +617,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 directionalLight.Type = LightType::Directional;
                 directionalLight.position = glm::vec4(direction, 1.f);
                 directionalLight.colour = lightColor;
-                LightManager::getInstance()->SetDirectionalLight(&directionalLight);
+                LightManager::getInstance().SetDirectionalLight(&directionalLight);
 
             }
         }
