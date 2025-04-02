@@ -10,7 +10,6 @@
 #include "Camera.hpp"
 #include "Context.hpp"
 #include "Entity.hpp"
-#include "CharacterEntity.hpp"
 #include "Image.hpp"
 #include "MaterialManager.hpp"
 #include "MeshManager.hpp"
@@ -92,15 +91,11 @@ class Scene {
 
     void UploadCameras(VkCommandBuffer cmdBuff);
 
-
-    Camera *GetActiveCamera();
-
-    void SwitchCamera();
-
 #ifndef NDEBUG
     void CheckActivePlayerCount(size_t activePlayerCount) const {
         if (activePlayerCount < 1 || activePlayerCount > GlobalConfig::maxPlayers) {
-            SPDLOG_ERROR("Invalid active player count. Must be >= 1 and <= max players ({}).",
+            SPDLOG_ERROR("Invalid active player count ({}). Must be >= 1 and <= max players ({}).",
+                         activePlayerCount,
                          GlobalConfig::maxPlayers);
             exit(EXIT_FAILURE);
         }
@@ -108,7 +103,8 @@ class Scene {
 
     void CheckActivePlayerCountOverride(size_t activePlayerCount) {
         if (activePlayerCount < 1 || activePlayerCount > mActivePlayerCount) {
-            SPDLOG_ERROR("Invalid active player count override. Must be >= 1 and <= active players ({}).",
+            SPDLOG_ERROR("Invalid active player count override ({}). Must be >= 1 and <= active players ({}).",
+                         activePlayerCount,
                          mActivePlayerCount);
             // exit(EXIT_FAILURE);
         }

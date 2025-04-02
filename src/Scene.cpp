@@ -401,45 +401,16 @@ void Scene::Awake()
 
     size_t scenePlayerCount = 0;
 
-    bool hasSetActive = false;
     for (auto &entity : m_Entities) {
         if (entity->IsCharacter()) {
-            auto *character = static_cast<CharacterEntity*>(entity);
-            Camera *camera = character->GetCamera();
-
-            // TODO: Set one active camera for now
-            if (!hasSetActive) {
-                camera->SetIsActive(true);
-                hasSetActive = true;
-            }
-
-            Entity *cameraEntity = static_cast<Entity*>(camera);
-            m_Entities.push_back(cameraEntity);
-
             ++scenePlayerCount;
+            SPDLOG_INFO("Adding character {}", entity->GetName());
         }
     }
 
     // TODO: Set the active player count to be the number of characters in the scene.
     // This can change in the future to be 1 at first and then players join in
     SetActivePlayerCount(scenePlayerCount);
-}
-
-Camera *Scene::GetActiveCamera() {
-    // Find the first active camera
-    for (auto &entity : m_Entities) {
-        if (entity->IsCharacter()) {
-            auto *character = static_cast<CharacterEntity*>(entity);
-            Camera *camera = character->GetCamera();
-
-            if (camera->IsActive()) {
-                return camera;
-            }
-        }
-    }
-
-    SPDLOG_ERROR("Active camera not found.");
-    std::exit(EXIT_FAILURE);
 }
 
 void Scene::StartUp(Context *context, MaterialManager *materialManager,

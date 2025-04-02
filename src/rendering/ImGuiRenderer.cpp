@@ -1,6 +1,7 @@
 #include "Context.hpp"
 #include "Scene.hpp"
 #include "Camera.hpp"
+#include "CharacterEntity.hpp"
 #include "RenderPass.hpp"
 #include "ImGuiRenderer.hpp"
 #include "Utils.hpp"
@@ -464,6 +465,16 @@ void ImGuiRenderer::NewActivePlayerCountOverride(
     }
 }
 
+void ImGuiRenderer::NewCharacterInfo(const CharacterEntity *character) {
+    if (ImGui::CollapsingHeader(character->GetName().c_str())) {
+        // Add camera position
+        ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)",
+                    character->GetCamera()->GetPosition().x,
+                    character->GetCamera()->GetPosition().y,
+                    character->GetCamera()->GetPosition().z);
+    }
+}
+
 void ImGuiRenderer::NewFrame() {
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -483,13 +494,6 @@ void ImGuiRenderer::Update(Scene *scene)
     ImGui::TextColored(
         ImVec4(0.76, 0.5, 0.0, 1.0), "FPS: (%.1f FPS), %.3f ms/frame",
         ImGui::GetIO().Framerate, 1000.0f / ImGui::GetIO().Framerate);
-
-    // Add camera position
-    ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)",
-        scene->GetActiveCamera()->GetPosition().x,
-        scene->GetActiveCamera()->GetPosition().y,
-        scene->GetActiveCamera()->GetPosition().z
-    );
 
    ImGui::Text("Directional Light: (%.2f, %.2f, %.2f)",
         LightManager::getInstance().GetLights()[0]->position.x,

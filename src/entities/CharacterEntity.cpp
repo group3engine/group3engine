@@ -185,6 +185,9 @@ void CharacterEntity::Update(double deltaTime) {
 }
 
 void CharacterEntity::UpdateUi(double deltaTime) {
+    // Add camera position
+    ImGuiRenderer::NewCharacterInfo(this);
+
     while (!mInternalUiEvents.empty()) {
         auto &event = mInternalUiEvents.top();
         mInternalUiEvents.pop();
@@ -372,6 +375,8 @@ void CharacterEntity::Awake() {
     glm::vec3 dir = glm::vec3(1.0f, 1.0f, -1.0f);
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0);
     mCamera = new Camera(pos, dir, up);
+
+    mCamera->SetIsActive(true);
 
     Scene::get().GetActiveScene()->AddCamera(mCamera);
 

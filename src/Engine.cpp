@@ -266,7 +266,7 @@ void Engine::Update(double deltaTime) {
 // TODO: Understand why Jolt does this
 #ifdef JPH_DEBUG_RENDERER
     if (GlobalConfig::enablePhysicsDebugRenderer) {
-        auto cameraPos = mScene->GetActiveCamera()->GetPosition();
+        auto cameraPos = mScene->GetCameras()[0]->GetPosition();
         mDebugRenderer.get()->SetCameraPos(RVec3{cameraPos.x, cameraPos.y, cameraPos.z});
 
         // Create render primitives: vertex buffers, index buffers and store them for later

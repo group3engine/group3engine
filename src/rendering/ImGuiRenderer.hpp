@@ -13,6 +13,7 @@ class Context;
 class Scene;
 class Camera;
 class TextureManager;
+class CharacterEntity;
 
 struct MyTextureData {
     VkDescriptorSet DS{};         // Descriptor set: this is what you'll pass to Image()
@@ -93,6 +94,8 @@ namespace ImGuiRenderer
     void Image(std::string const &imageName, ImVec2 position, ImVec2 size);
 
     void NewActivePlayerCountOverride(Scene *scene, gui::Settings::ActivePlayerCountOverride &settings);
+
+    void NewCharacterInfo(const CharacterEntity *character);
 
     void Initialize(const Context &context);
     void Shutdown(const Context &context);
