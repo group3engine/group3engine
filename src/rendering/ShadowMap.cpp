@@ -228,9 +228,9 @@ void ShadowMap::BuildDescriptors() {
         // Lights UBO
         for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
             VkDescriptorBufferInfo bufferInfo{};
-            bufferInfo.buffer = LightManager::getInstance()->GetLightsUBO()[i].buffer;
+            bufferInfo.buffer = LightManager::getInstance().GetLightsUBO()[i].buffer;
             bufferInfo.offset = 0;
-            bufferInfo.range = sizeof(vkutil::LightUBO) * LightManager::getInstance()->GetLights().size();
+            bufferInfo.range = sizeof(vkutil::LightUBO) * LightManager::getInstance().GetLights().size();
             vkutil::UpdateDescriptorSet(context, 0, bufferInfo, descriptorSets[i],
                                         VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
         }
