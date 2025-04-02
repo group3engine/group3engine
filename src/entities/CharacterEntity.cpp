@@ -185,7 +185,6 @@ void CharacterEntity::Update(double deltaTime) {
 }
 
 void CharacterEntity::UpdateUi(double deltaTime) {
-    // Add camera position
     ImGuiRenderer::NewCharacterInfo(this);
 
     while (!mInternalUiEvents.empty()) {
