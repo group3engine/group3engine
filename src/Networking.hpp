@@ -29,12 +29,20 @@ public:
     void SendMessage(const std::string &message) {
         sendto(my_socket, message.c_str(), message.size(), 0, (struct sockaddr *)&client_addr, sizeof(client_addr));
     }
+    std::vector<std::array<char, BUFFER_SIZE>> GetMessages() {
+        // copy the messages to a new vector and return it
+        // and clear the original vector
+        std::vector<std::array<char, BUFFER_SIZE>> temp = messages;
+        messages.clear();
+        return temp;
+    }
 private:
-    void Listen();
+    [[noreturn]] void Listen();
 private:
     int my_socket;
     struct sockaddr_in server_addr, client_addr;
-    char buffer[BUFFER_SIZE];
+    std::array<char, BUFFER_SIZE> buffer;
+    std::vector<std::array<char, BUFFER_SIZE>> messages;
     std::thread listen_thread;
 
     // list of clients

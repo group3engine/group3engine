@@ -34,6 +34,8 @@ Networking::Networking()
     {
         std::cerr << "Invalid client address" << std::endl;
     }
+
+    listen_thread = std::thread(&Networking::Listen, this);
 }
 
 void Networking::Listen()
@@ -42,16 +44,15 @@ void Networking::Listen()
     {
         struct sockaddr_in this_client;
         socklen_t length = sizeof(this_client);
-        int n = recvfrom(my_socket, buffer, BUFFER_SIZE, 0, (struct sockaddr *)&this_client, &length);
+        int n = recvfrom(my_socket, buffer.data(), BUFFER_SIZE, 0, (struct sockaddr *)&this_client, &length);
         if (n < 0)
         {
             std::cerr << "Receive failed" << std::endl;
         }
         buffer[n] = '\0';
-        std::cout << "Client: " << buffer << std::endl;
-        // add the client to the list of clients
-        clients.push_back(this_client);
-        sendto(my_socket, buffer, n, 0, (struct sockaddr *)&client_addr, length);
+        std::cout << "Server: " << buffer.data() << std::endl;
+        // add the data to the messages vector
+        messages.push_back(buffer);
     }
 }
 

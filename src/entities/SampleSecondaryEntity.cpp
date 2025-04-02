@@ -27,8 +27,21 @@ void SampleSecondaryEntity::ProcessInput(){
         // get the file name
         std::string mapName = Scene::get().GetActiveScene()->GetSceneFilename();
         // jsonify
-        std::string jsonToSend = "{ \"transform\": { \"position\": [" + glm::to_string(transform.translation) + "], \"rotation\": [" + to_string(transform.rotation.x) + "," +to_string(transform.rotation.x) + "," + to_string(transform.rotation.x) + "," + to_string(transform.rotation.x) + "," + "], \"scale\": [" + glm::to_string(transform.scale) + "] }, \"velocity\": [" + glm::to_string(velocity) + "], \"mapName\": \"" + mapName + "\" }";
+        std::string jsonToSend = "{ \"transform\": { \"position\": [" + to_string(transform.translation.x) + "," + to_string(transform.translation.y) + "," + to_string(transform.translation.z) + "], \"rotation\": [" + to_string(transform.rotation.x) + "," + to_string(transform.rotation.x) + "," + to_string(transform.rotation.x) + "," + to_string(transform.rotation.x) + "," + "], \"scale\": [" + to_string(transform.scale.x) + "," + to_string(transform.scale.y) + "," + to_string(transform.scale.z) + "] }, \"velocity\": [" + to_string(velocity.x) + "," + to_string(velocity.y) + "," + to_string(velocity.z) + "], \"mapName\": \"" + mapName + "\" }";
+        // add the map name to the start for quick parsing
+        jsonToSend = mapName + "\\" + jsonToSend;
         mNetworking->SendMessage(jsonToSend);
+    }
+    if(IsKeyDown(KEY::eO))
+    {
+        // get the messages
+        auto messages = mNetworking->GetMessages();
+        // for each message
+        for(auto &message : messages)
+        {
+            // print the message
+            std::cout << message.data() << std::endl;
+        }
     }
 
 
