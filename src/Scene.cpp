@@ -93,9 +93,10 @@ void Scene::Unload()
     }
     m_Entities.clear();
 
+    mCharacterEntities.clear();
+
     m_FrontMeshes.clear();
     m_BackMeshes.clear();
-    m_Entities.clear();
     m_Animations.clear();
     m_Skins.clear();
 
