@@ -51,6 +51,8 @@ void Networking::Listen()
         }
         buffer[n] = '\0';
         std::cout << "Server: " << buffer.data() << std::endl;
+        // get the client address from the buffer
+
         // add the data to the messages vector
         messages.push_back(buffer);
     }

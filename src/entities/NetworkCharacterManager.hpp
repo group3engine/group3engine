@@ -1,0 +1,14 @@
+//
+// Created by thomas on 02/04/25.
+//
+
+#ifndef GROUP3ENGINE_NETWORKCHARACTERMANAGER_HPP
+#define GROUP3ENGINE_NETWORKCHARACTERMANAGER_HPP
+
+
+class NetworkCharacterManager {
+
+};
+
+
+#endif //GROUP3ENGINE_NETWORKCHARACTERMANAGER_HPP

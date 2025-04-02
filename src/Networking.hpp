@@ -13,7 +13,7 @@
 #include <iostream>
 #include <vector>
 
-#define PORT 9999
+#define PORT 9998
 #define BUFFER_SIZE 1024
 
 
