@@ -47,6 +47,8 @@ class Engine {
     bool m_sceneNeedsChanging = false;
     std::filesystem::path m_scenePath;
 
+    bool mIsMainMenu = false;
+
     void UpdateLogic();
 
     void ChangeSceneFR();

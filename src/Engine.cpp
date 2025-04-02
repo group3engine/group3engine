@@ -46,26 +46,13 @@
 
 namespace {
     // TODO: Improve this temporary scene switching mechanism
+    std::filesystem::path mainMenuPath{"MainMenu/main_menu.gltf"};
 
-    enum class SceneValue {
-        OBBY,
-        OBBY_TEST_SCENE
+    const std::vector<std::reference_wrapper<std::filesystem::path>> scenePaths = {
+        mainMenuPath,
+        Sample::SampleObby,
+        Sample::SampleObbyTestScene
     };
-
-    SceneValue sceneValue{SceneValue::OBBY_TEST_SCENE};
-
-    const std::filesystem::path &SwitchScene() {
-        if (sceneValue == SceneValue::OBBY) {
-            sceneValue = SceneValue::OBBY_TEST_SCENE;
-            return Sample::SampleObbyTestScene;
-        } else if (sceneValue == SceneValue::OBBY_TEST_SCENE) {
-            sceneValue = SceneValue::OBBY;
-            return Sample::SampleObby;
-        } else {
-            SPDLOG_ERROR("Unaccounted for case.");
-            exit(EXIT_FAILURE);
-        }
-    }
 }
 
 Engine::Engine() {
@@ -104,7 +91,7 @@ bool Engine::Initialize() {
     
     PhysicsManager::get().StartUp();
 
-    mScene->Load(Sample::SampleObbyTestScene);
+    mScene->Load(mainMenuPath);
 
     mRenderer->CreateRenderPasses();
     // call the scene awake function
@@ -145,7 +132,7 @@ void Engine::Shutdown() {
 void Engine::ChangeScene()
 {
     m_sceneNeedsChanging = true;
-    m_scenePath = SwitchScene();
+    m_scenePath = Sample::SampleObbyTestScene;
 }
 
 void Engine::Run() {
@@ -157,6 +144,8 @@ void Engine::Run() {
     m_lastFrameTime = glfwGetTime();
 
     while (m_isRunning && !glfwWindowShouldClose(m_context.mWindow)) {
+        mIsMainMenu = mScene->GetSceneFilename() == "main_menu";
+
         double currentFrameTime = glfwGetTime();
         GlobalUtil::deltaTime = currentFrameTime - m_lastFrameTime;
         m_lastFrameTime = currentFrameTime;
@@ -168,6 +157,10 @@ void Engine::Run() {
         PollInputEvents();
 
         Update(GlobalUtil::deltaTime);
+
+        if (mIsMainMenu) {
+            ImGuiRenderer::NewMainMenu(m_context);
+        }
 
         ImGuiRenderer::EndFrame();
 
@@ -260,7 +253,6 @@ void Engine::Update(double deltaTime) {
 
     UpdateLogic();
     mScene->Update(deltaTime);
-    mScene->UpdateUi(deltaTime);
 
 // Draw physics before physics update
 // TODO: Understand why Jolt does this
@@ -276,6 +268,12 @@ void Engine::Update(double deltaTime) {
 #endif // JPH_DEBUG_RENDERER
 
     PhysicsManager::get().UpdatePhysics(deltaTime);
+
+    if (!mIsMainMenu) {
+        mScene->UpdateUi(deltaTime);
+        ImGuiRenderer::Update(mScene);
+    }
+
     mRenderer->Update(deltaTime);
 }
 

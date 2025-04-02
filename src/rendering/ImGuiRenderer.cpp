@@ -17,6 +17,7 @@
 #include <tracy/Tracy.hpp>
 
 #include "Config.hpp"
+#include "Engine.hpp"
 
 namespace {
     auto PushBackStyleVar = [](size_t i, std::function<void()> f) {
@@ -108,6 +109,50 @@ void ImGuiRenderer::RemoveTextures() {
         ImGui_ImplVulkan_RemoveTexture(myTexData.DS);
     }
     textureDatas.clear();
+}
+
+void ImGuiRenderer::NewMainMenu(const Context &context) {
+    // Style var counter for main menu window
+    size_t mainMenuWindowSv = 0;
+    // No window border
+    mainMenuWindowSv = PushBackStyleVar(mainMenuWindowSv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); });
+    // Make the window fit the screen exactly
+    mainMenuWindowSv = PushBackStyleVar(mainMenuWindowSv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(0, 0)); });
+    mainMenuWindowSv = PushBackStyleVar(mainMenuWindowSv, []() { ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0)); });
+    mainMenuWindowSv = PushBackStyleVar(mainMenuWindowSv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); });
+
+    ImVec2 windowSize = {static_cast<float>(context.extent.width), static_cast<float>(context.extent.height)};
+    ImGui::SetNextWindowSize(windowSize);
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    ImGui::SetNextWindowBgAlpha(1.0f);
+
+    // Flags to get a blank window to draw on
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                             ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+                             ImGuiWindowFlags_NoSavedSettings;
+
+    ImGui::Begin(std::string("Main Menu").c_str(), nullptr, flags);
+
+    ImGui::PopStyleVar(mainMenuWindowSv);
+
+    std::string mainMenuStr = "Main Menu";
+    ImVec2 mainMenuStrSize = ImGui::CalcTextSize(mainMenuStr.c_str());
+    ImGui::SetCursorScreenPos(ImVec2((windowSize.x - mainMenuStrSize.x) / 2.0f , windowSize.y / 3.0f - mainMenuStrSize.y));
+    ImGui::Text("Main Menu");
+
+    ImGuiStyle& style = ImGui::GetStyle();
+
+    // See: Pre-compute the size of widgets #3714 for calculating button size
+    std::string loadSceneStr = "Load Scene";
+    ImVec2 loadSceneStrSize = ImGui::CalcTextSize(loadSceneStr.c_str());
+    ImVec2 loadSceneButtonSize = ImVec2(loadSceneStrSize.x + style.FramePadding.x * 2, loadSceneStrSize.y + style.FramePadding.y * 2);
+    ImGui::SetCursorPosX((windowSize.x - loadSceneButtonSize.x) / 2.0f);
+    if (ImGui::Button(loadSceneStr.c_str())) {
+        SPDLOG_INFO("Load Scene");
+        Engine::get().ChangeScene();
+    }
+
+    ImGui::End();
 }
 
 void ImGuiRenderer::NewHeartSprite(const ImVec2 &offset) {

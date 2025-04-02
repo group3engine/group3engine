@@ -84,6 +84,8 @@ namespace ImGuiRenderer
         {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000}
     };
 
+    void NewMainMenu(const Context &context);
+
     void NewHeartSprite(const ImVec2 &offset);
     void NewDeathCounter(const gui::DeathCounterData &data);
     void NewDeathPopup(const gui::DeathPopupData &data);
