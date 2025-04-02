@@ -43,6 +43,8 @@ public:
 
         // Get velocity of the character (used for animation, don't include ground velocity)
         virtual Vec3			GetCharacterVelocity() const				{ return mCharacter->GetLinearVelocity() - mCharacter->GetGroundVelocity(); }
+        // add an impulse to the character
+        void AddImpulse(Vec3Arg impulse) { mAdditionalImpulse += impulse; mHasAdditionalImpulse = true; }
 
 	void SetCharacterPosition(RVec3 pos) { mCharacter->SetPosition(pos); }
 
@@ -82,6 +84,10 @@ private:
 
 	// Smoothed value of the player input
 	Vec3					mDesiredVelocity = Vec3::sZero();
+
+    // desired additional impulse
+    Vec3               mAdditionalImpulse = Vec3::sZero();
+    bool mHasAdditionalImpulse = false;
 
 	// True when the player is pressing movement controls
 	bool					mAllowSliding = false;

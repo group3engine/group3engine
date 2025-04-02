@@ -236,6 +236,7 @@ void CharacterEntity::CreateJoltCharacter()
 CharacterEntity::CharacterEntity() {
     SetAsCharacter();
     Load();
+    mType = "character";
 }
 void CharacterEntity::OnCollisionStart(Entity *aOther) {
 

@@ -67,7 +67,10 @@ class CharacterEntity : public Entity {
         mCharacterPositionOffset = glm::vec3(x, y, z);
     }
 
-    Camera *GetCamera() const { return mCamera; }
+    void AddImpulse(glm::vec3 glm_impulse) {
+        Vec3 impulse(glm_impulse.x, glm_impulse.y, glm_impulse.z);
+        mSampleJoltCharacter->AddImpulse(impulse);
+    }
 
     void MoveToSpawn();
 
@@ -76,6 +79,8 @@ class CharacterEntity : public Entity {
         Reset();
     }
 
+    [[nodiscard]] Camera* GetCamera(){return mCamera;}
+
   private:
     void Save();
     void Load();
@@ -83,7 +88,8 @@ class CharacterEntity : public Entity {
   protected:
     Camera *mCamera = nullptr;
 
-  private:
+
+private:
     Transform mInitialTransform = {};
     std::unique_ptr<SampleJoltCharacter> mSampleJoltCharacter;
 
