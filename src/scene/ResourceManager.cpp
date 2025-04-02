@@ -51,7 +51,8 @@ std::string DecodeURI(std::string_view uri, std::string_view gltfPath) {
 int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
              MaterialManager &aMaterialManager, TextureManager &aTextureManager,
              std::vector<Entity *> &aEntities, bool aIsDebug,
-             std::vector<Animation> &aAnimations, std::vector<Skin> &aSkins) {
+             std::vector<Animation> &aAnimations, std::vector<Skin> &aSkins,
+             std::vector<Entity *> &aCharacterEntities) {
     // Convert directory separators to preferred directory separator
     // Slight try at cross-platform for Windows
     aFilepath.make_preferred();
@@ -802,6 +803,16 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
     //    }
 
     cgltf_free(data);
+
+    // Find all character entities, erase them from the main entities list and
+    // move them into character entities
+    std::vector<Entity *> tmpEntities;
+    std::partition_copy(std::make_move_iterator(aEntities.begin()),
+                        std::make_move_iterator(aEntities.end()),
+                        std::back_inserter(aCharacterEntities),
+                        std::back_inserter(tmpEntities),
+                        [](Entity *entity) { return entity->IsCharacter(); });
+    aEntities = std::move(tmpEntities);
 
     return GLTF_LOAD_SUCCESS;
 }

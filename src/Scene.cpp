@@ -118,7 +118,11 @@ void Scene::LoadGLTF(const std::filesystem::path &aFilepath) {
     // Load the GLTF file
     ResourceLoader::LoadGLTF(aFilepath, *mMeshManager, *mMaterialManager,
                              *mTextureManager, m_Entities, false, m_Animations,
-                             m_Skins);
+                             m_Skins, mCharacterEntities);
+
+    for (size_t i = 0; i < GlobalConfig::maxPlayers; ++i) {
+        m_Entities.push_back(mCharacterEntities[i]);
+    }
 }
 
 void Scene::Load(const std::filesystem::path &filePath)
