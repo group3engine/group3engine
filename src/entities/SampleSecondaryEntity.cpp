@@ -18,6 +18,20 @@ SampleSecondaryEntity::~SampleSecondaryEntity() {
 }
 
 void SampleSecondaryEntity::ProcessInput(){
+    if(IsKeyDown(KEY::eP))
+    {
+        // construct our state - we want to include the current transform, and the current velocity
+        Transform transform = GetLocalTransform();
+        Vec3 jvelocity = mSampleJoltCharacter->GetCharacterVelocity();
+        glm::vec3 velocity = glm::vec3(jvelocity.GetX(), jvelocity.GetY(), jvelocity.GetZ());
+        // get the file name
+        std::string mapName = Scene::get().GetActiveScene()->GetSceneFilename();
+        // jsonify
+        std::string jsonToSend = "{ \"transform\": { \"position\": [" + glm::to_string(transform.translation) + "], \"rotation\": [" + to_string(transform.rotation.x) + "," +to_string(transform.rotation.x) + "," + to_string(transform.rotation.x) + "," + to_string(transform.rotation.x) + "," + "], \"scale\": [" + glm::to_string(transform.scale) + "] }, \"velocity\": [" + glm::to_string(velocity) + "], \"mapName\": \"" + mapName + "\" }";
+        mNetworking->SendMessage(jsonToSend);
+    }
+
+
     mCamera->SetInput(EInputState::FORWARD, IsKeyDown(KEY::eUP));
     mCamera->SetInput(EInputState::BACKWARD, IsKeyDown(KEY::eDOWN));
     mCamera->SetInput(EInputState::LEFT, IsKeyDown(KEY::eLEFT));
@@ -165,6 +179,7 @@ void SampleSecondaryEntity::CreateJoltCharacter()
 
 SampleSecondaryEntity::SampleSecondaryEntity() {
     SetAsCharacter();
+    mNetworking = new Networking();
 }
 void SampleSecondaryEntity::OnCollisionStart(Entity *aOther) {
 

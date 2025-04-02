@@ -153,7 +153,6 @@ void Scene::Load(const std::filesystem::path &filePath)
             if (!mesh) 
             {
                 // skip the entity
-                SPDLOG_WARN("Entity {} does not have mesh", entity->GetName());
                 continue;
             }
 
@@ -382,7 +381,7 @@ void Scene::Awake()
 
     for (auto &playerCameraTransform : mPlayerCameraTransforms) {
         playerCameraTransform.nearPlane = 0.1f;
-        playerCameraTransform.farPlane = 100.0f;
+        playerCameraTransform.farPlane = 10000.0f;
         playerCameraTransform.fov = 45.0f;
     }
 
