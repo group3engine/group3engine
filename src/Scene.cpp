@@ -120,7 +120,8 @@ void Scene::LoadGLTF(const std::filesystem::path &aFilepath) {
                              *mTextureManager, m_Entities, false, m_Animations,
                              m_Skins, mCharacterEntities);
 
-    for (size_t i = 0; i < GlobalConfig::maxPlayers; ++i) {
+    size_t playerCount = std::min(mCharacterEntities.size(), GlobalConfig::maxPlayers);
+    for (size_t i = 0; i < playerCount; ++i) {
         m_Entities.push_back(mCharacterEntities[i]);
     }
 }
