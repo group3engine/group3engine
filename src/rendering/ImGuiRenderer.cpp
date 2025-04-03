@@ -5,6 +5,10 @@
 #include "RenderPass.hpp"
 #include "ImGuiRenderer.hpp"
 #include "Utils.hpp"
+
+// Define math operators for the ImGui vector types
+// You're meant to use your own math vector types but I don't think we'll need them
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
@@ -137,7 +141,8 @@ void ImGuiRenderer::NewMainMenu(const Context &context) {
 
     std::string mainMenuStr = "Main Menu";
     ImVec2 mainMenuStrSize = ImGui::CalcTextSize(mainMenuStr.c_str());
-    ImGui::SetCursorScreenPos(ImVec2((windowSize.x - mainMenuStrSize.x) / 2.0f , windowSize.y / 3.0f - mainMenuStrSize.y));
+    ImVec2 mainMenuStrOffset = windowSize - mainMenuStrSize;
+    ImGui::SetCursorScreenPos(ImVec2(mainMenuStrOffset.x / 2.0f , mainMenuStrOffset.y / 3.0f));
     ImGui::Text("Main Menu");
 
     ImGuiStyle& style = ImGui::GetStyle();
@@ -145,7 +150,7 @@ void ImGuiRenderer::NewMainMenu(const Context &context) {
     // See: Pre-compute the size of widgets #3714 for calculating button size
     std::string loadSceneStr = "Load Scene";
     ImVec2 loadSceneStrSize = ImGui::CalcTextSize(loadSceneStr.c_str());
-    ImVec2 loadSceneButtonSize = ImVec2(loadSceneStrSize.x + style.FramePadding.x * 2, loadSceneStrSize.y + style.FramePadding.y * 2);
+    ImVec2 loadSceneButtonSize = loadSceneStrSize + style.FramePadding * 2;
     ImGui::SetCursorPosX((windowSize.x - loadSceneButtonSize.x) / 2.0f);
     if (ImGui::Button(loadSceneStr.c_str())) {
         SPDLOG_INFO("Load Scene");
