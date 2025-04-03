@@ -115,6 +115,13 @@ void NetworkCharacterManager::Update(double deltaTime)
     }
     // apply the first state to the second child
     NetworkedCharacterRemote* character = static_cast<NetworkedCharacterRemote*>(GetChildren()[1]);
+    if(states.find(samplePlayerID) == states.end())
+    {
+
+    }
+    else
+    {
     character->UpdateState(states[samplePlayerID]);
+    }
 }
 
