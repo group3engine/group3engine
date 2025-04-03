@@ -9,8 +9,8 @@
 
 class NetworkCharacterManager : public Entity {
 public:
-    NetworkCharacterManager();
-    ~NetworkCharacterManager() override;
+    NetworkCharacterManager(){mType = "NetworkCharacterManager";};
+    ~NetworkCharacterManager() override = default;
 
     void Update(double deltaTime) override;
     void SendMessage(const std::string &message) {

@@ -12,6 +12,9 @@
 #include "RotateOnX.hpp"
 #include "SampleSecondaryEntity.hpp"
 #include "ParticleCube.hpp"
+#include "NetworkCharacterManager.hpp"
+#include "NetworkedLocalCharacter.hpp"
+#include "NetworkedCharacterRemote.hpp"
 // Add more includes here
 
 // an enum of all the different entity types
@@ -25,6 +28,9 @@ enum class EntityType {
     CAMERA,
     PARTICLES,
     BOUNCEPAD,
+    NETWORKEDLOCALCHARACTER,
+    NETWORKEDCHARACTERREMOTE,
+    NETWORKCHARACTERMANAGER,
     // Add more entity types here
 };
 // a map of strings to entity types
@@ -38,6 +44,9 @@ static const std::unordered_map<std::string, EntityType> entityTypeMap = {
     {"bouncepad", EntityType::BOUNCEPAD},
     {"camera", EntityType::CAMERA},
     {"particles", EntityType::PARTICLES},
+    {"networkedlocal", EntityType::NETWORKEDLOCALCHARACTER},
+    {"networkedremote", EntityType::NETWORKEDCHARACTERREMOTE},
+    {"networkmanager", EntityType::NETWORKCHARACTERMANAGER},
 };
 // a function to convert a string to an entity type
 inline EntityType GetEntityTypeFromString(const std::string& aTypeName) {
@@ -73,9 +82,16 @@ inline Entity* CreateNewEntity(const std::string& aEntityType)
         return new ParticleCube();
     case EntityType::BOUNCEPAD:
         return new Bouncepad();
+    case EntityType::NETWORKEDLOCALCHARACTER:
+        return new NetworkedLocalCharacter();
+    case EntityType::NETWORKEDCHARACTERREMOTE:
+        return new NetworkedCharacterRemote();
+    case EntityType::NETWORKCHARACTERMANAGER:
+        return new NetworkCharacterManager();
 
     // Add more cases here
     default:
+        assert(false);
         return new Entity();
     }
 }

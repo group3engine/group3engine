@@ -87,7 +87,6 @@ void NetworkedCharacterRemote::CreateJoltCharacter()
 }
 
 NetworkedCharacterRemote::NetworkedCharacterRemote() {
-    SetAsCharacter();
     mType = "NetworkedCharacterRemote";
 }
 
