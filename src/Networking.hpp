@@ -23,8 +23,7 @@ public:
     Networking();
     ~Networking() {
         close(my_socket);
-        listen_thread.join();
-
+        if (listen_thread.joinable()) listen_thread.detach();
     }
     void SendMessage(const std::string &message) {
         sendto(my_socket, message.c_str(), message.size(), 0, (struct sockaddr *)&client_addr, sizeof(client_addr));
@@ -44,6 +43,7 @@ private:
     std::array<char, BUFFER_SIZE> buffer;
     std::vector<std::array<char, BUFFER_SIZE>> messages;
     std::thread listen_thread;
+    bool running = true;
 
     // list of clients
     std::vector<struct sockaddr_in> clients;
