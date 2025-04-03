@@ -14,7 +14,7 @@ void NetworkCharacterManager::Update(double deltaTime)
     auto messages = mNetworking.GetMessages();
     // create a map of states
     std::unordered_map<uint32_t, State> states;
-    uint32_t samplePlayerID = 0;
+    std::vector<uint32_t> playerIDs;
     // for each message
     for(auto &message : messages)
     {
@@ -111,17 +111,31 @@ void NetworkCharacterManager::Update(double deltaTime)
         state.velocity = velocity;
         // add the state to the map
         states[playerIDint] = state;
-        samplePlayerID = playerIDint;
+        // see if the player id is in the map
+        if(mPlayerIdToChildIndex.find(playerIDint) == mPlayerIdToChildIndex.end())
+        {
+            if(numConnections >= GetChildren().size()-1)
+            {
+                //std::cout << "Too many connections, ignoring player id: " << playerIDint << std::endl;
+                continue;
+            }
+            // if not, add it to the map
+            mPlayerIdToChildIndex[playerIDint] = ++numConnections;
+        }
+        // add the player id to the list
+        playerIDs.push_back(playerIDint);
     }
-    // apply the first state to the second child
-    NetworkedCharacterRemote* character = static_cast<NetworkedCharacterRemote*>(GetChildren()[1]);
-    if(states.find(samplePlayerID) == states.end())
+    // apply the states to the children
+    for(auto &playerID : playerIDs)
     {
-
-    }
-    else
-    {
-    character->UpdateState(states[samplePlayerID]);
+        // get the child index
+        size_t childIndex = mPlayerIdToChildIndex[playerID];
+        // get the state
+        State state = states[playerID];
+        // get the child
+        NetworkedCharacterRemote *child = static_cast<NetworkedCharacterRemote*>(GetChildren()[childIndex]);
+        // update the state
+        child->UpdateState(state);
     }
 }
 
