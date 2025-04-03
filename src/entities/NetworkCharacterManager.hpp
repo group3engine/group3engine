@@ -4,9 +4,23 @@
 
 #ifndef GROUP3ENGINE_NETWORKCHARACTERMANAGER_HPP
 #define GROUP3ENGINE_NETWORKCHARACTERMANAGER_HPP
+#include "Entity.hpp"
+#include "Networking.hpp"
+
+class NetworkCharacterManager : public Entity {
+public:
+    NetworkCharacterManager();
+    ~NetworkCharacterManager() override;
+
+    void Update(double deltaTime) override;
+    void SendMessage(const std::string &message) {
+        mNetworking.SendMessage(message);
+    }
 
 
-class NetworkCharacterManager {
+private:
+    Networking mNetworking;
+
 
 };
 

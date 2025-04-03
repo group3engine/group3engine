@@ -87,11 +87,11 @@ class CharacterEntity : public Entity {
 
   protected:
     Camera *mCamera = nullptr;
+    std::unique_ptr<SampleJoltCharacter> mSampleJoltCharacter;
 
 
 private:
     Transform mInitialTransform = {};
-    std::unique_ptr<SampleJoltCharacter> mSampleJoltCharacter;
 
     glm::vec3 mLastCheckpoint = glm::vec3(0, 10.0f, 0);
 

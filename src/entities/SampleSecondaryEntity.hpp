@@ -52,7 +52,6 @@ class SampleSecondaryEntity : public CharacterEntity {
     Transform mInitialTransform = {};
     std::unique_ptr<SampleJoltCharacter> mSampleJoltCharacter;
 
-    Networking* mNetworking = nullptr;
 
 };
 
