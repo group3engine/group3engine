@@ -637,10 +637,6 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             assert(parentIndex < (int)data->nodes_count);
             aEntities[ni]->SetParent(aEntities[parentIndex]);
         }
-        else
-        {
-            aEntities[ni]->SetParent(aEntities.back());
-        }
     }
     // update the children from the root node
     root->SetTransform(glm::mat4(1.f));
