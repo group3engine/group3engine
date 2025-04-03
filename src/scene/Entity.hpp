@@ -182,6 +182,7 @@ class Entity {
     void AddChild(Entity *aChild) { mChildren.push_back(aChild); }
 
     void SetAsCharacter() {mHasCharacter = true;}
+    void SetHasOffset() {mHasOffset = true;}
 
     void AddMesh(Mesh *mesh) {
         mMesh = mesh;
@@ -246,6 +247,7 @@ class Entity {
 
     bool mHasMesh = false;
     bool mHasCharacter = false;
+    bool mHasOffset = false;
 
     Animator *mAnimator = nullptr;
     size_t mFrameNumber = 0;

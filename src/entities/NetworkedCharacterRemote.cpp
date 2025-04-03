@@ -31,6 +31,7 @@ void NetworkedCharacterRemote::LateUpdate(double deltaTime) {
     auto characterPhysicsPos = mSampleJoltCharacter->GetCharacterPosition();
     SetCharacterPositionOffset(characterPhysicsPos.GetX(), characterPhysicsPos.GetY(), characterPhysicsPos.GetZ());
 
+
     // get the character state
     // calculate the delta velocity
     Vec3 characterVelocityJolt = mSampleJoltCharacter->GetCharacterVelocity();
@@ -88,6 +89,7 @@ void NetworkedCharacterRemote::CreateJoltCharacter()
 
 NetworkedCharacterRemote::NetworkedCharacterRemote() {
     mType = "NetworkedCharacterRemote";
+    SetHasOffset();
 }
 
 

@@ -6,6 +6,7 @@
 #define GROUP3ENGINE_NETWORKCHARACTERMANAGER_HPP
 #include "Entity.hpp"
 #include "Networking.hpp"
+#include "NetworkedCharacterRemote.hpp"
 
 class NetworkCharacterManager : public Entity {
 public:

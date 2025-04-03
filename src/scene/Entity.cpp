@@ -36,7 +36,7 @@ void Entity::SetParent(Entity *aParent) {
 
 void Entity::UpdateWorldTransform()
 {
-    if (mHasCharacter) {
+    if (mHasOffset || mHasCharacter) {
         mWorldTransform = glm::translate(mCharacterPositionOffset) * mParentTransform * mLocalTransform.getMatrix();
     }
     else if ((GetPhysicsType() == PhysicsType::KINEMATIC || GetPhysicsType() == PhysicsType::DYNAMIC) && mHasRigidBody) {
@@ -288,7 +288,7 @@ void Entity::BaseUpdate(double deltaTime) {
     {
         mRigidBody->PrePhysicsUpdate(deltaTime);
     }
-    if(GetPhysicsType() == PhysicsType::KINEMATIC || GetPhysicsType() == PhysicsType::DYNAMIC || mHasCharacter)
+    if(GetPhysicsType() == PhysicsType::KINEMATIC || GetPhysicsType() == PhysicsType::DYNAMIC || mHasCharacter || mHasOffset)
     {
         UpdateWorldTransform();
         UpdateChildrenTransform();
