@@ -148,6 +148,14 @@ void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, 
 		new_velocity += current_horizontal_velocity;
 	}
 
+    // Add additional impulse
+    if (mHasAdditionalImpulse)
+    {
+        new_velocity += mAdditionalImpulse;
+        mHasAdditionalImpulse = false;
+    }
+    mAdditionalImpulse = Vec3::sZero();
+
 	// Update character velocity
 	mCharacter->SetLinearVelocity(new_velocity);
 }

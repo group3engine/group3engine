@@ -5984,7 +5984,7 @@
 		},
 		{
 			"extras":{
-				"entity_type":"default",
+				"entity_type":"bouncepad",
 				"is_sensor":false,
 				"is_solid":true
 			},

@@ -284,12 +284,16 @@ void Entity::BaseUpdate(double deltaTime) {
     if (mAnimator) {
         mAnimator->Update(deltaTime, this);
     }
+    if(mHasRigidBody)
+    {
+        mRigidBody->PrePhysicsUpdate(deltaTime);
+    }
     if(GetPhysicsType() == PhysicsType::KINEMATIC || GetPhysicsType() == PhysicsType::DYNAMIC || mHasCharacter)
     {
         UpdateWorldTransform();
-        SetPhysicsTransform();
         UpdateChildrenTransform();
     }
+
 }
 void Entity::UpdateChildrenTransform() {
     for (auto &child : mChildren) {
