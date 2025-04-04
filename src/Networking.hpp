@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <iostream>
 #include <vector>
+#include <mutex>
+
 
 #define PORT 9998
 #define BUFFER_SIZE 1024
@@ -31,8 +33,12 @@ public:
     std::vector<std::array<char, BUFFER_SIZE>> GetMessages() {
         // copy the messages to a new vector and return it
         // and clear the original vector
-        std::vector<std::array<char, BUFFER_SIZE>> temp = messages;
-        messages.clear();
+        std::vector<std::array<char, BUFFER_SIZE>> temp;
+        {
+            std::lock_guard<std::mutex> lock(messages_mutex);
+            temp = messages;
+            messages.clear();
+        }
         return temp;
     }
 private:
@@ -47,6 +53,9 @@ private:
 
     // list of clients
     std::vector<struct sockaddr_in> clients;
+
+    std::mutex messages_mutex;
+
 
 };
 

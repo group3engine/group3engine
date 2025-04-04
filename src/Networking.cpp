@@ -52,7 +52,10 @@ void Networking::Listen()
         }
         buffer[n] = '\0';
         // add the data to the messages vector
-        messages.push_back(buffer);
+        {
+            std::lock_guard<std::mutex> lock(messages_mutex);
+            messages.push_back(buffer);
+        }
     }
 }
 

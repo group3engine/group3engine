@@ -302,10 +302,7 @@ void Entity::UpdateChildrenTransform() {
 }
 void Entity::SetTransform(Transform aTransform) {
     mLocalTransform = aTransform;
-    if(mType == "NetworkedCharacterRemote")
-    {
-        std::cout << "Setting transform for remote character" << std::endl;
-    }
+
     mLocalTransform.UpdateMatrix();
     UpdateWorldTransform();
     SetPhysicsTransform();
