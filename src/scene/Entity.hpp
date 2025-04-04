@@ -150,6 +150,9 @@ class Entity {
     // called on any frame except the first frame of a collision - note there is no function provided for the last frame of a collision
     virtual void OnCollisionStay(Entity *aOther) {}
 
+    // called for each entity just before update has been called per entity
+    virtual void PreUpdate(double deltaTime) {}
+
     // called for each entity after update has been called on all entities
     virtual void LateUpdate(double deltaTime) {}
 

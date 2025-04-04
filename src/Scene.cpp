@@ -21,6 +21,7 @@ void Scene::Update(double aDeltaTime) {
     // update the entities
     for(auto &entity : m_Entities) {
         entity->BaseUpdate(aDeltaTime);
+        entity->PreUpdate(aDeltaTime);
         entity->Update(aDeltaTime);
     }
     // late update the entities
@@ -73,10 +74,6 @@ void Scene::UploadCameras(VkCommandBuffer cmdBuff) {
 void Scene::UpdateUi(double aDeltaTime) {
     ZoneScopedN("Scene::UpdateUi");
 
-    // New timer window
-    mGuiTimerData.time += aDeltaTime;
-    ImGuiRenderer::NewTimer(mGuiTimerData);
-
     for (auto &entity : m_Entities) {
         entity->UpdateUi(aDeltaTime);
     }
@@ -106,6 +103,7 @@ void Scene::Unload()
     m_Animations.clear();
     m_Skins.clear();
 
+    mPlayerCount = 0;
     mActivePlayerCount = 0;
     mActivePlayerCountOverride = {Override::INACTIVE, 1};
 
