@@ -639,7 +639,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         }
         else
         {
-            aEntities[ni]->SetParent(aEntities.back());
+            aEntities[ni]->SetParent(root);
         }
     }
     // update the children from the root node
