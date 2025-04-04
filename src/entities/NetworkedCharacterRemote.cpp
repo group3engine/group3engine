@@ -98,6 +98,7 @@ NetworkedCharacterRemote::NetworkedCharacterRemote() {
 void NetworkedCharacterRemote::Awake() {
     // create the jolt character
     CreateJoltCharacter();
+    mSampleJoltCharacter->SetCharacterPosition({0, -10000, 0});
 }
 
 void NetworkedCharacterRemote::UpdateState(State state)
