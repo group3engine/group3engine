@@ -26,15 +26,7 @@ public:
         return mSampleJoltCharacter->GetCharacterPosition();
     }
 
-    void UpdateState(State state)
-    {
-        mSampleJoltCharacter->SetCharacterPosition(RVec3(state.position.x, state.position.y, state.position.z));
-        Transform newTransform = GetLocalTransform();
-        newTransform.rotation = glm::normalize(state.rotation);
-        SetTransform(newTransform);
-        mSampleJoltCharacter->SetCharacterVelocity(RVec3(state.velocity.x, state.velocity.y, state.velocity.z));
-    }
-
+    void UpdateState(State state);
     // update override
     void LateUpdate(double deltaTime) override;
 

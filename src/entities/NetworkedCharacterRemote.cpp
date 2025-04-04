@@ -100,3 +100,13 @@ void NetworkedCharacterRemote::Awake() {
     CreateJoltCharacter();
 }
 
+void NetworkedCharacterRemote::UpdateState(State state)
+{
+    mSampleJoltCharacter->SetCharacterPosition(RVec3(state.position.x, state.position.y, state.position.z));
+    Transform newTransform = GetLocalTransform();
+    newTransform.rotation = glm::normalize(state.rotation);
+    SetTransform(newTransform);
+    mSampleJoltCharacter->SetCharacterVelocity(RVec3(state.velocity.x, state.velocity.y, state.velocity.z));
+}
+
+
