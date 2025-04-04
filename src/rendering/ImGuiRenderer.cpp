@@ -1,9 +1,14 @@
 #include "Context.hpp"
 #include "Scene.hpp"
 #include "Camera.hpp"
+#include "CharacterEntity.hpp"
 #include "RenderPass.hpp"
 #include "ImGuiRenderer.hpp"
 #include "Utils.hpp"
+
+// Define math operators for the ImGui vector types
+// You're meant to use your own math vector types but I don't think we'll need them
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
@@ -16,6 +21,7 @@
 #include <tracy/Tracy.hpp>
 
 #include "Config.hpp"
+#include "Engine.hpp"
 
 namespace {
     auto PushBackStyleVar = [](size_t i, std::function<void()> f) {
@@ -26,6 +32,11 @@ namespace {
     bool enableTextWindowBorder = true;
     bool enableDeathPopup = true;
     bool enableFinishPopup = true;
+
+    ImVec2 WindowSize(const Context &context) {
+        return {static_cast<float>(context.extent.width),
+                static_cast<float>(context.extent.height)};
+    }
 }
 
 void ImGuiRenderer::Initialize(const Context &context) {
@@ -107,6 +118,176 @@ void ImGuiRenderer::RemoveTextures() {
         ImGui_ImplVulkan_RemoveTexture(myTexData.DS);
     }
     textureDatas.clear();
+}
+
+void ImGuiRenderer::BeginMainMenu(const Context &context) {
+    // Style var counter for main menu window
+    size_t mainMenuWindowSv = 0;
+    // No window border
+    mainMenuWindowSv = PushBackStyleVar(mainMenuWindowSv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); });
+    // Make the window fit the screen exactly
+    mainMenuWindowSv = PushBackStyleVar(mainMenuWindowSv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(0, 0)); });
+    mainMenuWindowSv = PushBackStyleVar(mainMenuWindowSv, []() { ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0)); });
+    mainMenuWindowSv = PushBackStyleVar(mainMenuWindowSv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); });
+
+    ImVec2 windowSize = WindowSize(context);
+    ImGui::SetNextWindowSize(windowSize);
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    ImGui::SetNextWindowBgAlpha(0.5f);
+
+    // Flags to get a blank window to draw on
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                             ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+                             ImGuiWindowFlags_NoSavedSettings;
+
+    ImGui::Begin(std::string("Main Menu").c_str(), nullptr, flags);
+
+    ImGui::PopStyleVar(mainMenuWindowSv);
+
+    std::string mainMenuStr = "Main Menu";
+    ImVec2 mainMenuStrSize = ImGui::CalcTextSize(mainMenuStr.c_str());
+    ImVec2 mainMenuStrOffset = windowSize - mainMenuStrSize;
+    ImGui::SetCursorScreenPos(ImVec2(mainMenuStrOffset.x / 2.0f , mainMenuStrOffset.y / 3.0f));
+    ImGui::Text("Main Menu");
+}
+
+const char *
+ImGuiRenderer::AddMainMenuPlayerCountSelection(const Context &context,
+                                               const std::vector<const char *> &playerCounts,
+                                               const char *playerCountSelection) {
+    ImVec2 windowSize = WindowSize(context);
+
+    const char *activeItem = playerCountSelection;
+
+    float sceneSelectionDropdownWidth = windowSize.x * 0.25f;
+    ImGui::SetCursorPosX((windowSize.x - sceneSelectionDropdownWidth) / 2.0f);
+
+    ImGui::Text("Select Number of Players");
+
+    ImGui::SetCursorPosX((windowSize.x - sceneSelectionDropdownWidth) / 2.0f);
+    ImGui::PushItemWidth(sceneSelectionDropdownWidth);
+
+    if (ImGui::BeginCombo("##Main Menu Player Count Selection", playerCountSelection)) {
+        for (size_t i = 0; i < playerCounts.size(); ++i) {
+            bool isSelected = playerCountSelection == playerCounts[i];
+
+            if (ImGui::Selectable(playerCounts[i], isSelected)) {
+                activeItem = playerCounts[i];
+            }
+
+            if (isSelected) {
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+
+        ImGui::EndCombo();
+    }
+
+    ImGui::PopItemWidth();
+
+    return activeItem;
+}
+
+const std::filesystem::path *
+ImGuiRenderer::AddMainMenuSceneSelection(const Context &context,
+                                         const std::vector<std::filesystem::path *> &scenePaths,
+                                         const std::filesystem::path *scenePathSelection) {
+    ImVec2 windowSize = WindowSize(context);
+
+    const std::filesystem::path *activeItem = scenePathSelection;
+
+    float sceneSelectionDropdownWidth = windowSize.x * 0.25f;
+    ImGui::SetCursorPosX((windowSize.x - sceneSelectionDropdownWidth) / 2.0f);
+
+    ImGui::Text("Select Level");
+
+    ImGui::SetCursorPosX((windowSize.x - sceneSelectionDropdownWidth) / 2.0f);
+    ImGui::PushItemWidth(sceneSelectionDropdownWidth);
+
+    if (ImGui::BeginCombo("##Main Menu Scene Selection", scenePathSelection->c_str())) {
+        for (size_t i = 0; i < scenePaths.size(); ++i) {
+            bool isSelected = scenePathSelection == scenePaths[i];
+
+            if (ImGui::Selectable(scenePaths[i]->c_str(), isSelected)) {
+                activeItem = scenePaths[i];
+            }
+
+            if (isSelected) {
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+
+        ImGui::EndCombo();
+    }
+
+    ImGui::PopItemWidth();
+
+    return activeItem;
+}
+
+const char *ImGuiRenderer::NewPlayerCountSelection(const std::vector<const char *> &playerCounts,
+                                                   const char *playerCountSelection) {
+    const char *activeItem = playerCountSelection;
+
+    ImGui::Text("Select Number of Players");
+
+    if (ImGui::BeginCombo("##Player Count Selection", playerCountSelection)) {
+        for (size_t i = 0; i < playerCounts.size(); ++i) {
+            bool isSelected = playerCountSelection == playerCounts[i];
+
+            if (ImGui::Selectable(playerCounts[i], isSelected)) {
+                activeItem = playerCounts[i];
+            }
+
+            if (isSelected) {
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+
+        ImGui::EndCombo();
+    }
+
+    return activeItem;
+}
+
+const std::filesystem::path *
+ImGuiRenderer::NewSceneSelection(const std::vector<std::filesystem::path *> &scenePaths,
+                                 const std::filesystem::path *scenePathSelection) {
+    const std::filesystem::path *activeItem = scenePathSelection;
+
+    ImGui::Text("Select Level");
+
+    if (ImGui::BeginCombo("##Scene Selection", scenePathSelection->c_str())) {
+        for (size_t i = 0; i < scenePaths.size(); ++i) {
+            bool isSelected = scenePathSelection == scenePaths[i];
+
+            if (ImGui::Selectable(scenePaths[i]->c_str(), isSelected)) {
+                activeItem = scenePaths[i];
+            }
+
+            if (isSelected) {
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+
+        ImGui::EndCombo();
+    }
+
+    return activeItem;
+}
+
+void ImGuiRenderer::AddLoadSceneButton(const std::filesystem::path &pendingScenePath,
+                                       size_t pendingPlayerCount) {
+    std::string loadSceneStr = "Load Scene";
+    ImGui::SameLine();
+    if (ImGui::Button(loadSceneStr.c_str())) {
+        SPDLOG_INFO("Load Scene");
+        Engine::get().ChangeScene(pendingScenePath, pendingPlayerCount);
+    }
+}
+
+void ImGuiRenderer::EndMainMenu() {
+    ImGui::End();
 }
 
 void ImGuiRenderer::NewHeartSprite(const ImVec2 &offset) {
@@ -434,6 +615,46 @@ void ImGuiRenderer::Image(std::string const &imageName, ImVec2 position, ImVec2 
     ImGui::End();
 }
 
+void ImGuiRenderer::NewActivePlayerCountOverride(
+    Scene *scene, gui::Settings::ActivePlayerCountOverride &settings) {
+    ImGui::Text("Active Player Count Override");
+    if (ImGui::BeginCombo("##Active Player Count Override", settings.activeItem)) {
+        for (size_t i = 0; i < settings.items.size(); ++i) {
+            bool isSelected = settings.activeItem == settings.items[i];
+
+            if (ImGui::Selectable(settings.items[i], isSelected)) {
+                settings.activeItem = settings.items[i];
+            }
+
+            if (isSelected) {
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+
+        ImGui::EndCombo();
+    }
+
+    if (settings.activeItem) {
+        if (strcmp(settings.activeItem, "INACTIVE") == 0) {
+            scene->SetActivePlayerCountOverrideInactive();
+        } else {
+            size_t playerCount = 0;
+            assert(sscanf(settings.activeItem, "%zu", &playerCount));
+            scene->SetActivePlayerCountOverride(playerCount);
+        }
+    }
+}
+
+void ImGuiRenderer::NewCharacterInfo(const CharacterEntity *character) {
+    if (ImGui::CollapsingHeader(character->GetName().c_str())) {
+        // Add camera position
+        ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)",
+                    character->GetCamera()->GetPosition().x,
+                    character->GetCamera()->GetPosition().y,
+                    character->GetCamera()->GetPosition().z);
+    }
+}
+
 void ImGuiRenderer::NewFrame() {
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -453,13 +674,6 @@ void ImGuiRenderer::Update(Scene *scene)
     ImGui::TextColored(
         ImVec4(0.76, 0.5, 0.0, 1.0), "FPS: (%.1f FPS), %.3f ms/frame",
         ImGui::GetIO().Framerate, 1000.0f / ImGui::GetIO().Framerate);
-
-    // Add camera position
-    ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)",
-        scene->GetActiveCamera()->GetPosition().x,
-        scene->GetActiveCamera()->GetPosition().y,
-        scene->GetActiveCamera()->GetPosition().z
-    );
 
    ImGui::Text("Directional Light: (%.2f, %.2f, %.2f)",
         LightManager::getInstance().GetLights()[0]->position.x,

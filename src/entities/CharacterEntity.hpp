@@ -79,7 +79,7 @@ class CharacterEntity : public Entity {
         Reset();
     }
 
-    [[nodiscard]] Camera* GetCamera(){return mCamera;}
+    [[nodiscard]] Camera* GetCamera() const{return mCamera;}
 
   private:
     void Save();

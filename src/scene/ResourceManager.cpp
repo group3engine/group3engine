@@ -51,7 +51,8 @@ std::string DecodeURI(std::string_view uri, std::string_view gltfPath) {
 int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
              MaterialManager &aMaterialManager, TextureManager &aTextureManager,
              std::vector<Entity *> &aEntities, bool aIsDebug,
-             std::vector<Animation> &aAnimations, std::vector<Skin> &aSkins) {
+             std::vector<Animation> &aAnimations, std::vector<Skin> &aSkins,
+             std::unordered_map<Entity *, std::vector<Entity *>> &aCharacterEntities) {
     // Convert directory separators to preferred directory separator
     // Slight try at cross-platform for Windows
     aFilepath.make_preferred();
@@ -807,6 +808,41 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
     //    }
 
     cgltf_free(data);
+
+    for (auto &&entity : aEntities) {
+        if (entity->IsCharacter()) {
+            // Try emplace the parent entity as a key and an empty vector children value. The key
+            // might already have been inserted into the map if the children were found first.
+            aCharacterEntities.try_emplace(entity);
+            // Mark as invalid
+            entity = nullptr;
+            continue;
+        }
+
+        if (entity->GetName() == "mixamorig:Hips") {
+            // raise(SIGINT);
+        }
+
+        Entity *parent = entity;
+        Entity *prevEntity = nullptr;
+        // While this child has a parent and this parent has not been seen already
+        while (parent && prevEntity != parent) {
+            if (parent->IsCharacter()) {
+                aCharacterEntities[parent].push_back(entity);
+                // Mark as invalid
+                entity = nullptr;
+                break;
+            }
+
+            prevEntity = parent;
+            parent = parent->GetParent();
+        }
+    }
+
+    // Remove character entities from main entitites
+    auto first =
+        std::partition(aEntities.begin(), aEntities.end(), [](Entity *entity) { return entity; });
+    aEntities.erase(first, aEntities.end());
 
     return GLTF_LOAD_SUCCESS;
 }
