@@ -307,8 +307,10 @@ void Entity::BaseUpdate(double deltaTime) {
         int updateRateInt = static_cast<int>(updateRate);
         // if the current frame number is divisible by the update rate, update the animator
         if ((mFrameNumber + mEntityID) % updateRateInt == 0 || mFrameNumber <= 10) {
-            mAnimator->Update(deltaTime, this);
+            // removing for now
         }
+        mAnimator->Update(deltaTime, this);
+
     }
     if(mHasRigidBody)
     {
