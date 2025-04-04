@@ -806,22 +806,17 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
 
     for (auto &&entity : aEntities) {
         if (entity->IsCharacter()) {
-            // Try emplace the parent entity as a key and an empty vector children value. The key
-            // might already have been inserted into the map if the children were found first.
+            // Try emplace the parent entity as a key and an empty vector of
+            // children as the value. The key might already have been inserted
+            // into the map if the children were found first
             aCharacterEntities.try_emplace(entity);
             // Mark as invalid
             entity = nullptr;
             continue;
         }
 
-        if (entity->GetName() == "mixamorig:Hips") {
-            // raise(SIGINT);
-        }
-
         Entity *parent = entity;
-        Entity *prevEntity = nullptr;
-        // While this child has a parent and this parent has not been seen already
-        while (parent && prevEntity != parent) {
+        while (parent) {
             if (parent->IsCharacter()) {
                 aCharacterEntities[parent].push_back(entity);
                 // Mark as invalid
@@ -829,14 +824,14 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 break;
             }
 
-            prevEntity = parent;
             parent = parent->GetParent();
         }
     }
 
-    // Remove character entities from main entitites
-    auto first =
-        std::partition(aEntities.begin(), aEntities.end(), [](Entity *entity) { return entity; });
+    // Remove character entities from main entitites by partitioning nullptr
+    // (invalid) entities and erasing them
+    auto first = std::partition(aEntities.begin(), aEntities.end(),
+                                [](Entity *entity) { return entity; });
     aEntities.erase(first, aEntities.end());
 
     return GLTF_LOAD_SUCCESS;
