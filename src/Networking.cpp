@@ -13,6 +13,10 @@ Networking::Networking()
         std::cerr << "Socket creation falied";
         return;
     }
+    struct timeval tv;
+    tv.tv_sec = 2;  // 2 seconds timeout
+    tv.tv_usec = 0;
+    setsockopt(my_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
     memset(&server_addr, 0, sizeof(server_addr));
     memset(&client_addr, 0, sizeof(client_addr));
 
@@ -49,6 +53,7 @@ void Networking::Listen()
         if (n < 0)
         {
             std::cerr << "Receive failed" << std::endl;
+            continue;
         }
         buffer[n] = '\0';
         // add the data to the messages vector

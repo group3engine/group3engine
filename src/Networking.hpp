@@ -24,8 +24,9 @@ class Networking {
 public:
     Networking();
     ~Networking() {
+        running = false;
+        listen_thread.join();
         close(my_socket);
-        if (listen_thread.joinable()) listen_thread.detach();
     }
     void SendMessage(const std::string &message) {
         sendto(my_socket, message.c_str(), message.size(), 0, (struct sockaddr *)&client_addr, sizeof(client_addr));
@@ -42,7 +43,7 @@ public:
         return temp;
     }
 private:
-    [[noreturn]] void Listen();
+    void Listen();
 private:
     int my_socket;
     struct sockaddr_in server_addr, client_addr;
