@@ -52,7 +52,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
              MaterialManager &aMaterialManager, TextureManager &aTextureManager,
              std::vector<Entity *> &aEntities, bool aIsDebug,
              std::vector<Animation> &aAnimations, std::vector<Skin> &aSkins,
-             std::vector<Entity *> &aCharacterEntities) {
+             std::unordered_map<Entity *, std::vector<Entity *>> &aCharacterEntities) {
     // Convert directory separators to preferred directory separator
     // Slight try at cross-platform for Windows
     aFilepath.make_preferred();
@@ -637,6 +637,10 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             assert(parentIndex < (int)data->nodes_count);
             aEntities[ni]->SetParent(aEntities[parentIndex]);
         }
+        else
+        {
+            aEntities[ni]->SetParent(aEntities.back());
+        }
     }
     // update the children from the root node
     root->SetTransform(glm::mat4(1.f));
@@ -800,15 +804,40 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
 
     cgltf_free(data);
 
-    // Find all character entities, erase them from the main entities list and
-    // move them into character entities
-    std::vector<Entity *> tmpEntities;
-    std::partition_copy(std::make_move_iterator(aEntities.begin()),
-                        std::make_move_iterator(aEntities.end()),
-                        std::back_inserter(aCharacterEntities),
-                        std::back_inserter(tmpEntities),
-                        [](Entity *entity) { return entity->IsCharacter(); });
-    aEntities = std::move(tmpEntities);
+    for (auto &&entity : aEntities) {
+        if (entity->IsCharacter()) {
+            // Try emplace the parent entity as a key and an empty vector children value. The key
+            // might already have been inserted into the map if the children were found first.
+            aCharacterEntities.try_emplace(entity);
+            // Mark as invalid
+            entity = nullptr;
+            continue;
+        }
+
+        if (entity->GetName() == "mixamorig:Hips") {
+            // raise(SIGINT);
+        }
+
+        Entity *parent = entity;
+        Entity *prevEntity = nullptr;
+        // While this child has a parent and this parent has not been seen already
+        while (parent && prevEntity != parent) {
+            if (parent->IsCharacter()) {
+                aCharacterEntities[parent].push_back(entity);
+                // Mark as invalid
+                entity = nullptr;
+                break;
+            }
+
+            prevEntity = parent;
+            parent = parent->GetParent();
+        }
+    }
+
+    // Remove character entities from main entitites
+    auto first =
+        std::partition(aEntities.begin(), aEntities.end(), [](Entity *entity) { return entity; });
+    aEntities.erase(first, aEntities.end());
 
     return GLTF_LOAD_SUCCESS;
 }

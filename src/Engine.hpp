@@ -4,6 +4,7 @@
 
 #include "Camera.hpp"
 #include "Context.hpp"
+#include "SampleGLTFFilePaths.hpp"
 #include "PhysicsManager.hpp"
 #include "Renderer.hpp"
 #include "RigidBody.hpp"
@@ -35,7 +36,7 @@ class Engine {
     bool Initialize();
     void Run();
     void Shutdown();
-    void ChangeScene();
+    void ChangeScene(const std::filesystem::path &pendingScenePath, size_t pendingPlayerCount);
 
   private:
     Context m_context;
@@ -47,11 +48,15 @@ class Engine {
     bool m_sceneNeedsChanging = false;
     std::filesystem::path m_scenePath;
 
+    // TODO: Change this when entities call change scene
+    std::filesystem::path mPendingScenePath = Sample::SampleObby;
+    size_t mPendingScenePlayerCount = 1;
+
     bool mIsMainMenu = false;
 
     void UpdateLogic();
 
-    void ChangeSceneFR();
+    void ChangeSceneFR(const std::filesystem::path &scenePath, size_t playerCount);
 
     void Update(double deltaTime);
     void Render();

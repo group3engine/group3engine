@@ -88,11 +88,17 @@ void Scene::UpdateUi(double aDeltaTime) {
 void Scene::Unload()
 {
     // delete the entities
-    for (auto &entity : m_Entities) {
+    for (auto *entity : m_Entities) {
         delete entity;
     }
     m_Entities.clear();
 
+    for (auto &[parent, children] : mCharacterEntities) {
+        delete parent;
+        for (auto *child : children) {
+            delete child;
+        }
+    }
     mCharacterEntities.clear();
 
     m_FrontMeshes.clear();
@@ -115,19 +121,40 @@ void Scene::Unload()
     mGuiActivePlayerCountOverride = {};
 }
 
-void Scene::LoadGLTF(const std::filesystem::path &aFilepath) {
+void Scene::LoadGLTF(const std::filesystem::path &aFilepath, size_t playerCount) {
     // Load the GLTF file
     ResourceLoader::LoadGLTF(aFilepath, *mMeshManager, *mMaterialManager,
                              *mTextureManager, m_Entities, false, m_Animations,
                              m_Skins, mCharacterEntities);
 
-    size_t playerCount = std::min(mCharacterEntities.size(), GlobalConfig::maxPlayers);
-    for (size_t i = 0; i < playerCount; ++i) {
-        m_Entities.push_back(mCharacterEntities[i]);
+    size_t playersAddedCount = 0;
+    // Add each character entity and its children until the player count is reached
+    for (auto &[parent, children] : mCharacterEntities) {
+        m_Entities.push_back(parent);
+        for (auto *child : children) {
+            m_Entities.push_back(child);
+        }
+
+        ++playersAddedCount;
+        if (playersAddedCount >= playerCount) {
+            break;
+        }
     }
+
+    mCharacterEntities.erase(mCharacterEntities.begin(),
+                             std::next(mCharacterEntities.begin(), playerCount));
+
+    if (playersAddedCount < playerCount) {
+        SPDLOG_ERROR("Failed to add the selected number of players ({}). Only {} players were "
+                     "found in the character entities list. Add more characters to the scene.",
+                     playerCount, playersAddedCount);
+        std::exit(EXIT_FAILURE);
+    }
+
+    assert(playersAddedCount > 0 && playersAddedCount <= playerCount);
 }
 
-void Scene::Load(const std::filesystem::path &filePath)
+void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
 {
     mSceneFilename = filePath.stem();
 
@@ -135,7 +162,7 @@ void Scene::Load(const std::filesystem::path &filePath)
     std::filesystem::path basePath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets";
     std::filesystem::path gltfPath = basePath / filePath;
 
-    LoadGLTF(gltfPath);
+    LoadGLTF(gltfPath, playerCount);
 
     SPDLOG_DEBUG("Number of Lights: {}", GetLights().size());
 

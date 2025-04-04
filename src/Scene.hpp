@@ -56,7 +56,7 @@ class Scene {
   public:
     Scene *GetActiveScene() const { return mCurrentScene; }
 
-    void LoadGLTF(const std::filesystem::path &aFilepath);
+    void LoadGLTF(const std::filesystem::path &aFilepath, size_t playerCount);
 
     void DrawOpaque(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
     void DrawAlphaMasked(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
@@ -67,7 +67,7 @@ class Scene {
 
     void Awake();
 
-    void Load(const std::filesystem::path &filePath);
+    void Load(const std::filesystem::path &filePath, size_t playerCount);
     void Unload();
 
     void StartUp(Context *context, MaterialManager *materialManager,
@@ -154,9 +154,9 @@ class Scene {
     std::vector<size_t> m_FrontMeshes;
     std::vector<size_t> m_BackMeshes;
     std::vector<Entity *> m_Entities;
-    // All character entities. Character entities are added to the main entity
-    // list depending on how many players are playing
-    std::vector<Entity *> mCharacterEntities;
+
+    std::unordered_map<Entity *, std::vector<Entity *>> mCharacterEntities;
+
     std::vector<Animation> m_Animations;
     std::vector<Skin> m_Skins;
 

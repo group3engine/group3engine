@@ -24,7 +24,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
              MaterialManager &aMaterialManager, TextureManager &aTextureManager,
              std::vector<Entity *> &aEntities, bool aIsDebug,
              std::vector<Animation> &aAnimations, std::vector<Skin> &aSkins,
-             std::vector<Entity *> &aCharacterEntities);
+             std::unordered_map<Entity *, std::vector<Entity *>> &aCharacterEntities);
 
 } // namespace ResourceLoader
 #endif // GROUP3ENGINE_RESOURCEMANAGER_HPP

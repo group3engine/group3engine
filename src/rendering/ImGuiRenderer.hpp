@@ -84,7 +84,28 @@ namespace ImGuiRenderer
         {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000}
     };
 
-    void NewMainMenu(const Context &context);
+    void BeginMainMenu(const Context &context);
+
+    const char *AddMainMenuPlayerCountSelection(const Context &context,
+                                                const std::vector<const char *> &playerCounts,
+                                                const char *playerCountSelection);
+
+    const std::filesystem::path *
+    AddMainMenuSceneSelection(const Context &context,
+                              const std::vector<std::filesystem::path *> &scenePaths,
+                              const std::filesystem::path *scenePathSelection);
+
+    const char *NewPlayerCountSelection(const std::vector<const char *> &playerCounts,
+                                        const char *playerCountSelection);
+
+    const std::filesystem::path *
+    NewSceneSelection(const std::vector<std::filesystem::path *> &scenePaths,
+                      const std::filesystem::path *scenePathSelection);
+
+    void AddLoadSceneButton(const std::filesystem::path &pendingScenePath,
+                            size_t pendingPlayerCount);
+
+    void EndMainMenu();
 
     void NewHeartSprite(const ImVec2 &offset);
     void NewDeathCounter(const gui::DeathCounterData &data);

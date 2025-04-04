@@ -109,7 +109,8 @@ void CharacterEntity::Update(double deltaTime) {
 
     if (IsKeyPressed(KEY::eR))
     {
-        Engine::get().ChangeScene();
+        // TODO: Handle logic for selecting which scene to switch to
+        Engine::get().ChangeScene(Sample::SampleObby, GetScene()->GetActivePlayerCount());
     }
 
 

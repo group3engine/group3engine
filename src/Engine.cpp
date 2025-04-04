@@ -48,11 +48,21 @@ namespace {
     // TODO: Improve this temporary scene switching mechanism
     std::filesystem::path mainMenuPath{"MainMenu/main_menu.gltf"};
 
-    const std::vector<std::reference_wrapper<std::filesystem::path>> scenePaths = {
-        mainMenuPath,
-        Sample::SampleObby,
-        Sample::SampleObbyTestScene
+    const std::vector<std::filesystem::path *> scenePaths = {
+        &Sample::SampleObby,
+        &Sample::SampleObbyTestScene
     };
+
+    const std::filesystem::path *scenePathSelection = scenePaths[0];
+
+    const std::vector<const char *> playerCounts = {
+        "1",
+        "2",
+        "3",
+        "4"
+    };
+
+    const char *playerCountSelection = playerCounts[0];
 }
 
 Engine::Engine() {
@@ -91,7 +101,9 @@ bool Engine::Initialize() {
     
     PhysicsManager::get().StartUp();
 
-    mScene->Load(mainMenuPath);
+    constexpr size_t mainMenuPlayerCount = 1;
+    mScene->Load(mainMenuPath, mainMenuPlayerCount);
+    m_scenePath = mScene->GetSceneFilename();
 
     mRenderer->CreateRenderPasses();
     // call the scene awake function
@@ -129,10 +141,10 @@ void Engine::Shutdown() {
     PhysicsManager::get().ShutDown();
 }
 
-void Engine::ChangeScene()
-{
+void Engine::ChangeScene(const std::filesystem::path &pendingScenePath, size_t pendingPlayerCount) {
     m_sceneNeedsChanging = true;
-    m_scenePath = Sample::SampleObbyTestScene;
+    mPendingScenePath = pendingScenePath;
+    mPendingScenePlayerCount = pendingPlayerCount;
 }
 
 void Engine::Run() {
@@ -159,7 +171,11 @@ void Engine::Run() {
         Update(GlobalUtil::deltaTime);
 
         if (mIsMainMenu) {
-            ImGuiRenderer::NewMainMenu(m_context);
+            ImGuiRenderer::BeginMainMenu(m_context);
+            playerCountSelection = ImGuiRenderer::AddMainMenuPlayerCountSelection(m_context, playerCounts, playerCountSelection);
+            scenePathSelection = ImGuiRenderer::AddMainMenuSceneSelection(m_context, scenePaths, scenePathSelection);
+            ImGuiRenderer::AddLoadSceneButton(*scenePathSelection, std::stoi(playerCountSelection));
+            ImGuiRenderer::EndMainMenu();
         }
 
         ImGuiRenderer::EndFrame();
@@ -168,7 +184,7 @@ void Engine::Run() {
 
         if (m_sceneNeedsChanging)
         {
-            ChangeSceneFR();
+            ChangeSceneFR(mPendingScenePath, mPendingScenePlayerCount);
             m_sceneNeedsChanging = false;
         }
 
@@ -192,7 +208,7 @@ void Engine::UpdateLogic() {
     }
 }
 
-void Engine::ChangeSceneFR()
+void Engine::ChangeSceneFR(const std::filesystem::path &scenePath, size_t playerCount)
 {
     // vkDestroyBuffer():  can't be called on VkBuffer that is currently in use by VkCommandBuffer
     vkQueueWaitIdle(m_context.graphicsQueue);
@@ -230,7 +246,10 @@ void Engine::ChangeSceneFR()
     assert(bodyIds.empty());
 #endif // #ifndef NDEBUG
     m_progress = 25.f;
-    mScene->Load(m_scenePath);
+
+    mScene->Load(scenePath, playerCount);
+    m_scenePath = mScene->GetSceneFilename();
+
     m_progress = 75.f;
 
     // Add back UI textures
@@ -271,6 +290,11 @@ void Engine::Update(double deltaTime) {
 
     if (!mIsMainMenu) {
         mScene->UpdateUi(deltaTime);
+
+        playerCountSelection = ImGuiRenderer::NewPlayerCountSelection(playerCounts, playerCountSelection);
+        scenePathSelection = ImGuiRenderer::NewSceneSelection(scenePaths, scenePathSelection);
+        ImGuiRenderer::AddLoadSceneButton(*scenePathSelection, std::stoi(playerCountSelection));
+
         ImGuiRenderer::Update(mScene);
     }
 
