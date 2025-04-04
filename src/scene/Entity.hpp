@@ -22,6 +22,9 @@ enum class PhysicsType {
     KINEMATIC,
     DYNAMIC
 };
+#define MIN_ANIMATOR_UPDATE_DISTANCE 10.f
+#define MAX_ANIMATOR_UPDATE_DISTANCE 500.f
+#define LOWEST_ANIMATOR_UPDATE_RATE 1000.f
 
 /// The base class for all entities in the scene. Custom entities all have this as their base class
 class Entity {

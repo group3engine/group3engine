@@ -90,8 +90,6 @@ void NetworkedCharacterRemote::CreateJoltCharacter()
 NetworkedCharacterRemote::NetworkedCharacterRemote() {
     mType = "NetworkedCharacterRemote";
     SetHasOffset();
-    // set the inital character position offset to far off screen
-    mCharacterPositionOffset = glm::vec3(0, -10000, 0);
 }
 
 
