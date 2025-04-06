@@ -654,7 +654,8 @@ void ImGuiRenderer::NewActivePlayerCountOverride(
             scene->SetActivePlayerCountOverrideInactive();
         } else {
             size_t playerCount = 0;
-            assert(sscanf(settings.activeItem, "%zu", &playerCount));
+            [[maybe_unused]] int ret = sscanf(settings.activeItem, "%zu", &playerCount);
+            assert(ret);
             scene->SetActivePlayerCountOverride(playerCount);
         }
     }
