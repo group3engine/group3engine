@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <iostream>
+#include <array>
 #include <vector>
 #include <mutex>
 
