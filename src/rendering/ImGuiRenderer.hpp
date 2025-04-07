@@ -7,6 +7,8 @@
 #include <iostream>
 #include <memory>
 
+#include "Context.hpp"
+
 class ImVec2;
 
 class Context;
@@ -107,11 +109,13 @@ namespace ImGuiRenderer
 
     void EndMainMenu();
 
-    void NewHeartSprite(const ImVec2 &offset);
-    void NewDeathCounter(const gui::DeathCounterData &data);
-    void NewDeathPopup(const gui::DeathPopupData &data);
-    void NewFinishPopup(const gui::FinishPopupData &data);
-    void NewTimer(const gui::TimerData &data);
+    // Player UI
+    void NewHeartSprite(const ImVec2 &offset, size_t playerId);
+    void NewDeathCounter(const gui::DeathCounterData &data, size_t activePlayerCount, size_t playerId);
+    void NewDeathPopup(const gui::DeathPopupData &data, size_t activePlayerCount, size_t playerId);
+    void NewFinishPopup(const gui::FinishPopupData &data, size_t activePlayerCount, size_t playerId);
+    void NewTimer(const gui::TimerData &data, size_t activePlayerCount, size_t playerId);
+
     void LoadingBar(float progress, ImVec2 position);
 
     void Image(std::string const &imageName, ImVec2 position, ImVec2 size);
