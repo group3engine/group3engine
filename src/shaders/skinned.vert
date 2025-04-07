@@ -58,5 +58,5 @@ void main()
 	WorldPos = skinMat * vec4(pos, 1.0);
 	gl_Position = ubo.projection * ubo.view * WorldPos;
 
-	WorldNormal = adjugate(skinMat) * normal;
+	WorldNormal = vec4((skinMat) * vec4(normal, 0.0)).xyz;
 }

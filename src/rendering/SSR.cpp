@@ -9,10 +9,14 @@
 #include "Scene.hpp"
 #include "Utils.hpp"
 
-SSR::SSR(Context &context, Scene *scene, Image &depthBuffer, Image& renderedScene, Image& metallicRoughness, Image& skybox) :
+SSR::SSR(Context &context, Scene *scene, Image &depthBuffer, Image& renderedScene, Image& normalRoughnessImage, Image& skybox) :
 
-    context{context}, m_Scene{scene}, depthBuffer{depthBuffer}, renderedScene{renderedScene},
-      metallicRoughness{metallicRoughness}, skybox{skybox} {
+    context{context},
+    m_Scene{scene},
+    depthBuffer{depthBuffer},
+    renderedScene{renderedScene},
+    normalRoughnessImage{normalRoughnessImage},
+    skybox{skybox} {
 
     m_width = context.extent.width;
     m_height = context.extent.height;
@@ -123,7 +127,7 @@ void SSR::Resize()
 
     for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkDescriptorImageInfo imageInfo = {.sampler = vkutil::clampToEdgeSamplerAniso,
-                                           .imageView = metallicRoughness.imageView,
+                                           .imageView = normalRoughnessImage.imageView,
                                            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
 
         vkutil::UpdateDescriptorSet(context, 3, imageInfo, mDescriptorSets[i],
@@ -177,6 +181,8 @@ void SSR::Execute(VkCommandBuffer cmd)
     for (size_t playerId = 0; playerId < playerCount; ++playerId) {
         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
 
+        // Should not be rendering post-processing twice, should be applied to final rendered image
+        // which would have rendering information of both viewports a single image
         vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1,
                                 &mPlayerDescriptorSets[playerId][vkutil::currentFrame], 0, nullptr);
 
@@ -273,20 +279,19 @@ void SSR::BuildDescriptorSetLayouts() {
 
 void SSR::BuildDescriptors() {
     // Build player descriptors
+
     for (size_t playerId = 0; playerId < GlobalConfig::maxPlayers; ++playerId) {
         auto &descriptorSets = mPlayerDescriptorSets[playerId];
 
         descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
-        vkutil::AllocateDescriptorSets(context, context.descriptorPool, mPlayerDescriptorSetLayout,
-                                       vkutil::MAX_FRAMES_IN_FLIGHT, descriptorSets);
+        vkutil::AllocateDescriptorSets(context, context.descriptorPool, mPlayerDescriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, descriptorSets);
 
         for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
             VkDescriptorBufferInfo bufferInfo{};
             bufferInfo.buffer = m_Scene->GetCameraBuffers(playerId)[i].buffer;
             bufferInfo.offset = 0;
             bufferInfo.range = sizeof(CameraTransform);
-            vkutil::UpdateDescriptorSet(context, 0, bufferInfo, descriptorSets[i],
-                                        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+            vkutil::UpdateDescriptorSet(context, 0, bufferInfo, descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
         }
     }
 
@@ -328,7 +333,7 @@ void SSR::BuildDescriptors() {
 
         for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
             VkDescriptorImageInfo imageInfo = {.sampler = vkutil::clampToEdgeSamplerAniso,
-                                               .imageView = metallicRoughness.imageView,
+                                               .imageView = normalRoughnessImage.imageView,
                                                .imageLayout =
                                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
 

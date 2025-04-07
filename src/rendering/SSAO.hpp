@@ -16,12 +16,7 @@ class Context;
 class SSAO {
   public:
 
-    struct SSAOSamples
-    {
-        glm::vec3 samples[64];
-    };
-
-    explicit SSAO(Context &context, Scene *scene, Image& depthBuffer, Image& renderedScene);
+    explicit SSAO(Context &context, Scene *scene, Image& depthBuffer, Image& normalRoughnessImage);
     ~SSAO();
     void Execute(VkCommandBuffer cmd);
     void Update();
@@ -35,14 +30,7 @@ class SSAO {
     void BuildDescriptors();
     void CreateFramebuffer();
     void CreateRenderPass();
-
-    void GenerateSSAOSamples();
     void GenerateNoiseTexture(uint32_t width, uint32_t height);
-
-    float lerp(float a, float b, float f)
-    {
-        return a + f * (b - a);
-    }
 
     Context &context;
     Scene *m_Scene;
@@ -50,7 +38,7 @@ class SSAO {
     uint32_t m_height;
     Image m_RenderTarget;
     Image& depthBuffer;
-    Image &renderedScene;
+    Image& normalRoughnessImage;
     Image m_NoiseTexture;
 
     VkPipeline m_Pipeline;
@@ -65,6 +53,4 @@ class SSAO {
     VkRenderPass m_RenderPass;
     VkFramebuffer m_Framebuffer;
     std::vector<Buffer> m_SSAOUniform;
-    Buffer m_SSAOSamples;
-    SSAOSamples ssaoSamplesCPUtoGPU;
 };

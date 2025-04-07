@@ -34,8 +34,7 @@ mat3 adjugate( in mat4 m )
 
 void main()
 {
-	WorldNormal = normalize(adjugate(pc.ModelMatrix) * normal);
-
+	WorldNormal = vec4(pc.ModelMatrix * vec4(normal, 0.0)).xyz;
 	uv = tex;
 	WorldPos = pc.ModelMatrix * vec4(pos, 1.0);
 	gl_Position = ubo.projection * ubo.view * pc.ModelMatrix * vec4(pos, 1.0);

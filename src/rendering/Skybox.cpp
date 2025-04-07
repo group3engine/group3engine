@@ -28,6 +28,9 @@ Skybox::Skybox(Context& context, Scene *scene, VkRenderPass renderpass) :
         6
     );
 
+    // TODO: The skybox path should be user provided earlier during engine init
+    // This pass will then use that provided path to load skybox
+    // This will prevent users from having to navigate into renderer code to change paths
     char* faceTextureData[6]; // Stores the pixel data from stb
     LoadCubemapFace(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/" / "Skybox/px.png",   &faceTextureData[0]);
     LoadCubemapFace(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/" / "Skybox/nx.png",   &faceTextureData[1]);
@@ -156,8 +159,7 @@ void Skybox::Execute(VkCommandBuffer cmd, size_t playerCount, size_t playerId)
     vkutil::MeshPushConstants pc = {};
     pc.ModelMatrix = glm::mat4(1.0f);
     vkCmdPushConstants(cmd, m_PipelineLayout,
-                        VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT |
-                            VK_SHADER_STAGE_GEOMETRY_BIT,
+                        VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
                         0, sizeof(vkutil::MeshPushConstants), &pc);
 
     // Set up push constants
@@ -172,10 +174,12 @@ void Skybox::Execute(VkCommandBuffer cmd, size_t playerCount, size_t playerId)
 
 void Skybox::CreatePipeline()
 {
-    VkPushConstantRange pushConstantRange = {
-        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_GEOMETRY_BIT,
-        .offset = 0,
-        .size = sizeof(vkutil::MeshPushConstants)
+    std::vector<VkPushConstantRange> pushConstants = {
+
+        {.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+         .offset = 0,
+         .size = sizeof(vkutil::MeshPushConstants)
+        },
     };
 
     auto skyboxPiplineRes = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
@@ -184,8 +188,9 @@ void Skybox::CreatePipeline()
         .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
         .SetDynamicState({ {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR} })
         .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE)
-        .SetPipelineLayout({ mPlayerDescriptorSetLayout, mDescriptorSetLayout }, pushConstantRange)
+        .SetPipelineLayout({ mPlayerDescriptorSetLayout, mDescriptorSetLayout }, pushConstants)
         .SetSampling(VK_SAMPLE_COUNT_1_BIT)
+        .AddBlendAttachmentState()
         .AddBlendAttachmentState()
         .AddBlendAttachmentState()
         .SetDepthState(VK_TRUE, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL)

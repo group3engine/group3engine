@@ -13,11 +13,14 @@
 
 #include "RenderPassCommon.hpp"
 
-ForwardPass::ForwardPass(Context &context, Image &shadowMap, Image &depthPrepass, Scene *scene)
-    : context{context},
+ForwardPass::ForwardPass(Context &context, Image &shadowMap, Image &depthPrepass, Scene *scene, const ShadowMap* shadowMapRenderPass)
+    :
+      context{context},
       shadowMap{shadowMap},
       depthPrepass{depthPrepass},
-      scene{scene} {
+      scene{scene},
+      shadowMapRenderPass{shadowMapRenderPass}
+{
 
     m_RenderTarget = CreateImageTexture2D(
         "ForwardPassRT",
@@ -29,15 +32,26 @@ ForwardPass::ForwardPass(Context &context, Image &shadowMap, Image &depthPrepass
         VK_IMAGE_ASPECT_COLOR_BIT,
         1);
 
-    m_DepthTarget = CreateImageTexture2D(
-        "ForwardPassDepth",
+    //m_DepthTarget = CreateImageTexture2D(
+    //    "ForwardPassDepth",
+    //    context,
+    //    context.extent.width,
+    //    context.extent.height,
+    //    VK_FORMAT_D32_SFLOAT,
+    //    VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+    //    VK_IMAGE_ASPECT_DEPTH_BIT,
+    //    1);
+
+    m_NormalRoughness = CreateImageTexture2D(
+        "NormalRoughnessRT",
         context,
         context.extent.width,
         context.extent.height,
-        VK_FORMAT_D32_SFLOAT,
-        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-        VK_IMAGE_ASPECT_DEPTH_BIT,
-        1);
+        VK_FORMAT_B8G8R8A8_UNORM, // VK_FORMAT_A2R10G10B10_UNORM_PACK32,
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_IMAGE_ASPECT_COLOR_BIT,
+        1
+    );
 
     m_BrightnessTexture = CreateImageTexture2D(
         "BrightnessRT",
@@ -62,7 +76,8 @@ ForwardPass::~ForwardPass() {
 
     m_Skybox.reset();
     m_RenderTarget.Destroy(context.device);
-    m_DepthTarget.Destroy(context.device);
+    //m_DepthTarget.Destroy(context.device);
+    m_NormalRoughness.Destroy(context.device);
     m_BrightnessTexture.Destroy(context.device);
     vkDestroyPipeline(context.device, m_opaquePipeline.first, nullptr);
     vkDestroyPipelineLayout(context.device, m_opaquePipeline.second, nullptr);
@@ -98,7 +113,8 @@ void ForwardPass::Resize() {
     vkDestroyFramebuffer(context.device, m_framebuffer, nullptr);
 
     m_RenderTarget.Destroy(context.device);
-    m_DepthTarget.Destroy(context.device);
+    //m_DepthTarget.Destroy(context.device);
+    m_NormalRoughness.Destroy(context.device);
     m_BrightnessTexture.Destroy(context.device);
 
     m_RenderTarget = CreateImageTexture2D(
@@ -111,15 +127,26 @@ void ForwardPass::Resize() {
         VK_IMAGE_ASPECT_COLOR_BIT,
         1);
 
-    m_DepthTarget = CreateImageTexture2D(
-        "ForwardPassDepth",
+    //m_DepthTarget = CreateImageTexture2D(
+    //    "ForwardPassDepth",
+    //    context,
+    //    width,
+    //    height,
+    //    VK_FORMAT_D32_SFLOAT,
+    //    VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+    //    VK_IMAGE_ASPECT_DEPTH_BIT,
+    //    1);
+
+    m_NormalRoughness = CreateImageTexture2D(
+        "NormalRoughnessRT",
         context,
-        width,
-        height,
-        VK_FORMAT_D32_SFLOAT,
-        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-        VK_IMAGE_ASPECT_DEPTH_BIT,
-        1);
+        context.extent.width,
+        context.extent.height,
+        VK_FORMAT_B8G8R8A8_UNORM, // VK_FORMAT_A2R10G10B10_UNORM_PACK32,
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_IMAGE_ASPECT_COLOR_BIT,
+        1
+    );
 
     m_BrightnessTexture = CreateImageTexture2D(
         "BrightnessRT",
@@ -150,9 +177,9 @@ void ForwardPass::BeginExecute(VkCommandBuffer cmd) {
     ZoneScopedN("ForwardPass::Execute");
     TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "ForwardPass::BeginExecute", tracy::Color::Tomato);
 
-// #ifdef _DEBUG
-//     vkutil::RenderPassLabel(cmd, "ForwardPass");
-// #endif // !DEBUG
+ #ifdef _DEBUG
+     vkutil::RenderPassLabel(cmd, "ForwardPass");
+ #endif // !DEBUG
 
     VkRenderPassBeginInfo beginInfo = {};
     beginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -163,7 +190,8 @@ void ForwardPass::BeginExecute(VkCommandBuffer cmd) {
     VkClearValue clearValues[3];
     clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
     clearValues[1].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
-    clearValues[2].depthStencil = {1.0f, 0};
+    //clearValues[2].depthStencil = {1.0f, 0};
+    clearValues[2].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
     beginInfo.clearValueCount = 3;
     beginInfo.pClearValues = clearValues;
 
@@ -206,31 +234,34 @@ void ForwardPass::EndExecute(VkCommandBuffer cmd) {
 
     vkCmdEndRenderPass(cmd);
 
-// #ifdef _DEBUG
-//     vkutil::EndRenderPassLabel(cmd);
-// #endif // !DEBUG
+ #ifdef _DEBUG
+     vkutil::EndRenderPassLabel(cmd);
+ #endif // !DEBUG
 }
 
 void ForwardPass::CreatePipeline() {
-    VkPushConstantRange pushConstantRange = {
-        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-        .offset = 0,
-        .size = sizeof(vkutil::MeshPushConstants)};
 
-    // Default pipeline
-    // .first  = VkPipeline
-    // .second = VkPipelineLayout
+    std::vector<VkPushConstantRange> pushConstants = {
+
+        {
+         .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+         .offset = 0,
+         .size = sizeof(vkutil::MeshPushConstants)
+        },
+    };
+
     auto defaultPipelineResult = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
         .AddShader(OPAQUE_VERTEX_SHADER, ShaderType::VERTEX)
         .AddShader(OPAQUE_FRAGMENT_SHADER, ShaderType::FRAGMENT)
         .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
         .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}})
         .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE)
-        .SetPipelineLayout({{meshDescriptorSetLayout, vkutil::materialDescriptorSetLayout}}, pushConstantRange)
+        .SetPipelineLayout({{meshDescriptorSetLayout, vkutil::materialDescriptorSetLayout}}, pushConstants)
         .SetSampling(VK_SAMPLE_COUNT_1_BIT)
         .AddBlendAttachmentState()
         .AddBlendAttachmentState()
-        .SetDepthState(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL)
+        .AddBlendAttachmentState()
+        .SetDepthState(VK_TRUE, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL)
         .SetRenderPass(m_renderPass)
         .Build();
 
@@ -241,12 +272,13 @@ void ForwardPass::CreatePipeline() {
         .AddShader(ALPHA_MASK_FRAGMENT_SHADER, ShaderType::FRAGMENT)
         .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
         .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}})
-        .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE)
-        .SetPipelineLayout({{meshDescriptorSetLayout, vkutil::materialDescriptorSetLayout}}, pushConstantRange)
+        .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE)
+        .SetPipelineLayout({{meshDescriptorSetLayout, vkutil::materialDescriptorSetLayout}}, pushConstants)
         .SetSampling(VK_SAMPLE_COUNT_1_BIT)
         .AddBlendAttachmentState()
         .AddBlendAttachmentState()
-        .SetDepthState(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL)
+        .AddBlendAttachmentState()
+        .SetDepthState(VK_TRUE, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL)
         .SetRenderPass(m_renderPass)
         .Build();
 
@@ -258,42 +290,47 @@ void ForwardPass::CreatePipeline() {
         .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
         .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}})
         .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE)
-        .SetPipelineLayout( {{meshDescriptorSetLayout, vkutil::materialDescriptorSetLayout, skinDescriptorSetLayout}}, pushConstantRange)
+        .SetPipelineLayout( {{meshDescriptorSetLayout, vkutil::materialDescriptorSetLayout, skinDescriptorSetLayout}}, pushConstants)
         .SetSampling(VK_SAMPLE_COUNT_1_BIT)
         .AddBlendAttachmentState()
         .AddBlendAttachmentState()
-        .SetDepthState(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL)
+        .AddBlendAttachmentState()
+        .SetDepthState(VK_TRUE, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL)
         .SetRenderPass(m_renderPass)
         .Build();
 
     m_skinnedPipeline = skinnedPipeline;
 
     m_particlePipeline = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
-            .AddShader(PARTICLE_MESH_VERTEX_SHADER, ShaderType::VERTEX)
-            .AddShader(PARTICLE_SHADER_UNLIT_FRAGMENT, ShaderType::FRAGMENT)
-            .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-            .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}})
-            .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE)
-            .SetPipelineLayout({meshDescriptorSetLayout, vkutil::materialDescriptorSetLayout, particleDescriptorSetLayout})
-            .SetSampling(VK_SAMPLE_COUNT_1_BIT)
-            .AddBlendAttachmentState()
-            .AddBlendAttachmentState()
-            .SetDepthState(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL)
-            .SetRenderPass(m_renderPass)
-            .Build();
+        .AddShader(PARTICLE_MESH_VERTEX_SHADER, ShaderType::VERTEX)
+        .AddShader(PARTICLE_SHADER_UNLIT_FRAGMENT, ShaderType::FRAGMENT)
+        .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+        .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}})
+        .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE)
+        .SetPipelineLayout({meshDescriptorSetLayout, vkutil::materialDescriptorSetLayout, particleDescriptorSetLayout})
+        .SetSampling(VK_SAMPLE_COUNT_1_BIT)
+        .AddBlendAttachmentState()
+        .AddBlendAttachmentState()
+        .AddBlendAttachmentState()
+        .SetDepthState(VK_TRUE, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL)
+        .SetRenderPass(m_renderPass)
+        .Build();
 
 }
 
 void ForwardPass::CreateRenderPass() {
     RenderPass builder(context.device, 1);
-
+    //VK_FORMAT_B8G8R8A8_UNORM
     m_renderPass = builder
         .AddAttachment(context.swapchainFormat, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
         .AddAttachment(VK_FORMAT_R16G16B16A16_SFLOAT, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-        .AddAttachment(VK_FORMAT_D32_SFLOAT, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL)
-        .SetDepthAttachmentRef(0, 2, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+        .AddAttachment(VK_FORMAT_B8G8R8A8_UNORM, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+        .AddAttachment(VK_FORMAT_D32_SFLOAT, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_NONE, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL)
         .AddColorAttachmentRef(0, 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
         .AddColorAttachmentRef(0, 1, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+        .AddColorAttachmentRef(0, 2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+        .SetDepthAttachmentRef(0, 3, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL)
+
         // External -> 0 : Color
         .AddDependency(VK_SUBPASS_EXTERNAL, 0, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_DEPENDENCY_BY_REGION_BIT)
 
@@ -302,33 +339,34 @@ void ForwardPass::CreateRenderPass() {
 
         // External -> 0 : Depth
         // Wait for the depth-prepass to finish writing to the depth attachment before this pass uses it for depth comparison
-        //.AddDependency(
-        //    VK_SUBPASS_EXTERNAL, 0,
-        //    VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-        //    VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-        //    VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-        //    VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT)
+        .AddDependency(
+            VK_SUBPASS_EXTERNAL, 0,
+            VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+            VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+            VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+            VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT)
 
-        // 0 -> External : Depth
-        // Wait for this pass to finish reading from the depth attachment to occlude fragments before the depth-prepass writes to it
-        //.AddDependency(0, VK_SUBPASS_EXTERNAL,
-        //    VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-        //    VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT,
-        //    VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-        //    VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT)
+         // 0 -> External : Depth
+         // Wait for this pass to finish reading from the depth attachment to occlude fragments before the depth-prepass writes to it
+        .AddDependency(0, VK_SUBPASS_EXTERNAL,
+            VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+            VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT,
+            VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+            VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT)
 
         // External -> 0 : Depth
         // External -> 0 : Depth
-        .AddDependency(VK_SUBPASS_EXTERNAL, 0, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT)
+        //.AddDependency(VK_SUBPASS_EXTERNAL, 0, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT)
 
-        // 0 -> External : Depth
-        .AddDependency(0, VK_SUBPASS_EXTERNAL,VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT)
+        //// 0 -> External : Depth
+        //.AddDependency(0, VK_SUBPASS_EXTERNAL,VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT)
         .Build();
 }
 
 void ForwardPass::CreateFramebuffer() {
     // Framebuffer
-    std::vector<VkImageView> attachments = {m_RenderTarget.imageView, m_BrightnessTexture.imageView, m_DepthTarget.imageView};
+    std::vector<VkImageView> attachments = {m_RenderTarget.imageView, m_BrightnessTexture.imageView, m_NormalRoughness.imageView, depthPrepass.imageView };
+
     VkFramebufferCreateInfo fbcInfo = {
         .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
         .renderPass = m_renderPass,
@@ -336,7 +374,8 @@ void ForwardPass::CreateFramebuffer() {
         .pAttachments = attachments.data(),
         .width = context.extent.width,
         .height = context.extent.height,
-        .layers = 1};
+        .layers = 1
+    };
 
     VK_CHECK(vkCreateFramebuffer(context.device, &fbcInfo, nullptr, &m_framebuffer), "Failed to create Forward pass framebuffer.");
 }
@@ -345,7 +384,10 @@ void ForwardPass::BuildDescriptorSetLayouts() {
     std::vector<VkDescriptorSetLayoutBinding> bindings = {
         vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT), // CameraUBO (projection, view etc..)
         vkutil::CreateDescriptorBinding(1, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT),                              // Light UBO
-        vkutil::CreateDescriptorBinding(2, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)};
+        vkutil::CreateDescriptorBinding(2, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
+        vkutil::CreateDescriptorBinding(3, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT)
+
+    };
 
     meshDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
 
@@ -393,6 +435,14 @@ void ForwardPass::BuildDescriptors() {
 
             vkutil::UpdateDescriptorSet(context, 2, imageInfo, descriptorSets[i],
                                         VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+        }
+
+        for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+            VkDescriptorBufferInfo bufferInfo{};
+            bufferInfo.buffer = shadowMapRenderPass->GetCascadeUniformBuffer()[i].buffer;
+            bufferInfo.offset = 0;
+            bufferInfo.range = sizeof(vkutil::CascadeMatrices);
+            vkutil::UpdateDescriptorSet(context, 3, bufferInfo, descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
         }
     }
 }

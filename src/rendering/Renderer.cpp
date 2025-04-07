@@ -40,10 +40,10 @@ void Renderer::CreateRenderPasses() {
     // Renderer passes
     m_ShadowMap = std::make_unique<ShadowMap>(context, m_scene);
     m_DepthPrepass = std::make_unique<DepthPrepass>(context, m_scene);
-    m_ForwardPass = std::make_unique<ForwardPass>(context, m_ShadowMap->GetRenderTarget(), m_DepthPrepass->GetRenderTarget(), m_scene);
-    m_GBuffer = std::make_unique<GBuffer>(context, m_scene);
-    m_SSAO = std::make_unique<SSAO>(context, m_scene, m_ForwardPass->GetDepthTarget(), m_ForwardPass->GetRenderTarget());
-    m_SSR = std::make_unique<SSR>(context, m_scene, m_ForwardPass->GetDepthTarget(), m_ForwardPass->GetRenderTarget(), m_GBuffer->GetMetallicRoughnessTarget(), m_ForwardPass->GetSkybox()->GetSkyBoxImage());
+    m_ForwardPass = std::make_unique<ForwardPass>(context, m_ShadowMap->GetRenderTarget(), m_DepthPrepass->GetRenderTarget(), m_scene, m_ShadowMap.get());
+    //m_GBuffer = std::make_unique<GBuffer>(context, m_scene);
+    m_SSAO = std::make_unique<SSAO>(context, m_scene, m_DepthPrepass->GetRenderTarget(), m_ForwardPass->GetNormalRoughnessTarget());
+    m_SSR = std::make_unique<SSR>(context, m_scene, m_DepthPrepass->GetRenderTarget(), m_ForwardPass->GetRenderTarget(), m_ForwardPass->GetNormalRoughnessTarget(), m_ForwardPass->GetSkybox()->GetSkyBoxImage());
     m_BloomPass = std::make_unique<Bloom>(context, m_scene, m_ForwardPass->GetBrightnessTarget());
     m_CompositePass = std::make_unique<Composite>(context, m_scene, m_ForwardPass->GetRenderTarget(), m_BloomPass->GetRenderTarget(), m_SSAO->GetRenderTarget(), m_SSR->GetRenderTarget());
     m_PresentPass = std::make_unique<PresentPass>(context, m_scene, m_CompositePass->GetRenderTarget());
@@ -53,7 +53,14 @@ void Renderer::CreateRenderPasses() {
     std::filesystem::path path = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets" / "heart.png";
     ImGuiRenderer::AddTextures(m_scene->GetTextureManager(), path, "heart");
     // // TODO: This will cause a validation error if you re-size the window. Just needs to be updated when re-sized
-    ImGuiRenderer::AddTexture(vkutil::clampToEdgeSamplerAniso, m_ShadowMap->GetRenderTarget().imageView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL);
+    //ImGuiRenderer::AddTexture(vkutil::clampToEdgeSamplerAniso, m_ShadowMap->GetRenderTarget().imageView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL);
+
+    const auto &cascades = m_ShadowMap->GetCascades();
+
+    for (auto& cascade : cascades)
+    {
+        ImGuiRenderer::AddTexture(vkutil::clampToEdgeSamplerAniso,cascade.imgView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL);
+    }
 }
 
 void Renderer::Destroy() {
@@ -63,7 +70,7 @@ void Renderer::Destroy() {
 
     m_DepthPrepass.reset();
     m_ForwardPass.reset();
-    m_GBuffer.reset();
+    //m_GBuffer.reset();
     m_ShadowMap.reset();
     m_BloomPass.reset();
     m_CompositePass.reset();
@@ -217,9 +224,8 @@ void Renderer::BeginFrame(VkCommandBuffer cmd) {
         // Recreate swapchain
         context.RecreateSwapchain();
         m_DepthPrepass->Resize();
-        m_ShadowMap->Resize();
         m_ForwardPass->Resize();
-        m_GBuffer->Resize();
+        //m_GBuffer->Resize();
         m_SSAO->Resize();
         m_SSR->Resize();
         m_BloomPass->Resize();
@@ -389,9 +395,8 @@ void Renderer::Present(uint32_t imageIndex) {
         // Recreate the swapchain
         context.RecreateSwapchain();
         m_DepthPrepass->Resize();
-        m_ShadowMap->Resize();
         m_ForwardPass->Resize();
-        m_GBuffer->Resize();
+        //m_GBuffer->Resize();
         m_SSAO->Resize();
         m_SSR->Resize();
         m_BloomPass->Resize();
