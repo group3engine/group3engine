@@ -5,7 +5,7 @@
 
 layout(location = 0) in vec4 WorldPos;
 layout(location = 1) in vec2 uv;
-layout(location = 2) in vec3 WorldNormal;
+layout(location = 2) in mat3 TBNFrame;
 
 layout(location = 0) out vec4 fragColor;
 layout(location = 1) out vec4 brightColours;
@@ -56,8 +56,10 @@ layout(set = 0, binding = 2) uniform sampler2DArrayShadow shadowMap;
 layout (set = 1, binding = 0) uniform sampler2D uTextureColour;
 // roughness texture
 layout (set = 1, binding = 1) uniform sampler2D uTextureMetallicRoughness;
+// normal map
+layout (set = 1, binding = 2) uniform sampler2D uTextureNormal;
 // material numbers
-layout (set = 1, binding = 2) uniform UNumbers
+layout (set = 1, binding = 3) uniform UNumbers
 {
 	vec4 baseColour;
 	float metallness;
@@ -227,6 +229,9 @@ void main()
     float roughness = texture(uTextureMetallicRoughness, uv).g * uNumbers.roughness;
     float metallic = texture(uTextureMetallicRoughness, uv).b * uNumbers.metallness;
 
+    vec3 pixelNormal = normalize(TBNFrame * (texture(uTextureNormal, uv).xyz * 2.f - 1.f));
+
+
     vec3 outLight = vec3(0.0);
 
     {
@@ -241,7 +246,7 @@ void main()
         float shadowTerm = 1.0 - myPCF(WorldPos.xyz);
 
         vec3 brdf;
-        COOK_TORRENCE_BRDF(WorldNormal.xyz, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour, brdf);
+        COOK_TORRENCE_BRDF(pixelNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour, brdf);
         outLight += brdf * LightColour.xyz * shadowTerm;
     }
 
@@ -258,8 +263,8 @@ void main()
         float shadowTerm = 1.0;
 
         vec3 brdf;
-        COOK_TORRENCE_BRDF(WorldNormal.xyz, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour, brdf);
-        outLight += brdf * LightColour.xyz;
+        COOK_TORRENCE_BRDF(pixelNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour, brdf);
+        outLight += brdf * LightColour.xyz * shadowTerm;
     }
 
     vec3 ambient = vec3(0.02) * color;

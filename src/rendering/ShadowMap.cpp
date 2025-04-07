@@ -16,7 +16,6 @@
 
 ShadowMap::ShadowMap(Context &context, Scene *scene)
     : context{context}, scene{scene} {
-    assert(!scene->GetLights().empty());
 
     // 128, 256, 512, 1024, 2048, 4096
     m_width = RESOLUTION;
@@ -266,9 +265,9 @@ void ShadowMap::BuildDescriptors() {
         // Lights UBO
         for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
             VkDescriptorBufferInfo bufferInfo{};
-            bufferInfo.buffer = scene->GetLightsUBO()[i].buffer;
+            bufferInfo.buffer = LightManager::getInstance().GetLightsUBO()[i].buffer;
             bufferInfo.offset = 0;
-            bufferInfo.range = sizeof(vkutil::LightUBO) * scene->GetLights().size();
+            bufferInfo.range = sizeof(vkutil::LightUBO) * LightManager::getInstance().GetLights().size();
             vkutil::UpdateDescriptorSet(context, 0, bufferInfo, descriptorSets[i],
                                         VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
         }

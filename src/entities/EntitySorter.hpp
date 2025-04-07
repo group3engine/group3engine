@@ -4,6 +4,7 @@
 
 #ifndef GROUP3ENGINE_ENTITYSORTER_HPP
 #define GROUP3ENGINE_ENTITYSORTER_HPP
+#include "Bouncepad.hpp"
 #include "Entity.hpp"
 #include "MovingEntity.hpp"
 #include "CharacterEntity.hpp"
@@ -22,7 +23,8 @@ enum class EntityType {
     SPINNINGONX,
     SECONDCHARACTER,
     CAMERA,
-    PARTICLES
+    PARTICLES,
+    BOUNCEPAD,
     // Add more entity types here
 };
 // a map of strings to entity types
@@ -33,6 +35,7 @@ static const std::unordered_map<std::string, EntityType> entityTypeMap = {
     {"rotatingPlatform", EntityType::ROTATING},
     {"SpinningOnX", EntityType::SPINNINGONX},
     {"second", EntityType::SECONDCHARACTER},
+    {"bouncepad", EntityType::BOUNCEPAD},
     {"camera", EntityType::CAMERA},
     {"particles", EntityType::PARTICLES},
 };
@@ -68,6 +71,8 @@ inline Entity* CreateNewEntity(const std::string& aEntityType)
         exit(EXIT_FAILURE);
     case EntityType::PARTICLES:
         return new ParticleCube();
+    case EntityType::BOUNCEPAD:
+        return new Bouncepad();
 
     // Add more cases here
     default:

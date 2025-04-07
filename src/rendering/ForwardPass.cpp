@@ -419,9 +419,9 @@ void ForwardPass::BuildDescriptors() {
         // Light UBO
         for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
             VkDescriptorBufferInfo bufferInfo{};
-            bufferInfo.buffer = scene->GetLightsUBO()[i].buffer;
+            bufferInfo.buffer = LightManager::getInstance().GetLightsUBO()[i].buffer;
             bufferInfo.offset = 0;
-            bufferInfo.range = sizeof(vkutil::LightBuffer);
+            bufferInfo.range = sizeof(LightBuffer);
             vkutil::UpdateDescriptorSet(context, 1, bufferInfo, descriptorSets[i],
                                         VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
         }

@@ -12,8 +12,9 @@
 
 #include "Entity.hpp"
 #include "EntitySorter.hpp"
-#include "animation/Animation.hpp"
-#include "animation/Skin.hpp"
+#include "Animation.hpp"
+#include "Skin.hpp"
+#include "LightManager.hpp"
 #include "cgltf_write.h"
 #include "glm/gtc/type_ptr.hpp"
 
@@ -100,6 +101,8 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
     defaultMaterial.name = "default";
     defaultMaterial.pbrMetallicRoughness.baseColorTextureName = "white";
     defaultMaterial.pbrMetallicRoughness.metallicRoughnessTextureName = "white";
+    defaultMaterial.normalTexture = aTextureManager.GetTexture("normal");
+    defaultMaterial.normalTextureName = "normal";
 
     aMaterialManager.AddMaterial(defaultMaterial);
 
@@ -186,6 +189,26 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         } else {
             material.hasPBRMetallicRoughness = false;
         }
+        // load the normal map if there is one
+        if (gltfMaterial.normal_texture.texture) {
+            std::string normalFileName =
+                    gltfMaterial.normal_texture.texture->image->uri;
+            std::string normalName = DecodeURI(
+                    normalFileName, aFilepath.string());
+
+            aTextureManager.addTexture(normalName,
+                                       normalFileName);
+            material.normalTexture =
+                    aTextureManager.GetTexture(normalFileName);
+
+            material.normalTextureName =
+                    normalFileName;
+        }
+        else
+        {
+            material.normalTexture = aTextureManager.GetTexture("normal");
+            material.normalTextureName = "normal";
+        }
         // TODO: create material descriptor set
         aMaterialManager.AddMaterial(material);
     }
@@ -212,6 +235,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             // temporary positions, normals, texcoords
             std::vector<float> positions;
             std::vector<float> normals;
+            std::vector<float> tangents;
             std::vector<float> texcoords;
             std::vector<float> joints;
             std::vector<float> weights;
@@ -232,6 +256,15 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 normals.resize(count);
                 assert(cgltf_num_components(nrm->type) == 3);
                 cgltf_accessor_unpack_floats(nrm, normals.data(), count);
+            }
+
+            // tangents
+            if (const cgltf_accessor *tngent = cgltf_find_accessor(
+                    &gltfPrimitive, cgltf_attribute_type_tangent, 0)) {
+                size_t count = tngent->count * 4;
+                tangents.resize(count);
+                assert(cgltf_num_components(tngent->type) == 4);
+                cgltf_accessor_unpack_floats(tngent, tangents.data(), count);
             }
 
             // Texcoords
@@ -277,6 +310,15 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                     normals[i * 3], normals[i * 3 + 1], normals[i * 3 + 2]};
                 meshPrimitive.vertices[i].tex = {texcoords[i * 2],
                                                  texcoords[i * 2 + 1]};
+                // if the mesh has tangents
+                if (!tangents.empty()){
+                    meshPrimitive.vertices[i].tangent = {
+                            tangents[i * 4],
+                            tangents[i * 4 + 1],
+                            tangents[i * 4 + 2],
+                            tangents[i * 4 + 3]
+                    };
+                }
                 // if the mesh has joints and weights
                 if (!joints.empty() && !weights.empty()) {
                     meshPrimitive.vertices[i].joints = {joints[i * 4],
@@ -322,6 +364,8 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         const auto &gltfNode = data->nodes[ni];
         std::string entityTypeName = "default";
         std::string physicsTypeName = "static"; // default type is static
+
+
 
         // IDEA: Store parse data in this struct and use C-style char * so
         // we can use cgltf_parse_json_string. Then, we can store info
@@ -533,43 +577,51 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             int meshIndex = static_cast<int>(gltfNode.mesh - data->meshes);
             entity.AddMesh(aMeshManager.getMesh(meshIndex));
         }
+        // check if the node has a light
+        if (gltfNode.light != nullptr) {
+            // get the location of the light
+            glm::vec4 lightLocation = {gltfNode.translation[0],
+                                       gltfNode.translation[1],
+                                       gltfNode.translation[2], 1.0};
+            // get the color of the light (and multiply the intensity)
+            glm::vec4 lightColor = {gltfNode.light->color[0],
+                                    gltfNode.light->color[1],
+                                    gltfNode.light->color[2], 1.0};
+            lightColor *= gltfNode.light->intensity / 1000.f;
+            lightColor.w = 1.0;
+            // if its a point light
+            if (gltfNode.light->type == cgltf_light_type_point) {
+                Light pointLight;
+                pointLight.Type = LightType::Point;
+                pointLight.position = lightLocation;
+                pointLight.colour = lightColor;
+                LightManager::getInstance().SetPointLight(&pointLight);
+            }
+                // if its a directional light
+            else if (gltfNode.light->type ==
+                     cgltf_light_type_directional) {
+                // the direction is the negative z axis of the
+                // rotation matrix
+                // convert the quaternion to a rotation matrix
+                glm::mat4 rotationMatrix =
+                        glm::mat4_cast(glm::normalize(
+                                glm::quat(gltfNode.rotation[0],
+                                          gltfNode.rotation[1],
+                                          gltfNode.rotation[2],
+                                          gltfNode.rotation[3])));
+                // the direction is the negative z axis of the
+                // rotation matrix
+                glm::vec3 direction = glm::vec3(rotationMatrix[2]);
 
-        //        // check if the node has a light
-        //        if (gltfNode.light != nullptr) {
-        //            // get the location of the light
-        //            glm::vec4 lightLocation = {gltfNode.translation[0],
-        //                                       gltfNode.translation[1],
-        //                                       gltfNode.translation[2], 1.0};
-        //            // get the color of the light (and multiply the intensity)
-        //            glm::vec4 lightColor = {gltfNode.light->color[0],
-        //                                    gltfNode.light->color[1],
-        //                                    gltfNode.light->color[2], 1.0};
-        //            lightColor *= gltfNode.light->intensity;
-        //            lightColor.a = 1.0;
-        //            // if its a point light
-        //            if (gltfNode.light->type == cgltf_light_type_point) {
-        //                new Engine::Light(lightLocation, lightColor);
-        //            }
-        //            // if its a directional light
-        //            else if (gltfNode.light->type ==
-        //            cgltf_light_type_directional) {
-        //                // the direction is the negative z axis of the
-        //                rotation matrix
-        //                // convert the quaternion to a rotation matrix
-        //                glm::mat4 rotationMatrix =
-        //                glm::mat4_cast(glm::normalize(
-        //                    glm::quat(gltfNode.rotation[3],
-        //                    gltfNode.rotation[0],
-        //                              gltfNode.rotation[1],
-        //                              gltfNode.rotation[2])));
-        //                // the direction is the negative z axis of the
-        //                rotation matrix glm::vec3 direction =
-        //                -glm::vec3(rotationMatrix[2]);
-        //
-        //                new Engine::Light(lightLocation, direction,
-        //                lightColor);
-        //            }
-        //        }
+                Light directionalLight {};
+                directionalLight.Type = LightType::Directional;
+                directionalLight.position = glm::vec4(direction, 1.f);
+                directionalLight.colour = lightColor;
+                LightManager::getInstance().SetDirectionalLight(&directionalLight);
+
+            }
+        }
+
     }
     // last, create the root node
     Entity *root = new Entity();
@@ -727,7 +779,12 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 break;
             }
         }
-        assert(foundSkin);
+        if (!foundSkin) {
+            SPDLOG_ERROR("The animation {} targets multiple skins. This is not supported. Make "
+                         "sure your animations only target one skin.",
+                         animation->GetName());
+            exit(EXIT_FAILURE);
+        }
 
         animationPointers.push_back(animation);
     }

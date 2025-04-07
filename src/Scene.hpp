@@ -12,11 +12,11 @@
 #include "Entity.hpp"
 #include "CharacterEntity.hpp"
 #include "Image.hpp"
-#include "Light.hpp"
 #include "MaterialManager.hpp"
 #include "MeshManager.hpp"
 #include "TextureManager.hpp"
 #include "Utils.hpp"
+#include "LightManager.hpp"
 
 
 #include "ImGuiRenderer.hpp"
@@ -56,6 +56,7 @@ class Scene {
 
     void DrawOpaque(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
     void DrawAlphaMasked(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
+
     void DrawShadowMap(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout, uint32_t caseCadeIndex = 0);
     void DrawSkinned(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout, uint32_t caseCadeIndex = 0);
     void AddLightSource(Light& LightSource);
@@ -73,9 +74,6 @@ class Scene {
 
     TextureManager *GetTextureManager() const { return mTextureManager; }
 
-    std::vector<Light> &GetLights() { return m_Lights; }
-
-    std::vector<Buffer> &GetLightsUBO() { return m_LightUBO; }
 
     std::vector<Entity *>& GetEntities() { return m_Entities; }
 
@@ -101,7 +99,6 @@ class Scene {
 
     void UploadCameras(VkCommandBuffer cmdBuff);
 
-    void UploadLights(VkCommandBuffer cmdBuff);
 
     Camera *GetActiveCamera();
 
@@ -122,9 +119,6 @@ private:
 
     std::vector<size_t> m_FrontMeshes;
     std::vector<size_t> m_BackMeshes;
-    std::vector<Light>  m_Lights;
-    vkutil::LightBuffer m_LightBuffer;
-    std::vector<Buffer> m_LightUBO;
     std::vector<Entity *> m_Entities;
     std::vector<Animation> m_Animations;
     std::vector<Skin> m_Skins;
@@ -132,7 +126,7 @@ private:
     bool mHasCharacter = false;
     CharacterEntity *mCharacter;
 
-    size_t mPlayerCount = 2;
+    size_t mPlayerCount = 1;
     std::vector<Camera *> mCameras;
     std::array<CameraTransform, GlobalConfig::maxPlayers> mPlayerCameraTransforms;
     std::array<std::vector<Buffer>, GlobalConfig::maxPlayers> mPlayerCameraUbos;
