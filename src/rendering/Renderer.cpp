@@ -409,8 +409,6 @@ void Renderer::Present(uint32_t imageIndex) {
 void Renderer::Update(double deltaTime) {
     ZoneScopedN("Renderer::Update");
 
-    ImGuiRenderer::Update(m_scene);
-
     m_SSAO->Update();
     m_SSR->Update();
     // Update passes

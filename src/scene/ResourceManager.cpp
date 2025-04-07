@@ -51,7 +51,8 @@ std::string DecodeURI(std::string_view uri, std::string_view gltfPath) {
 int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
              MaterialManager &aMaterialManager, TextureManager &aTextureManager,
              std::vector<Entity *> &aEntities, bool aIsDebug,
-             std::vector<Animation> &aAnimations, std::vector<Skin> &aSkins) {
+             std::vector<Animation> &aAnimations, std::vector<Skin> &aSkins,
+             std::unordered_map<Entity *, std::vector<Entity *>> &aCharacterEntities) {
     // Convert directory separators to preferred directory separator
     // Slight try at cross-platform for Windows
     aFilepath.make_preferred();
@@ -638,7 +639,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         }
         else
         {
-            aEntities[ni]->SetParent(aEntities.back());
+            aEntities[ni]->SetParent(root);
         }
     }
     // update the children from the root node
@@ -807,6 +808,36 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
     //    }
 
     cgltf_free(data);
+
+    for (auto &&entity : aEntities) {
+        if (entity->IsCharacter()) {
+            // Try emplace the parent entity as a key and an empty vector of
+            // children as the value. The key might already have been inserted
+            // into the map if the children were found first
+            aCharacterEntities.try_emplace(entity);
+            // Mark as invalid
+            entity = nullptr;
+            continue;
+        }
+
+        Entity *parent = entity;
+        while (parent) {
+            if (parent->IsCharacter()) {
+                aCharacterEntities[parent].push_back(entity);
+                // Mark as invalid
+                entity = nullptr;
+                break;
+            }
+
+            parent = parent->GetParent();
+        }
+    }
+
+    // Remove character entities from main entitites by partitioning nullptr
+    // (invalid) entities and erasing them
+    auto first = std::partition(aEntities.begin(), aEntities.end(),
+                                [](Entity *entity) { return entity; });
+    aEntities.erase(first, aEntities.end());
 
     return GLTF_LOAD_SUCCESS;
 }
