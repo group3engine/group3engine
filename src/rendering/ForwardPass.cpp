@@ -169,7 +169,7 @@ void ForwardPass::BeginExecute(VkCommandBuffer cmd) {
 
     vkCmdBeginRenderPass(cmd, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    size_t playerCount = scene->GetPlayerCount();
+    size_t playerCount = scene->GetActivePlayerCount();
     for (size_t playerId = 0; playerId < playerCount; ++playerId) {
         m_Skybox->Execute(cmd, playerCount, playerId);
 

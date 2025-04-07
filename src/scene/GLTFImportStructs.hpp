@@ -170,7 +170,7 @@ struct Transform {
     /// The scale of the transform
     glm::vec3 scale = glm::vec3(1.f);
 
-    glm::mat4 matrix{};
+    glm::mat4 matrix = glm::identity<glm::mat4>();
 
     /// Update the matrix. If this function is not called since the last change, the matrix will be out of date
     void UpdateMatrix() {

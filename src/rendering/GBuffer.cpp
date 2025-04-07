@@ -122,7 +122,7 @@ void GBuffer::Execute(VkCommandBuffer cmd)
 
     vkCmdBeginRenderPass(cmd, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    size_t playerCount = scene->GetPlayerCount();
+    size_t playerCount = scene->GetActivePlayerCount();
     for (size_t playerId = 0; playerId < playerCount; ++playerId) {
         VkViewport viewport = CalcViewport(context.extent, playerCount, playerId);
         vkCmdSetViewport(cmd, 0, 1, &viewport);

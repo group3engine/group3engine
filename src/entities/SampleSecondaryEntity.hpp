@@ -9,6 +9,7 @@
 #include "CharacterEntity.hpp"
 #include "Entity.hpp"
 #include "SampleJoltCharacter.h"
+#include "Networking.hpp"
 
 
 
@@ -50,6 +51,7 @@ class SampleSecondaryEntity : public CharacterEntity {
   private:
     Transform mInitialTransform = {};
     std::unique_ptr<SampleJoltCharacter> mSampleJoltCharacter;
+
 
 };
 

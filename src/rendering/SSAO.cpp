@@ -158,7 +158,7 @@ void SSAO::Execute(VkCommandBuffer cmd)
     vkCmdBeginRenderPass(cmd, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
     // TODO: Can move more stuff out of these loops
-    size_t playerCount = m_Scene->GetPlayerCount();
+    size_t playerCount = m_Scene->GetActivePlayerCount();
     for (size_t playerId = 0; playerId < playerCount; ++playerId) {
         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
 

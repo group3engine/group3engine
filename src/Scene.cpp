@@ -13,6 +13,7 @@
 #include "ImGuiRenderer.hpp"
 #include "SampleGLTFFilePaths.hpp"
 
+#include "RenderPassCommon.hpp"
 
 void Scene::Update(double aDeltaTime) {
     ZoneScopedN("Scene::Update");
@@ -32,19 +33,17 @@ void Scene::Update(double aDeltaTime) {
 }
 
 void Scene::UpdateCameraTransforms() {
-    for (size_t i = 0; i < mPlayerCount; ++i) {
-        float width = static_cast<float>(mContext->extent.width);
-        float height = static_cast<float>(mContext->extent.height);
+    size_t activePlayerCount = GetActivePlayerCount();
+    for (size_t i = 0; i < activePlayerCount; ++i) {
+        ViewportSize viewportSize = CalcViewportSize(mContext->extent, activePlayerCount, i);
+
+        float width = viewportSize.width;
+        float height = viewportSize.height;
 
         auto *camera = mCameras[i];
         const auto &pos = camera->GetPosition();
         const auto &dir = camera->GetDirection();
         const auto &up = camera->GetUp();
-
-        if (mPlayerCount == 2) {
-            width = static_cast<float>(width) / mPlayerCount;
-            height = static_cast<float>(height);
-        }
 
         auto &playerCameraTransform = mPlayerCameraTransforms[i];
         playerCameraTransform.view = glm::lookAt(pos, pos + dir, up);
@@ -64,7 +63,7 @@ void Scene::UploadCameras(VkCommandBuffer cmdBuff) {
     // Write new data to the buffer to update uniform
     VkDeviceSize size = sizeof(CameraTransform);
 
-    for (size_t i = 0; i < mPlayerCount; ++i) {
+    for (size_t i = 0; i < GetActivePlayerCount(); ++i) {
         auto &cameraUBO = mPlayerCameraUbos[i];
         cameraUBO[vkutil::currentFrame].Upload(cmdBuff, &mPlayerCameraTransforms[i], size);
     }
@@ -81,34 +80,81 @@ void Scene::UpdateUi(double aDeltaTime) {
     for (auto &entity : m_Entities) {
         entity->UpdateUi(aDeltaTime);
     }
+
+    ImGuiRenderer::NewActivePlayerCountOverride(GetActiveScene(),
+                                                mGuiActivePlayerCountOverride);
 }
 
 void Scene::Unload()
 {
     // delete the entities
-    for (auto &entity : m_Entities) {
+    for (auto *entity : m_Entities) {
         delete entity;
     }
     m_Entities.clear();
 
+    for (auto &[parent, children] : mCharacterEntities) {
+        delete parent;
+        for (auto *child : children) {
+            delete child;
+        }
+    }
+    mCharacterEntities.clear();
+
     m_FrontMeshes.clear();
     m_BackMeshes.clear();
-    m_Entities.clear();
     m_Animations.clear();
     m_Skins.clear();
 
-    mHasCharacter = false;
-    mCharacter = nullptr;
+    mActivePlayerCount = 0;
+    mActivePlayerCountOverride = {Override::INACTIVE, 1};
+
+    mCameras.clear();
+
+    // Zero out camera transforms for safety
+    for (auto &cameraTransform : mPlayerCameraTransforms) {
+        cameraTransform = {};
+    }
+
+    mSceneFilename = "";
+
+    mGuiActivePlayerCountOverride = {};
 }
 
-void Scene::LoadGLTF(const std::filesystem::path &aFilepath) {
+void Scene::LoadGLTF(const std::filesystem::path &aFilepath, size_t playerCount) {
     // Load the GLTF file
     ResourceLoader::LoadGLTF(aFilepath, *mMeshManager, *mMaterialManager,
                              *mTextureManager, m_Entities, false, m_Animations,
-                             m_Skins);
+                             m_Skins, mCharacterEntities);
+
+    size_t playersAddedCount = 0;
+    // Add each character entity and its children until the player count is reached
+    for (auto &[parent, children] : mCharacterEntities) {
+        m_Entities.push_back(parent);
+        for (auto *child : children) {
+            m_Entities.push_back(child);
+        }
+
+        ++playersAddedCount;
+        if (playersAddedCount >= playerCount) {
+            break;
+        }
+    }
+
+    mCharacterEntities.erase(mCharacterEntities.begin(),
+                             std::next(mCharacterEntities.begin(), playerCount));
+
+    if (playersAddedCount < playerCount) {
+        SPDLOG_ERROR("Failed to add the selected number of players ({}). Only {} players were "
+                     "found in the character entities list. Add more characters to the scene.",
+                     playerCount, playersAddedCount);
+        std::exit(EXIT_FAILURE);
+    }
+
+    assert(playersAddedCount > 0 && playersAddedCount <= playerCount);
 }
 
-void Scene::Load(const std::filesystem::path &filePath)
+void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
 {
     mSceneFilename = filePath.stem();
 
@@ -116,7 +162,7 @@ void Scene::Load(const std::filesystem::path &filePath)
     std::filesystem::path basePath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets";
     std::filesystem::path gltfPath = basePath / filePath;
 
-    LoadGLTF(gltfPath);
+    LoadGLTF(gltfPath, playerCount);
 
     SPDLOG_DEBUG("Number of Lights: {}", GetLights().size());
 
@@ -153,7 +199,6 @@ void Scene::Load(const std::filesystem::path &filePath)
             if (!mesh) 
             {
                 // skip the entity
-                SPDLOG_WARN("Entity {} does not have mesh", entity->GetName());
                 continue;
             }
 
@@ -382,62 +427,22 @@ void Scene::Awake()
 
     for (auto &playerCameraTransform : mPlayerCameraTransforms) {
         playerCameraTransform.nearPlane = 0.1f;
-        playerCameraTransform.farPlane = 100.0f;
+        playerCameraTransform.farPlane = 10000.0f;
         playerCameraTransform.fov = 45.0f;
     }
 
-    bool hasSetActive = false;
+    size_t scenePlayerCount = 0;
+
     for (auto &entity : m_Entities) {
         if (entity->IsCharacter()) {
-            auto *character = static_cast<CharacterEntity*>(entity);
-            Camera *camera = character->GetCamera();
-
-            if (!hasSetActive) {
-                camera->SetIsActive(true);
-                hasSetActive = true;
-            }
-
-            Entity *cameraEntity = static_cast<Entity*>(camera);
-            m_Entities.push_back(cameraEntity);
-        }
-    }
-}
-
-Camera *Scene::GetActiveCamera() {
-    for (auto &entity : m_Entities) {
-        if (entity->IsCharacter()) {
-            auto *character = static_cast<CharacterEntity*>(entity);
-            Camera *camera = character->GetCamera();
-
-            if (camera->IsActive()) {
-                return camera;
-            }
+            ++scenePlayerCount;
+            SPDLOG_INFO("Adding character {}", entity->GetName());
         }
     }
 
-    SPDLOG_ERROR("Active camera not found.");
-    std::exit(EXIT_FAILURE);
-}
-
-void Scene::SwitchCamera() {
-    CharacterEntity *activeCharacter = nullptr;
-    CharacterEntity *inactiveCharacter = nullptr;
-    for (auto &entity : m_Entities) {
-        if (entity->IsCharacter()) {
-            auto *character = static_cast<CharacterEntity*>(entity);
-            Camera *camera = character->GetCamera();
-
-            if (camera->IsActive()) {
-                activeCharacter = character;
-            } else {
-                inactiveCharacter = character;
-            }
-        }
-    }
-
-    activeCharacter->GetCamera()->SetIsActive(false);
-    inactiveCharacter->GetCamera()->SetIsActive(true);
-    mCharacter = inactiveCharacter;
+    // TODO: Set the active player count to be the number of characters in the scene.
+    // This can change in the future to be 1 at first and then players join in
+    SetActivePlayerCount(scenePlayerCount);
 }
 
 void Scene::StartUp(Context *context, MaterialManager *materialManager,
@@ -473,8 +478,6 @@ void Scene::ShutDown() {
 
     // call shutdown on the light manager
     LightManager::getInstance().Destroy();
-    // remove the cameras
-    mCameras.clear();
 }
 
 void Scene::DrawOpaque(VkCommandBuffer cmd,

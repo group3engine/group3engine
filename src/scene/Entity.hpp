@@ -22,6 +22,9 @@ enum class PhysicsType {
     KINEMATIC,
     DYNAMIC
 };
+#define MIN_ANIMATOR_UPDATE_DISTANCE 50.f
+#define MAX_ANIMATOR_UPDATE_DISTANCE 500.f
+#define LOWEST_ANIMATOR_UPDATE_RATE 1000.f
 
 /// The base class for all entities in the scene. Custom entities all have this as their base class
 class Entity {
@@ -182,6 +185,7 @@ class Entity {
     void AddChild(Entity *aChild) { mChildren.push_back(aChild); }
 
     void SetAsCharacter() {mHasCharacter = true;}
+    void SetHasOffset() {mHasOffset = true;}
 
     void AddMesh(Mesh *mesh) {
         mMesh = mesh;
@@ -246,6 +250,7 @@ class Entity {
 
     bool mHasMesh = false;
     bool mHasCharacter = false;
+    bool mHasOffset = false;
 
     Animator *mAnimator = nullptr;
     size_t mFrameNumber = 0;

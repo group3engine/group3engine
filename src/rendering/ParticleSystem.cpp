@@ -200,7 +200,7 @@ void ParticleSystem::DrawAll(VkCommandBuffer cmd, VkPipeline aPipeline, VkPipeli
 void ParticleSystem::Render(VkCommandBuffer cmd, VkPipeline aPipeline, VkPipelineLayout aLayout,
                             const std::array<std::vector<VkDescriptorSet>, GlobalConfig::maxPlayers>
                                 &playerDescriptorSets) {
-    size_t playerCount = mScene->GetPlayerCount();
+    size_t playerCount = mScene->GetActivePlayerCount();
     for (size_t playerId = 0; playerId < playerCount; ++playerId) {
         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, aPipeline);
 

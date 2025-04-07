@@ -18,6 +18,9 @@ SampleSecondaryEntity::~SampleSecondaryEntity() {
 }
 
 void SampleSecondaryEntity::ProcessInput(){
+
+
+
     mCamera->SetInput(EInputState::FORWARD, IsKeyDown(KEY::eUP));
     mCamera->SetInput(EInputState::BACKWARD, IsKeyDown(KEY::eDOWN));
     mCamera->SetInput(EInputState::LEFT, IsKeyDown(KEY::eLEFT));
@@ -46,7 +49,7 @@ void SampleSecondaryEntity::ProcessInput(){
             glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         }
     }
-    if (IsMouseButtonPressed(MOUSE_BUTTON::eLEFT)) {
+    if (IsKeyDown(KEY::eLEFT_SHIFT) && IsMouseButtonPressed(MOUSE_BUTTON::eLEFT)) {
         auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
         flag = false;
     }
@@ -180,6 +183,8 @@ void SampleSecondaryEntity::Awake() {
     glm::vec3 dir = glm::vec3(1.0f, 1.0f, -1.0f);
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0);
     mCamera = new Camera(pos, dir, up);
+
+    mCamera->SetIsActive(true);
 
     Scene::get().GetActiveScene()->AddCamera(mCamera);
 

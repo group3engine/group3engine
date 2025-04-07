@@ -45,7 +45,7 @@ void CharacterEntity::ProcessInput(){
     mCamera->SetInput(EInputState::ZOOM_IN, IsKeyPressed(KEY::eY));
     mCamera->SetInput(EInputState::ZOOM_OUT, IsKeyPressed(KEY::eU));
 
-    if (IsMouseButtonPressed(MOUSE_BUTTON::eLEFT)) {
+    if (IsKeyDown(KEY::eLEFT_SHIFT) && IsMouseButtonPressed(MOUSE_BUTTON::eLEFT)) {
         auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
         flag = !flag;
 
@@ -109,7 +109,8 @@ void CharacterEntity::Update(double deltaTime) {
 
     if (IsKeyPressed(KEY::eR))
     {
-        Engine::get().ChangeScene(Sample::SampleObby);
+        // TODO: Handle logic for selecting which scene to switch to
+        Engine::get().ChangeScene(Sample::SampleObby, GetScene()->GetActivePlayerCount());
     }
 
 
@@ -185,6 +186,8 @@ void CharacterEntity::Update(double deltaTime) {
 }
 
 void CharacterEntity::UpdateUi(double deltaTime) {
+    ImGuiRenderer::NewCharacterInfo(this);
+
     while (!mInternalUiEvents.empty()) {
         auto &event = mInternalUiEvents.top();
         mInternalUiEvents.pop();
@@ -367,14 +370,14 @@ void CharacterEntity::Awake() {
     mInitialTransform = GetLocalTransform();
     // create the jolt character
     CreateJoltCharacter();
-    // register the character with the scene
-    Scene::get().GetActiveScene()->SetMainCharacter(this);
 
     JPH::Vec3 joltPos = GetCharacterPosition();
     glm::vec3 pos = glm::vec3(joltPos.GetX(), joltPos.GetY(), joltPos.GetZ());
     glm::vec3 dir = glm::vec3(1.0f, 1.0f, -1.0f);
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0);
     mCamera = new Camera(pos, dir, up);
+
+    mCamera->SetIsActive(true);
 
     Scene::get().GetActiveScene()->AddCamera(mCamera);
 

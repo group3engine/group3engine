@@ -13,6 +13,7 @@ class Context;
 class Scene;
 class Camera;
 class TextureManager;
+class CharacterEntity;
 
 struct MyTextureData {
     VkDescriptorSet DS{};         // Descriptor set: this is what you'll pass to Image()
@@ -37,6 +38,13 @@ struct FinishPopupData {
 struct TimerData {
     float time;
 };
+
+namespace Settings {
+struct ActivePlayerCountOverride {
+    std::vector<const char *> items = {"INACTIVE", "1", "2", "3", "4"};
+    const char *activeItem = nullptr;
+};
+} // namespace Settings
 } // namespace gui
 
 namespace ImGuiRenderer
@@ -76,6 +84,29 @@ namespace ImGuiRenderer
         {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000}
     };
 
+    void BeginMainMenu(const Context &context);
+
+    const char *AddMainMenuPlayerCountSelection(const Context &context,
+                                                const std::vector<const char *> &playerCounts,
+                                                const char *playerCountSelection);
+
+    const std::filesystem::path *
+    AddMainMenuSceneSelection(const Context &context,
+                              const std::vector<std::filesystem::path *> &scenePaths,
+                              const std::filesystem::path *scenePathSelection);
+
+    const char *NewPlayerCountSelection(const std::vector<const char *> &playerCounts,
+                                        const char *playerCountSelection);
+
+    const std::filesystem::path *
+    NewSceneSelection(const std::vector<std::filesystem::path *> &scenePaths,
+                      const std::filesystem::path *scenePathSelection);
+
+    void AddLoadSceneButton(const std::filesystem::path &pendingScenePath,
+                            size_t pendingPlayerCount);
+
+    void EndMainMenu();
+
     void NewHeartSprite(const ImVec2 &offset);
     void NewDeathCounter(const gui::DeathCounterData &data);
     void NewDeathPopup(const gui::DeathPopupData &data);
@@ -84,6 +115,10 @@ namespace ImGuiRenderer
     void LoadingBar(float progress, ImVec2 position);
 
     void Image(std::string const &imageName, ImVec2 position, ImVec2 size);
+
+    void NewActivePlayerCountOverride(Scene *scene, gui::Settings::ActivePlayerCountOverride &settings);
+
+    void NewCharacterInfo(const CharacterEntity *character);
 
     void Initialize(const Context &context);
     void Shutdown(const Context &context);
