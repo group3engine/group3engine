@@ -35,6 +35,5 @@ layout(location = 3) in uvec3 compressedTBN;
 
 void main()
 {
-//lightData.lights[0].LightSpaceMatrix
 	gl_Position = csmMatrices.cascadeViewProjection[pc.cascadeIndex] * pc.ModelMatrix * vec4(pos, 1.0);
 }

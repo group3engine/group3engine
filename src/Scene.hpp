@@ -56,8 +56,8 @@ class Scene {
 
     void DrawOpaque(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
     void DrawAlphaMasked(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
-    void DrawShadowMap(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout, uint32_t caseCadeIndex = 0);
-    void DrawSkinned(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout, uint32_t caseCadeIndex = 0);
+    void DrawShadowMap(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout, uint32_t cascadeIndex = 0);
+    void DrawSkinned(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout, uint32_t cascadeIndex= 0);
     void AddLightSource(Light& LightSource);
     void Update(double aDeltaTime);
     void UpdateUi(double aDeltaTime);
@@ -110,7 +110,7 @@ class Scene {
     size_t GetPlayerCount() const { return mPlayerCount; }
 
     // CSM requires player camera transforms to compute splits
-    std::array<CameraTransform, GlobalConfig::maxPlayers> GetPlayerCameraTransforms() const { return mPlayerCameraTransforms; }
+    const std::array<CameraTransform, GlobalConfig::maxPlayers> GetPlayerCameraTransforms() const { return mPlayerCameraTransforms; }
 
 private:
     Scene *mCurrentScene = nullptr;

@@ -547,15 +547,15 @@ void Scene::DrawAlphaMasked(VkCommandBuffer cmd,
     }
 }
 void Scene::DrawShadowMap(VkCommandBuffer cmd,
-                          VkPipelineLayout pipelineLayout, uint32_t caseCadeIndex) {
+                          VkPipelineLayout pipelineLayout, uint32_t cascadeIndex) {
     for (auto& entity : m_Entities) {
-        entity->RecordDrawShadow(cmd, pipelineLayout, caseCadeIndex);
+        entity->RecordDrawShadow(cmd, pipelineLayout, cascadeIndex);
     }
 }
 
 void Scene::DrawSkinned(VkCommandBuffer cmd,
-                        VkPipelineLayout pipelineLayout, uint32_t caseCadeIndex) {
+                        VkPipelineLayout pipelineLayout, uint32_t cascadeIndex) {
     for (auto &entity : m_Entities) {
-        entity->RecordDrawSkinned(cmd, pipelineLayout, caseCadeIndex);
+        entity->RecordDrawSkinned(cmd, pipelineLayout, cascadeIndex);
     }
 }

@@ -52,8 +52,6 @@ void Renderer::CreateRenderPasses() {
     ImGuiRenderer::Initialize(context);
     std::filesystem::path path = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets" / "heart.png";
     ImGuiRenderer::AddTextures(m_scene->GetTextureManager(), path, "heart");
-    // // TODO: This will cause a validation error if you re-size the window. Just needs to be updated when re-sized
-    //ImGuiRenderer::AddTexture(vkutil::clampToEdgeSamplerAniso, m_ShadowMap->GetRenderTarget().imageView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL);
 
     const auto &cascades = m_ShadowMap->GetCascades();
 
