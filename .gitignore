@@ -370,6 +370,6 @@ Makefile
 
 build/
 assets/shaders/
-!assets/GameSamples
+!assets/GameSamples/
 
 imgui.ini
