@@ -117,6 +117,8 @@ private:
     std::stack<InternalEvent> mInternalEvents;
     std::stack<InternalUiEvent> mInternalUiEvents;
     bool m_has_save = false;
+
+    bool mInClimb = false;
 };
 
 #endif // GROUP3ENGINE_CHARACTERENTITY_HPP

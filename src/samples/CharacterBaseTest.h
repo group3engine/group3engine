@@ -59,7 +59,7 @@ public:
 	virtual void 			Initialize();
 
 	// Process input
-	void					ProcessInput(glm::vec3 controlInput, bool jump);
+	void					ProcessInput(glm::vec3 controlInput, bool jump, bool inClimb);
 
 	// Update the test, called before the physics update
 	virtual void			PrePhysicsUpdate(const PreUpdateParams &inParams);
@@ -84,7 +84,7 @@ public:
 	virtual RVec3			GetCharacterPosition() const = 0;
 
 	// Handle user input to the character
-	virtual void			HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime) = 0;
+	virtual void			HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime, bool inClimb) = 0;
 
 	// Character size
 	static constexpr float	cCharacterHeightStanding = 0.8f;
@@ -127,5 +127,6 @@ private:
 	// Player input
 	Vec3					mControlInput = Vec3::sZero();
 	bool					mJump = false;
+    bool                    mInClimb = false;
 	bool					mWasJump = false;
 };

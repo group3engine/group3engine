@@ -73,7 +73,7 @@ void SampleJoltCharacter::PrePhysicsUpdate(const PreUpdateParams &inParams)
 #endif
 }
 
-void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime)
+void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime, bool inClimb)
 {
 	bool player_controls_horizontal_velocity = sControlMovementDuringJump || mCharacter->IsSupported();
 	if (player_controls_horizontal_velocity)
@@ -245,6 +245,15 @@ void SampleJoltCharacter::OnContactPersisted(const CharacterVirtual *inCharacter
 			SPDLOG_ERROR("Got a persisted contact that should have been an add contact");
 			exit(EXIT_FAILURE);
 		}
+
+        // handle the contact
+        if(mCustomContactListener->GetMap().find(inBodyID2) != mCustomContactListener->GetMap().end()) {
+            mCustomContactListener->GetMap()[inBodyID2]->OnCollisionStay(mCustomContactListener->GetMap()[inCharacter->GetInnerBodyID()]);
+        }
+
+        if(mCustomContactListener->GetMap().find(inCharacter->GetInnerBodyID()) != mCustomContactListener->GetMap().end()) {
+            mCustomContactListener->GetMap()[inCharacter->GetInnerBodyID()]->OnCollisionStay(mCustomContactListener->GetMap()[inBodyID2]);
+        }
 	}
 }
 
@@ -261,6 +270,14 @@ void SampleJoltCharacter::OnContactRemoved(const CharacterVirtual *inCharacter, 
 			exit(EXIT_FAILURE);
 		}
 		mActiveContacts.erase(it);
+
+        // handle the contact
+        if(mCustomContactListener->GetMap().find(inBodyID2) != mCustomContactListener->GetMap().end()) {
+            mCustomContactListener->GetMap()[inBodyID2]->OnCollisionEnd(mCustomContactListener->GetMap()[inCharacter->GetInnerBodyID()]);
+        }
+        if(mCustomContactListener->GetMap().find(inCharacter->GetInnerBodyID()) != mCustomContactListener->GetMap().end()) {
+            mCustomContactListener->GetMap()[inCharacter->GetInnerBodyID()]->OnCollisionEnd(mCustomContactListener->GetMap()[inBodyID2]);
+        }
 	}
 
 }

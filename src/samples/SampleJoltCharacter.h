@@ -66,7 +66,7 @@ protected:
 	void					OnContactCommon(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings);
 
 	// Handle user input to the character
-	virtual void			HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime) override;
+	virtual void			HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime, bool inClimb) override;
 
 private:
 	// Character movement settings

@@ -89,6 +89,10 @@ void CharacterEntity::ProcessInput(){
 
             // Check actions
             jump = IsKeyPressed(KEY::eSPACE) || IsGamepadButtonPressed(GAMEPAD_BUTTON::eA);
+            if(jump)
+            {
+                mInClimb = false;
+            }
             if (IsKeyPressed(KEY::eF)) {
                 // for each child, if there is an animator, call set animation
                 for (auto &child: GetChildren()) {
@@ -100,7 +104,7 @@ void CharacterEntity::ProcessInput(){
             }
         }
     }
-    mSampleJoltCharacter->ProcessInput(controlInput, jump);
+    mSampleJoltCharacter->ProcessInput(controlInput, jump, mInClimb);
 }
 
 void CharacterEntity::PrePhysicsUpdate() {
@@ -289,6 +293,11 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
     {
         // do finish zone things
         mInternalUiEvents.push(InternalUiEvent::eFinishPopup);
+    }
+
+    if(aOther->CompareTag("climbable"))
+    {
+        mInClimb = true;
     }
 
     SPDLOG_INFO("I am {} and I collided with {}", GetName(), aOther->GetName());

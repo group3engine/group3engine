@@ -54,6 +54,7 @@ namespace {
         &Sample::ArrowSample,
         &Sample::TileSample,
         &Sample::SpikePitSample,
+        &Sample::LadderSample,
 
     };
 

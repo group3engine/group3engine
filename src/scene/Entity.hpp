@@ -151,11 +151,14 @@ class Entity {
 
   public:
     // the following functions are overridable by the user
-    // called on the first frame of a collision
+    /// called on the first frame of a collision
     virtual void OnCollisionStart(Entity *aOther) {}
 
-    // called on any frame except the first frame of a collision - note there is no function provided for the last frame of a collision
+    /// called on any frame except the first frame of a collision - note there is no function provided for the last frame of a collision
     virtual void OnCollisionStay(Entity *aOther) {}
+
+    /// called after the last frame of a collision
+    virtual void OnCollisionEnd(Entity *aOther) {}
 
     // called for each entity after update has been called on all entities
     virtual void LateUpdate(double deltaTime) {}
