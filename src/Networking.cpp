@@ -72,7 +72,7 @@ void Networking::Close() {
         status = closesocket(my_socket);
     }
 #else
-    status = shutdown(sock, SHUT_RDWR);
+    status = shutdown(my_socket, SHUT_RDWR);
     if (status == 0) {
         status = close(my_socket);
     }
