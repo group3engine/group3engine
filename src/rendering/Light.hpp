@@ -22,6 +22,6 @@ struct Light {
     glm::vec4 colour = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
     glm::mat4 LightSpaceMatrix = glm::mat4(1.0f);
     float view = -10.0f;//-13.0f; // TODO: this is temp and needs to be removed in the future
-    float near = 0.1f;
-    float far = 55.0f;
+    float near_ = 0.1f;
+    float far_ = 55.0f;
 };

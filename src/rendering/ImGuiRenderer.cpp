@@ -215,11 +215,11 @@ ImGuiRenderer::AddMainMenuSceneSelection(const Context &context,
     ImGui::SetCursorPosX((windowSize.x - sceneSelectionDropdownWidth) / 2.0f);
     ImGui::PushItemWidth(sceneSelectionDropdownWidth);
 
-    if (ImGui::BeginCombo("##Main Menu Scene Selection", scenePathSelection->c_str())) {
+    if (ImGui::BeginCombo("##Main Menu Scene Selection", scenePathSelection->string().c_str())) {
         for (size_t i = 0; i < scenePaths.size(); ++i) {
             bool isSelected = scenePathSelection == scenePaths[i];
 
-            if (ImGui::Selectable(scenePaths[i]->c_str(), isSelected)) {
+            if (ImGui::Selectable(scenePaths[i]->string().c_str(), isSelected)) {
                 activeItem = scenePaths[i];
             }
 
@@ -268,11 +268,11 @@ ImGuiRenderer::NewSceneSelection(const std::vector<std::filesystem::path *> &sce
 
     ImGui::Text("Select Level");
 
-    if (ImGui::BeginCombo("##Scene Selection", scenePathSelection->c_str())) {
+    if (ImGui::BeginCombo("##Scene Selection", scenePathSelection->string().c_str())) {
         for (size_t i = 0; i < scenePaths.size(); ++i) {
             bool isSelected = scenePathSelection == scenePaths[i];
 
-            if (ImGui::Selectable(scenePaths[i]->c_str(), isSelected)) {
+            if (ImGui::Selectable(scenePaths[i]->string().c_str(), isSelected)) {
                 activeItem = scenePaths[i];
             }
 
@@ -710,8 +710,8 @@ void ImGuiRenderer::Update(Scene *scene)
 
     if (!initialized) {
         sunLight->view = -43.0f;
-        sunLight->far = 50.0f;
-        sunLight->near = -125.0f;
+        sunLight->far_ = 50.0f;
+        sunLight->near_ = -125.0f;
         initialized = true;
     }
 
@@ -725,8 +725,8 @@ void ImGuiRenderer::Update(Scene *scene)
 
         ImGui::Text("Light Camera Settings");
         ImGui::SliderFloat("View", &sunLight->view, -200.0f, 200.0f, "%.2f");
-        ImGui::SliderFloat("Near", &sunLight->near, -200.0f, 1.0f, "%.2f");
-        ImGui::SliderFloat("Far", &sunLight->far, 0.0f, 50.0f, "%.2f");
+        ImGui::SliderFloat("Near", &sunLight->near_, -200.0f, 1.0f, "%.2f");
+        ImGui::SliderFloat("Far", &sunLight->far_, 0.0f, 50.0f, "%.2f");
 
         ImGui::SliderFloat("Shadow bias: ", &vkutil::ShadowBias, 0.0f, 10.0f);
         ImGui::SliderFloat("Shadow slope: ", &vkutil::ShadowSlope, 0.0f, 10.0f);

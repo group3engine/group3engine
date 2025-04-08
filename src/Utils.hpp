@@ -15,9 +15,6 @@ class Context;
         }                                                                                   \
     } while (0)
 
-#define ERROR(message) std::cout << "[ERROR]: " << message << std::endl;
-
-
 namespace vkutil {
 enum class RenderType {
     FORWARD,

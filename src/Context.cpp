@@ -7,6 +7,8 @@
 #include <string>
 #include <unordered_set>
 
+#include <spdlog/spdlog.h>
+
 #include "RenderPass.hpp"
 #include "Utils.hpp"
 
@@ -559,7 +561,7 @@ bool Context::MakeContext(GLFWwindow *window) {
     mWindow = window;
 
     if (volkInitialize() != VK_SUCCESS) {
-        ERROR("Failed to initialize Volk.");
+        SPDLOG_ERROR("Failed to initialize Volk.");
         return false;
     }
 
