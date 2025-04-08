@@ -12,7 +12,7 @@ std::tuple<Light *, int> LightManager::GetDirectionalLight()
 {
     // find the first available light in the mask
     int lightIndex = 0;
-    while(mDirectionalLightMask[lightIndex] && lightIndex < NUM_DIRECTIONAL_LIGHTS) {
+    while(lightIndex < NUM_DIRECTIONAL_LIGHTS && mDirectionalLightMask[lightIndex]) {
         lightIndex++;
     }
     if (lightIndex == NUM_DIRECTIONAL_LIGHTS) {
@@ -26,7 +26,7 @@ std::tuple<Light *, int> LightManager::GetPointLight()
 {
     // find the first available light in the mask
     int lightIndex = 0;
-    while(mPointLightMask[lightIndex] && lightIndex < NUM_POINT_LIGHTS) {
+    while (lightIndex < NUM_POINT_LIGHTS && mPointLightMask[lightIndex]) {
         lightIndex++;
     }
     if (lightIndex == NUM_POINT_LIGHTS) {
@@ -51,7 +51,7 @@ void LightManager::Update()
     // for each directional light, update the lightspace matrix
     for (size_t i = 0; i < NUM_DIRECTIONAL_LIGHTS; i++) {
         if (mDirectionalLightMask[i]) {
-            mDirectionalLights[i].LightSpaceMatrix = glm::ortho(-mDirectionalLights[i].view, mDirectionalLights[i].view, -mDirectionalLights[i].view, mDirectionalLights[i].view, mDirectionalLights[i].near, mDirectionalLights[i].far) *
+            mDirectionalLights[i].LightSpaceMatrix = glm::ortho(-mDirectionalLights[i].view, mDirectionalLights[i].view, -mDirectionalLights[i].view, mDirectionalLights[i].view, mDirectionalLights[i].near_, mDirectionalLights[i].far_) *
                                                      glm::lookAt(glm::vec3(mDirectionalLights[i].position), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0));
         }
     }

@@ -4,11 +4,26 @@
 
 #ifndef GROUP3ENGINE_NETWORKING_HPP
 #define GROUP3ENGINE_NETWORKING_HPP
+
+#ifdef _WIN32
+    #ifndef WIN32_LEAN_AND_MEAN
+    #define WIN32_LEAN_AND_MEAN
+    #endif
+
+    #include <windows.h>
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+#else
+    /* Assume that any non-Windows platform uses POSIX-style sockets instead. */
+    #include <arpa/inet.h>
+    #include <netdb.h> /* Needed for getaddrinfo() and freeaddrinfo() */
+    #include <sys/socket.h>
+    #include <unistd.h> /* Needed for close() */
+#endif
+
 #include <iostream>
 #include <thread>
 #include <cstring>
-#include <arpa/inet.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <iostream>
 #include <array>
@@ -27,7 +42,8 @@ public:
     ~Networking() {
         running = false;
         listen_thread.join();
-        close(my_socket);
+
+        Close();
     }
     void SendMessage(const std::string &message) {
         sendto(my_socket, message.c_str(), message.size(), 0, (struct sockaddr *)&client_addr, sizeof(client_addr));
@@ -44,6 +60,8 @@ public:
         return temp;
     }
 private:
+    void Close();
+
     void Listen();
 private:
     int my_socket;
