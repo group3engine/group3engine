@@ -98,7 +98,7 @@ bool Engine::Initialize() {
     mScene = Scene::get().GetActiveScene();
 
     mRenderer = std::make_unique<Renderer>(m_context, mScene);
-    
+
     PhysicsManager::get().StartUp();
 
     constexpr size_t mainMenuPlayerCount = 1;
@@ -330,7 +330,7 @@ void Engine::Render() {
 
         mRenderer->GetForwardPass()->EndExecute(mRenderer->GetCommandBuffer());
 
-        mRenderer->GetGBuffer()->Execute(mRenderer->GetCommandBuffer());
+        //mRenderer->GetGBuffer()->Execute(mRenderer->GetCommandBuffer());
         mRenderer->GetSSAO()->Execute(mRenderer->GetCommandBuffer());
         mRenderer->GetSSR()->Execute(mRenderer->GetCommandBuffer());
 

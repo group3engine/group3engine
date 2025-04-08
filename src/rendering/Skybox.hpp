@@ -14,7 +14,6 @@ class Skybox {
     ~Skybox();
 
     void Execute(VkCommandBuffer cmd, size_t playerCount, size_t playerId);
-    void Resize();
 
     Image& GetSkyBoxImage() { return m_Skybox; }
 
@@ -22,7 +21,6 @@ class Skybox {
     void CreatePipeline();
     void BuildDescriptorSetLayouts();
     void BuildDescriptors();
-    void CreateFramebuffer();
     void LoadCubemapFace(std::filesystem::path facePath, char **pixelData);
 
     Context &context;

@@ -709,9 +709,11 @@ void ImGuiRenderer::Update(Scene *scene)
     auto *sunLight = lights[0];
 
     if (!initialized) {
-        sunLight->view = -43.0f;
-        sunLight->far_ = 50.0f;
-        sunLight->near_ = -125.0f;
+        SunElevation = 0.89f; // default elevation // -21
+        SunAzimuthal = 0.0f; // default azimuth // 45
+        //sunLight.view = -43.0f;
+        //sunLight.far = 50.0f;
+        //sunLight.near = -125.0f;
         initialized = true;
     }
 
@@ -772,7 +774,7 @@ void ImGuiRenderer::Update(Scene *scene)
     {
         ImGui::Begin("Debug Textures");
         for (size_t i = 0; i < textureIDs.size(); ++i) {
-            ImGui::Image(textureIDs[i], ImVec2(800, 600));
+            ImGui::Image(textureIDs[i], ImVec2(800 / 2, 600 / 2));
         }
         ImGui::End();
     }

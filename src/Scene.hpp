@@ -25,6 +25,8 @@
 struct CameraTransform {
     alignas(16) glm::mat4 view;
     alignas(16) glm::mat4 projection;
+    alignas(16) glm::mat4 inverseProjection;
+    alignas(16) glm::mat4 inverseView;
     alignas(16) glm::vec4 cameraPosition;
     alignas(8) glm::vec2 viewportSize;
     alignas(4) float fov;
@@ -60,8 +62,11 @@ class Scene {
 
     void DrawOpaque(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
     void DrawAlphaMasked(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
-    void DrawShadowMap(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
-    void DrawSkinned(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
+
+    void DrawShadowMap(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout, uint32_t cascadeIndex = 0);
+    void DrawSkinned(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout, uint32_t cascadeIndex= 0);
+    void AddLightSource(Light& LightSource);
+
     void Update(double aDeltaTime);
     void UpdateUi(double aDeltaTime);
 
@@ -156,8 +161,10 @@ class Scene {
         mActivePlayerCountOverride.override = Override::ACTIVE;
         mActivePlayerCountOverride.playerCount = activePlayerCount;
     }
+        // CSM requires player camera transforms to compute splits
+    const std::array<CameraTransform, GlobalConfig::maxPlayers> GetPlayerCameraTransforms() const { return mPlayerCameraTransforms; }
 
-  private:
+private:
     Scene *mCurrentScene = nullptr;
 
     Context *mContext = nullptr;
