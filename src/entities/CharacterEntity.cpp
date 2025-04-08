@@ -62,32 +62,43 @@ void CharacterEntity::ProcessInput(){
 
     glm::vec3 controlInput = glm::vec3(0.0f);
     bool jump = false;
-    if(mCamera->isInFollowCharacterMode()) {
-        // Determine controller input
-        if (IsKeyDown(KEY::eA))
-            controlInput.z = -1;
-        if (IsKeyDown(KEY::eD))
-            controlInput.z = 1;
-        if (IsKeyDown(KEY::eW))
-            controlInput.x = 1;
-        if (IsKeyDown(KEY::eS))
-            controlInput.x = -1;
-        if (controlInput != glm::vec3(0.f))
-            controlInput = glm::normalize(controlInput);
-        if (abs(GetGamepadAxis(GAMEPAD_AXIS::eLEFT_Y)) > 0.1f)
-            controlInput.z = -GetGamepadAxis(GAMEPAD_AXIS::eLEFT_Y);
-        if (abs(GetGamepadAxis(GAMEPAD_AXIS::eLEFT_X)) > 0.1f)
-            controlInput.z = GetGamepadAxis(GAMEPAD_AXIS::eLEFT_X);
+    if(mDeathState == DeathState::eLiving) {
+        if (mCamera->isInFollowCharacterMode()) {
+            // Determine controller input
+            if (IsKeyDown(KEY::eA))
+                controlInput.z = -1;
+            if (IsKeyDown(KEY::eD))
+                controlInput.z = 1;
+            if (IsKeyDown(KEY::eW))
+                controlInput.x = 1;
+            if (IsKeyDown(KEY::eS))
+                controlInput.x = -1;
+            if (controlInput != glm::vec3(0.f))
+                controlInput = glm::normalize(controlInput);
+            if (abs(GetGamepadAxis(GAMEPAD_AXIS::eLEFT_Y)) > 0.1f)
+                controlInput.z = -GetGamepadAxis(GAMEPAD_AXIS::eLEFT_Y);
+            if (abs(GetGamepadAxis(GAMEPAD_AXIS::eLEFT_X)) > 0.1f)
+                controlInput.z = GetGamepadAxis(GAMEPAD_AXIS::eLEFT_X);
 
-        // Rotate controls to align with the camera
-        auto cameraForward = mCamera->GetDirection();
-        cameraForward.y = 0.0f;
-        cameraForward = glm::normalize(cameraForward);
-        glm::quat rotation = glm::rotation(glm::vec3(1.0f, 0.0f, 0.0f), cameraForward);
-        controlInput = rotation * controlInput;
+            // Rotate controls to align with the camera
+            auto cameraForward = mCamera->GetDirection();
+            cameraForward.y = 0.0f;
+            cameraForward = glm::normalize(cameraForward);
+            glm::quat rotation = glm::rotation(glm::vec3(1.0f, 0.0f, 0.0f), cameraForward);
+            controlInput = rotation * controlInput;
 
-        // Check actions
-        jump = IsKeyPressed(KEY::eSPACE) || IsGamepadButtonPressed(GAMEPAD_BUTTON::eA);
+            // Check actions
+            jump = IsKeyPressed(KEY::eSPACE) || IsGamepadButtonPressed(GAMEPAD_BUTTON::eA);
+            if (IsKeyPressed(KEY::eF)) {
+                // for each child, if there is an animator, call set animation
+                for (auto &child: GetChildren()) {
+                    if (child->HasAnimator()) {
+                        child->GetAnimator().SetActiveAnimation("dance", 0.1, true, true);
+                        child->GetAnimator().SetTimeScale(1.f);
+                    }
+                }
+            }
+        }
     }
     mSampleJoltCharacter->ProcessInput(controlInput, jump);
 }
@@ -99,6 +110,15 @@ void CharacterEntity::PrePhysicsUpdate() {
 }
 
 void CharacterEntity::Update(double deltaTime) {
+    // update the death timer
+    if(mDeathState == DeathState::eDying) {
+        mDeathTimer -= deltaTime;
+        if(mDeathTimer <= 0.0) {
+            mDeathState = DeathState::eDead;
+            mInternalEvents.push(InternalEvent::eDeath);
+            Reset();
+        }
+    }
     // process the input
     ProcessInput();
     // pre physics update
@@ -173,6 +193,13 @@ void CharacterEntity::Update(double deltaTime) {
     case EJumpState::None:
         break;
     }
+    // if the character is dying, set the animation to dying
+    if(mDeathState == DeathState::eDying) {
+        activeAnimation = "death";
+        timeScale = 1.0f;
+        blend = 0.5f;
+        playWholeAnimation = false;
+    }
     // for each child, if there is an animator, call set animation
     for (auto &child : GetChildren()) {
             if (child->HasAnimator()) {
@@ -246,7 +273,7 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
     if(aOther->CompareTag("deathzone")) {
         SPDLOG_INFO("I am {} and I collided with a death zone", GetName());
         mInternalEvents.push(InternalEvent::eDeath);
-        Reset();
+        Die();
     }
 
     // if its a checkpoint, set the checkpoint
@@ -405,4 +432,13 @@ void CharacterEntity::MoveToSpawn()
             Reset();
         }
     }
+}
+
+void CharacterEntity::Die()
+{
+    // set the death state to dying
+    mDeathState = DeathState::eDying;
+    // set the death timer to death time
+    mDeathTimer = mDeathTime;
+
 }

@@ -17,6 +17,12 @@ enum class InternalEvent {
     eCount
 };
 
+enum class DeathState{
+    eLiving,
+    eDying,
+    eDead,
+};
+
 enum class InternalUiEvent {
     eDeathPopup,
     eFinishPopup,
@@ -53,12 +59,13 @@ class CharacterEntity : public Entity {
     // set the checkpoint
     void SetCheckpoint(glm::vec3 checkpoint) { mLastCheckpoint = checkpoint; Save();}
 
-
+    void Die();
     // reset the character to the last checkpoint
     void Reset() {
         mSampleJoltCharacter->SetCharacterPosition(RVec3(mLastCheckpoint.x,
                                                 mLastCheckpoint.y,
                                                 mLastCheckpoint.z));
+        mDeathState = DeathState::eLiving;
     }
 
     [[nodiscard]] glm::vec3 GetCharacterPositionOffset() const { return mCharacterPositionOffset; }
@@ -98,6 +105,10 @@ private:
     size_t mDeathCount = 0;
     float mDeathVisibleTimer = 0.0f;
     float mFinishVisibleTimer = 0.0f;
+
+    DeathState mDeathState = DeathState::eLiving;
+    double mDeathTimer = 0.0;
+    const double mDeathTime = 1.0;
 
     gui::DeathCounterData mGuiDeathCounterData{};
     gui::DeathPopupData mGuiDeathPopupData{};

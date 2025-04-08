@@ -53,6 +53,7 @@ namespace {
         &Sample::SampleObbyTestScene,
         &Sample::ArrowSample,
         &Sample::TileSample,
+        &Sample::SpikePitSample,
 
     };
 

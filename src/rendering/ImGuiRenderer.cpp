@@ -395,7 +395,7 @@ void ImGuiRenderer::NewDeathPopup(const gui::DeathPopupData &data) {
 
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
 
-    std::string str = fmt::format("DEATH POPUP");
+    std::string str = fmt::format("YOU DIED");
 
     size_t sv = 0;
 
