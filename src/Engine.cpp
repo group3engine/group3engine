@@ -46,26 +46,23 @@
 
 namespace {
     // TODO: Improve this temporary scene switching mechanism
+    std::filesystem::path mainMenuPath{"MainMenu/main_menu.gltf"};
 
-    enum class SceneValue {
-        OBBY,
-        OBBY_TEST_SCENE
+    const std::vector<std::filesystem::path *> scenePaths = {
+        &Sample::SampleObby,
+        &Sample::SampleObbyTestScene
     };
 
-    SceneValue sceneValue{SceneValue::OBBY_TEST_SCENE};
+    const std::filesystem::path *scenePathSelection = scenePaths[0];
 
-    const std::filesystem::path &SwitchScene() {
-        if (sceneValue == SceneValue::OBBY) {
-            sceneValue = SceneValue::OBBY_TEST_SCENE;
-            return Sample::SampleObbyTestScene;
-        } else if (sceneValue == SceneValue::OBBY_TEST_SCENE) {
-            sceneValue = SceneValue::OBBY;
-            return Sample::SampleObby;
-        } else {
-            SPDLOG_ERROR("Unaccounted for case.");
-            exit(EXIT_FAILURE);
-        }
-    }
+    const std::vector<const char *> playerCounts = {
+        "1",
+        "2",
+        "3",
+        "4"
+    };
+
+    const char *playerCountSelection = playerCounts[0];
 }
 
 Engine::Engine() {
@@ -93,24 +90,29 @@ bool Engine::Initialize() {
     mTextureManager = std::make_unique<TextureManager>(m_context);
     mTextureManager->Initialise();
 
-    mScene = std::make_shared<Scene>(m_context,
-                                     mMaterialManager.get(),
-                                     mMeshManager.get(),
-                                     mTextureManager.get());
-    mScene->StartUp();
+    Scene::get().StartUp(&m_context,
+                         mMaterialManager.get(),
+                         mMeshManager.get(),
+                         mTextureManager.get());
+
+    mScene = Scene::get().GetActiveScene();
 
     mRenderer = std::make_unique<Renderer>(m_context, mScene);
-    
+
     PhysicsManager::get().StartUp();
 
-    mScene->Initialise(Sample::SampleObbyTestScene);
+    constexpr size_t mainMenuPlayerCount = 1;
+    mScene->Load(mainMenuPath, mainMenuPlayerCount);
+    m_scenePath = mScene->GetSceneFilename();
 
     mRenderer->CreateRenderPasses();
     // call the scene awake function
     mScene->Awake();
 
+    mRenderer->AddCameras();
+
 #ifdef JPH_DEBUG_RENDERER
-    mDebugRenderer = std::make_unique<DebugRendererImp>(mRenderer.get());
+    mDebugRenderer = std::make_unique<DebugRendererImp>(mRenderer.get(), mScene);
 #endif // JPH_DEBUG_RENDERER
 
     SPDLOG_DEBUG("Engine initialised.");
@@ -127,7 +129,8 @@ void Engine::Shutdown() {
 
     mRenderer->Destroy();
     mRenderer.reset();
-    mScene->Destroy();
+    mScene->Unload();
+    mScene->ShutDown();
 
     mMeshManager->Destroy();
     mMaterialManager->Destroy();
@@ -138,20 +141,23 @@ void Engine::Shutdown() {
     PhysicsManager::get().ShutDown();
 }
 
-void Engine::ChangeScene(const std::filesystem::path &filePath)
-{
+void Engine::ChangeScene(const std::filesystem::path &pendingScenePath, size_t pendingPlayerCount) {
     m_sceneNeedsChanging = true;
-    m_scenePath = filePath;
+    mPendingScenePath = pendingScenePath;
+    mPendingScenePlayerCount = pendingPlayerCount;
 }
 
 void Engine::Run() {
-    auto camera = static_cast<Camera *>(glfwGetWindowUserPointer(Platform::get().window));
-    camera->SetPhysics(&PhysicsManager::get());
-    camera->SetScene(mScene.get());
+    for (auto *camera : mScene->GetCameras()) {
+        camera->SetPhysics(&PhysicsManager::get());
+        camera->SetScene(mScene);
+    }
 
     m_lastFrameTime = glfwGetTime();
 
     while (m_isRunning && !glfwWindowShouldClose(m_context.mWindow)) {
+        mIsMainMenu = mScene->GetSceneFilename() == "main_menu";
+
         double currentFrameTime = glfwGetTime();
         GlobalUtil::unscaledDeltaTime = currentFrameTime - m_lastFrameTime;
         GlobalUtil::deltaTime = GlobalUtil::unscaledDeltaTime * m_timeScale;
@@ -165,17 +171,23 @@ void Engine::Run() {
 
         Update(GlobalUtil::deltaTime);
 
+        if (mIsMainMenu) {
+            ImGuiRenderer::BeginMainMenu(m_context);
+            playerCountSelection = ImGuiRenderer::AddMainMenuPlayerCountSelection(m_context, playerCounts, playerCountSelection);
+            scenePathSelection = ImGuiRenderer::AddMainMenuSceneSelection(m_context, scenePaths, scenePathSelection);
+            ImGuiRenderer::AddLoadSceneButton(*scenePathSelection, std::stoi(playerCountSelection));
+            ImGuiRenderer::EndMainMenu();
+        }
+
         ImGuiRenderer::EndFrame();
 
         Render();
 
         if (m_sceneNeedsChanging)
         {
-            ChangeSceneFR();
+            ChangeSceneFR(mPendingScenePath, mPendingScenePlayerCount);
             m_sceneNeedsChanging = false;
         }
-
-
 
         FrameMark;
     }
@@ -188,27 +200,6 @@ void Engine::UpdateLogic() {
         glfwSetWindowShouldClose(Platform::get().window, GLFW_TRUE);
     }
 
-    auto camera = static_cast<Camera *>(glfwGetWindowUserPointer(Platform::get().window));
-    assert(camera);
-
-    camera->SetInput(EInputState::FORWARD, IsKeyDown(KEY::eW));
-    camera->SetInput(EInputState::BACKWARD, IsKeyDown(KEY::eS));
-    camera->SetInput(EInputState::LEFT, IsKeyDown(KEY::eA));
-    camera->SetInput(EInputState::RIGHT, IsKeyDown(KEY::eD));
-
-    camera->SetInput(EInputState::DOWN, IsKeyDown(KEY::eQ));
-    camera->SetInput(EInputState::UP, IsKeyDown(KEY::eE));
-
-    camera->SetInput(EInputState::FAST, IsKeyDown(KEY::eLEFT_SHIFT));
-    camera->SetInput(EInputState::SLOW, IsKeyDown(KEY::eLEFT_CONTROL));
-
-    camera->SetInput(EInputState::SWITCHVIEW, IsKeyPressed(KEY::eV));
-
-    camera->SetInput(EInputState::TELEPORT, IsKeyPressed(KEY::eT));
-
-    camera->SetInput(EInputState::ZOOM_IN, IsKeyPressed(KEY::eY));
-    camera->SetInput(EInputState::ZOOM_OUT, IsKeyPressed(KEY::eU));
-
     if (IsKeyPressed(KEY::e5)) {
         vkutil::postProcessSettings.Enable = vkutil::postProcessSettings.Enable == true ? false : true;
 
@@ -216,39 +207,18 @@ void Engine::UpdateLogic() {
 
         SPDLOG_INFO("Post process: {}", result);
     }
-
-    if (IsMouseButtonPressed(MOUSE_BUTTON::eRIGHT)) {
-        auto &flag = camera->inputMap[std::size_t(EInputState::MOUSING)];
-        flag = !flag;
-
-        if (flag) {
-            glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        } else {
-            glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-        }
-    }
-
-    if(IsKeyPressed(KEY::eP))
-    {
-        SPDLOG_INFO("Camera Location: {}", glm::to_string(camera->GetPosition()));
-    }
 }
 
-void Engine::ChangeSceneFR()
+void Engine::ChangeSceneFR(const std::filesystem::path &scenePath, size_t playerCount)
 {
     // vkDestroyBuffer():  can't be called on VkBuffer that is currently in use by VkCommandBuffer
     vkQueueWaitIdle(m_context.graphicsQueue);
     vkQueueWaitIdle(m_context.presentQueue);
 
-
-
-
-
-
     // Remove all UI textures as they were linked with the texture manager
     ImGuiRenderer::RemoveTextures();
 
-    mScene->Destroy();
+    mScene->Unload();
     mMaterialManager->Destroy();
     mMeshManager->Destroy();
     mTextureManager->Destroy();
@@ -266,7 +236,7 @@ void Engine::ChangeSceneFR()
 
     m_isLoading = true;
     m_progress = 0.f;
-    std::thread loadingScreen(&Engine::RenderLoadingScreen, this);
+    // std::thread loadingScreen(&Engine::RenderLoadingScreen, this);
 
 
 
@@ -277,25 +247,25 @@ void Engine::ChangeSceneFR()
     assert(bodyIds.empty());
 #endif // #ifndef NDEBUG
     m_progress = 25.f;
-    mScene->StartUp();
-    mScene->Initialise(m_scenePath);
+
+    mScene->Load(scenePath, playerCount);
+    m_scenePath = mScene->GetSceneFilename();
+
     m_progress = 75.f;
 
     // Add back UI textures
     std::filesystem::path path = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets" / "heart.png";
     ImGuiRenderer::AddTextures(mTextureManager.get(), path, "heart");
 
-    mRenderer->RebuildSceneDescriptors();
-
     mScene->Awake();
     m_progress = 100.f;
     // sleep for 1 second
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    // std::this_thread::sleep_for(std::chrono::seconds(1));
     // end the loading screen
     m_isLoading = false;
     // wait for loading screen thread to finish
-    while (!loadingScreen.joinable()) {}
-    loadingScreen.join();
+    // while (!loadingScreen.joinable()) {}
+    // loadingScreen.join();
 }
 
 void Engine::Update(double deltaTime) {
@@ -303,13 +273,12 @@ void Engine::Update(double deltaTime) {
 
     UpdateLogic();
     mScene->Update(deltaTime);
-    mScene->UpdateUi(deltaTime);
 
 // Draw physics before physics update
 // TODO: Understand why Jolt does this
 #ifdef JPH_DEBUG_RENDERER
     if (GlobalConfig::enablePhysicsDebugRenderer) {
-        auto cameraPos = mRenderer->GetCamera()->GetPosition();
+        auto cameraPos = mScene->GetCameras()[0]->GetPosition();
         mDebugRenderer.get()->SetCameraPos(RVec3{cameraPos.x, cameraPos.y, cameraPos.z});
 
         // Create render primitives: vertex buffers, index buffers and store them for later
@@ -319,6 +288,17 @@ void Engine::Update(double deltaTime) {
 #endif // JPH_DEBUG_RENDERER
 
     PhysicsManager::get().UpdatePhysics(deltaTime);
+
+    if (!mIsMainMenu) {
+        mScene->UpdateUi(deltaTime);
+
+        playerCountSelection = ImGuiRenderer::NewPlayerCountSelection(playerCounts, playerCountSelection);
+        scenePathSelection = ImGuiRenderer::NewSceneSelection(scenePaths, scenePathSelection);
+        ImGuiRenderer::AddLoadSceneButton(*scenePathSelection, std::stoi(playerCountSelection));
+
+        ImGuiRenderer::Update(mScene);
+    }
+
     mRenderer->Update(deltaTime);
 }
 
@@ -351,7 +331,7 @@ void Engine::Render() {
 
         mRenderer->GetForwardPass()->EndExecute(mRenderer->GetCommandBuffer());
 
-        mRenderer->GetGBuffer()->Execute(mRenderer->GetCommandBuffer());
+        //mRenderer->GetGBuffer()->Execute(mRenderer->GetCommandBuffer());
         mRenderer->GetSSAO()->Execute(mRenderer->GetCommandBuffer());
         mRenderer->GetSSR()->Execute(mRenderer->GetCommandBuffer());
 
@@ -371,12 +351,12 @@ void Engine::RenderLoadingScreen()
     {
         while (m_isLoading)
         {
-            ImGuiRenderer::NewFrame();
-            ImGuiRenderer::Image("load", ImVec2{0,0}, ImVec2{1,1});
-            ImGuiRenderer::LoadingBar(m_progress, ImVec2(500, 500));
-            ImGuiRenderer::EndFrame();
-            // render some text with imgui
-            mRenderer->RenderUIOnly();
+            // ImGuiRenderer::NewFrame();
+            // ImGuiRenderer::Image("load", ImVec2{0,0}, ImVec2{1,1});
+            // ImGuiRenderer::LoadingBar(m_progress, ImVec2(500, 500));
+            // ImGuiRenderer::EndFrame();
+            // // render some text with imgui
+            // mRenderer->RenderUIOnly();
         }
     }catch (const std::exception& e) {
         // Handle the exception

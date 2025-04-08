@@ -5,14 +5,14 @@
 
 layout(location = 0) in vec4 WorldPos;
 layout(location = 1) in vec2 uv;
-layout(location = 2) in vec3 WorldNormal;
+layout(location = 2) in mat3 TBNFrame;
 
 layout(location = 0) out vec4 fragColor;
 layout(location = 1) out vec4 brightColours;
+layout(location = 2) out vec4 NormalMetallic;
 
-layout(set = 0, binding = 0) uniform SceneUniform
+layout(set = 0, binding = 0) uniform CameraUBO
 {
-	mat4 model;
 	mat4 view;
 	mat4 projection;
     vec4 cameraPosition;
@@ -39,15 +39,27 @@ layout(set = 0, binding = 1) uniform LightBuffer {
 layout(push_constant) uniform Push
 {
 	mat4 ModelMatrix;
+    int cascadeIndex;
 }pc;
 
-layout(set = 0, binding = 2) uniform sampler2DShadow shadowMap;
+#define NUM_SHADOW_CASCADES 4
+
+layout(set = 0, binding = 3) uniform CascadeMatrices
+{
+	mat4 cascadeViewProjection[NUM_SHADOW_CASCADES];
+	vec4 cascadeSplits;
+}csmMatrices;
+
+layout(set = 0, binding = 2) uniform sampler2DArrayShadow shadowMap;
+
 // colour texture
 layout (set = 1, binding = 0) uniform sampler2D uTextureColour;
 // roughness texture
 layout (set = 1, binding = 1) uniform sampler2D uTextureMetallicRoughness;
+// normal map
+layout (set = 1, binding = 2) uniform sampler2D uTextureNormal;
 // material numbers
-layout (set = 1, binding = 2) uniform UNumbers
+layout (set = 1, binding = 3) uniform UNumbers
 {
 	vec4 baseColour;
 	float metallness;
@@ -57,6 +69,8 @@ layout (set = 1, binding = 2) uniform UNumbers
 } uNumbers;
 
 #define PI 3.14159265359
+
+uint cascadeIndex = 0;
 
 #define FRESNEL(halfVector, viewDir, baseColor, metallic, schlick_approx) { \
     vec3 F0 = vec3(0.04); \
@@ -126,52 +140,65 @@ vec2(-1.5, -1.5), vec2(-0.5, -1.5), vec2(0.5, -1.5), vec2(1.5, -1.5)
 );
 
 
-float PCF(vec4 shadowMapPosition)
-{
-	vec2 offset = vec2(shadowMapPosition.w / 1024.0f);
-	float shadow = 0.0;
-	for (int i = 0; i < 16; i++)
-	{
-        vec4 pcfShadowMapPosition = shadowMapPosition + vec4(PCFFilter4x4[i] * offset, 0.0, 0.0);
-        shadow += textureProj(shadowMap, shadowMapPosition);
-	}
-
-	return shadow / 16.0;
-}
+//float PCF(vec4 shadowMapPosition)
+//{
+//	vec2 offset = vec2(shadowMapPosition.w / 1024.0f);
+//	float shadow = 0.0;
+//	for (int i = 0; i < 16; i++)
+//	{
+//        vec4 pcfShadowMapPosition = shadowMapPosition + vec4(PCFFilter4x4[i] * offset, 0.0, 0.0);
+//        shadow += textureProj(shadowMap, shadowMapPosition);
+//	}
+//
+//	return shadow / 16.0;
+//}
 
 // https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing
-float Shadows(vec3 WorldPos)
-{
-	// Use direct lighting only. Point light shadows are handleded differently (cube depth)
-	vec4 fragPositionInLightSpace = lightData.lights[0].LightSpaceMatrix * vec4(WorldPos, 1.0);
-	fragPositionInLightSpace.xyz /= fragPositionInLightSpace.w;
-	fragPositionInLightSpace.xy = fragPositionInLightSpace.xy * 0.5 + 0.5;
-	fragPositionInLightSpace.z = fragPositionInLightSpace.z - 0.005;
-	float shadow = PCF(fragPositionInLightSpace);
-
-	return shadow;
-}
+//float Shadows(vec3 WorldPos)
+//{
+//	// Use direct lighting only. Point light shadows are handleded differently (cube depth)
+//	vec4 fragPositionInLightSpace = lightData.lights[0].LightSpaceMatrix * vec4(WorldPos, 1.0);
+//	fragPositionInLightSpace.xyz /= fragPositionInLightSpace.w;
+//	fragPositionInLightSpace.xy = fragPositionInLightSpace.xy * 0.5 + 0.5;
+//	fragPositionInLightSpace.z = fragPositionInLightSpace.z - 0.005;
+//	float shadow = PCF(fragPositionInLightSpace);
+//
+//	return shadow;
+//}
 
 float Shadow(vec3 WorldPos)
 {
-	vec4 fragPositionInLightSpace = lightData.lights[0].LightSpaceMatrix * vec4(WorldPos, 1.0);
+    vec4 fragPositionInLightSpace = csmMatrices.cascadeViewProjection[cascadeIndex] * vec4(WorldPos, 1.0);
 	fragPositionInLightSpace.xyz /= fragPositionInLightSpace.w;
 	fragPositionInLightSpace.xy = fragPositionInLightSpace.xy * 0.5 + 0.5;
 	fragPositionInLightSpace.z -= 0.005;
 
-	float shadow = textureProj(shadowMap, fragPositionInLightSpace);
+	float shadow = texture(shadowMap, fragPositionInLightSpace);
 	return shadow;
 }
-
+//
 // https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing
 float myPCF(vec3 WorldPos)
 {
 	// Use direct lighting only. Point light shadows are handleded differently (cube depth)
-	vec4 fragPositionInLightSpace = lightData.lights[0].LightSpaceMatrix * vec4(WorldPos, 1.0);
+//	vec4 fragPositionInLightSpace = lightData.lights[0].LightSpaceMatrix * vec4(WorldPos, 1.0);
+//	fragPositionInLightSpace.xyz /= fragPositionInLightSpace.w;
+//	fragPositionInLightSpace.xy = fragPositionInLightSpace.xy * 0.5 + 0.5;
+
+	vec3 texSize = 1.0 / textureSize(shadowMap, 0);
+
+
+    // compute the cascade index
+    vec4 viewPos = ubo.view * vec4(WorldPos, 1.0);
+    for(uint i = 0; i < NUM_SHADOW_CASCADES - 1; ++i)
+    {
+        cascadeIndex = viewPos.z < csmMatrices.cascadeSplits[i] ? cascadeIndex = i + 1: cascadeIndex;
+    }
+
+    vec4 fragPositionInLightSpace = csmMatrices.cascadeViewProjection[cascadeIndex] * vec4(WorldPos, 1.0);
 	fragPositionInLightSpace.xyz /= fragPositionInLightSpace.w;
 	fragPositionInLightSpace.xy = fragPositionInLightSpace.xy * 0.5 + 0.5;
 
-	vec2 texSize = 1.0 / textureSize(shadowMap, 0);
 	int range = 2; // 4x4
 	int samples = 0;
 	float sum = 0.0;
@@ -179,10 +206,10 @@ float myPCF(vec3 WorldPos)
 	{
 		for(int y = -range; y < range; y++)
 		{
-			vec2 offset = vec2(x,y) * texSize;
+			vec2 offset = vec2(x,y) * texSize.xy;
 			vec4 sampleCoord = vec4(fragPositionInLightSpace.xy + offset, fragPositionInLightSpace.z, fragPositionInLightSpace.w);
-			sum += textureProj(shadowMap, sampleCoord);
-			samples++;
+			sum += texture(shadowMap, vec4(sampleCoord.xy, float(cascadeIndex), sampleCoord.z)); // I don't think textureProj works with sampler2DArrayShadow
+            samples++;
 		}
 	}
 
@@ -202,6 +229,9 @@ void main()
     float roughness = texture(uTextureMetallicRoughness, uv).g * uNumbers.roughness;
     float metallic = texture(uTextureMetallicRoughness, uv).b * uNumbers.metallness;
 
+    vec3 pixelNormal = normalize(TBNFrame * (texture(uTextureNormal, uv).xyz * 2.f - 1.f));
+
+
     vec3 outLight = vec3(0.0);
 
     {
@@ -216,7 +246,7 @@ void main()
         float shadowTerm = 1.0 - myPCF(WorldPos.xyz);
 
         vec3 brdf;
-        COOK_TORRENCE_BRDF(WorldNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour, brdf);
+        COOK_TORRENCE_BRDF(pixelNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour, brdf);
         outLight += brdf * LightColour.xyz * shadowTerm;
     }
 
@@ -233,16 +263,30 @@ void main()
         float shadowTerm = 1.0;
 
         vec3 brdf;
-        COOK_TORRENCE_BRDF(WorldNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour, brdf);
+        COOK_TORRENCE_BRDF(pixelNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour, brdf);
         outLight += brdf * LightColour.xyz * shadowTerm;
     }
 
     vec3 ambient = vec3(0.02) * color;
-    fragColor = vec4(vec3(ambient + outLight), 1.0);
+    fragColor = vec4(vec3(ambient + outLight + emissive), 1.0);
+    NormalMetallic = vec4(pixelNormal.xyz * 0.5 + 0.5, roughness);
+
+//    switch(cascadeIndex) {
+//		case 0 :
+//			fragColor.rgb *= vec3(1.0f, 0.25f, 0.25f);
+//			break;
+//		case 1 :
+//			fragColor.rgb *= vec3(0.25f, 1.0f, 0.25f);
+//			break;
+//		case 2 :
+//			fragColor.rgb *= vec3(0.25f, 0.25f, 1.0f);
+//			break;
+//		case 3 :
+//			fragColor.rgb *= vec3(1.0f, 1.0f, 0.25f);
+//			break;
+//	}
 
     float brightness = dot(fragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
-    if(brightness > 1.0)
-    brightColours = vec4(fragColor.rgb, 1.0);
-    else
-    brightColours = vec4(0.0, 0.0, 0.0, 1.0);
+    float threshold = step(1.0, brightness); // check if brightness is less than 1.0
+    brightColours = vec4(fragColor.rgb * threshold, 1.0);
 }

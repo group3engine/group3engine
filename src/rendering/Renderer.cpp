@@ -10,6 +10,7 @@
 #include "Light.hpp"
 #include "Utils.hpp"
 #include "SampleGLTFFilePaths.hpp"
+#include "LightManager.hpp"
 #include <imgui.h>
 
 namespace {
@@ -21,7 +22,7 @@ constexpr glm::vec3 cameraDir = glm::vec3(1.0f, 1.0f, -1.0f);
 constexpr glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0);
 } // namespace
 
-Renderer::Renderer(Context &context, std::shared_ptr<Scene> scene)
+Renderer::Renderer(Context &context, Scene *scene)
     : m_scene(scene), context{context} {
     std::printf("Launching Renderer\n");
     vkutil::renderType = vkutil::RenderType::FORWARD;
@@ -33,38 +34,32 @@ Renderer::Renderer(Context &context, std::shared_ptr<Scene> scene)
     vkutil::repeatSampler = vkutil::CreateSampler(context, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL);
     vkutil::clampToEdgeSamplerAniso = vkutil::CreateSampler(context, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_FALSE, VK_COMPARE_OP_GREATER);
 
-    // Camera
-    m_camera = std::make_shared<Camera>(context, cameraPos, glm::normalize(cameraPos + cameraDir), up, context.extent.width / (float)context.extent.height);
-
-    // GLFW callbacks
-    glfwSetWindowUserPointer(context.mWindow, m_camera.get());
-
     mFreedBuffers.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
 }
 
 void Renderer::CreateRenderPasses() {
     // Renderer passes
     m_ShadowMap = std::make_unique<ShadowMap>(context, m_scene);
-    m_DepthPrepass = std::make_unique<DepthPrepass>(context, m_scene, m_camera);
-    m_ForwardPass = std::make_unique<ForwardPass>(context, m_ShadowMap->GetRenderTarget(), m_DepthPrepass->GetRenderTarget(), m_scene, m_camera);
-    m_GBuffer = std::make_unique<GBuffer>(context, m_scene, m_camera);
-    m_SSAO = std::make_unique<SSAO>(context, m_ForwardPass->GetDepthTarget(), m_ForwardPass->GetRenderTarget(), m_camera);
-    m_SSR = std::make_unique<SSR>(context, m_ForwardPass->GetDepthTarget(), m_ForwardPass->GetRenderTarget(), m_GBuffer->GetMetallicRoughnessTarget(), m_ForwardPass->GetSkybox()->GetSkyBoxImage(), m_camera);
-    m_BloomPass = std::make_unique<Bloom>(context, m_ForwardPass->GetBrightnessTarget());
-    m_CompositePass = std::make_unique<Composite>(context, m_ForwardPass->GetRenderTarget(), m_BloomPass->GetRenderTarget(), m_SSAO->GetRenderTarget(), m_SSR->GetRenderTarget());
-    m_PresentPass = std::make_unique<PresentPass>(context, m_CompositePass->GetRenderTarget());
+    m_DepthPrepass = std::make_unique<DepthPrepass>(context, m_scene);
+    m_ForwardPass = std::make_unique<ForwardPass>(context, m_ShadowMap->GetRenderTarget(), m_DepthPrepass->GetRenderTarget(), m_scene, m_ShadowMap.get());
+    //m_GBuffer = std::make_unique<GBuffer>(context, m_scene);
+    m_SSAO = std::make_unique<SSAO>(context, m_scene, m_DepthPrepass->GetRenderTarget(), m_ForwardPass->GetNormalRoughnessTarget());
+    m_SSR = std::make_unique<SSR>(context, m_scene, m_DepthPrepass->GetRenderTarget(), m_ForwardPass->GetRenderTarget(), m_ForwardPass->GetNormalRoughnessTarget(), m_ForwardPass->GetSkybox()->GetSkyBoxImage());
+    m_BloomPass = std::make_unique<Bloom>(context, m_scene, m_ForwardPass->GetBrightnessTarget());
+    m_CompositePass = std::make_unique<Composite>(context, m_scene, m_ForwardPass->GetRenderTarget(), m_BloomPass->GetRenderTarget(), m_SSAO->GetRenderTarget(), m_SSR->GetRenderTarget());
+    m_PresentPass = std::make_unique<PresentPass>(context, m_scene, m_CompositePass->GetRenderTarget());
 
     // ImGui
     ImGuiRenderer::Initialize(context);
     std::filesystem::path path = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets" / "heart.png";
     ImGuiRenderer::AddTextures(m_scene->GetTextureManager(), path, "heart");
-    // // TODO: This will cause a validation error if you re-size the window. Just needs to be updated when re-sized
-    ImGuiRenderer::AddTexture(vkutil::clampToEdgeSamplerAniso, m_ShadowMap->GetRenderTarget().imageView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL);
-}
 
-void Renderer::RebuildSceneDescriptors() {
-    m_ShadowMap->RebuildDescriptors();
-    m_ForwardPass->RebuildDescriptors();
+    const auto &cascades = m_ShadowMap->GetCascades();
+
+    for (auto& cascade : cascades)
+    {
+        ImGuiRenderer::AddTexture(vkutil::clampToEdgeSamplerAniso,cascade.imgView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL);
+    }
 }
 
 void Renderer::Destroy() {
@@ -74,14 +69,13 @@ void Renderer::Destroy() {
 
     m_DepthPrepass.reset();
     m_ForwardPass.reset();
-    m_GBuffer.reset();
+    //m_GBuffer.reset();
     m_ShadowMap.reset();
     m_BloomPass.reset();
     m_CompositePass.reset();
     m_SSAO.reset();
     m_SSR.reset();
     m_PresentPass.reset();
-    m_camera.reset();
 
     vkDestroySampler(context.device, vkutil::repeatSamplerAniso, nullptr);
     vkDestroySampler(context.device, vkutil::repeatSampler, nullptr);
@@ -99,11 +93,11 @@ void Renderer::Destroy() {
         vkDestroySemaphore(context.device, semaphore, nullptr);
     }
 
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         vkFreeCommandBuffers(context.device, m_commandPool[i], 1, &m_commandBuffers[i]);
     }
 
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         vkDestroyCommandPool(context.device, m_commandPool[i], nullptr);
     }
 
@@ -130,7 +124,7 @@ void Renderer::CreateResources() {
 }
 
 void Renderer::CreateFences() {
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         // Fence
         VkFenceCreateInfo fenceInfo{
             .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
@@ -144,7 +138,7 @@ void Renderer::CreateFences() {
 
 void Renderer::CreateSemaphores() {
     // Image available semaphore
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkSemaphoreCreateInfo semaphoreInfo = {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
 
@@ -154,7 +148,7 @@ void Renderer::CreateSemaphores() {
     }
 
     // Render finished sempahore
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkSemaphoreCreateInfo semaphoreInfo = {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
 
@@ -165,7 +159,7 @@ void Renderer::CreateSemaphores() {
 }
 
 void Renderer::CreateCommandPool() {
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         VkCommandPoolCreateInfo cmdPool{};
         cmdPool.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         cmdPool.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
@@ -178,7 +172,7 @@ void Renderer::CreateCommandPool() {
 }
 
 void Renderer::AllocateCommandBuffers() {
-    for (size_t i = 0; i < (size_t)vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
         // Allocate command buffers from command pool
         VkCommandBufferAllocateInfo cmdAlloc{};
         cmdAlloc.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -229,9 +223,8 @@ void Renderer::BeginFrame(VkCommandBuffer cmd) {
         // Recreate swapchain
         context.RecreateSwapchain();
         m_DepthPrepass->Resize();
-        m_ShadowMap->Resize();
         m_ForwardPass->Resize();
-        m_GBuffer->Resize();
+        //m_GBuffer->Resize();
         m_SSAO->Resize();
         m_SSR->Resize();
         m_BloomPass->Resize();
@@ -265,9 +258,9 @@ void Renderer::BeginFrame(VkCommandBuffer cmd) {
         {
             ZoneScopedN("vk::Upload");
 
-            m_camera->Upload(cmd);
+            m_scene->UploadCameras(cmd);
 
-            m_scene->UploadLights(cmd);
+            LightManager::getInstance().UploadLights(cmd);
 
             // Upload animation data to GPU
             for (auto *entity : m_scene->GetEntities()) {
@@ -401,9 +394,8 @@ void Renderer::Present(uint32_t imageIndex) {
         // Recreate the swapchain
         context.RecreateSwapchain();
         m_DepthPrepass->Resize();
-        m_ShadowMap->Resize();
         m_ForwardPass->Resize();
-        m_GBuffer->Resize();
+        //m_GBuffer->Resize();
         m_SSAO->Resize();
         m_SSR->Resize();
         m_BloomPass->Resize();
@@ -415,14 +407,15 @@ void Renderer::Present(uint32_t imageIndex) {
 void Renderer::Update(double deltaTime) {
     ZoneScopedN("Renderer::Update");
 
-    m_camera->Update(context.extent.width, context.extent.height, deltaTime);
-
-    ImGuiRenderer::Update(m_scene, m_camera);
-
     m_SSAO->Update();
     m_SSR->Update();
     // Update passes
     m_ShadowMap->Update();
     m_ForwardPass->Update();
     m_PresentPass->Update();
+}
+
+void Renderer::AddCameras() {
+    // Find camera(s) in scene
+    m_cameras = m_scene->GetCameras();
 }

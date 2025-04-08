@@ -11,13 +11,15 @@
 #include "Camera.hpp"
 #include "Engine.hpp"
 #include "imgui.h"
+#include "GLFW.hpp"
+#include "RenderPassCommon.hpp"
 #include "SampleGLTFFilePaths.hpp"
 #include "Scene.hpp"
 
 namespace {
     std::filesystem::path BuildSaveFilename() {
         std::filesystem::path saveFilename = "save_";
-        saveFilename += Scene::GetActiveScene()->GetSceneFilename();
+        saveFilename += Scene::get().GetActiveScene()->GetSceneFilename();
         saveFilename += ".txt";
         return saveFilename;
     }
@@ -27,9 +29,42 @@ CharacterEntity::~CharacterEntity() {
 }
 
 void CharacterEntity::ProcessInput(){
+    mCamera->SetInput(EInputState::FORWARD, IsKeyDown(KEY::eW));
+    mCamera->SetInput(EInputState::BACKWARD, IsKeyDown(KEY::eS));
+    mCamera->SetInput(EInputState::LEFT, IsKeyDown(KEY::eA));
+    mCamera->SetInput(EInputState::RIGHT, IsKeyDown(KEY::eD));
+
+    mCamera->SetInput(EInputState::DOWN, IsKeyDown(KEY::eQ));
+    mCamera->SetInput(EInputState::UP, IsKeyDown(KEY::eE));
+
+    mCamera->SetInput(EInputState::FAST, IsKeyDown(KEY::eLEFT_SHIFT));
+    mCamera->SetInput(EInputState::SLOW, IsKeyDown(KEY::eLEFT_CONTROL));
+
+    mCamera->SetInput(EInputState::SWITCHVIEW, IsKeyPressed(KEY::eV));
+
+    mCamera->SetInput(EInputState::TELEPORT, IsKeyPressed(KEY::eT));
+
+    mCamera->SetInput(EInputState::ZOOM_IN, IsKeyPressed(KEY::eY));
+    mCamera->SetInput(EInputState::ZOOM_OUT, IsKeyPressed(KEY::eU));
+
+    if (IsKeyDown(KEY::eLEFT_SHIFT) && IsMouseButtonPressed(MOUSE_BUTTON::eLEFT)) {
+        auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
+        flag = !flag;
+
+        if (flag) {
+            glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        } else {
+            glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        }
+    }
+    if (IsMouseButtonPressed(MOUSE_BUTTON::eRIGHT)) {
+        auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
+        flag = false;
+    }
+
     glm::vec3 controlInput = glm::vec3(0.0f);
     bool jump = false;
-    if(Camera::GetMainCamera()->isInFollowCharacterMode()) {
+    if(mCamera->isInFollowCharacterMode()) {
         // Determine controller input
         if (IsKeyDown(KEY::eA))
             controlInput.z = -1;
@@ -47,7 +82,7 @@ void CharacterEntity::ProcessInput(){
             controlInput.z = GetGamepadAxis(GAMEPAD_AXIS::eLEFT_X);
 
         // Rotate controls to align with the camera
-        auto cameraForward = Camera::GetMainCamera()->GetDirection();
+        auto cameraForward = mCamera->GetDirection();
         cameraForward.y = 0.0f;
         cameraForward = glm::normalize(cameraForward);
         glm::quat rotation = glm::rotation(glm::vec3(1.0f, 0.0f, 0.0f), cameraForward);
@@ -65,9 +100,12 @@ void CharacterEntity::PrePhysicsUpdate() {
     mSampleJoltCharacter->PrePhysicsUpdate(preUpdateParams);
 }
 
-void CharacterEntity::Update(double deltaTime) {
+void CharacterEntity::PreUpdate(double deltaTime) {
     // process the input
     ProcessInput();
+}
+
+void CharacterEntity::Update(double deltaTime) {
     // pre physics update
     PrePhysicsUpdate();
     // update the character position offset
@@ -76,7 +114,8 @@ void CharacterEntity::Update(double deltaTime) {
 
     if (IsKeyPressed(KEY::eR))
     {
-        Engine::get().ChangeScene(Sample::SampleObby);
+        // TODO: Handle logic for selecting which scene to switch to
+        Engine::get().ChangeScene(Sample::SampleObby, GetScene()->GetActivePlayerCount());
     }
     if (IsKeyPressed(KEY::eESCAPE))
     {
@@ -152,6 +191,9 @@ void CharacterEntity::Update(double deltaTime) {
                 child->GetAnimator().SetTimeScale(timeScale);
             }
     }
+
+    mCamera->UpdateCameraRotation(deltaTime);
+    mCamera->UpdateCameraMovement(GetWorldTransformComponents());
 }
 
 void UnPause()
@@ -171,6 +213,8 @@ void CharacterEntity::UnscaledUpdate(double deltaTime)
     }
 }
 void CharacterEntity::UpdateUi(double deltaTime) {
+    ImGuiRenderer::NewCharacterInfo(this);
+
     while (!mInternalUiEvents.empty()) {
         auto &event = mInternalUiEvents.top();
         mInternalUiEvents.pop();
@@ -191,20 +235,26 @@ void CharacterEntity::UpdateUi(double deltaTime) {
         }
     }
 
+    size_t activePlayerCount = GetScene()->GetActivePlayerCount();
+
+    // New timer window
+    mGuiTimerData.time += deltaTime;
+    ImGuiRenderer::NewTimer(mGuiTimerData, activePlayerCount, mPlayerId);
+
     // NOTE: If copying the data into a struct gets annoying, we can just use
     // simple parameters to the gui functions. But using structs might help
     // bundle things more nicely in some cases. This is just an example.
     mGuiDeathCounterData.deathCount = mDeathCount;
-    ImGuiRenderer::NewDeathCounter(mGuiDeathCounterData);
+    ImGuiRenderer::NewDeathCounter(mGuiDeathCounterData, activePlayerCount, mPlayerId);
 
     mDeathVisibleTimer = std::max(0.0f, mDeathVisibleTimer - static_cast<float>(deltaTime));
     mGuiDeathPopupData.visibleTimer = mDeathVisibleTimer;
-    ImGuiRenderer::NewDeathPopup(mGuiDeathPopupData);
+    ImGuiRenderer::NewDeathPopup(mGuiDeathPopupData, activePlayerCount, mPlayerId);
 
     mFinishVisibleTimer = std::max(0.0f, mFinishVisibleTimer - static_cast<float>(deltaTime));
     mGuiFinishPopupData.visibleTimer = mFinishVisibleTimer;
 
-    ImGuiRenderer::NewFinishPopup(mGuiFinishPopupData);
+    ImGuiRenderer::NewFinishPopup(mGuiFinishPopupData, activePlayerCount, mPlayerId);
 }
 
 void CharacterEntity::CreateJoltCharacter()
@@ -222,6 +272,7 @@ void CharacterEntity::CreateJoltCharacter()
 CharacterEntity::CharacterEntity() {
     SetAsCharacter();
     Load();
+    mType = "character";
 }
 void CharacterEntity::OnCollisionStart(Entity *aOther) {
 
@@ -349,13 +400,24 @@ void CharacterEntity::Load() {
 }
 
 void CharacterEntity::Awake() {
+    mPlayerId = GetScene()->PostIncrementPlayerCount();
+
     mInitialTransform = GetLocalTransform();
     // create the jolt character
     CreateJoltCharacter();
-    // register the character with the scene
-    Scene::GetActiveScene()->SetMainCharacter(this);
+
+    JPH::Vec3 joltPos = GetCharacterPosition();
+    glm::vec3 pos = glm::vec3(joltPos.GetX(), joltPos.GetY(), joltPos.GetZ());
+    glm::vec3 dir = glm::vec3(1.0f, 1.0f, -1.0f);
+    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0);
+    mCamera = new Camera(pos, dir, up);
+
+    mCamera->SetIsActive(true);
+
+    Scene::get().GetActiveScene()->AddCamera(mCamera);
+
     // register the teleport callback
-    Camera::GetMainCamera()->SetTeleportCallbackFunction(std::bind(&CharacterEntity::TeleportCallback, this, std::placeholders::_1));
+    mCamera->SetTeleportCallbackFunction(std::bind(&CharacterEntity::TeleportCallback, this, std::placeholders::_1));
 
     // if there is no save
     if(!m_has_save)
@@ -370,7 +432,7 @@ void CharacterEntity::Awake() {
 
 void CharacterEntity::MoveToSpawn()
 {
-    for(auto &entity: Scene::GetActiveScene()->GetEntities())
+    for(auto &entity: Scene::get().GetActiveScene()->GetEntities())
     {
         if(entity->CompareTag("spawnpoint"))
         {

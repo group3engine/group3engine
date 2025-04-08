@@ -28,7 +28,7 @@ struct FreedBuffer {
 
 class Renderer {
   public:
-    Renderer(Context &context, std::shared_ptr<Scene> scene);
+    Renderer(Context &context, Scene *scene);
 
     void CreateRenderPasses();
 
@@ -40,7 +40,7 @@ class Renderer {
     void EndFrame(VkCommandBuffer cmd);
     void Update(double deltaTime);
 
-    std::shared_ptr<Scene> m_scene;
+    Scene *m_scene;
 
 
     // TODO: Check if we are calling this from within a frame
@@ -48,21 +48,19 @@ class Renderer {
 
     Context &GetContext() const { return context; }
 
-    const DepthPrepass *GetDepthPrepass() const { return m_DepthPrepass.get(); }
-    const ShadowMap *GetShadowMap() const { return m_ShadowMap.get(); }
-    const ForwardPass *GetForwardPass() const { return m_ForwardPass.get(); }
-    const GBuffer *GetGBuffer() const { return m_GBuffer.get(); }
-    const SSAO *GetSSAO() const { return m_SSAO.get(); }
-    const SSR *GetSSR() const { return m_SSR.get(); }
-    const Bloom *GetBloomPass() const { return m_BloomPass.get(); }
-    const Composite *GetCompositePass() const { return m_CompositePass.get(); }
-    const PresentPass *GetPresentPass() const { return m_PresentPass.get(); }
+    DepthPrepass *GetDepthPrepass() const { return m_DepthPrepass.get(); }
+    ShadowMap *GetShadowMap() const { return m_ShadowMap.get(); }
+    ForwardPass *GetForwardPass() const { return m_ForwardPass.get(); }
+    //GBuffer *GetGBuffer() const { return m_GBuffer.get(); }
+    SSAO *GetSSAO() const { return m_SSAO.get(); }
+    SSR *GetSSR() const { return m_SSR.get(); }
+    Bloom *GetBloomPass() const { return m_BloomPass.get(); }
+    Composite *GetCompositePass() const { return m_CompositePass.get(); }
+    PresentPass *GetPresentPass() const { return m_PresentPass.get(); }
 
-    const Camera *GetCamera() const { return m_camera.get(); }
+    void AddCameras();
 
     uint32_t GetImageIndex() const { return mImageIndex; }
-
-    void RebuildSceneDescriptors();
 
   private:
     void CreateResources();
@@ -87,7 +85,7 @@ class Renderer {
 
     std::unique_ptr<DepthPrepass> m_DepthPrepass;
     std::unique_ptr<ForwardPass> m_ForwardPass;
-    std::unique_ptr<GBuffer> m_GBuffer;
+    //std::unique_ptr<GBuffer> m_GBuffer;
     std::unique_ptr<SSAO> m_SSAO;
     std::unique_ptr<SSR> m_SSR;
     std::unique_ptr<ShadowMap> m_ShadowMap;
@@ -95,7 +93,7 @@ class Renderer {
     std::unique_ptr<Composite> m_CompositePass;
     std::unique_ptr<PresentPass> m_PresentPass;
 
-    std::shared_ptr<Camera> m_camera;
+    std::vector<Camera *> m_cameras;
 
     uint32_t mImageIndex = 0;
 };

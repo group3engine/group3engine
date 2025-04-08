@@ -1,11 +1,13 @@
 #version 450
 
+// NOTE: Some data when 2 player was implemented has broken something
+// Works with a single player but stopped working correctly when two players was introduced
+
 layout(location = 0) in vec2 uv;
 layout(location = 0) out vec4 fragColour;
 
-layout(set = 0, binding = 0) uniform SceneUniform
+layout(set = 0, binding = 0) uniform CameraUBO
 {
-	mat4 model;
 	mat4 view;
 	mat4 projection;
     vec4 cameraPosition;
@@ -16,7 +18,7 @@ layout(set = 0, binding = 0) uniform SceneUniform
 } ubo;
 
 
-layout(set = 0, binding = 2) uniform SSRSettings
+layout(set = 1, binding = 1) uniform SSRSettings
 {
     int MaxSteps;
     int BinarySearchIterations;
@@ -26,10 +28,10 @@ layout(set = 0, binding = 2) uniform SSRSettings
 	float time;
 }ssr;
 
-layout (set = 0, binding = 1) uniform sampler2D depthBuffer;
-layout (set = 0, binding = 3) uniform sampler2D renderedScene;
-layout (set = 0, binding = 4) uniform sampler2D MetallicRoughness; // r = metallic, g = roughness
-layout (set = 0, binding = 5) uniform samplerCube skybox;
+layout (set = 1, binding = 0) uniform sampler2D depthBuffer;
+layout (set = 1, binding = 2) uniform sampler2D renderedScene;
+layout (set = 1, binding = 3) uniform sampler2D normalRoughness; // rgb = normals, a = roughness
+layout (set = 1, binding = 4) uniform samplerCube skybox;
 
 vec4 DepthToPosition(vec2 uv)
 {
@@ -41,6 +43,8 @@ vec4 DepthToPosition(vec2 uv)
 	return vec4(viewSpace.xyz, 1.0);
 }
 
+// This should be replaced storing normals in the render target during thin g-buffer creation.
+// This one is not accurate enough.
 vec4 DepthToNormal(vec2 uv)
 {
 	float depth = texture(depthBuffer, uv).x;
@@ -53,204 +57,98 @@ vec4 DepthToNormal(vec2 uv)
 	return vec4(n, 1.0);
 }
 
-float IGN(vec2 p)
+// This should be faster and better quality than original implementation
+vec3 ScreenSpaceReflections()
 {
-    vec3 magic = vec3(0.06711056, 0.00583715, 52.9829189);
-    return fract( magic.z * fract(dot(p,magic.xy)) );
-}
+    const vec2 texSize = textureSize(normalRoughness, 0);
+    const float MAX_DISTANCE = ssr.MaxDistance;
 
-float noise(vec2 seed)
-{
-    return fract(sin(dot(seed.xy, vec2(12.9898, 78.233))) * 43758.5453);
-}
+    vec4 WorldPos = inverse(ubo.view) * vec4(DepthToPosition(uv).xyz, 1.0);
+    vec3 camDir = normalize(WorldPos.xyz - ubo.cameraPosition.xyz);
+    vec4 WorldNormal = texture(normalRoughness, uv); //(xyz is normal, .a is roughness)
+    WorldNormal.xyz = normalize(WorldNormal.xyz * 2.0 - 1.0);
 
-vec3 BSWorld(vec3 worldRayPos, vec3 worldRayDir)
-{
-	for(int i = 0; i < ssr.BinarySearchIterations; i++)
-	{
-		// to screen-space
-		vec4 projectedCoords = ubo.projection * ubo.view * vec4(worldRayPos, 1.0);
-		projectedCoords.xyz /= projectedCoords.w;
-		projectedCoords.xy = projectedCoords.xy * 0.5 + 0.5;
+    //vec4 WorldNormal = normalize(inverse(ubo.view) * vec4(DepthToNormal(uv).xyz, 0.0)); // Depth for normals can cause issues when looking straight down. Store normals in a g-buffer target instead
+    vec3 worldReflectionDir = normalize(reflect(camDir, WorldNormal.xyz));
 
-		float rayDepth = (projectedCoords.z);
-		float depth = (texture(depthBuffer, projectedCoords.xy).x);
+    vec3 WorldSpaceBegin = WorldPos.xyz;
+    vec3 worldSpaceEnd = WorldSpaceBegin + worldReflectionDir * MAX_DISTANCE;
 
-		float delta = rayDepth - depth;
+    // project to screen space
+    vec4 start = ubo.projection * ubo.view * vec4(WorldSpaceBegin, 1.0);
+    start.xyz /= start.w;
+    start.xy = start.xy * 0.5 + 0.5;
+    start.xy *= texSize;
 
-		if(delta > 0.0)
-			worldRayPos -= worldRayDir;
-		else
-			worldRayPos += worldRayDir;
+    vec4 end = ubo.projection * ubo.view * vec4(worldSpaceEnd, 1.0);
+    end.xyz /= end.w;
+    end.xy = end.xy * 0.5 + 0.5;
+    end.xy *= texSize;
 
-		worldRayDir *= 0.5;
-	}
+    // get the step direction, take largest to prevent branching
+    float dx = end.x - start.x;
+    float dy = end.y - start.y;
+    int stepDir = max(abs(int(dx)), abs(int(dy)));
 
-	return worldRayPos;
-}
+	// early exit if start and end are the same we dont need to traverse the ray
+    if (stepDir == 0) {
+        return vec3(0.0);
+    }
 
+    float stepRCP = 1.0 / float(stepDir);
+    float x_incr = dx * stepRCP;
+    float y_incr = dy * stepRCP;
 
-vec3 worldToScreen(vec3 world)
-{
-	vec4 projected = ubo.projection * ubo.view * vec4(world, 1.0);
-	projected = projected / projected.w; // perspective divide
-	projected.xy = projected.xy * 0.5 + 0.5;
+    float x = start.x;
+    float y = start.y;
 
-	return vec3(projected.xyz);
-}
+    // move along the ray
+    for (int i = 0; i < stepDir; i++) {
 
-vec3 BinarySearch(vec3 raypos, vec3 raydir)
-{
-	for(int i = 0; i < ssr.BinarySearchIterations; i++)
-	{
-		float depth = texture(depthBuffer, raypos.xy).r;
-		float depthDelta = depth - raypos.z;
+        x += x_incr;
+        y += y_incr;
 
-		if(depthDelta > 0.0) raypos += raydir;
-		else raypos -= raydir;
+        // Check if x, y are outside the bounds of pixel-space-screen-space
+        if (x < 0.0 || x >= texSize.x || y < 0.0 || y >= texSize.y) {
+            break;
+        }
 
+        // interpolate depth to find depth at current position
+        float t = float(i) / float(stepDir);
+        float z = mix(start.z, end.z, t);
+        float depth = texelFetch(depthBuffer, ivec2(x, y), 0).x;
 
-		raydir *= 0.5;
-	}
+        // depth test to determine hit
+        float depthDiff = z - depth;
+        if (depthDiff > 0.0 && depthDiff < ssr.thickness) {
 
-	return raypos;
-}
+			// sample the colour at the hit point
+			vec3 colour = texelFetch(renderedScene, ivec2(x, y), 0).rgb;
 
-vec3 ViewToScreen(vec3 view)
-{
-	vec4 projected = ubo.projection * vec4(view, 1.0);
-	projected = projected / projected.w; // perspective divide
-	projected.xy = projected.xy * 0.5 + 0.5;
-
-	return vec3(projected.xyz);
-}
-
-bool inScreenSpace(vec2 ssPos)
-{
-	if((ssPos.x >= 0.0 && ssPos.x <= 1.0 && ssPos.y >= 0.0 && ssPos.y <= 1.0))
-	{
-		return true;
-	}
-
-	return false;
-}
-
-float LinearizeDepth(float d)
-{
-    float zNear = ubo.nearPlane;
-    float zFar = ubo.farPlane;
-	return (zFar * zNear) / (zFar - zNear) / (d + zFar / (zNear - zFar));
-}
-
-
-vec4 NaiveScreenSpaceReflections()
-{
-	int STEPS = ssr.MaxSteps;
-	float MAX_DISTANCE = ssr.MaxDistance;
-	float stepSize = MAX_DISTANCE / float(STEPS);
-
-	vec4 WorldPos = inverse(ubo.view) * vec4(DepthToPosition(uv).xyz, 1.0);
-	vec4 WorldNormal = inverse(ubo.view) * vec4(DepthToNormal(uv).rgb, 0.0);
-
-	vec3 camDir = normalize(WorldPos.xyz - ubo.cameraPosition.xyz);
-	//vec3 reflectionDirection = sampleGGXVNDF(WorldNormal, ssr.thickness, getRandomXi(gl_FragCoord.xy));
-
-	vec3 worldReflectionDir = normalize(reflect(camDir, WorldNormal.xyz));
-
-	vec3 RayPos = WorldPos.xyz;
-	vec3 RayStep = worldReflectionDir * stepSize;
-
-
-	vec4 color = vec4(0,0,0,0);
-	for(int i = 0; i < STEPS; i++)
-	{
-		//RayPos += ( i + noise(uv + ssr.time)) * RayStep;
-		RayPos += RayStep * IGN(gl_FragCoord.xy);
-
-		// Get the position of the ray in screen-space
-		vec4 projectedCoords = ubo.projection * ubo.view * vec4(RayPos.xyz, 1.0);
-		projectedCoords.xyz /= projectedCoords.w;
-		projectedCoords.xy = projectedCoords.xy * 0.5 + 0.5;
-
-		// check if outside view-frustum
-		if(projectedCoords.x < 0.0 || projectedCoords.x > 1.0 || projectedCoords.y < 0.0 || projectedCoords.y > 1.0)
-		{
-			// fade out based on how far along the ray we are
-			float fade = smoothstep(0.0, 1.0, float(i) * stepSize / MAX_DISTANCE);
-			return vec4(0.0, 0.0, 0.0, 1.0);
-		}
-
-		float rayDepth = (projectedCoords.z);
-		float depth = (texture(depthBuffer, projectedCoords.xy).x);
-
-		if((rayDepth - depth) > 0.0 && (rayDepth - depth) < ssr.thickness)
-		{
-			// We hit geometry
-
-			vec3 hitPos = RayPos;
-			vec3 prevPos = RayPos - RayStep;
-			for (int j = 0; j < ssr.BinarySearchIterations; j++) { // 4 iterations for refinement
-				vec3 midPos = (hitPos + prevPos) * 0.5;
-				vec4 midCoords = ubo.projection * ubo.view * vec4(midPos, 1.0);
-				midCoords.xyz /= midCoords.w;
-				midCoords.xy = midCoords.xy * 0.5 + 0.5;
-				float midDepth = texture(depthBuffer, midCoords.xy).x;
-				if (midDepth < midCoords.z) {
-					hitPos = midPos;
-				} else {
-					prevPos = midPos;
-				}
-			}
-			projectedCoords = ubo.projection * ubo.view * vec4(hitPos, 1.0);
-			projectedCoords.xyz /= projectedCoords.w;
-			projectedCoords.xy = projectedCoords.xy * 0.5 + 0.5;
-
-			float NdotR = max(dot(-camDir, worldReflectionDir), 0.0);
-			color = texture(renderedScene, projectedCoords.xy);
-
-			vec2 center = vec2(0.5, 0.5);
-			float fadeStart = 0.3;
-			float fadeEnd = 0.5;
-
-			float dist = length(projectedCoords.xy - center);
-
-			//float fadeFactor = smoothstep(fadeEnd, fadeStart, dist);
-
-			// Convert to NDC (-1 to 1 range)
-			vec2 hitPixelNDC = projectedCoords.xy * 2.0 - 1.0;
-			const float blendScreenEdgeFade = 5.0f;
-
-			// Compute edge vignette (similar to CalculateEdgeVignette)
+			// screen-fading at edges
+			vec2 hitPixelNDC = (vec2(x,y) / texSize) * 2.0 - 1.0; // get in NDC [-1, 1]
+			const float blendScreenEdgeFade = 2.0f; // TODO: Make tweakable parameter?
 			vec2 vignette = clamp(abs(hitPixelNDC) * blendScreenEdgeFade - (blendScreenEdgeFade - 1.0), 0.0, 1.0);
-			float fadeFactor = clamp(1.0 - dot(vignette, vignette), 0.0, 1.0);
+			float screenFade = clamp(1.0 - dot(vignette, vignette), 0.0, 1.0);
 
-			//color = color * fadeFactor;
-			//mix(color, vec4(0), NdotR)
-			return color;
+			// rays which point towards the camera have less contribution (likely hitting the back of a surface)
+			float NdotR = max(dot(normalize(-camDir), (worldReflectionDir)), 0.0);
+            float TowardsCameraVisibility = (1 - clamp(NdotR, 0.0, 1.0));
 
-			//return mix(color.rgb, vec3(0,0,0), NdotR); // if its closer to 1, we get less reflection since its aligned with camera
-		}
+			// fade the ray based on the distance the ray has travelled
+			float DistanceTravelled = (1.0 - clamp(float(i) / float(stepDir), 0.0, 1.0));
+			//return colour * TowardsCameraVisibility * DistanceTravelled * screenFade;
+            return colour;
+        }
+    }
 
-		RayPos += RayStep;
-	}
+    // TODO: Sample cube map if no intersection
 
-	// TODO: Read from cube map
-
-	//vec4 skyboxColour = texture(skybox, worldReflectionDir);
-
-	return vec4(0,0,0,1);
+    return vec3(0.0);
 }
 
 void main()
 {
-	vec4 position = DepthToPosition(uv);
-	vec4 normals = DepthToNormal(uv);
-
-	float metallic = texture(MetallicRoughness, uv).r;
-	float roughness = texture(MetallicRoughness, uv).g;
-
-
-	fragColour = vec4(mix(vec3(0), NaiveScreenSpaceReflections().rgb, roughness), 1.0);
-
-	//fragColour = vec4(vec3(NaiveScreenSpaceReflections().xyz), clamp(metallic, 0.0, 1.0));
+    fragColour = vec4(0.0, 0.0, 0.0, 1.0);
+	//fragColour = vec4(mix(ScreenSpaceReflections().rgb, vec3(0), roughness), 1.0);
 }

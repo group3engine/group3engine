@@ -1,9 +1,15 @@
 #include "Context.hpp"
 #include "Scene.hpp"
 #include "Camera.hpp"
+#include "CharacterEntity.hpp"
 #include "RenderPass.hpp"
+#include "RenderPassCommon.hpp"
 #include "ImGuiRenderer.hpp"
 #include "Utils.hpp"
+
+// Define math operators for the ImGui vector types
+// You're meant to use your own math vector types but I don't think we'll need them
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
@@ -16,6 +22,7 @@
 #include <tracy/Tracy.hpp>
 
 #include "Config.hpp"
+#include "Engine.hpp"
 
 namespace {
     auto PushBackStyleVar = [](size_t i, std::function<void()> f) {
@@ -26,6 +33,21 @@ namespace {
     bool enableTextWindowBorder = true;
     bool enableDeathPopup = true;
     bool enableFinishPopup = true;
+
+    ImVec2 WindowSize(const Context &context) {
+        return {static_cast<float>(context.extent.width),
+                static_cast<float>(context.extent.height)};
+    }
+
+    ImGuiViewport CalcPlayerViewport(VkExtent2D extent, size_t activePlayerCount, size_t playerId) {
+        ImGuiViewport viewport = {};
+
+        VkViewport vkViewport = CalcViewport(extent, activePlayerCount, playerId);
+        viewport.WorkPos = {vkViewport.x, vkViewport.y};
+        viewport.WorkSize = {vkViewport.width, vkViewport.height};
+
+        return viewport;
+    }
 }
 
 void ImGuiRenderer::Initialize(const Context &context) {
@@ -109,7 +131,177 @@ void ImGuiRenderer::RemoveTextures() {
     textureDatas.clear();
 }
 
-void ImGuiRenderer::NewHeartSprite(const ImVec2 &offset) {
+void ImGuiRenderer::BeginMainMenu(const Context &context) {
+    // Style var counter for main menu window
+    size_t mainMenuWindowSv = 0;
+    // No window border
+    mainMenuWindowSv = PushBackStyleVar(mainMenuWindowSv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); });
+    // Make the window fit the screen exactly
+    mainMenuWindowSv = PushBackStyleVar(mainMenuWindowSv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(0, 0)); });
+    mainMenuWindowSv = PushBackStyleVar(mainMenuWindowSv, []() { ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0)); });
+    mainMenuWindowSv = PushBackStyleVar(mainMenuWindowSv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); });
+
+    ImVec2 windowSize = WindowSize(context);
+    ImGui::SetNextWindowSize(windowSize);
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    ImGui::SetNextWindowBgAlpha(0.5f);
+
+    // Flags to get a blank window to draw on
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                             ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+                             ImGuiWindowFlags_NoSavedSettings;
+
+    ImGui::Begin(std::string("Main Menu").c_str(), nullptr, flags);
+
+    ImGui::PopStyleVar(mainMenuWindowSv);
+
+    std::string mainMenuStr = "Main Menu";
+    ImVec2 mainMenuStrSize = ImGui::CalcTextSize(mainMenuStr.c_str());
+    ImVec2 mainMenuStrOffset = windowSize - mainMenuStrSize;
+    ImGui::SetCursorScreenPos(ImVec2(mainMenuStrOffset.x / 2.0f , mainMenuStrOffset.y / 3.0f));
+    ImGui::Text("Main Menu");
+}
+
+const char *
+ImGuiRenderer::AddMainMenuPlayerCountSelection(const Context &context,
+                                               const std::vector<const char *> &playerCounts,
+                                               const char *playerCountSelection) {
+    ImVec2 windowSize = WindowSize(context);
+
+    const char *activeItem = playerCountSelection;
+
+    float sceneSelectionDropdownWidth = windowSize.x * 0.25f;
+    ImGui::SetCursorPosX((windowSize.x - sceneSelectionDropdownWidth) / 2.0f);
+
+    ImGui::Text("Select Number of Players");
+
+    ImGui::SetCursorPosX((windowSize.x - sceneSelectionDropdownWidth) / 2.0f);
+    ImGui::PushItemWidth(sceneSelectionDropdownWidth);
+
+    if (ImGui::BeginCombo("##Main Menu Player Count Selection", playerCountSelection)) {
+        for (size_t i = 0; i < playerCounts.size(); ++i) {
+            bool isSelected = playerCountSelection == playerCounts[i];
+
+            if (ImGui::Selectable(playerCounts[i], isSelected)) {
+                activeItem = playerCounts[i];
+            }
+
+            if (isSelected) {
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+
+        ImGui::EndCombo();
+    }
+
+    ImGui::PopItemWidth();
+
+    return activeItem;
+}
+
+const std::filesystem::path *
+ImGuiRenderer::AddMainMenuSceneSelection(const Context &context,
+                                         const std::vector<std::filesystem::path *> &scenePaths,
+                                         const std::filesystem::path *scenePathSelection) {
+    ImVec2 windowSize = WindowSize(context);
+
+    const std::filesystem::path *activeItem = scenePathSelection;
+
+    float sceneSelectionDropdownWidth = windowSize.x * 0.25f;
+    ImGui::SetCursorPosX((windowSize.x - sceneSelectionDropdownWidth) / 2.0f);
+
+    ImGui::Text("Select Level");
+
+    ImGui::SetCursorPosX((windowSize.x - sceneSelectionDropdownWidth) / 2.0f);
+    ImGui::PushItemWidth(sceneSelectionDropdownWidth);
+
+    if (ImGui::BeginCombo("##Main Menu Scene Selection", scenePathSelection->string().c_str())) {
+        for (size_t i = 0; i < scenePaths.size(); ++i) {
+            bool isSelected = scenePathSelection == scenePaths[i];
+
+            if (ImGui::Selectable(scenePaths[i]->string().c_str(), isSelected)) {
+                activeItem = scenePaths[i];
+            }
+
+            if (isSelected) {
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+
+        ImGui::EndCombo();
+    }
+
+    ImGui::PopItemWidth();
+
+    return activeItem;
+}
+
+const char *ImGuiRenderer::NewPlayerCountSelection(const std::vector<const char *> &playerCounts,
+                                                   const char *playerCountSelection) {
+    const char *activeItem = playerCountSelection;
+
+    ImGui::Text("Select Number of Players");
+
+    if (ImGui::BeginCombo("##Player Count Selection", playerCountSelection)) {
+        for (size_t i = 0; i < playerCounts.size(); ++i) {
+            bool isSelected = playerCountSelection == playerCounts[i];
+
+            if (ImGui::Selectable(playerCounts[i], isSelected)) {
+                activeItem = playerCounts[i];
+            }
+
+            if (isSelected) {
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+
+        ImGui::EndCombo();
+    }
+
+    return activeItem;
+}
+
+const std::filesystem::path *
+ImGuiRenderer::NewSceneSelection(const std::vector<std::filesystem::path *> &scenePaths,
+                                 const std::filesystem::path *scenePathSelection) {
+    const std::filesystem::path *activeItem = scenePathSelection;
+
+    ImGui::Text("Select Level");
+
+    if (ImGui::BeginCombo("##Scene Selection", scenePathSelection->string().c_str())) {
+        for (size_t i = 0; i < scenePaths.size(); ++i) {
+            bool isSelected = scenePathSelection == scenePaths[i];
+
+            if (ImGui::Selectable(scenePaths[i]->string().c_str(), isSelected)) {
+                activeItem = scenePaths[i];
+            }
+
+            if (isSelected) {
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+
+        ImGui::EndCombo();
+    }
+
+    return activeItem;
+}
+
+void ImGuiRenderer::AddLoadSceneButton(const std::filesystem::path &pendingScenePath,
+                                       size_t pendingPlayerCount) {
+    std::string loadSceneStr = "Load Scene";
+    ImGui::SameLine();
+    if (ImGui::Button(loadSceneStr.c_str())) {
+        SPDLOG_INFO("Load Scene");
+        Engine::get().ChangeScene(pendingScenePath, pendingPlayerCount);
+    }
+}
+
+void ImGuiRenderer::EndMainMenu() {
+    ImGui::End();
+}
+
+void ImGuiRenderer::NewHeartSprite(const ImVec2 &offset, size_t playerId) {
     // TODO: Remove hardcoded image size
     MyTextureData &myTexData = textureDatas["heart"];
     ImVec2 imageSize = ImVec2(myTexData.Width * 0.02f, myTexData.Height * 0.02f);
@@ -139,7 +331,7 @@ void ImGuiRenderer::NewHeartSprite(const ImVec2 &offset) {
                              ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
                              ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
 
-    ImGui::Begin("Heart", nullptr, flags);
+    ImGui::Begin(fmt::format("Heart##{}", playerId).c_str(), nullptr, flags);
     ImGui::Image((ImTextureID)myTexData.DS, imageSize);
 
     ImGui::PopStyleVar(sv);
@@ -147,8 +339,9 @@ void ImGuiRenderer::NewHeartSprite(const ImVec2 &offset) {
     ImGui::End();
 }
 
-void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data) {
-    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data,
+                                    size_t activePlayerCount, size_t playerId) {
+    ImGuiViewport viewport = CalcPlayerViewport(Context::get().extent, activePlayerCount, playerId);
 
     size_t deathCount = data.deathCount;
 
@@ -168,7 +361,7 @@ void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data) {
     }
 
     // Bottom right of viewport. NOTE: hardcoded bottom right positioning
-    ImVec2 pos = ImVec2(viewport->WorkPos.x + viewport->WorkSize.x, viewport->WorkPos.y + viewport->WorkSize.y);
+    ImVec2 pos = ImVec2(viewport.WorkPos.x + viewport.WorkSize.x, viewport.WorkPos.y + viewport.WorkSize.y);
     ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
 
     // Make the window fit the text exactly
@@ -186,21 +379,22 @@ void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data) {
                              ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
                              ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
 
-    ImGui::Begin("Death Counter Window", nullptr, flags);
+    ImGui::Begin(fmt::format("Death Counter Window##{}", playerId).c_str(), nullptr, flags);
 
     // Text
     ImGui::Text("%s", str.c_str());
 
     // Heart
     ImVec2 offset = {pos.x - textSize.x, pos.y};
-    NewHeartSprite(offset);
+    NewHeartSprite(offset, playerId);
 
     ImGui::PopStyleVar(sv);
 
     ImGui::End();
 }
 
-void ImGuiRenderer::NewDeathPopup(const gui::DeathPopupData &data) {
+void ImGuiRenderer::NewDeathPopup(const gui::DeathPopupData &data,
+                                  size_t activePlayerCount, size_t playerId) {
     if (!enableDeathPopup) {
         // Early return
         return;
@@ -212,7 +406,7 @@ void ImGuiRenderer::NewDeathPopup(const gui::DeathPopupData &data) {
         return;
     }
 
-    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+    ImGuiViewport viewport = CalcPlayerViewport(Context::get().extent, activePlayerCount, playerId);
 
     std::string str = fmt::format("DEATH POPUP");
 
@@ -228,7 +422,7 @@ void ImGuiRenderer::NewDeathPopup(const gui::DeathPopupData &data) {
     }
 
     // Middle of viewport. NOTE: hardcoded middle of viewport positioning
-    ImVec2 pos = ImVec2(viewport->WorkPos.x + viewport->WorkSize.x / 2.0f, viewport->WorkPos.y + viewport->WorkSize.y / 2.0f);
+    ImVec2 pos = ImVec2(viewport.WorkPos.x + viewport.WorkSize.x / 2.0f, viewport.WorkPos.y + viewport.WorkSize.y / 2.0f);
     ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
 
     // Make the window fit the text exactly
@@ -246,7 +440,7 @@ void ImGuiRenderer::NewDeathPopup(const gui::DeathPopupData &data) {
                              ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
                              ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
 
-    ImGui::Begin("Death Popup Window", nullptr, flags);
+    ImGui::Begin(fmt::format("Death Popup Window##{}", playerId).c_str(), nullptr, flags);
 
     // Text
     ImGui::Text("%s", str.c_str());
@@ -256,7 +450,8 @@ void ImGuiRenderer::NewDeathPopup(const gui::DeathPopupData &data) {
     ImGui::End();
 }
 
-void ImGuiRenderer::NewFinishPopup(const gui::FinishPopupData &data) {
+void ImGuiRenderer::NewFinishPopup(const gui::FinishPopupData &data,
+                                   size_t activePlayerCount, size_t playerId) {
     if (!enableFinishPopup) {
         // Early return
         return;
@@ -268,7 +463,7 @@ void ImGuiRenderer::NewFinishPopup(const gui::FinishPopupData &data) {
         return;
     }
 
-    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+    ImGuiViewport viewport = CalcPlayerViewport(Context::get().extent, activePlayerCount, playerId);
 
     std::string str = fmt::format("FINISH POPUP");
 
@@ -284,7 +479,7 @@ void ImGuiRenderer::NewFinishPopup(const gui::FinishPopupData &data) {
     }
 
     // Middle of viewport. NOTE: hardcoded middle of viewport positioning
-    ImVec2 pos = ImVec2(viewport->WorkPos.x + viewport->WorkSize.x / 2.0f, viewport->WorkPos.y + viewport->WorkSize.y / 2.0f);
+    ImVec2 pos = ImVec2(viewport.WorkPos.x + viewport.WorkSize.x / 2.0f, viewport.WorkPos.y + viewport.WorkSize.y / 2.0f);
     ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
 
     // Make the window fit the text exactly
@@ -302,7 +497,7 @@ void ImGuiRenderer::NewFinishPopup(const gui::FinishPopupData &data) {
                              ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
                              ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
 
-    ImGui::Begin("Finish Popup Window", nullptr, flags);
+    ImGui::Begin(fmt::format("Finish Popup Window##{}", playerId).c_str(), nullptr, flags);
 
     // Text
     ImGui::Text("%s", str.c_str());
@@ -312,8 +507,9 @@ void ImGuiRenderer::NewFinishPopup(const gui::FinishPopupData &data) {
     ImGui::End();
 }
 
-void ImGuiRenderer::NewTimer(const gui::TimerData &data) {
-    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+void ImGuiRenderer::NewTimer(const gui::TimerData &data,
+                             size_t activePlayerCount, size_t playerId) {
+    ImGuiViewport viewport = CalcPlayerViewport(Context::get().extent, activePlayerCount, playerId);
 
     float time = data.time;
 
@@ -333,7 +529,7 @@ void ImGuiRenderer::NewTimer(const gui::TimerData &data) {
     }
 
     // Top right of viewport. NOTE: hardcoded top right positioning
-    ImVec2 pos = ImVec2(viewport->WorkPos.x + viewport->WorkSize.x, viewport->WorkPos.y);
+    ImVec2 pos = ImVec2(viewport.WorkPos.x + viewport.WorkSize.x, viewport.WorkPos.y);
     ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
 
     // Make the window fit the text exactly
@@ -351,7 +547,7 @@ void ImGuiRenderer::NewTimer(const gui::TimerData &data) {
                              ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
                              ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
 
-    ImGui::Begin("Timer Window", nullptr, flags);
+    ImGui::Begin(fmt::format("Timer Window##{}", playerId).c_str(), nullptr, flags);
 
     // Text
     ImGui::Text("%s", str.c_str());
@@ -434,6 +630,47 @@ void ImGuiRenderer::Image(std::string const &imageName, ImVec2 position, ImVec2 
     ImGui::End();
 }
 
+void ImGuiRenderer::NewActivePlayerCountOverride(
+    Scene *scene, gui::Settings::ActivePlayerCountOverride &settings) {
+    ImGui::Text("Active Player Count Override");
+    if (ImGui::BeginCombo("##Active Player Count Override", settings.activeItem)) {
+        for (size_t i = 0; i < settings.items.size(); ++i) {
+            bool isSelected = settings.activeItem == settings.items[i];
+
+            if (ImGui::Selectable(settings.items[i], isSelected)) {
+                settings.activeItem = settings.items[i];
+            }
+
+            if (isSelected) {
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+
+        ImGui::EndCombo();
+    }
+
+    if (settings.activeItem) {
+        if (strcmp(settings.activeItem, "INACTIVE") == 0) {
+            scene->SetActivePlayerCountOverrideInactive();
+        } else {
+            size_t playerCount = 0;
+            [[maybe_unused]] int ret = sscanf(settings.activeItem, "%zu", &playerCount);
+            assert(ret);
+            scene->SetActivePlayerCountOverride(playerCount);
+        }
+    }
+}
+
+void ImGuiRenderer::NewCharacterInfo(const CharacterEntity *character) {
+    if (ImGui::CollapsingHeader(character->GetName().c_str())) {
+        // Add camera position
+        ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)",
+                    character->GetCamera()->GetPosition().x,
+                    character->GetCamera()->GetPosition().y,
+                    character->GetCamera()->GetPosition().z);
+    }
+}
+
 void ImGuiRenderer::Text(std::string const &text, ImVec2 position)
 {
     // flip position 0-1 to 1-0
@@ -494,7 +731,7 @@ void ImGuiRenderer::EndFrame() {
     ImGui::EndFrame();
 }
 
-void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::shared_ptr<Camera>& camera)
+void ImGuiRenderer::Update(Scene *scene)
 {
     ZoneScopedN("ImGuiRenderer::Update");
 
@@ -504,17 +741,10 @@ void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::share
         ImVec4(0.76, 0.5, 0.0, 1.0), "FPS: (%.1f FPS), %.3f ms/frame",
         ImGui::GetIO().Framerate, 1000.0f / ImGui::GetIO().Framerate);
 
-    // Add camera position
-    ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)",
-        camera->GetPosition().x,
-        camera->GetPosition().y,
-        camera->GetPosition().z
-    );
-
    ImGui::Text("Directional Light: (%.2f, %.2f, %.2f)",
-        scene->GetLights()[0].position.x,
-        scene->GetLights()[0].position.y,
-        scene->GetLights()[0].position.z
+        LightManager::getInstance().GetLights()[0]->position.x,
+        LightManager::getInstance().GetLights()[0]->position.y,
+        LightManager::getInstance().GetLights()[0]->position.z
     );
 
     static bool initialized = false;
@@ -522,33 +752,22 @@ void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::share
     static float SunAzimuthal = 0.0f;
     static const float distance = 1.0f;
 
-    auto &lights = scene->GetLights();
+    auto lights = LightManager::getInstance().GetLights();
     if (lights.empty())
         return;
 
-    auto &sunLight = lights[0];
+    auto *sunLight = lights[0];
 
     if (!initialized) {
         SunElevation = 0.89f; // default elevation // -21
         SunAzimuthal = 0.0f; // default azimuth // 45
-        sunLight.view = -43.0f;
-        sunLight.far = 50.0f;
-        sunLight.near = -125.0f;
+        //sunLight.view = -43.0f;
+        //sunLight.far = 50.0f;
+        //sunLight.near = -125.0f;
         initialized = true;
     }
 
-    // Phis is elevation
-    // Theta is azimuthal
-    const float ElevationPhi = (SunElevation);
-    const float AzimuthalTheta = (SunAzimuthal);
 
-    const float x = cosf(ElevationPhi) * cosf(AzimuthalTheta) * distance;
-    const float y = sinf(ElevationPhi) * distance;
-    const float z = cosf(ElevationPhi) * sinf(AzimuthalTheta) * distance;
-
-    sunLight.position.x = x;
-    sunLight.position.y = y;
-    sunLight.position.z = z;
 
     if (ImGui::CollapsingHeader("Directional Light"))
     {
@@ -557,20 +776,20 @@ void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::share
         ImGui::SliderFloat("Azimuthal - Theta", &SunAzimuthal, -3.141f, 3.141f, "%.2f");
 
         ImGui::Text("Light Camera Settings");
-        ImGui::SliderFloat("View", &sunLight.view, -200.0f, 200.0f, "%.2f");
-        ImGui::SliderFloat("Near", &sunLight.near, -200.0f, 1.0f, "%.2f");
-        ImGui::SliderFloat("Far", &sunLight.far, 0.0f, 50.0f, "%.2f");
+        ImGui::SliderFloat("View", &sunLight->view, -200.0f, 200.0f, "%.2f");
+        ImGui::SliderFloat("Near", &sunLight->near_, -200.0f, 1.0f, "%.2f");
+        ImGui::SliderFloat("Far", &sunLight->far_, 0.0f, 50.0f, "%.2f");
 
         ImGui::SliderFloat("Shadow bias: ", &vkutil::ShadowBias, 0.0f, 10.0f);
         ImGui::SliderFloat("Shadow slope: ", &vkutil::ShadowSlope, 0.0f, 10.0f);
     }
 
     if (ImGui::CollapsingHeader("Lights")) {
-        auto &lights = scene->GetLights();
+        auto lights = LightManager::getInstance().GetLights();
         for (size_t i = 1; i < lights.size() - 1; ++i) {
-            if (lights[i].Type != LightType::Directional) {
+            if (lights[i]->Type != LightType::Directional) {
                 std::string label = "Light " + std::to_string(i) + " Position";
-                ImGui::SliderFloat3(label.c_str(), &lights[i].position.x, -10.0f, 10.0f, "%.2f");
+                ImGui::SliderFloat3(label.c_str(), &lights[i]->position.x, -10.0f, 10.0f, "%.2f");
             }
         }
     }
@@ -605,7 +824,7 @@ void ImGuiRenderer::Update(const std::shared_ptr<Scene>& scene, const std::share
     {
         ImGui::Begin("Debug Textures");
         for (size_t i = 0; i < textureIDs.size(); ++i) {
-            ImGui::Image(textureIDs[i], ImVec2(800, 600));
+            ImGui::Image(textureIDs[i], ImVec2(800 / 2, 600 / 2));
         }
         ImGui::End();
     }
@@ -644,5 +863,5 @@ void ImGuiRenderer::Shutdown(const Context& context)
 void ImGuiRenderer::AddTexture(VkSampler sampler, VkImageView imageView, VkImageLayout imageLayout)
 {
     ImTextureID textureID = ImGui_ImplVulkan_AddTexture(sampler, imageView, imageLayout);
-	textureIDs.push_back(static_cast<void*>(textureID));
+    textureIDs.push_back(static_cast<void*>(textureID));
 }

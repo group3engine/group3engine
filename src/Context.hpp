@@ -12,6 +12,12 @@
 #include "Image.hpp"
 
 class Context {
+public:
+    static Context& get() {
+        return *kcontext;
+    }
+private:
+    static Context *kcontext;
   public:
     Context();
     void Destroy();

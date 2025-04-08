@@ -9,14 +9,15 @@
 #include "Pipeline.hpp"
 #include "RenderPass.hpp"
 
-DepthPrepass::DepthPrepass(Context &context, std::shared_ptr<Scene> scene, std::shared_ptr<Camera> camera)
+#include "RenderPassCommon.hpp"
+
+DepthPrepass::DepthPrepass(Context &context, Scene *scene)
     : context{context},
-      scene{scene},
-      camera{camera},
+      m_Scene{scene},
       m_Pipeline{VK_NULL_HANDLE},
       m_PipelineLayout{VK_NULL_HANDLE},
-      m_descriptorSetLayout{VK_NULL_HANDLE},
-      m_descriptorSets{},
+      mPlayerDescriptorSetLayout{VK_NULL_HANDLE},
+      mPlayerDescriptorSets{},
       m_renderPass{VK_NULL_HANDLE},
       m_framebuffer{VK_NULL_HANDLE},
       m_width{0},
@@ -46,7 +47,11 @@ DepthPrepass::~DepthPrepass() {
     vkDestroyPipelineLayout(context.device, m_PipelineLayout, nullptr);
     vkDestroyRenderPass(context.device, m_renderPass, nullptr);
     vkDestroyFramebuffer(context.device, m_framebuffer, nullptr);
-    vkDestroyDescriptorSetLayout(context.device, m_descriptorSetLayout, nullptr);
+    vkDestroyDescriptorSetLayout(context.device, mPlayerDescriptorSetLayout, nullptr);
+    vkDestroyDescriptorSetLayout(context.device, skinDescriptorSetLayout, nullptr);
+
+    vkDestroyPipeline(context.device, m_skinnedPipeline.first, nullptr);
+    vkDestroyPipelineLayout(context.device, m_skinnedPipeline.second, nullptr);
 }
 
 void DepthPrepass::Resize() {
@@ -67,7 +72,7 @@ void DepthPrepass::Resize() {
     CreateFramebuffer();
 }
 
-void DepthPrepass::Execute(VkCommandBuffer cmd) const {
+void DepthPrepass::Execute(VkCommandBuffer cmd) {
     ZoneScopedN("DepthPrepass::Execute");
     TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "DepthPrepass", tracy::Color::Crimson);
 
@@ -86,33 +91,34 @@ void DepthPrepass::Execute(VkCommandBuffer cmd) const {
     beginInfo.clearValueCount = 1;
     beginInfo.pClearValues = clearValues;
 
-    VkViewport viewport{};
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.width = (float)context.extent.width;
-    viewport.height = (float)context.extent.height;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-    vkCmdSetViewport(cmd, 0, 1, &viewport);
-
-    VkRect2D scissor{};
-    scissor.offset = {0, 0};
-    scissor.extent = {context.extent.width, context.extent.height};
-    vkCmdSetScissor(cmd, 0, 1, &scissor);
-
     vkCmdBeginRenderPass(cmd, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
-    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_descriptorSets[vkutil::currentFrame], 0, nullptr);
 
-    // Draw front freshes
-    //
-    scene->DrawOpaque(cmd, m_PipelineLayout);
+    size_t playerCount = m_Scene->GetActivePlayerCount();
+    for (size_t playerId = 0; playerId < playerCount; ++playerId) {
+        //m_Skybox->Execute(cmd, playerCount, playerId);
 
-    // scene->RenderFrontMeshes(cmd, m_PipelineLayout);
-    //
-    //// Doing depth-prepass on alpha masking objects will mean discard will break later
-    // vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
-    // scene->RenderBackMeshes(cmd, m_PipelineLayout);
+        // NOTE: Viewport and scissor needs to be set again after executing skybox pass
+        // TODO: Investigate more
+        VkViewport viewport = CalcViewport(context.extent, playerCount, playerId);
+        vkCmdSetViewport(cmd, 0, 1, &viewport);
+
+        VkRect2D scissor{};
+        scissor.offset = {static_cast<int32_t>(viewport.x), static_cast<int32_t>(viewport.y)};
+        scissor.extent = {static_cast<uint32_t>(viewport.width),
+                          static_cast<uint32_t>(viewport.height)};
+        vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &mPlayerDescriptorSets[playerId][vkutil::currentFrame], 0, nullptr);
+
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_skinnedPipeline.first);
+        m_Scene->DrawSkinned(cmd, m_skinnedPipeline.second);
+
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
+        m_Scene->DrawOpaque(cmd, m_PipelineLayout);
+
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
+        m_Scene->DrawAlphaMasked(cmd, m_PipelineLayout);
+    }
     vkCmdEndRenderPass(cmd);
 
 #ifdef _DEBUG
@@ -121,36 +127,52 @@ void DepthPrepass::Execute(VkCommandBuffer cmd) const {
 }
 
 void DepthPrepass::CreatePipeline() {
-    VkPushConstantRange pushConstantRange = {
-        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-        .offset = 0,
-        .size = sizeof(vkutil::MeshPushConstants)};
+    std::vector<VkPushConstantRange> pushConstants = {
+
+        {.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+         .offset = 0,
+         .size = sizeof(vkutil::MeshPushConstants)},
+    };
 
     auto pipelineResult = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
-                              .AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "default.vert.spv", ShaderType::VERTEX)
-                              .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-                              .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}})
-                              .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE)
-                              .SetPipelineLayout({{m_descriptorSetLayout, vkutil::materialDescriptorSetLayout}}, pushConstantRange)
-                              .SetSampling(VK_SAMPLE_COUNT_1_BIT)
-                              .AddBlendAttachmentState()
-                              .SetDepthState(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL) // Depth write and test enabled
-                              .SetRenderPass(m_renderPass)
-                              .Build();
+        .AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "default.vert.spv", ShaderType::VERTEX)
+        .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+        .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}})
+        .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE)
+        .SetPipelineLayout({{mPlayerDescriptorSetLayout, vkutil::materialDescriptorSetLayout}}, pushConstants)
+        .SetSampling(VK_SAMPLE_COUNT_1_BIT)
+        .AddBlendAttachmentState()
+        .SetDepthState(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL) // Depth write and test enabled
+        .SetRenderPass(m_renderPass)
+        .Build();
 
     m_Pipeline = pipelineResult.first;
     m_PipelineLayout = pipelineResult.second;
+
+    auto skinnedPipeline = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
+        .AddShader(SKINNED_VERTEX_SHADER, ShaderType::VERTEX)
+        .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+        .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}})
+        .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE)
+        .SetPipelineLayout( {{mPlayerDescriptorSetLayout, vkutil::materialDescriptorSetLayout, skinDescriptorSetLayout}}, pushConstants)
+        .SetSampling(VK_SAMPLE_COUNT_1_BIT)
+        .AddBlendAttachmentState()
+        .SetDepthState(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL)
+        .SetRenderPass(m_renderPass)
+        .Build();
+
+    m_skinnedPipeline = skinnedPipeline;
 }
 
 void DepthPrepass::CreateRenderPass() {
     RenderPass builder(context.device, 1);
 
     m_renderPass = builder
-                       .AddAttachment(VK_FORMAT_D32_SFLOAT, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL)
-                       .SetDepthAttachmentRef(0, 0, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
-                       .AddDependency(VK_SUBPASS_EXTERNAL, 0, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT)
-                       .AddDependency(0, VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT)
-                       .Build();
+        .AddAttachment(VK_FORMAT_D32_SFLOAT, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL)
+        .SetDepthAttachmentRef(0, 0, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+        .AddDependency(VK_SUBPASS_EXTERNAL, 0, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT)
+        .AddDependency(0, VK_SUBPASS_EXTERNAL, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT)
+        .Build();
 }
 
 void DepthPrepass::CreateFramebuffer() {
@@ -170,23 +192,32 @@ void DepthPrepass::CreateFramebuffer() {
 }
 
 void DepthPrepass::BuildDescriptorSetLayouts() {
-    std::vector<VkDescriptorSetLayoutBinding> bindings = {
-        vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT),
-    };
+    {
+        std::vector<VkDescriptorSetLayoutBinding> bindings = {
+            vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT),
+        };
 
-    m_descriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
+        mPlayerDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
+        skinDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}});
+    }
 }
 
 void DepthPrepass::BuildDescriptors() {
-    m_descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
-    vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_descriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, m_descriptorSets);
+    for (size_t playerId = 0; playerId < GlobalConfig::maxPlayers; ++playerId) {
+        auto &descriptorSets = mPlayerDescriptorSets[playerId];
 
-    // Camera Transform UBO
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
-        VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = camera->GetBuffers()[i].buffer;
-        bufferInfo.offset = 0;
-        bufferInfo.range = sizeof(CameraTransform);
-        vkutil::UpdateDescriptorSet(context, 0, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+        descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+        vkutil::AllocateDescriptorSets(context, context.descriptorPool, mPlayerDescriptorSetLayout,
+                                       vkutil::MAX_FRAMES_IN_FLIGHT, descriptorSets);
+
+        // Camera Transform UBO
+        for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+            VkDescriptorBufferInfo bufferInfo{};
+            bufferInfo.buffer = m_Scene->GetCameraBuffers(playerId)[i].buffer;
+            bufferInfo.offset = 0;
+            bufferInfo.range = sizeof(CameraTransform);
+            vkutil::UpdateDescriptorSet(context, 0, bufferInfo, descriptorSets[i],
+                                        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+        }
     }
 }

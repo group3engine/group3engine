@@ -1,0 +1,80 @@
+//
+// Created by thomas on 01/04/25.
+//
+
+#include "Networking.hpp"
+
+Networking::Networking()
+{
+    my_socket = socket(AF_INET, SOCK_DGRAM, 0);
+    if (my_socket < 0)
+    {
+        std::cerr << "Socket creation falied";
+        return;
+    }
+    struct timeval tv;
+    tv.tv_sec = 2;  // 2 seconds timeout
+    tv.tv_usec = 0;
+    setsockopt(my_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+    memset(&server_addr, 0, sizeof(server_addr));
+    memset(&client_addr, 0, sizeof(client_addr));
+
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+    server_addr.sin_port = htons(PORT);
+
+
+    if(bind(my_socket, (const struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
+    {
+        std::cerr << "bind failed";
+        Close();
+        return;
+    }
+    // Set the client address to the hard coded values
+    client_addr.sin_family = AF_INET;
+    client_addr.sin_port = htons(9999);
+    if (inet_pton(AF_INET, "132.145.48.206", &client_addr.sin_addr) <= 0)
+    {
+        std::cerr << "Invalid client address" << std::endl;
+    }
+
+    messages.reserve(100);
+    listen_thread = std::thread(&Networking::Listen, this);
+}
+
+void Networking::Listen()
+{
+    while(running)
+    {
+        struct sockaddr_in this_client;
+        socklen_t length = sizeof(this_client);
+        int n = recvfrom(my_socket, buffer.data(), BUFFER_SIZE, 0, (struct sockaddr *)&this_client, &length);
+        if (n < 0)
+        {
+            std::cerr << "Receive failed" << std::endl;
+            continue;
+        }
+        buffer[n] = '\0';
+        // add the data to the messages vector
+        {
+            std::lock_guard<std::mutex> lock(messages_mutex);
+            messages.push_back(buffer);
+        }
+    }
+}
+
+void Networking::Close() {
+    int status = 0;
+
+#ifdef _WIN32
+    status = shutdown(my_socket, SD_BOTH);
+    if (status == 0) {
+        status = closesocket(my_socket);
+    }
+#else
+    status = shutdown(sock, SHUT_RDWR);
+    if (status == 0) {
+        status = close(my_socket);
+    }
+#endif
+}
