@@ -46,26 +46,23 @@
 
 namespace {
     // TODO: Improve this temporary scene switching mechanism
+    std::filesystem::path mainMenuPath{"MainMenu/main_menu.gltf"};
 
-    enum class SceneValue {
-        OBBY,
-        OBBY_TEST_SCENE
+    const std::vector<std::filesystem::path *> scenePaths = {
+        &Sample::SampleObby,
+        &Sample::SampleObbyTestScene
     };
 
-    SceneValue sceneValue{SceneValue::OBBY_TEST_SCENE};
+    const std::filesystem::path *scenePathSelection = scenePaths[0];
 
-    const std::filesystem::path &SwitchScene() {
-        if (sceneValue == SceneValue::OBBY) {
-            sceneValue = SceneValue::OBBY_TEST_SCENE;
-            return Sample::SampleObbyTestScene;
-        } else if (sceneValue == SceneValue::OBBY_TEST_SCENE) {
-            sceneValue = SceneValue::OBBY;
-            return Sample::SampleObby;
-        } else {
-            SPDLOG_ERROR("Unaccounted for case.");
-            exit(EXIT_FAILURE);
-        }
-    }
+    const std::vector<const char *> playerCounts = {
+        "1",
+        "2",
+        "3",
+        "4"
+    };
+
+    const char *playerCountSelection = playerCounts[0];
 }
 
 Engine::Engine() {
@@ -104,7 +101,9 @@ bool Engine::Initialize() {
 
     PhysicsManager::get().StartUp();
 
-    mScene->Load(Sample::SampleObbyTestScene);
+    constexpr size_t mainMenuPlayerCount = 1;
+    mScene->Load(mainMenuPath, mainMenuPlayerCount);
+    m_scenePath = mScene->GetSceneFilename();
 
     mRenderer->CreateRenderPasses();
     // call the scene awake function
@@ -142,10 +141,10 @@ void Engine::Shutdown() {
     PhysicsManager::get().ShutDown();
 }
 
-void Engine::ChangeScene(const std::filesystem::path &filePath)
-{
+void Engine::ChangeScene(const std::filesystem::path &pendingScenePath, size_t pendingPlayerCount) {
     m_sceneNeedsChanging = true;
-    m_scenePath = filePath;
+    mPendingScenePath = pendingScenePath;
+    mPendingScenePlayerCount = pendingPlayerCount;
 }
 
 void Engine::Run() {
@@ -157,6 +156,8 @@ void Engine::Run() {
     m_lastFrameTime = glfwGetTime();
 
     while (m_isRunning && !glfwWindowShouldClose(m_context.mWindow)) {
+        mIsMainMenu = mScene->GetSceneFilename() == "main_menu";
+
         double currentFrameTime = glfwGetTime();
         GlobalUtil::deltaTime = currentFrameTime - m_lastFrameTime;
         m_lastFrameTime = currentFrameTime;
@@ -169,20 +170,23 @@ void Engine::Run() {
 
         Update(GlobalUtil::deltaTime);
 
+        if (mIsMainMenu) {
+            ImGuiRenderer::BeginMainMenu(m_context);
+            playerCountSelection = ImGuiRenderer::AddMainMenuPlayerCountSelection(m_context, playerCounts, playerCountSelection);
+            scenePathSelection = ImGuiRenderer::AddMainMenuSceneSelection(m_context, scenePaths, scenePathSelection);
+            ImGuiRenderer::AddLoadSceneButton(*scenePathSelection, std::stoi(playerCountSelection));
+            ImGuiRenderer::EndMainMenu();
+        }
+
         ImGuiRenderer::EndFrame();
 
         Render();
 
         if (m_sceneNeedsChanging)
         {
-            ChangeSceneFR();
+            ChangeSceneFR(mPendingScenePath, mPendingScenePlayerCount);
             m_sceneNeedsChanging = false;
         }
-
-        if (IsKeyPressed(KEY::eC)) {
-            mScene->SwitchCamera();
-        }
-
 
         FrameMark;
     }
@@ -204,7 +208,7 @@ void Engine::UpdateLogic() {
     }
 }
 
-void Engine::ChangeSceneFR()
+void Engine::ChangeSceneFR(const std::filesystem::path &scenePath, size_t playerCount)
 {
     // vkDestroyBuffer():  can't be called on VkBuffer that is currently in use by VkCommandBuffer
     vkQueueWaitIdle(m_context.graphicsQueue);
@@ -231,7 +235,7 @@ void Engine::ChangeSceneFR()
 
     m_isLoading = true;
     m_progress = 0.f;
-    std::thread loadingScreen(&Engine::RenderLoadingScreen, this);
+    // std::thread loadingScreen(&Engine::RenderLoadingScreen, this);
 
 
 
@@ -242,7 +246,10 @@ void Engine::ChangeSceneFR()
     assert(bodyIds.empty());
 #endif // #ifndef NDEBUG
     m_progress = 25.f;
-    mScene->Load(m_scenePath);
+
+    mScene->Load(scenePath, playerCount);
+    m_scenePath = mScene->GetSceneFilename();
+
     m_progress = 75.f;
 
     // Add back UI textures
@@ -252,12 +259,12 @@ void Engine::ChangeSceneFR()
     mScene->Awake();
     m_progress = 100.f;
     // sleep for 1 second
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    // std::this_thread::sleep_for(std::chrono::seconds(1));
     // end the loading screen
     m_isLoading = false;
     // wait for loading screen thread to finish
-    while (!loadingScreen.joinable()) {}
-    loadingScreen.join();
+    // while (!loadingScreen.joinable()) {}
+    // loadingScreen.join();
 }
 
 void Engine::Update(double deltaTime) {
@@ -265,13 +272,12 @@ void Engine::Update(double deltaTime) {
 
     UpdateLogic();
     mScene->Update(deltaTime);
-    mScene->UpdateUi(deltaTime);
 
 // Draw physics before physics update
 // TODO: Understand why Jolt does this
 #ifdef JPH_DEBUG_RENDERER
     if (GlobalConfig::enablePhysicsDebugRenderer) {
-        auto cameraPos = mScene->GetActiveCamera()->GetPosition();
+        auto cameraPos = mScene->GetCameras()[0]->GetPosition();
         mDebugRenderer.get()->SetCameraPos(RVec3{cameraPos.x, cameraPos.y, cameraPos.z});
 
         // Create render primitives: vertex buffers, index buffers and store them for later
@@ -281,6 +287,17 @@ void Engine::Update(double deltaTime) {
 #endif // JPH_DEBUG_RENDERER
 
     PhysicsManager::get().UpdatePhysics(deltaTime);
+
+    if (!mIsMainMenu) {
+        mScene->UpdateUi(deltaTime);
+
+        playerCountSelection = ImGuiRenderer::NewPlayerCountSelection(playerCounts, playerCountSelection);
+        scenePathSelection = ImGuiRenderer::NewSceneSelection(scenePaths, scenePathSelection);
+        ImGuiRenderer::AddLoadSceneButton(*scenePathSelection, std::stoi(playerCountSelection));
+
+        ImGuiRenderer::Update(mScene);
+    }
+
     mRenderer->Update(deltaTime);
 }
 
@@ -333,12 +350,12 @@ void Engine::RenderLoadingScreen()
     {
         while (m_isLoading)
         {
-            ImGuiRenderer::NewFrame();
-            ImGuiRenderer::Image("load", ImVec2{0,0}, ImVec2{1,1});
-            ImGuiRenderer::LoadingBar(m_progress, ImVec2(500, 500));
-            ImGuiRenderer::EndFrame();
-            // render some text with imgui
-            mRenderer->RenderUIOnly();
+            // ImGuiRenderer::NewFrame();
+            // ImGuiRenderer::Image("load", ImVec2{0,0}, ImVec2{1,1});
+            // ImGuiRenderer::LoadingBar(m_progress, ImVec2(500, 500));
+            // ImGuiRenderer::EndFrame();
+            // // render some text with imgui
+            // mRenderer->RenderUIOnly();
         }
     }catch (const std::exception& e) {
         // Handle the exception

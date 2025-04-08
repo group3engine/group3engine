@@ -1,6 +1,7 @@
 #ifndef SCENE_ENTITY_HPP
 #define SCENE_ENTITY_HPP
 
+#include <string>
 #include <utility>
 
 #include <glm/glm.hpp>
@@ -21,6 +22,9 @@ enum class PhysicsType {
     KINEMATIC,
     DYNAMIC
 };
+#define MIN_ANIMATOR_UPDATE_DISTANCE 50.f
+#define MAX_ANIMATOR_UPDATE_DISTANCE 500.f
+#define LOWEST_ANIMATOR_UPDATE_RATE 1000.f
 
 /// The base class for all entities in the scene. Custom entities all have this as their base class
 class Entity {
@@ -142,6 +146,9 @@ class Entity {
     /// Get the total time that has passed since the entity was created
     [[nodiscard]] double GetTotalTime() const {return mTotalTime;}
 
+    /// Compares the entity's type with the provided string
+    [[nodiscard]] bool CompareType(std::string const& aCompareType) {return aCompareType == mType;}
+
   public:
     // the following functions are overridable by the user
     // called on the first frame of a collision
@@ -149,6 +156,9 @@ class Entity {
 
     // called on any frame except the first frame of a collision - note there is no function provided for the last frame of a collision
     virtual void OnCollisionStay(Entity *aOther) {}
+
+    // called for each entity just before update has been called per entity
+    virtual void PreUpdate(double deltaTime) {}
 
     // called for each entity after update has been called on all entities
     virtual void LateUpdate(double deltaTime) {}
@@ -178,6 +188,7 @@ class Entity {
     void AddChild(Entity *aChild) { mChildren.push_back(aChild); }
 
     void SetAsCharacter() {mHasCharacter = true;}
+    void SetHasOffset() {mHasOffset = true;}
 
     void AddMesh(Mesh *mesh) {
         mMesh = mesh;
@@ -214,6 +225,9 @@ class Entity {
 
   protected:
     glm::vec3 mCharacterPositionOffset{};
+
+    /// the Type of entity this is, overwrite in inherited classes
+    std::string mType = "default";
   private:
 
     std::string mName{};
@@ -239,6 +253,7 @@ class Entity {
 
     bool mHasMesh = false;
     bool mHasCharacter = false;
+    bool mHasOffset = false;
 
     Animator *mAnimator = nullptr;
     size_t mFrameNumber = 0;

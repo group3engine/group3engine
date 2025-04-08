@@ -28,23 +28,26 @@ class CharacterEntity : public Entity {
     CharacterEntity();
     ~CharacterEntity() override;
 
-    void ProcessInput();
     void PrePhysicsUpdate();
 
-    Vec3 GetCharacterPosition() {
+    virtual void ProcessInput();
+
+    virtual Vec3 GetCharacterPosition() const {
         return mSampleJoltCharacter->GetCharacterPosition();
     }
+
+    virtual void CreateJoltCharacter();
+
+    void PreUpdate(double deltaTime) override;
 
     // update override
     void Update(double deltaTime) override;
 
     void UpdateUi(double deltaTime) override;
 
-    void CreateJoltCharacter();
+    void Awake() override;
 
-    void Awake() override ;
-
-    void OnCollisionStart(Entity *aOther) override ;
+    void OnCollisionStart(Entity *aOther) override;
 
     void OnCollisionStay(Entity *aOther) override {
 //        SPDLOG_INFO("I am {} and I am colliding with {}", mName, aOther->mName);
@@ -67,7 +70,10 @@ class CharacterEntity : public Entity {
         mCharacterPositionOffset = glm::vec3(x, y, z);
     }
 
-    Camera *GetCamera() const { return mCamera; }
+    void AddImpulse(glm::vec3 glm_impulse) {
+        Vec3 impulse(glm_impulse.x, glm_impulse.y, glm_impulse.z);
+        mSampleJoltCharacter->AddImpulse(impulse);
+    }
 
     void MoveToSpawn();
 
@@ -76,18 +82,22 @@ class CharacterEntity : public Entity {
         Reset();
     }
 
+    [[nodiscard]] Camera* GetCamera() const{return mCamera;}
+
+    size_t GetPlayerId() const { return mPlayerId; }
+
   private:
     void Save();
     void Load();
 
   protected:
     Camera *mCamera = nullptr;
-
-  private:
-    Transform mInitialTransform = {};
     std::unique_ptr<SampleJoltCharacter> mSampleJoltCharacter;
 
-    glm::vec3 mLastCheckpoint = glm::vec3(0, 10.0f, 0);
+
+    size_t mPlayerId = 0;
+
+    gui::TimerData mGuiTimerData{};
 
     size_t mDeathCount = 0;
     float mDeathVisibleTimer = 0.0f;
@@ -97,8 +107,14 @@ class CharacterEntity : public Entity {
     gui::DeathPopupData mGuiDeathPopupData{};
     gui::FinishPopupData mGuiFinishPopupData{};
 
+    Transform mInitialTransform = {};
+
+    glm::vec3 mLastCheckpoint = glm::vec3(0, 10.0f, 0);
+
     std::stack<InternalEvent> mInternalEvents;
     std::stack<InternalUiEvent> mInternalUiEvents;
+
+  private:
     bool m_has_save = false;
 };
 

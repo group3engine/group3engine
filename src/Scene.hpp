@@ -10,13 +10,12 @@
 #include "Camera.hpp"
 #include "Context.hpp"
 #include "Entity.hpp"
-#include "CharacterEntity.hpp"
 #include "Image.hpp"
-#include "Light.hpp"
 #include "MaterialManager.hpp"
 #include "MeshManager.hpp"
 #include "TextureManager.hpp"
 #include "Utils.hpp"
+#include "LightManager.hpp"
 
 
 #include "ImGuiRenderer.hpp"
@@ -33,6 +32,13 @@ struct CameraTransform {
     alignas(4) float fov;
     alignas(4) float nearPlane;
     alignas(4) float farPlane;
+};
+
+enum class Override { ACTIVE, INACTIVE };
+
+struct ActivePlayerCountOverride {
+    Override override = Override::INACTIVE;
+    size_t playerCount = 1;
 };
 
 class Scene {
@@ -52,19 +58,21 @@ class Scene {
   public:
     Scene *GetActiveScene() const { return mCurrentScene; }
 
-    void LoadGLTF(const std::filesystem::path &aFilepath);
+    void LoadGLTF(const std::filesystem::path &aFilepath, size_t playerCount);
 
     void DrawOpaque(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
     void DrawAlphaMasked(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
+
     void DrawShadowMap(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout, uint32_t cascadeIndex = 0);
     void DrawSkinned(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout, uint32_t cascadeIndex= 0);
     void AddLightSource(Light& LightSource);
+
     void Update(double aDeltaTime);
     void UpdateUi(double aDeltaTime);
 
     void Awake();
 
-    void Load(const std::filesystem::path &filePath);
+    void Load(const std::filesystem::path &filePath, size_t playerCount);
     void Unload();
 
     void StartUp(Context *context, MaterialManager *materialManager,
@@ -73,18 +81,10 @@ class Scene {
 
     TextureManager *GetTextureManager() const { return mTextureManager; }
 
-    std::vector<Light> &GetLights() { return m_Lights; }
-
-    std::vector<Buffer> &GetLightsUBO() { return m_LightUBO; }
 
     std::vector<Entity *>& GetEntities() { return m_Entities; }
 
     const std::filesystem::path &GetSceneFilename() { return mSceneFilename; }
-
-    void SetHasCharacter(bool hasCharacter) { mHasCharacter = hasCharacter; }
-    [[nodiscard]] bool HasCharacter() const { return mHasCharacter; }
-
-    CharacterEntity &GetCharacter() { return *mCharacter; }
 
     const std::vector<Camera *> &GetCameras() const { return mCameras; }
 
@@ -92,27 +92,79 @@ class Scene {
 
     void AddCamera(Camera *camera) { mCameras.push_back(camera); }
 
-    void SetMainCharacter(Entity *entity) {
-        mCharacter = static_cast<CharacterEntity*>(entity);
-        mHasCharacter = true;
-    }
-
     void UpdateCameraTransforms();
 
     void UploadCameras(VkCommandBuffer cmdBuff);
 
-    void UploadLights(VkCommandBuffer cmdBuff);
+#ifndef NDEBUG
+    void CheckPlayerCount(size_t activePlayerCount) const {
+        if (activePlayerCount < 1 || activePlayerCount > GlobalConfig::maxPlayers) {
+            SPDLOG_ERROR("Invalid active player count ({}). Must be >= 1 and <= max players ({}).",
+                         activePlayerCount,
+                         GlobalConfig::maxPlayers);
+            exit(EXIT_FAILURE);
+        }
+    }
 
-    Camera *GetActiveCamera();
+    void CheckActivePlayerCountOverride(size_t activePlayerCount) {
+        if (activePlayerCount < 1 || activePlayerCount > mActivePlayerCount) {
+            SPDLOG_ERROR("Invalid active player count override ({}). Must be >= 1 and <= active players ({}).",
+                         activePlayerCount,
+                         mActivePlayerCount);
+            // exit(EXIT_FAILURE);
+        }
+    }
+#endif // NDEBUG
 
-    void SwitchCamera();
+    size_t GetActivePlayerCount() const {
+        if (mActivePlayerCountOverride.override == Override::ACTIVE) {
+            return mActivePlayerCountOverride.playerCount;
+        } else {
+            return mActivePlayerCount;
+        }
+    }
 
     size_t GetPlayerCount() const { return mPlayerCount; }
 
+    size_t PostIncrementPlayerCount() {
+        size_t playerCount = mPlayerCount;
+
+#ifndef NDEBUG
+        CheckPlayerCount(mPlayerCount + 1);
+#endif // NDEBUG
+
+        ++mPlayerCount;
+
+        return playerCount;
+    }
+
+    void SetActivePlayerCount(size_t activePlayerCount) {
+#ifndef NDEBUG
+        CheckPlayerCount(activePlayerCount);
+#endif // NDEBUG
+
+        mActivePlayerCount = activePlayerCount;
+    }
+
+    void SetActivePlayerCountOverrideInactive() {
+        mActivePlayerCountOverride.override = Override::INACTIVE;
+    }
+
+    void SetActivePlayerCountOverride(size_t activePlayerCount) {
+#ifndef NDEBUG
+        // Check against global config max players
+        CheckPlayerCount(activePlayerCount);
+        // Check against current scene active players
+        CheckActivePlayerCountOverride(activePlayerCount);
+#endif // NDEBUG
+
+        mActivePlayerCountOverride.override = Override::ACTIVE;
+        mActivePlayerCountOverride.playerCount = activePlayerCount;
+    }
+
+  private:
     // CSM requires player camera transforms to compute splits
     const std::array<CameraTransform, GlobalConfig::maxPlayers> GetPlayerCameraTransforms() const { return mPlayerCameraTransforms; }
-
-private:
     Scene *mCurrentScene = nullptr;
 
     Context *mContext = nullptr;
@@ -122,22 +174,26 @@ private:
 
     std::vector<size_t> m_FrontMeshes;
     std::vector<size_t> m_BackMeshes;
-    std::vector<Light>  m_Lights;
-    vkutil::LightBuffer m_LightBuffer;
-    std::vector<Buffer> m_LightUBO;
     std::vector<Entity *> m_Entities;
+
+    std::unordered_map<Entity *, std::vector<Entity *>> mCharacterEntities;
+
     std::vector<Animation> m_Animations;
     std::vector<Skin> m_Skins;
 
-    bool mHasCharacter = false;
-    CharacterEntity *mCharacter;
+    // Actual player count
+    size_t mPlayerCount = 0;
 
-    size_t mPlayerCount = 2;
+    // Active player count is how many players we want to have a camera
+    size_t mActivePlayerCount = 0;
+    // Override the active player count as a debug tool
+    ActivePlayerCountOverride mActivePlayerCountOverride = {Override::INACTIVE, 1};
+
     std::vector<Camera *> mCameras;
     std::array<CameraTransform, GlobalConfig::maxPlayers> mPlayerCameraTransforms;
     std::array<std::vector<Buffer>, GlobalConfig::maxPlayers> mPlayerCameraUbos;
 
-    gui::TimerData mGuiTimerData{};
+    gui::Settings::ActivePlayerCountOverride mGuiActivePlayerCountOverride = {};
 
     std::filesystem::path mSceneFilename;
 };

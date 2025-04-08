@@ -177,7 +177,7 @@ void DebugRendererImp::DrawLines() {
 
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, linePipeline);
 
-        size_t playerCount = mScene->GetPlayerCount();
+        size_t playerCount = mScene->GetActivePlayerCount();
         for (size_t playerId = 0; playerId < playerCount; ++playerId) {
             auto &descriptorSets = mDescriptorSets[playerId];
 
@@ -236,7 +236,7 @@ void DebugRendererImp::DrawTriangles() {
 
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, linePipeline);
 
-        size_t playerCount = mScene->GetPlayerCount();
+        size_t playerCount = mScene->GetActivePlayerCount();
         for (size_t playerId = 0; playerId < playerCount; ++playerId) {
             auto &descriptorSets = mDescriptorSets[playerId];
 

@@ -10,6 +10,7 @@
 #include "Light.hpp"
 #include "Utils.hpp"
 #include "SampleGLTFFilePaths.hpp"
+#include "LightManager.hpp"
 #include <imgui.h>
 
 namespace {
@@ -259,7 +260,7 @@ void Renderer::BeginFrame(VkCommandBuffer cmd) {
 
             m_scene->UploadCameras(cmd);
 
-            m_scene->UploadLights(cmd);
+            LightManager::getInstance().UploadLights(cmd);
 
             // Upload animation data to GPU
             for (auto *entity : m_scene->GetEntities()) {
@@ -405,8 +406,6 @@ void Renderer::Present(uint32_t imageIndex) {
 
 void Renderer::Update(double deltaTime) {
     ZoneScopedN("Renderer::Update");
-
-    ImGuiRenderer::Update(m_scene);
 
     m_SSAO->Update();
     m_SSR->Update();

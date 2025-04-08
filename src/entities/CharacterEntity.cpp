@@ -11,6 +11,7 @@
 #include "Camera.hpp"
 #include "Engine.hpp"
 #include "GLFW.hpp"
+#include "RenderPassCommon.hpp"
 #include "SampleGLTFFilePaths.hpp"
 #include "Scene.hpp"
 
@@ -45,7 +46,7 @@ void CharacterEntity::ProcessInput(){
     mCamera->SetInput(EInputState::ZOOM_IN, IsKeyPressed(KEY::eY));
     mCamera->SetInput(EInputState::ZOOM_OUT, IsKeyPressed(KEY::eU));
 
-    if (IsMouseButtonPressed(MOUSE_BUTTON::eLEFT)) {
+    if (IsKeyDown(KEY::eLEFT_SHIFT) && IsMouseButtonPressed(MOUSE_BUTTON::eLEFT)) {
         auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
         flag = !flag;
 
@@ -98,9 +99,12 @@ void CharacterEntity::PrePhysicsUpdate() {
     mSampleJoltCharacter->PrePhysicsUpdate(preUpdateParams);
 }
 
-void CharacterEntity::Update(double deltaTime) {
+void CharacterEntity::PreUpdate(double deltaTime) {
     // process the input
     ProcessInput();
+}
+
+void CharacterEntity::Update(double deltaTime) {
     // pre physics update
     PrePhysicsUpdate();
     // update the character position offset
@@ -109,7 +113,8 @@ void CharacterEntity::Update(double deltaTime) {
 
     if (IsKeyPressed(KEY::eR))
     {
-        Engine::get().ChangeScene(Sample::SampleObby);
+        // TODO: Handle logic for selecting which scene to switch to
+        Engine::get().ChangeScene(Sample::SampleObby, GetScene()->GetActivePlayerCount());
     }
 
 
@@ -185,6 +190,8 @@ void CharacterEntity::Update(double deltaTime) {
 }
 
 void CharacterEntity::UpdateUi(double deltaTime) {
+    ImGuiRenderer::NewCharacterInfo(this);
+
     while (!mInternalUiEvents.empty()) {
         auto &event = mInternalUiEvents.top();
         mInternalUiEvents.pop();
@@ -205,20 +212,26 @@ void CharacterEntity::UpdateUi(double deltaTime) {
         }
     }
 
+    size_t activePlayerCount = GetScene()->GetActivePlayerCount();
+
+    // New timer window
+    mGuiTimerData.time += deltaTime;
+    ImGuiRenderer::NewTimer(mGuiTimerData, activePlayerCount, mPlayerId);
+
     // NOTE: If copying the data into a struct gets annoying, we can just use
     // simple parameters to the gui functions. But using structs might help
     // bundle things more nicely in some cases. This is just an example.
     mGuiDeathCounterData.deathCount = mDeathCount;
-    ImGuiRenderer::NewDeathCounter(mGuiDeathCounterData);
+    ImGuiRenderer::NewDeathCounter(mGuiDeathCounterData, activePlayerCount, mPlayerId);
 
     mDeathVisibleTimer = std::max(0.0f, mDeathVisibleTimer - static_cast<float>(deltaTime));
     mGuiDeathPopupData.visibleTimer = mDeathVisibleTimer;
-    ImGuiRenderer::NewDeathPopup(mGuiDeathPopupData);
+    ImGuiRenderer::NewDeathPopup(mGuiDeathPopupData, activePlayerCount, mPlayerId);
 
     mFinishVisibleTimer = std::max(0.0f, mFinishVisibleTimer - static_cast<float>(deltaTime));
     mGuiFinishPopupData.visibleTimer = mFinishVisibleTimer;
 
-    ImGuiRenderer::NewFinishPopup(mGuiFinishPopupData);
+    ImGuiRenderer::NewFinishPopup(mGuiFinishPopupData, activePlayerCount, mPlayerId);
 }
 
 void CharacterEntity::CreateJoltCharacter()
@@ -236,6 +249,7 @@ void CharacterEntity::CreateJoltCharacter()
 CharacterEntity::CharacterEntity() {
     SetAsCharacter();
     Load();
+    mType = "character";
 }
 void CharacterEntity::OnCollisionStart(Entity *aOther) {
 
@@ -363,17 +377,19 @@ void CharacterEntity::Load() {
 }
 
 void CharacterEntity::Awake() {
+    mPlayerId = GetScene()->PostIncrementPlayerCount();
+
     mInitialTransform = GetLocalTransform();
     // create the jolt character
     CreateJoltCharacter();
-    // register the character with the scene
-    Scene::get().GetActiveScene()->SetMainCharacter(this);
 
     JPH::Vec3 joltPos = GetCharacterPosition();
     glm::vec3 pos = glm::vec3(joltPos.GetX(), joltPos.GetY(), joltPos.GetZ());
     glm::vec3 dir = glm::vec3(1.0f, 1.0f, -1.0f);
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0);
     mCamera = new Camera(pos, dir, up);
+
+    mCamera->SetIsActive(true);
 
     Scene::get().GetActiveScene()->AddCamera(mCamera);
 

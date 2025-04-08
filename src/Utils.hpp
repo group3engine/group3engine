@@ -17,7 +17,6 @@ class Context;
 
 #define ERROR(message) std::cout << "[ERROR]: " << message << std::endl;
 
-constexpr int NUM_LIGHTS = 26;
 
 namespace vkutil {
 
@@ -93,6 +92,7 @@ namespace vkutil {
     inline float ShadowSlope = 3.4f;
 
     inline VkDescriptorSetLayout materialDescriptorSetLayout;
+
 } // namespace vkutil
 
 namespace GlobalUtil {

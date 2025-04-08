@@ -1,6 +1,7 @@
 #include "Entity.hpp"
 
 #include <glm/gtx/matrix_decompose.hpp>
+#include <glm/glm.hpp>
 #include <iostream>
 #include <utility>
 
@@ -8,6 +9,7 @@
 #include <spdlog/spdlog.h>
 
 #include "Utils.hpp"
+#include "Scene.hpp"
 
 std::atomic<uint32_t> Entity::kEntityCount{0};
 
@@ -36,7 +38,7 @@ void Entity::SetParent(Entity *aParent) {
 
 void Entity::UpdateWorldTransform()
 {
-    if (mHasCharacter) {
+    if (mHasOffset || mHasCharacter) {
         mWorldTransform = glm::translate(mCharacterPositionOffset) * mParentTransform * mLocalTransform.getMatrix();
     }
     else if ((GetPhysicsType() == PhysicsType::KINEMATIC || GetPhysicsType() == PhysicsType::DYNAMIC) && mHasRigidBody) {
@@ -281,15 +283,45 @@ void Entity::RemoveChild(Entity *aChild) {
 void Entity::BaseUpdate(double deltaTime) {
     mFrameNumber++;
     mTotalTime += deltaTime;
-    if (mAnimator) {
-        mAnimator->Update(deltaTime, this);
+    // get the world transform of this entity
+    glm::mat4 worldTransform = GetWorldTransform();
+    glm::vec3 worldTranslation = worldTransform[3];
+    // initialise the min distance to a camera to max
+    float minDistance = std::numeric_limits<float>::max();
+    // get the world transform of all the cameras
+    for (auto &camera : mScene->GetCameras()) {
+        // get the distance from the camera to this entity
+        float dist = glm::length(glm::vec3(camera->GetWorldTransform()[3]) - worldTranslation);
+        // if the distance is less than the min distance, set the min distance to the distance
+        minDistance = std::min(minDistance, dist);
     }
-    if(GetPhysicsType() == PhysicsType::KINEMATIC || GetPhysicsType() == PhysicsType::DYNAMIC || mHasCharacter)
+
+    if (mAnimator) {
+        // work out how often to update the animator based on distance
+        float t = (minDistance - MIN_ANIMATOR_UPDATE_DISTANCE) / (MAX_ANIMATOR_UPDATE_DISTANCE - MIN_ANIMATOR_UPDATE_DISTANCE);
+        // clamp t to 0 and 1
+        t = std::clamp(t, 0.0f, 1.0f);
+        // use t to lerp between 1 and LOWEST_ANIMATOR_UPDATE_RATE
+        float updateRate = lerp(1, LOWEST_ANIMATOR_UPDATE_RATE, t);
+        // convert to an int
+        int updateRateInt = static_cast<int>(updateRate);
+        // if the current frame number is divisible by the update rate, update the animator
+        if ((mFrameNumber + mEntityID) % updateRateInt == 0 || mFrameNumber <= 10) {
+            // removing for now
+        }
+        mAnimator->Update(deltaTime, this);
+
+    }
+    if(mHasRigidBody)
+    {
+        mRigidBody->PrePhysicsUpdate(deltaTime);
+    }
+    if(GetPhysicsType() == PhysicsType::KINEMATIC || GetPhysicsType() == PhysicsType::DYNAMIC || mHasCharacter || mHasOffset)
     {
         UpdateWorldTransform();
-        SetPhysicsTransform();
         UpdateChildrenTransform();
     }
+
 }
 void Entity::UpdateChildrenTransform() {
     for (auto &child : mChildren) {
@@ -298,6 +330,7 @@ void Entity::UpdateChildrenTransform() {
 }
 void Entity::SetTransform(Transform aTransform) {
     mLocalTransform = aTransform;
+
     mLocalTransform.UpdateMatrix();
     UpdateWorldTransform();
     SetPhysicsTransform();

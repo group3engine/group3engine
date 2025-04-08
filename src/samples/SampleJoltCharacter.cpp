@@ -129,7 +129,14 @@ void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, 
             new_velocity = current_vertical_velocity;
             if(new_velocity.GetY() > 0.2f)
             {
-                mJumpState = EJumpState::Falling;
+                if(mJumpState == EJumpState::None)
+                {
+                    mJumpState = EJumpState::Start;
+                }
+                else
+                {
+                    mJumpState = EJumpState::Falling;
+                }
             }
         }
 
@@ -148,8 +155,19 @@ void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, 
 		new_velocity += current_horizontal_velocity;
 	}
 
-	// Update character velocity
-	mCharacter->SetLinearVelocity(new_velocity);
+    // Add additional impulse
+    if (mHasAdditionalImpulse)
+    {
+        new_velocity += mAdditionalImpulse;
+        mHasAdditionalImpulse = false;
+    }
+    mAdditionalImpulse = Vec3::sZero();
+
+    if(!mManualVelocityMode) {
+        // Update character velocity
+        mCharacter->SetLinearVelocity(new_velocity);
+    }
+
 }
 
 void SampleJoltCharacter::OnContactCommon(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings)
