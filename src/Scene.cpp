@@ -425,7 +425,7 @@ void Scene::Awake()
 
     for (auto &playerCameraTransform : mPlayerCameraTransforms) {
         playerCameraTransform.nearPlane = 0.1f;
-        playerCameraTransform.farPlane = 10000.0f;
+        playerCameraTransform.farPlane = 1000.0f;
         playerCameraTransform.fov = 45.0f;
     }
 

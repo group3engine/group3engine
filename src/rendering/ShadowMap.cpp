@@ -357,7 +357,7 @@ void ShadowMap::Update() {
         //glm::vec3 lightPos = glm::vec3(cos(angle) * r, -r, sin(angle) * r);
         //scene->GetLights()[0].position = glm::vec4(lightPos, 1.0f);
         glm::vec3 lightDir = glm::normalize(LightManager::getInstance().GetLights()[0]->position);
-        glm::mat4 lightViewMatrix = glm::lookAt(frustumCenter - lightDir * -minExtents.z, frustumCenter, glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 lightViewMatrix = glm::lookAt(frustumCenter + lightDir * -minExtents.z, frustumCenter, glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 lightOrthoMatrix = glm::ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, -200.0f, maxExtents.z - minExtents.z);
 
         // Store split distance and matrix in cascade
