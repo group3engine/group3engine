@@ -161,10 +161,10 @@ class Scene {
         mActivePlayerCountOverride.override = Override::ACTIVE;
         mActivePlayerCountOverride.playerCount = activePlayerCount;
     }
-
-  private:
-    // CSM requires player camera transforms to compute splits
+        // CSM requires player camera transforms to compute splits
     const std::array<CameraTransform, GlobalConfig::maxPlayers> GetPlayerCameraTransforms() const { return mPlayerCameraTransforms; }
+
+private:
     Scene *mCurrentScene = nullptr;
 
     Context *mContext = nullptr;
