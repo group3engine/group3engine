@@ -119,6 +119,5 @@ class CharacterEntity : public Entity {
     bool m_has_save = false;
 };
 
-void UnPause();
 
 #endif // GROUP3ENGINE_CHARACTERENTITY_HPP

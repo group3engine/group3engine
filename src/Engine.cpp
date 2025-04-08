@@ -171,7 +171,7 @@ void Engine::Run() {
 
         Update(GlobalUtil::deltaTime);
 
-        if (mIsMainMenu) {
+        if (mIsMainMenu || m_timeScale == 0.f) {
             ImGuiRenderer::BeginMainMenu(m_context);
             playerCountSelection = ImGuiRenderer::AddMainMenuPlayerCountSelection(m_context, playerCounts, playerCountSelection);
             scenePathSelection = ImGuiRenderer::AddMainMenuSceneSelection(m_context, scenePaths, scenePathSelection);

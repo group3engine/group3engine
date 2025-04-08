@@ -121,6 +121,11 @@ void CharacterEntity::Update(double deltaTime) {
     {
         // Engine::get().Quit();
         Engine::get().SetTimeScale(0.f);
+        // free the mouse
+        auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
+        flag = false
+        glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
     }
 
 
@@ -196,20 +201,16 @@ void CharacterEntity::Update(double deltaTime) {
     mCamera->UpdateCameraMovement(GetWorldTransformComponents());
 }
 
-void UnPause()
-{
-    Engine::get().SetTimeScale(1.f);
-}
 
 void CharacterEntity::UnscaledUpdate(double deltaTime)
 {
     if (Engine::get().GetTimeScale() == 0.f)
     {
+
         if (IsKeyPressed(KEY::eESCAPE))
         {
             Engine::get().SetTimeScale(1.f);
         }
-        ImGuiRenderer::Text("paused", ImVec2{0.5, 0.75});
     }
 }
 void CharacterEntity::UpdateUi(double deltaTime) {
