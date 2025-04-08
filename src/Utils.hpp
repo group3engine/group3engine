@@ -52,10 +52,6 @@ namespace vkutil {
         alignas(1) bool Enable;
     };
 
-    struct LightBuffer {
-        LightUBO lights[NUM_LIGHTS];
-    };
-
     struct SSAOSettings
     {
         int NumDirections;

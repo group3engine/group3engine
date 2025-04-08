@@ -269,7 +269,7 @@ void main()
 
     vec3 ambient = vec3(0.02) * color;
     fragColor = vec4(vec3(ambient + outLight + emissive), 1.0);
-    NormalMetallic = vec4(WorldNormal.xyz * 0.5 + 0.5, roughness);
+    NormalMetallic = vec4(pixelNormal.xyz * 0.5 + 0.5, roughness);
 
 //    switch(cascadeIndex) {
 //		case 0 :
