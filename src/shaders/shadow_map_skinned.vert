@@ -9,14 +9,23 @@ struct Light
 };
 
 const int NUM_LIGHTS = 26;
+#define NUM_SHADOW_CASCADES 4
 
 layout(set = 0, binding = 0) uniform LightBuffer {
 	Light lights[NUM_LIGHTS];
 } lightData;
 
+
+layout(set = 0, binding = 1) uniform CascadeMatrices
+{
+	mat4 cascadeViewProjection[NUM_SHADOW_CASCADES];
+	vec4 splitCascades;
+}csmMatrices;
+
 layout(push_constant) uniform Push
 {
 	mat4 ModelMatrix;
+	int cascadeIndex;
 }pc;
 
 layout(location = 0) in vec3 pos;
@@ -43,7 +52,6 @@ layout(set = 2, binding = 0) uniform JointBuffer
 	mat4 jointTransforms[256];
 } jointBuffer;
 
-
 void main()
 {
 	mat4 skinMat =
@@ -53,6 +61,6 @@ void main()
 		weights.w * jointBuffer.jointTransforms[int(joints.w)];
 
 	vec4 WorldPos = skinMat * vec4(pos, 1.0);
-	gl_Position = lightData.lights[0].LightSpaceMatrix * vec4(WorldPos.xyz, 1.0);
+	gl_Position = csmMatrices.cascadeViewProjection[pc.cascadeIndex] * vec4(WorldPos.xyz, 1.0);
 }
 

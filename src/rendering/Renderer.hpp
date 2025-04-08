@@ -51,7 +51,7 @@ class Renderer {
     DepthPrepass *GetDepthPrepass() const { return m_DepthPrepass.get(); }
     ShadowMap *GetShadowMap() const { return m_ShadowMap.get(); }
     ForwardPass *GetForwardPass() const { return m_ForwardPass.get(); }
-    GBuffer *GetGBuffer() const { return m_GBuffer.get(); }
+    //GBuffer *GetGBuffer() const { return m_GBuffer.get(); }
     SSAO *GetSSAO() const { return m_SSAO.get(); }
     SSR *GetSSR() const { return m_SSR.get(); }
     Bloom *GetBloomPass() const { return m_BloomPass.get(); }
@@ -85,7 +85,7 @@ class Renderer {
 
     std::unique_ptr<DepthPrepass> m_DepthPrepass;
     std::unique_ptr<ForwardPass> m_ForwardPass;
-    std::unique_ptr<GBuffer> m_GBuffer;
+    //std::unique_ptr<GBuffer> m_GBuffer;
     std::unique_ptr<SSAO> m_SSAO;
     std::unique_ptr<SSR> m_SSR;
     std::unique_ptr<ShadowMap> m_ShadowMap;

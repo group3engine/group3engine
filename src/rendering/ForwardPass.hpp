@@ -6,6 +6,8 @@
 #include "Skybox.hpp"
 
 #include "Config.hpp"
+#include "ShadowMap.hpp"
+
 
 // This is disgusting whoever did it lol
 #define SHADER_DIR std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/"
@@ -20,9 +22,11 @@ class Context;
 class Scene;
 class Buffer;
 
+
 class ForwardPass {
+
   public:
-    ForwardPass(Context &context, Image &shadowMap, Image &depthPrepass, Scene *scene);
+    ForwardPass(Context &context, Image &shadowMap, Image &depthPrepass, Scene *scene, const ShadowMap* shadowMapRenderPass);
     ~ForwardPass();
 
     VkRenderPass Get() const { return m_renderPass; }
@@ -35,7 +39,7 @@ class ForwardPass {
     Image &GetRenderTarget() { return m_RenderTarget; }
     Image &GetBrightnessTarget() { return m_BrightnessTexture; }
     Image &GetDepthTarget() { return m_DepthTarget; }
-
+    Image &GetNormalRoughnessTarget() { return m_NormalRoughness; }
     Skybox* GetSkybox() { return m_Skybox.get(); }
 
   private:
@@ -48,6 +52,7 @@ class ForwardPass {
     Image m_RenderTarget;
     Image m_DepthTarget;
     Image m_BrightnessTexture;
+    Image m_NormalRoughness;
 
     VkRenderPass m_renderPass;
     VkFramebuffer m_framebuffer;
@@ -59,6 +64,7 @@ class ForwardPass {
     Image &shadowMap;
     Image &depthPrepass;
     Scene *scene;
+    const ShadowMap *shadowMapRenderPass;
 
     std::array<std::vector<VkDescriptorSet>, GlobalConfig::maxPlayers> mPlayerDescriptorSets;
 

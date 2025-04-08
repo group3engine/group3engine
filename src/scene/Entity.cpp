@@ -104,10 +104,11 @@ void Entity::RecordDrawOpaque(VkCommandBuffer aCmdBuff,
                               VkPipelineLayout aPipelineLayout) const {
     if (mHasMesh && mAnimator == nullptr && mIsVisible) {
         // push the model matrix
-        glm::mat4 mModelMatrix = GetWorldTransform();
+        vkutil::MeshPushConstants pc = {};
+        pc.ModelMatrix = GetWorldTransform();
         vkCmdPushConstants(aCmdBuff, aPipelineLayout,
                            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
-                           sizeof(glm::mat4), &mModelMatrix);
+                           sizeof(vkutil::MeshPushConstants), &pc);
 
         // for each mesh primitive
         for (const auto &meshPrimitive : mMesh->meshPrimitives) {
@@ -136,13 +137,13 @@ void Entity::RecordDrawOpaque(VkCommandBuffer aCmdBuff,
     }
 }
 
-void Entity::RecordDrawShadow(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout) const {
+void Entity::RecordDrawShadow(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout,uint32_t caseCadeIndex) const {
     if (mHasMesh && mIsVisible) {
         // push the model matrix
-        glm::mat4 mModelMatrix = GetWorldTransform();
-        vkCmdPushConstants(aCmdBuff, aPipelineLayout,
-                           VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
-                           sizeof(glm::mat4), &mModelMatrix);
+        vkutil::MeshPushConstants pc = {};
+        pc.ModelMatrix = GetWorldTransform();
+        pc.cascadeIndex = caseCadeIndex;
+        vkCmdPushConstants(aCmdBuff, aPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(vkutil::MeshPushConstants), &pc);
 
         // for each mesh primitive
         for (const auto &meshPrimitive : mMesh->meshPrimitives) {
@@ -169,10 +170,11 @@ void Entity::RecordDrawCutout(VkCommandBuffer aCmdBuff,
                               VkPipelineLayout aPipelineLayout) const{
     if (mHasMesh && mAnimator == nullptr && mIsVisible) {
         // push the model matrix
-        glm::mat4 mModelMatrix = GetWorldTransform();
+        vkutil::MeshPushConstants pc = {};
+        pc.ModelMatrix = GetWorldTransform();
         vkCmdPushConstants(aCmdBuff, aPipelineLayout,
                            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
-                           sizeof(glm::mat4), &mModelMatrix);
+                           sizeof(vkutil::MeshPushConstants), &pc);
 
         // for each mesh primitive
         for (const auto &meshPrimitive : mMesh->meshPrimitives) {
@@ -205,16 +207,14 @@ Entity::~Entity() {
     // delete the animator if it exists
     delete mAnimator;
 }
-void Entity::RecordDrawSkinned(VkCommandBuffer aCmdBuff,
-                               VkPipelineLayout aPipeLayout) const{
+void Entity::RecordDrawSkinned(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipeLayout, uint32_t caseCadeIndex) const {
     // we only need to render if we have a skinned mesh
     if (mHasMesh && mAnimator != nullptr && mIsVisible) {
         // push the model matrix
-        glm::mat4 mModelMatrix = GetWorldTransform();
-        vkCmdPushConstants(aCmdBuff, aPipeLayout,
-                           VK_SHADER_STAGE_VERTEX_BIT |
-                               VK_SHADER_STAGE_FRAGMENT_BIT,
-                           0, sizeof(glm::mat4), &mModelMatrix);
+        vkutil::MeshPushConstants pc = {};
+        pc.ModelMatrix = GetWorldTransform();
+        pc.cascadeIndex = caseCadeIndex;
+        vkCmdPushConstants(aCmdBuff, aPipeLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(vkutil::MeshPushConstants), &pc);
         // bind the joint descriptor set
         mAnimator->BindDescriptorSet(aCmdBuff, aPipeLayout, 2, vkutil::currentFrame);
         // for each mesh primitive

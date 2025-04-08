@@ -48,10 +48,10 @@ void Scene::UpdateCameraTransforms() {
 
         auto &playerCameraTransform = mPlayerCameraTransforms[i];
         playerCameraTransform.view = glm::lookAt(pos, pos + dir, up);
-        playerCameraTransform.projection =
-            glm::perspective(playerCameraTransform.fov, width / height,
-                             playerCameraTransform.nearPlane, playerCameraTransform.farPlane);
+        playerCameraTransform.projection = glm::perspective(playerCameraTransform.fov, width / height, playerCameraTransform.nearPlane, playerCameraTransform.farPlane);
         playerCameraTransform.projection[1][1] *= -1;
+        playerCameraTransform.inverseProjection = glm::inverse(playerCameraTransform.projection);
+        playerCameraTransform.inverseView = glm::inverse(playerCameraTransform.view);
         playerCameraTransform.cameraPosition = glm::vec4(pos.x, pos.y, pos.z, 1.0);
         playerCameraTransform.viewportSize = glm::vec2(width, height);
         playerCameraTransform.nearPlane = playerCameraTransform.nearPlane;
@@ -170,20 +170,20 @@ void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
     JPH::Ref<Shape> shape;
 
     // for all entities in the scene
-    for (auto it = GetEntities().begin(); it != GetEntities().end(); ++it) 
+    for (auto it = GetEntities().begin(); it != GetEntities().end(); ++it)
     {
         const auto &entity = *it;
 
         // if the entity is the character
-        if (entity->IsCharacter()) 
+        if (entity->IsCharacter())
         {
             // we skip it and handle it later
             SPDLOG_INFO("Skipping character");
-        } 
+        }
         else // if the entity isnt the character (NPCs, Obstacles, Moving platforms etc)
         {
             // if the entity has an animator
-            if (entity->HasAnimator()) 
+            if (entity->HasAnimator())
             {
                 // also skip it
                 SPDLOG_INFO("Skipping entity {}, as it has an animator", entity->GetName());
@@ -194,7 +194,7 @@ void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
             const auto *mesh = entity->GetMesh();
 
             // if it doesnt have a mesh
-            if (!mesh) 
+            if (!mesh)
             {
                 // skip the entity
                 continue;
@@ -204,7 +204,7 @@ void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
             size_t totalVertices = 0;
             size_t totalTriangles = 0;
             // if the entity has physics (either as it is solid or is a sensor and needs collision response)
-            if(entity->IsSensor() || entity->IsSolid()) 
+            if(entity->IsSensor() || entity->IsSolid())
             {
                 // calculate the transforms for the rigid body
                 glm::mat4 entityWorldTransform = entity->GetWorldTransform();
@@ -220,7 +220,7 @@ void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
                 glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f), scale);
 
                 // for all primatives in the mesh
-                for (const auto &primitive : mesh->meshPrimitives) 
+                for (const auto &primitive : mesh->meshPrimitives)
                 {
                     // Create an array of vertices (and a copy in the points format) and the list of indexed faces
                     VertexList vertices;
@@ -228,11 +228,11 @@ void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
                     IndexedTriangleList indexedTriangles;
 
                     // for all vertices
-                    for (const auto &vertex : primitive.vertices) 
+                    for (const auto &vertex : primitive.vertices)
                     {
                         // calculate the position of the vertex in world space
                         auto worldPos = scalingMatrix * glm::vec4(vertex.pos, 1.0f);
-                        
+
                         // add it to the list
                         vertices.emplace_back(worldPos.x, worldPos.y, worldPos.z);
                         list_of_points.emplace_back(Vec3(worldPos.x, worldPos.y, worldPos.z));
@@ -241,7 +241,7 @@ void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
                     }
 
                     // for all indexed faces
-                    for (size_t i = 0; i < primitive.indices.size(); i += 3) 
+                    for (size_t i = 0; i < primitive.indices.size(); i += 3)
                     {
                         // add the indexed face to the list
                         indexedTriangles.push_back(IndexedTriangle(primitive.indices[i],
@@ -264,7 +264,7 @@ void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
                         if(result.IsValid()) // if the shape is valid
                         {
                             shape = result.Get(); // set the shape as the result
-                        } 
+                        }
                         else // if it isnt valid
                         {
                             // give an error statement
@@ -296,7 +296,7 @@ void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
                             // only do this part if its supposed to DO something when collided with (i.e. sensors)
                             PhysicsManager::get().RegisterEntity(entity, entity_rigid_body->mBodyId);
                         }
-                        
+
                         PhysicsManager::get().mPhysicsSystem.OptimizeBroadPhase();
                         entity->AddRigidBody(std::move(entity_rigid_body));
                     }
@@ -310,7 +310,7 @@ void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
                         if(result.IsValid()) // if the shape is valid
                         {
                             shape = result.Get(); // set the shape as the result
-                        } 
+                        }
                         else // if it isnt valid
                         {
                             // give an error statement
@@ -362,7 +362,7 @@ void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
                         if(result.IsValid()) // if the shape is valid
                         {
                             shape = result.Get(); // set the shape as the result
-                        } 
+                        }
                         else // if it isnt valid
                         {
                             // give an error statement
@@ -492,15 +492,15 @@ void Scene::DrawAlphaMasked(VkCommandBuffer cmd,
     }
 }
 void Scene::DrawShadowMap(VkCommandBuffer cmd,
-                          VkPipelineLayout pipelineLayout) {
+                          VkPipelineLayout pipelineLayout, uint32_t cascadeIndex) {
     for (auto& entity : m_Entities) {
-        entity->RecordDrawShadow(cmd, pipelineLayout);
+        entity->RecordDrawShadow(cmd, pipelineLayout, cascadeIndex);
     }
 }
 
 void Scene::DrawSkinned(VkCommandBuffer cmd,
-                        VkPipelineLayout pipelineLayout) {
+                        VkPipelineLayout pipelineLayout, uint32_t cascadeIndex) {
     for (auto &entity : m_Entities) {
-        entity->RecordDrawSkinned(cmd, pipelineLayout);
+        entity->RecordDrawSkinned(cmd, pipelineLayout, cascadeIndex);
     }
 }

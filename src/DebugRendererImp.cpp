@@ -102,6 +102,7 @@ DebugRendererImp::DebugRendererImp(Renderer *renderer, Scene *scene)
             .SetSampling(VK_SAMPLE_COUNT_1_BIT)
             .AddBlendAttachmentState()
             .AddBlendAttachmentState()
+            .AddBlendAttachmentState()
             .SetDepthState(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL)
             .SetRenderPass(mRenderer->GetForwardPass()->Get())
             .Build();
