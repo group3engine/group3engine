@@ -10,6 +10,8 @@ layout(set = 0, binding = 0) uniform CameraUBO
 {
 	mat4 view;
 	mat4 projection;
+	mat4 inverseProjection;
+	mat4 inverseView;
     vec4 cameraPosition;
     vec2 viewportSize;
 	float fov;
@@ -149,6 +151,6 @@ vec3 ScreenSpaceReflections()
 
 void main()
 {
-    fragColour = vec4(0.0, 0.0, 0.0, 1.0);
+    fragColour = vec4(ScreenSpaceReflections().xyz, 1.0);
 	//fragColour = vec4(mix(ScreenSpaceReflections().rgb, vec3(0), roughness), 1.0);
 }
