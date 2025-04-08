@@ -122,7 +122,7 @@ void Animator::UpdateAnimationSamples(double aDeltaTime) {
     }
 
     if (mActiveAnimation != -1) {
-        if(mAnimationLockTimer > 0.0f){
+        if(mAnimationLockTimer > 0.0f || !mActiveAnimationIsLooping){
             // if the lock timer is still active, then don't modulus the time, but still increment it
                 mAnimationSamples[mActiveAnimation] = {
                         mAnimationSamples[mActiveAnimation].time +
@@ -184,7 +184,7 @@ void Animator::SetActiveAnimation(const std::string &aName) {
     }
 }
 
-void Animator::SetActiveAnimation(const std::string &aName, float blendTime, bool lockForFirstLoop = false) {
+void Animator::SetActiveAnimation(const std::string &aName, float blendTime, bool lockForFirstLoop, bool isLooping) {
     // if the lock timer is still active, then don't change the animation
     if (mAnimationLockTimer > 0.0f) {
             return;
@@ -192,6 +192,7 @@ void Animator::SetActiveAnimation(const std::string &aName, float blendTime, boo
     if (aName != mCurrentAnimationName && mActiveAnimation != -1) {
         mTotalBlendTime = blendTime;
         mLastAnimation = mActiveAnimation;
+        mLastAnimationIsLooping = mActiveAnimationIsLooping;
         mCurrentBlendingTime = 0.f;
     }
     for (size_t i = 0; i < mAnimations.size(); i++) {
@@ -205,6 +206,7 @@ void Animator::SetActiveAnimation(const std::string &aName, float blendTime, boo
                 mAnimationSamples[static_cast<int>(i)].time = 0;
             }
             mActiveAnimation = static_cast<int>(i);
+            mActiveAnimationIsLooping = isLooping;
             return;
         }
     }

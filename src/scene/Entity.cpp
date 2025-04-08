@@ -137,7 +137,7 @@ void Entity::RecordDrawOpaque(VkCommandBuffer aCmdBuff,
 }
 
 void Entity::RecordDrawShadow(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout) const {
-    if (mHasMesh && mIsVisible) {
+    if (mHasMesh && mIsVisible && mAnimator == nullptr) {
         // push the model matrix
         glm::mat4 mModelMatrix = GetWorldTransform();
         vkCmdPushConstants(aCmdBuff, aPipelineLayout,

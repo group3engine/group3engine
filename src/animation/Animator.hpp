@@ -38,7 +38,7 @@ class Animator {
     void SetActiveAnimation(int index) { mActiveAnimation = index;
     }
     void SetActiveAnimation(const std::string&);
-    void SetActiveAnimation(const std::string& aName, float blendTime, bool lockForFirstLoop);
+    void SetActiveAnimation(const std::string& aName, float blendTime, bool lockForFirstLoop, bool isLooping = true);
 
     void SetTimeScale(float aTimeScale);
 
@@ -68,6 +68,8 @@ class Animator {
 
     int mActiveAnimation = -1;
     int mLastAnimation = -1;
+    bool mActiveAnimationIsLooping = false;
+    bool mLastAnimationIsLooping = false;
 
     // the skin that the animator is animating
     Skin *mSkin{};
