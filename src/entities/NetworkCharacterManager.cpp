@@ -28,7 +28,6 @@ void NetworkCharacterManager::Update(double deltaTime)
         // convert the player id to an int by the bits
         uint32_t playerIDint;
         std::memcpy(&playerIDint, playerId.data(), sizeof(playerIDint)); // Copy first 4 bytes
-        std::cout << "Player ID: " << playerIDint << std::endl;
         // get the json string - this is the part between the first { and the last }
         std::string jsonString = messageString.substr(messageString.find_first_of('{'), lastBracket - messageString.find_first_of('{') + 1);
         // parse the json string
@@ -49,7 +48,6 @@ void NetworkCharacterManager::Update(double deltaTime)
         float posY = std::stof(posValues[1]);
         float posZ = std::stof(posValues[2]);
         glm::vec3 position = glm::vec3(posX, posY, posZ);
-        std::cout << "Position: " << position.x << ", " << position.y << ", " << position.z << std::endl;
         // get the rotation - the values between [ and ] after "rotation":
         size_t rotStart = jsonString.find('[', jsonString.find("\"rotation\":"));
         size_t rotEnd = jsonString.find(']', rotStart);
@@ -68,7 +66,6 @@ void NetworkCharacterManager::Update(double deltaTime)
         float rotZ = std::stof(rotValues[2]);
         float rotW = std::stof(rotValues[3]);
         glm::quat rotation = glm::quat(rotX, rotY, rotZ, rotW);
-        std::cout << "Rotation: " << rotation.x << ", " << rotation.y << ", " << rotation.z << ", " << rotation.w << std::endl;
         // get the scale - the values between [ and ] after "scale":
         size_t scaleStart = jsonString.find('[', jsonString.find("\"scale\":"));
         size_t scaleEnd = jsonString.find(']', scaleStart);
@@ -86,7 +83,6 @@ void NetworkCharacterManager::Update(double deltaTime)
         float scaleY = std::stof(scaleValues[1]);
         float scaleZ = std::stof(scaleValues[2]);
         glm::vec3 scale = glm::vec3(scaleX, scaleY, scaleZ);
-        std::cout << "Scale: " << scale.x << ", " << scale.y << ", " << scale.z << std::endl;
         // get the velocity - the values between [ and ] after "velocity":
         size_t velStart = jsonString.find('[', jsonString.find("\"velocity\":"));
         size_t velEnd = jsonString.find(']', velStart);
@@ -104,7 +100,6 @@ void NetworkCharacterManager::Update(double deltaTime)
         float velY = std::stof(velValues[1]);
         float velZ = std::stof(velValues[2]);
         glm::vec3 velocity = glm::vec3(velX, velY, velZ);
-        std::cout << "Velocity: " << velocity.x << ", " << velocity.y << ", " << velocity.z << std::endl;
         // construct the state
         State state{};
         state.position = position;
@@ -117,7 +112,6 @@ void NetworkCharacterManager::Update(double deltaTime)
         {
             if(numConnections >= GetChildren().size()-1)
             {
-                //std::cout << "Too many connections, ignoring player id: " << playerIDint << std::endl;
                 continue;
             }
             // if not, add it to the map
@@ -148,8 +142,11 @@ void NetworkCharacterManager::SendChatMessage(std::string playerName, std::strin
     // generate the json of the message
     // we need to include the player name, message, timestamp, and map name
     std::string mapName = Scene::get().GetActiveScene()->GetSceneFilename().string();
-    std::string jsonToSend = "{ \"playerName\": \"" + playerName + "\", \"message\": \"" + message + "\", \"timestamp\": \"" + std::to_string(time(nullptr)) + "\", \"mapName\": \"" + mapName + "\" }";
-    std::cout << jsonToSend << std::endl;
+    std::string jsonToSend = "{ \"playerName\": \"" + playerName + "\", \"message\": \"" + message + "\", \"time\": \"" + std::to_string(time(nullptr)) + "\", \"gameID\": \"" + mapName + "\" }";
+    // send the message
+    std::string url = "wipeoutchat.pythonanywhere.com/SendMessage";
+    // send the message in a thread
+    http_post(url, jsonToSend);
 }
 
 NetworkCharacterManager::NetworkCharacterManager()
@@ -183,7 +180,6 @@ void NetworkCharacterManager::ReceiveMessages()
             messages.reserve(data.size());
             // for each element in the json array
             for (const auto &item : data) {
-                std::cout << item.dump(4) << std::endl;
 
                 // get the player name
                 std::string playerName = item["playerName"];

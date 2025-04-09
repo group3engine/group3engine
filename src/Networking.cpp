@@ -152,3 +152,64 @@ std::string http_get(const std::string& url) {
     close(sock);
     return response;
 }
+void http_post(const std::string& url, const std::string& data)
+{
+    // Extract host and path from the URL
+    std::string host = url;
+    std::string path = "/";
+    auto slashPos = url.find('/');
+    if (slashPos != std::string::npos) {
+        host = url.substr(0, slashPos);
+        path = url.substr(slashPos);
+    }
+
+    const char* port = "80";
+    std::string request =
+            "POST " + path + " HTTP/1.1\r\n" +
+            "Host: " + host + "\r\n" +
+            "Content-Type: application/json\r\n" +
+            "Content-Length: " + std::to_string(data.size()) + "\r\n" +
+            "Connection: close\r\n\r\n" +
+            data;
+
+    // DNS resolution
+    addrinfo hints{}, *res;
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    if (getaddrinfo(host.c_str(), port, &hints, &res) != 0) {
+        perror("getaddrinfo");
+        return;
+    }
+
+    // Open socket
+    int sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+    if (sock < 0) {
+        perror("socket");
+        freeaddrinfo(res);
+        return;
+    }
+
+    // Connect
+    if (connect(sock, res->ai_addr, res->ai_addrlen) < 0) {
+        perror("connect");
+        close(sock);
+        freeaddrinfo(res);
+        return;
+    }
+    freeaddrinfo(res);
+
+    // Send request
+    if (send(sock, request.c_str(), request.length(), 0) < 0) {
+        perror("send");
+        close(sock);
+        return;
+    }
+    // Receive response
+    char buffer[4096];
+    while (recv(sock, buffer, sizeof(buffer), 0) > 0) {
+    }
+
+
+    // Close socket
+    close(sock);
+}

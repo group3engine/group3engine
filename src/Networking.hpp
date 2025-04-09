@@ -80,4 +80,5 @@ private:
 };
 
 std::string http_get(const std::string& url);
+void http_post(const std::string& url, const std::string& data);
 #endif //GROUP3ENGINE_NETWORKING_HPP

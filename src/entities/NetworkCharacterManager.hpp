@@ -42,6 +42,7 @@ private:
     size_t numConnections = 0;
 
     std::thread chatGetThread;
+    std::thread chatSendThread;
     std::vector<Message> mChatMessages{};
     std::mutex messages_mutex;
     bool chatting = true;

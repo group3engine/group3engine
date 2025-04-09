@@ -29,6 +29,12 @@ CharacterEntity::~CharacterEntity() {
 }
 
 void CharacterEntity::ProcessInput(){
+#ifndef PLATINUM
+    // don't process input if we aren't mousing
+    if (!mCamera->inputMap[std::size_t(EInputState::MOUSING)]) {
+        return;
+    }
+#endif
     mCamera->SetInput(EInputState::FORWARD, IsKeyDown(KEY::eW));
     mCamera->SetInput(EInputState::BACKWARD, IsKeyDown(KEY::eS));
     mCamera->SetInput(EInputState::LEFT, IsKeyDown(KEY::eA));
@@ -112,11 +118,6 @@ void CharacterEntity::Update(double deltaTime) {
     auto characterPhysicsPos = mSampleJoltCharacter->GetCharacterPosition();
     SetCharacterPositionOffset(characterPhysicsPos.GetX(), characterPhysicsPos.GetY(), characterPhysicsPos.GetZ());
 
-    if (IsKeyPressed(KEY::eR))
-    {
-        // TODO: Handle logic for selecting which scene to switch to
-        Engine::get().ChangeScene(Sample::SampleObby, GetScene()->GetActivePlayerCount());
-    }
     if (IsKeyPressed(KEY::eESCAPE))
     {
         // Engine::get().Quit();
