@@ -43,6 +43,9 @@
 
 #include "Config.hpp"
 #ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif // #ifndef WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #endif
 #define TEMP_DISABLE_PHYSICS 0
