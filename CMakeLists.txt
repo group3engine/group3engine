@@ -94,6 +94,9 @@ target_include_directories(src PUBLIC ${JoltPhysics_SOURCE_DIR}/..)
 add_library(cgltf INTERFACE)
 target_include_directories(cgltf INTERFACE extern/cgltf)
 
+add_library(json INTERFACE)
+target_include_directories(json INTERFACE extern/json)
+
 add_library(vma INTERFACE)
 target_include_directories(vma INTERFACE extern/vma)
 
@@ -106,7 +109,7 @@ target_compile_definitions(src PRIVATE GLFW_INCLUDE_NONE GLM_ENABLE_EXPERIMENTAL
 
 target_compile_definitions(src PRIVATE CMAKE_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 
-target_link_libraries(src PRIVATE cgltf glfw glm::glm-header-only Jolt spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32> stb_image Tracy::TracyClient volk_headers vma)
+target_link_libraries(src PRIVATE cgltf glfw glm::glm-header-only Jolt spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32> stb_image Tracy::TracyClient volk_headers vma json)
 
 # Compiler warnings
 if ((CMAKE_CXX_COMPILER_ID STREQUAL "Clang") OR (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))

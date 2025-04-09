@@ -8,11 +8,15 @@
 #include "Networking.hpp"
 #include "NetworkedCharacterRemote.hpp"
 #include "ImGuiRenderer.hpp"
+namespace JSONPARSE
+{
+    std::tuple<std::string, std::string> GetPairFromString(const std::string &aString);
+}
 
 class NetworkCharacterManager : public Entity {
 public:
-    NetworkCharacterManager(){mType = "NetworkCharacterManager";};
-    ~NetworkCharacterManager() override = default;
+    NetworkCharacterManager();
+    ~NetworkCharacterManager() override;
 
     void Update(double deltaTime) override;
     void SendMessage(const std::string &message) {
@@ -21,20 +25,11 @@ public:
 
     void SendChatMessage(std::string playerName, std::string message);
 
+    void ReceiveMessages();
+
     void UpdateUi(double deltaTime) override {
-        std::vector<Message> sampleMessages = {
-                {"Alice", "Hello, world!", "10:00"},
-                {"Bob", "How are you?", "10:01"},
-                {"Charlie", "Good morning!", "10:02"},
-                {"David", "Nice to meet you!", "10:03"},
-                {"Eve", "Welcome to the game.", "10:04"},
-                {"Frank", "Let's start the quest.", "10:05"},
-                {"Grace", "Watch out for enemies.", "10:06"},
-                {"Heidi", "I found a secret path.", "10:07"},
-                {"Ivan", "Collect all the treasures.", "10:08"},
-                {"Judy", "Good luck, everyone!", "10:09"}
-        };
-        ImGuiRenderer::ChatWindow(sampleMessages, [this](const std::string &playerName, const std::string &message) {
+        std::lock_guard<std::mutex> lock(messages_mutex);
+        ImGuiRenderer::ChatWindow(mChatMessages, [this](const std::string &playerName, const std::string &message) {
             SendChatMessage(playerName, message);
         });
     }
@@ -45,6 +40,12 @@ private:
     // map of player id to child index
     std::unordered_map<uint32_t, size_t> mPlayerIdToChildIndex;
     size_t numConnections = 0;
+
+    std::thread chatGetThread;
+    std::vector<Message> mChatMessages{};
+    std::mutex messages_mutex;
+    bool chatting = true;
+
 
 
 };

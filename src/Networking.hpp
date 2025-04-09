@@ -79,5 +79,5 @@ private:
 
 };
 
-
+std::string http_get(const std::string& url);
 #endif //GROUP3ENGINE_NETWORKING_HPP

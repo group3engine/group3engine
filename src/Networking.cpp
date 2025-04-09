@@ -78,3 +78,77 @@ void Networking::Close() {
     }
 #endif
 }
+
+
+
+std::string http_get(const std::string& url) {
+    // Extract host and path from the URL
+    std::string host = url;
+    std::string path = "/";
+    auto slashPos = url.find('/');
+    if (slashPos != std::string::npos) {
+        host = url.substr(0, slashPos);
+        path = url.substr(slashPos);
+    }
+
+    const char* port = "80";
+    std::string request =
+            "GET " + path + " HTTP/1.1\r\n" +
+            "Host: " + host + "\r\n" +
+            "Connection: close\r\n\r\n";
+
+    // DNS resolution
+    addrinfo hints{}, *res;
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    if (getaddrinfo(host.c_str(), port, &hints, &res) != 0) {
+        perror("getaddrinfo");
+        return "";
+    }
+
+    // Open socket
+    int sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+    if (sock < 0) {
+        perror("socket");
+        freeaddrinfo(res);
+        return "";
+    }
+
+    // Connect
+    if (connect(sock, res->ai_addr, res->ai_addrlen) < 0) {
+        perror("connect");
+        close(sock);
+        freeaddrinfo(res);
+        return "";
+    }
+    freeaddrinfo(res);
+
+    // Send request
+    if (send(sock, request.c_str(), request.length(), 0) < 0) {
+        perror("send");
+        close(sock);
+        return "";
+    }
+
+    // Receive and print response
+    char buffer[4096];
+    ssize_t bytesRead;
+    while ((bytesRead = recv(sock, buffer, sizeof(buffer) - 1, 0)) > 0) {
+        buffer[bytesRead] = '\0';
+    }
+    // parse out the header
+    std::string header(buffer);
+    std::string response;
+    size_t headerEnd = header.find("\r\n\r\n");
+    if (headerEnd != std::string::npos) {
+        response = header.substr(headerEnd + 4); // Skip the header
+    } else {
+        std::cerr << "Invalid HTTP response" << std::endl;
+        close(sock);
+        return "";
+    }
+
+    // Close socket
+    close(sock);
+    return response;
+}
