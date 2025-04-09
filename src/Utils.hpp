@@ -8,9 +8,7 @@
 
 class Context;
 
-#ifdef PLATINUM
     inline std::filesystem::path assetsPath = {};
-#endif
 
 #define VK_CHECK(call, message)                                                             \
     do {                                                                                    \
