@@ -114,19 +114,24 @@ static void PollGamepadJoysticks()
 void Platform::StartUp(int windowWidth, int windowHeight) {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+    GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+
 #ifdef PLATINUM
-    // get the monitor size
-    int monitorWidth, monitorHeight;
-    glfwGetMonitorWorkarea(glfwGetPrimaryMonitor(), nullptr, nullptr, &monitorWidth, &monitorHeight);
+    const GLFWvidmode *mode = glfwGetVideoMode(monitor);
     // set the window size to the monitor size
-    windowWidth = monitorWidth;
-    windowHeight = monitorHeight;
+    windowWidth = mode->width;
+    windowHeight = mode->height;
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
     glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
 #endif
 
+#ifdef PLATINUM
+    Platform::get().window = glfwCreateWindow(windowWidth, windowHeight, "Vulkan", monitor, nullptr);
+#else
     Platform::get().window = glfwCreateWindow(windowWidth, windowHeight, "Vulkan", nullptr, nullptr);
+#endif
 
     if (!Platform::get().window) {
         SPDLOG_ERROR("Failed to create GLFW window");
@@ -136,16 +141,6 @@ void Platform::StartUp(int windowWidth, int windowHeight) {
     glfwSetKeyCallback(Platform::get().window, &KeyCallback);
     glfwSetMouseButtonCallback(Platform::get().window, &MouseButtonCallback);
     glfwSetCursorPosCallback(Platform::get().window, &MouseCursorPosCallback);
-#ifdef PLATINUM
-    // Set the window to be fullscreen
-    glfwSetWindowMonitor(Platform::get().window, glfwGetPrimaryMonitor(), 0, 0, windowWidth, windowHeight, 0);
-    // Set the window to be borderless
-    glfwSetWindowAttrib(Platform::get().window, GLFW_DECORATED, GLFW_FALSE);
-    // Set the window to be not resizable
-    glfwSetWindowAttrib(Platform::get().window, GLFW_RESIZABLE, GLFW_FALSE);
-    // Set the window to be always on top
-    glfwSetWindowAttrib(Platform::get().window, GLFW_FLOATING, GLFW_TRUE);
-#endif // PLATINUM
 
 }
 
