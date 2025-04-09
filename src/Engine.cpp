@@ -299,11 +299,12 @@ void Engine::Update(double deltaTime) {
     if (!mIsMainMenu) {
         mScene->UpdateUi(deltaTime);
 
+#ifndef PLATINUM
         playerCountSelection = ImGuiRenderer::NewPlayerCountSelection(playerCounts, playerCountSelection);
         scenePathSelection = ImGuiRenderer::NewSceneSelection(scenePaths, scenePathSelection);
         ImGuiRenderer::AddLoadSceneButton(*scenePathSelection, std::stoi(playerCountSelection));
-        ImGuiRenderer::AddQuitButton();
         ImGuiRenderer::Update(mScene);
+#endif
     }
 
     mRenderer->Update(deltaTime);

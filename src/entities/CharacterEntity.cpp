@@ -119,7 +119,11 @@ void CharacterEntity::Update(double deltaTime) {
     auto characterPhysicsPos = mSampleJoltCharacter->GetCharacterPosition();
     SetCharacterPositionOffset(characterPhysicsPos.GetX(), characterPhysicsPos.GetY(), characterPhysicsPos.GetZ());
 
+#ifdef PLATINUM
     if (IsKeyPressed(KEY::eESCAPE))
+#else
+    if (IsKeyPressed(Key::eP))
+#endif
     {
         // Engine::get().Quit();
         Engine::get().SetTimeScale(0.f);
@@ -129,6 +133,13 @@ void CharacterEntity::Update(double deltaTime) {
         glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
     }
+#ifndef PLATINUM
+    if(IsKeyPressed(KEY::eESCAPE))
+    {
+    // quit the game
+    Engine::get().Quit();
+    }
+#endif
 
 
 
@@ -208,8 +219,11 @@ void CharacterEntity::UnscaledUpdate(double deltaTime)
 {
     if (Engine::get().GetTimeScale() == 0.f)
     {
-
+#ifdef PLATINUM
         if (IsKeyPressed(KEY::eESCAPE))
+#else
+        if (IsKeyPressed(Key::eP))
+#endif
         {
             Engine::get().SetTimeScale(1.f);
         }

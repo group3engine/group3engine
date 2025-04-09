@@ -666,6 +666,7 @@ void ImGuiRenderer::Image(std::string const &imageName, ImVec2 position, ImVec2 
 
 void ImGuiRenderer::NewActivePlayerCountOverride(
     Scene *scene, gui::Settings::ActivePlayerCountOverride &settings) {
+#ifndef PLATINUM
     ImGui::Text("Active Player Count Override");
     if (ImGui::BeginCombo("##Active Player Count Override", settings.activeItem)) {
         for (size_t i = 0; i < settings.items.size(); ++i) {
@@ -693,9 +694,11 @@ void ImGuiRenderer::NewActivePlayerCountOverride(
             scene->SetActivePlayerCountOverride(playerCount);
         }
     }
+#endif
 }
 
 void ImGuiRenderer::NewCharacterInfo(const CharacterEntity *character) {
+#ifndef PLATINUM
     if (ImGui::CollapsingHeader(character->GetName().c_str())) {
         // Add camera position
         ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)",
@@ -703,6 +706,7 @@ void ImGuiRenderer::NewCharacterInfo(const CharacterEntity *character) {
                     character->GetCamera()->GetPosition().y,
                     character->GetCamera()->GetPosition().z);
     }
+#endif
 }
 
 void ImGuiRenderer::Text(std::string const &text, ImVec2 position)

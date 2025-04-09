@@ -121,6 +121,9 @@ void Platform::StartUp(int windowWidth, int windowHeight) {
     // set the window size to the monitor size
     windowWidth = monitorWidth;
     windowHeight = monitorHeight;
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
+    glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
 #endif
 
     Platform::get().window = glfwCreateWindow(windowWidth, windowHeight, "Vulkan", nullptr, nullptr);
