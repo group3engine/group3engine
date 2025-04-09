@@ -37,7 +37,7 @@ class CustomContactListener : public JPH::ContactListener {
     virtual void OnContactPersisted(const JPH::Body &inBody1, const JPH::Body &inBody2, const JPH::ContactManifold &inManifold, JPH::ContactSettings &ioSettings) override ;
 
     virtual void OnContactRemoved([[maybe_unused]]const JPH::SubShapeIDPair &inSubShapePair) override;
-    }
+    
 };
 
 #endif // GROUP3ENGINE_CUSTOMCONTACTLISTENER_HPP

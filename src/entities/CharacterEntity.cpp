@@ -90,10 +90,6 @@ void CharacterEntity::ProcessInput(){
 
             // Check actions
             jump = IsKeyPressed(KEY::eSPACE) || IsGamepadButtonPressed(GAMEPAD_BUTTON::eA);
-            if(jump)
-            {
-                mInClimb = false;
-            }
             if (IsKeyPressed(KEY::eF)) {
                 // for each child, if there is an animator, call set animation
                 for (auto &child: GetChildren()) {
@@ -462,4 +458,12 @@ void CharacterEntity::Die()
     // set the death timer to death time
     mDeathTimer = mDeathTime;
 
+}
+
+void CharacterEntity::OnCollisionEnd(Entity *aOther)
+{
+    if (aOther->CompareTag("climbable"))
+    {
+        mInClimb = false;
+    }
 }

@@ -59,6 +59,8 @@ class CharacterEntity : public Entity {
 //        SPDLOG_INFO("I am {} and I am colliding with {}", mName, aOther->mName);
     }
 
+    void OnCollisionEnd(Entity *aOther) override;
+
     // set the checkpoint
     void SetCheckpoint(glm::vec3 checkpoint) { mLastCheckpoint = checkpoint; Save();}
 
