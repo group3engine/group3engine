@@ -87,7 +87,8 @@ bool Engine::Initialize() {
         if (GetModuleFileNameA(nullptr, path, MAX_PATH)) {
             assetsPath = std::filesystem::path(path).parent_path() / "assets";
         } else {
-            throw std::runtime_error("Error getting executable path.");
+            SPDLOG_ERROR("Error getting executable path.");
+            exit(EXIT_FAILURE);
         }
         #else
                 char path[PATH_MAX];
@@ -96,7 +97,8 @@ bool Engine::Initialize() {
                     path[len] = '\0'; // Null-terminate the string
                     assetsPath = std::filesystem::path(path).parent_path() / "assets";
                 } else {
-                    throw std::runtime_error("Error getting executable path.");
+                    SPDLOG_ERROR("Error getting executable path.");
+                    exit(EXIT_FAILURE);
                 }
 
         #endif
