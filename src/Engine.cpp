@@ -42,7 +42,9 @@
 #include "imgui.h"
 
 #include "Config.hpp"
-
+#ifdef _WIN32
+#include <Windows.h>
+#endif
 #define TEMP_DISABLE_PHYSICS 0
 
 namespace {
@@ -72,6 +74,34 @@ Engine::Engine() {
 }
 
 bool Engine::Initialize() {
+
+
+#ifdef PLATINUM
+    // get the file path to the executable
+    {
+        #ifdef _WIN32
+        char path[MAX_PATH];
+        if (GetModuleFileNameA(nullptr, path, MAX_PATH)) {
+            assetsPath = std::filesystem::path(path).parent_path() / "assets";
+        } else {
+            throw std::runtime_error("Error getting executable path.");
+        }
+        #else
+                char path[PATH_MAX];
+                ssize_t len = readlink("/proc/self/exe", path, sizeof(path) - 1);
+                if (len != -1) {
+                    path[len] = '\0'; // Null-terminate the string
+                    assetsPath = std::filesystem::path(path).parent_path() / "assets";
+                } else {
+                    throw std::runtime_error("Error getting executable path.");
+                }
+
+        #endif
+    }
+#else
+    assetsPath = assetsPath / "assets";
+#endif
+
     // TODO: Could probably store this somewhere else
     int windowWidth = 1280;
     int windowHeight = 720;
@@ -120,6 +150,7 @@ bool Engine::Initialize() {
 
     ImGuiRenderer::themes.applyTheme("Catpuccin Mocha");
     Fonts::LoadFonts();
+
 
 
 
@@ -237,7 +268,7 @@ void Engine::ChangeSceneFR(const std::filesystem::path &scenePath, size_t player
     mTextureManager->Initialise();
 
     // load in heart
-    std::filesystem::path loadingPath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets" / "loadingImage.png";
+    std::filesystem::path loadingPath = assetsPath/ "loadingImage.png";
     ImGuiRenderer::AddTextures(mTextureManager.get(), loadingPath, "load");
 
 
@@ -261,7 +292,7 @@ void Engine::ChangeSceneFR(const std::filesystem::path &scenePath, size_t player
     m_progress = 75.f;
 
     // Add back UI textures
-    std::filesystem::path path = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets" / "heart.png";
+    std::filesystem::path path = assetsPath/ "heart.png";
     ImGuiRenderer::AddTextures(mTextureManager.get(), path, "heart");
 
     mScene->Awake();
@@ -353,7 +384,7 @@ void Engine::Render() {
 
 void Engine::RenderLoadingScreen()
 {
-    // load in a new image from assets/loadingImage.png
+    // load in a new image from loadingImage.png
 
     try
     {

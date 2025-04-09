@@ -158,6 +158,15 @@ endforeach()
 
 add_custom_target(compile_shaders DEPENDS ${SPIRV_BINARY_FILES})
 add_dependencies(src compile_shaders)
+if(CMAKE_BUILD_TYPE STREQUAL "Platinum")
+    add_custom_target(copy_assets ALL
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_SOURCE_DIR}/assets $<TARGET_FILE_DIR:src>/assets
+            COMMENT "Copying assets directory to the output directory for Platinum build"
+    )
+    add_dependencies(src copy_assets)
+endif()
+
 
 # Check git submodules
 # https://cliutils.gitlab.io/modern-cmake/chapters/projects/submodule.html
@@ -175,3 +184,5 @@ if(GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
         endif()
     endif()
 endif()
+
+

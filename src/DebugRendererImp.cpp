@@ -16,7 +16,7 @@
 #include "RenderPassCommon.hpp"
 
 namespace {
-    #define SHADER_DIR std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/"
+    #define SHADER_DIR assetsPath / "shaders/"
     #define LINE_VERTEX_SHADER SHADER_DIR / "line.vert.spv"
     #define LINE_FRAGMENT_SHADER SHADER_DIR / "line.frag.spv"
     #define TRIANGLE_VERTEX_SHADER SHADER_DIR / "triangle.vert.spv"

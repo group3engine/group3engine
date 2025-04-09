@@ -165,7 +165,7 @@ void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
     mSceneFilename = filePath.stem();
 
     // Current path is the current working directory, i.e., where the root CMakeLists.txt is
-    std::filesystem::path basePath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets";
+    std::filesystem::path basePath = assetsPath;
     std::filesystem::path gltfPath = basePath / filePath;
 
     LoadGLTF(gltfPath, playerCount);
