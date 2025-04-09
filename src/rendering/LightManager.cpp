@@ -7,14 +7,24 @@
 #include "LightManager.hpp"
 #include "Utils.hpp"
 
+namespace {
+    template<std::size_t N>
+    size_t FirstAvailableLightIndex(const std::bitset<N> &lightMask) {
+        size_t i = 0;
+        for (; i < N; ++i) {
+            if (!lightMask[i]) {
+                return i;
+            }
+        }
+
+        return i;
+    }
+}
 
 std::tuple<Light *, int> LightManager::GetDirectionalLight()
 {
     // find the first available light in the mask
-    int lightIndex = 0;
-    while(mDirectionalLightMask[lightIndex] && lightIndex < NUM_DIRECTIONAL_LIGHTS) {
-        lightIndex++;
-    }
+    size_t lightIndex = FirstAvailableLightIndex(mDirectionalLightMask);
     if (lightIndex == NUM_DIRECTIONAL_LIGHTS) {
         return {nullptr, -1};
     }
@@ -25,10 +35,7 @@ std::tuple<Light *, int> LightManager::GetDirectionalLight()
 std::tuple<Light *, int> LightManager::GetPointLight()
 {
     // find the first available light in the mask
-    int lightIndex = 0;
-    while(mPointLightMask[lightIndex] && lightIndex < NUM_POINT_LIGHTS) {
-        lightIndex++;
-    }
+    size_t lightIndex = FirstAvailableLightIndex(mPointLightMask);
     if (lightIndex == NUM_POINT_LIGHTS) {
         return {nullptr, -1};
     }
@@ -51,7 +58,7 @@ void LightManager::Update()
     // for each directional light, update the lightspace matrix
     for (size_t i = 0; i < NUM_DIRECTIONAL_LIGHTS; i++) {
         if (mDirectionalLightMask[i]) {
-            mDirectionalLights[i].LightSpaceMatrix = glm::ortho(-mDirectionalLights[i].view, mDirectionalLights[i].view, -mDirectionalLights[i].view, mDirectionalLights[i].view, mDirectionalLights[i].near, mDirectionalLights[i].far) *
+            mDirectionalLights[i].LightSpaceMatrix = glm::ortho(-mDirectionalLights[i].view, mDirectionalLights[i].view, -mDirectionalLights[i].view, mDirectionalLights[i].view, mDirectionalLights[i].near_, mDirectionalLights[i].far_) *
                                                      glm::lookAt(glm::vec3(mDirectionalLights[i].position), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0));
         }
     }
@@ -82,6 +89,11 @@ void LightManager::Update()
 void LightManager::UploadLights(VkCommandBuffer cmdBuff)
 {
     m_LightUBO[vkutil::currentFrame].Upload(cmdBuff, &m_LightBuffer, sizeof(LightBuffer));
+}
+
+void LightManager::Unload() {
+    mDirectionalLightMask.reset();
+    mPointLightMask.reset();
 }
 
 void LightManager::Destroy()

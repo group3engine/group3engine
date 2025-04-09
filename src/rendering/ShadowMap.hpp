@@ -10,15 +10,32 @@ class Context;
 class Scene;
 class Buffer;
 
+
 class ShadowMap {
   public:
     ShadowMap(Context &context, Scene *scene);
     ~ShadowMap();
     void Execute(VkCommandBuffer cmd);
     void Update();
-    void Resize();
 
     Image &GetRenderTarget() { return m_ShadowMap; }
+    static constexpr uint8_t NUM_SHADOW_CASCADES = 4;
+
+    struct Cascade
+    {
+        VkFramebuffer framebuffer;
+        VkImageView imgView;
+        float splitDepth;
+        glm::mat4 viewProjMatrix;
+        void Destroy(VkDevice device)
+        {
+            vkDestroyImageView(device, imgView, nullptr);
+            vkDestroyFramebuffer(device, framebuffer, nullptr);
+        }
+    };
+
+    const std::vector<Cascade>& GetCascades() { return m_Cascades; }
+    const std::vector<Buffer>& GetCascadeUniformBuffer() const { return m_CascadeUniformBuffer; }
 
   private:
     void CreatePipeline();
@@ -45,4 +62,13 @@ class ShadowMap {
 
     VkPipeline m_SkinnedPipeline;
     VkPipelineLayout m_SkinnedPipelineLayout;
+
+    // CSM
+    //std::vector<VkImageView> m_CascadeImageViews;
+    //std::vector<VkFramebuffer> m_CascadeFramebuffer;
+    std::vector<Cascade> m_Cascades;
+
+    const float cascadeSplitLambda = 0.95f;
+    std::vector<Buffer> m_CascadeUniformBuffer;
+    vkutil::CascadeMatrices m_cascadeMatricesData;
 };

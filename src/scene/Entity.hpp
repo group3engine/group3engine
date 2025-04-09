@@ -160,6 +160,9 @@ class Entity {
     /// called after the last frame of a collision
     virtual void OnCollisionEnd(Entity *aOther) {}
 
+    // called for each entity just before update has been called per entity
+    virtual void PreUpdate(double deltaTime) {}
+
     // called for each entity after update has been called on all entities
     virtual void LateUpdate(double deltaTime) {}
 
@@ -177,11 +180,11 @@ class Entity {
 
     void RecordDrawOpaque(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout) const;
 
-    void RecordDrawShadow(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout) const;
+    void RecordDrawShadow(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout, uint32_t caseCadeIndex) const;
 
     void RecordDrawCutout(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout) const;
 
-    void RecordDrawSkinned(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipeLayout) const;
+    void RecordDrawSkinned(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipeLayout, uint32_t caseCadeIndex) const;
     // move an animator to the entity
     void SetAnimator(Animator *aAnimator);
 
@@ -229,7 +232,7 @@ class Entity {
     /// the Type of entity this is, overwrite in inherited classes
     std::string mType = "default";
   private:
-    
+
     std::string mName{};
 
     Entity *mParent = nullptr;

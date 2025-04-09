@@ -51,6 +51,8 @@ public:
 
     void UploadLights(VkCommandBuffer cmdBuff);
 
+    void Unload();
+
     void Destroy();
 
     void StartUp(Context &aContext);

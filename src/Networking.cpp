@@ -2,7 +2,6 @@
 // Created by thomas on 01/04/25.
 //
 
-#include <netdb.h>
 #include "Networking.hpp"
 
 Networking::Networking()
@@ -28,7 +27,7 @@ Networking::Networking()
     if(bind(my_socket, (const struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
     {
         std::cerr << "bind failed";
-        close(my_socket);
+        Close();
         return;
     }
     // Set the client address to the hard coded values
@@ -64,3 +63,18 @@ void Networking::Listen()
     }
 }
 
+void Networking::Close() {
+    int status = 0;
+
+#ifdef _WIN32
+    status = shutdown(my_socket, SD_BOTH);
+    if (status == 0) {
+        status = closesocket(my_socket);
+    }
+#else
+    status = shutdown(my_socket, SHUT_RDWR);
+    if (status == 0) {
+        status = close(my_socket);
+    }
+#endif
+}

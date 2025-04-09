@@ -11,7 +11,7 @@ class Context;
 class SSR {
   public:
 
-    explicit SSR(Context &context, Scene *scene, Image& depthBuffer, Image& renderedScene, Image& metallicRoughness, Image& skybox);
+    explicit SSR(Context &context, Scene *scene, Image& depthBuffer, Image& renderedScene, Image& normalRoughnessImage, Image& skybox);
     ~SSR();
     void Execute(VkCommandBuffer cmd);
     void Update();
@@ -33,7 +33,7 @@ class SSR {
     Image m_RenderTarget;
     Image& depthBuffer;
     Image& renderedScene;
-    Image& metallicRoughness;
+    Image& normalRoughnessImage;
     Image& skybox;
 
     VkPipeline m_Pipeline;

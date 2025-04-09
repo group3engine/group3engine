@@ -80,6 +80,7 @@ void ParticleSystem::Emit()
             break;
         case ShapeType::Box:
             emission = BoxParticleSpawn(seed, mSettings.emissionShape.shape);
+            break;
         default:
             assert(false);
     }
@@ -248,7 +249,7 @@ Emission SphereParticleSpawn(size_t& seed, EmitterShape const &sphereShape)
     do
     {
         // randomly generate a spawn position
-        glm::vec3 spawnPosition = {get_random(seed++), get_random(seed++), get_random(seed++)};
+        glm::vec3 spawnPosition = {get_next_random(seed), get_next_random(seed), get_next_random(seed)};
         if (glm::length2(spawnPosition) <= 1.f)
         {
             // if the emit type is surphace, normalise the spawn position to put it on the surface
@@ -274,8 +275,8 @@ Emission BoxParticleSpawn(size_t &seed, EmitterShape const &boxShape)
     Emission returnValue{};
     // randomly generate a spawn position
     returnValue.Position = {
-        get_random(seed++) * boxShape.box.size.x, get_random(seed++) * boxShape.box.size.y,
-        get_random(seed++) * boxShape.box.size.z
+        get_next_random(seed) * boxShape.box.size.x, get_next_random(seed) * boxShape.box.size.y,
+        get_next_random(seed) * boxShape.box.size.z
     };
     returnValue.Velocity = glm::normalize(returnValue.Position);
     return returnValue;
@@ -291,7 +292,7 @@ Emission ConeParticleSpawn(size_t &seed, EmitterShape const &coneShape)
     {
         // randomly generate a spawn position, x and z are between -radius and radius, y is between 0 and height
         glm::vec3 spawnPosition = {
-            get_random(seed++) * topRadius, get_hash(seed++) * coneShape.cone.height, get_random(seed++) * topRadius
+            get_next_random(seed) * topRadius, get_hash(seed) * coneShape.cone.height, get_next_random(seed) * topRadius
         };
         // if the point is inside the cone
         // work out the radius at the height of the point

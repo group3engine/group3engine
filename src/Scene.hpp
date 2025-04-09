@@ -25,6 +25,8 @@
 struct CameraTransform {
     alignas(16) glm::mat4 view;
     alignas(16) glm::mat4 projection;
+    alignas(16) glm::mat4 inverseProjection;
+    alignas(16) glm::mat4 inverseView;
     alignas(16) glm::vec4 cameraPosition;
     alignas(8) glm::vec2 viewportSize;
     alignas(4) float fov;
@@ -60,8 +62,11 @@ class Scene {
 
     void DrawOpaque(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
     void DrawAlphaMasked(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
-    void DrawShadowMap(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
-    void DrawSkinned(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
+
+    void DrawShadowMap(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout, uint32_t cascadeIndex = 0);
+    void DrawSkinned(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout, uint32_t cascadeIndex= 0);
+    void AddLightSource(Light& LightSource);
+
     void Update(double aDeltaTime);
     void UpdateUi(double aDeltaTime);
 
@@ -92,7 +97,7 @@ class Scene {
     void UploadCameras(VkCommandBuffer cmdBuff);
 
 #ifndef NDEBUG
-    void CheckActivePlayerCount(size_t activePlayerCount) const {
+    void CheckPlayerCount(size_t activePlayerCount) const {
         if (activePlayerCount < 1 || activePlayerCount > GlobalConfig::maxPlayers) {
             SPDLOG_ERROR("Invalid active player count ({}). Must be >= 1 and <= max players ({}).",
                          activePlayerCount,
@@ -119,9 +124,23 @@ class Scene {
         }
     }
 
+    size_t GetPlayerCount() const { return mPlayerCount; }
+
+    size_t PostIncrementPlayerCount() {
+        size_t playerCount = mPlayerCount;
+
+#ifndef NDEBUG
+        CheckPlayerCount(mPlayerCount + 1);
+#endif // NDEBUG
+
+        ++mPlayerCount;
+
+        return playerCount;
+    }
+
     void SetActivePlayerCount(size_t activePlayerCount) {
 #ifndef NDEBUG
-        CheckActivePlayerCount(activePlayerCount);
+        CheckPlayerCount(activePlayerCount);
 #endif // NDEBUG
 
         mActivePlayerCount = activePlayerCount;
@@ -134,7 +153,7 @@ class Scene {
     void SetActivePlayerCountOverride(size_t activePlayerCount) {
 #ifndef NDEBUG
         // Check against global config max players
-        CheckActivePlayerCount(activePlayerCount);
+        CheckPlayerCount(activePlayerCount);
         // Check against current scene active players
         CheckActivePlayerCountOverride(activePlayerCount);
 #endif // NDEBUG
@@ -142,8 +161,10 @@ class Scene {
         mActivePlayerCountOverride.override = Override::ACTIVE;
         mActivePlayerCountOverride.playerCount = activePlayerCount;
     }
+        // CSM requires player camera transforms to compute splits
+    const std::array<CameraTransform, GlobalConfig::maxPlayers> &GetPlayerCameraTransforms() const { return mPlayerCameraTransforms; }
 
-  private:
+private:
     Scene *mCurrentScene = nullptr;
 
     Context *mContext = nullptr;
@@ -160,6 +181,10 @@ class Scene {
     std::vector<Animation> m_Animations;
     std::vector<Skin> m_Skins;
 
+    // Actual player count
+    size_t mPlayerCount = 0;
+
+    // Active player count is how many players we want to have a camera
     size_t mActivePlayerCount = 0;
     // Override the active player count as a debug tool
     ActivePlayerCountOverride mActivePlayerCountOverride = {Override::INACTIVE, 1};
@@ -168,7 +193,6 @@ class Scene {
     std::array<CameraTransform, GlobalConfig::maxPlayers> mPlayerCameraTransforms;
     std::array<std::vector<Buffer>, GlobalConfig::maxPlayers> mPlayerCameraUbos;
 
-    gui::TimerData mGuiTimerData{};
     gui::Settings::ActivePlayerCountOverride mGuiActivePlayerCountOverride = {};
 
     std::filesystem::path mSceneFilename;

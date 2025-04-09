@@ -19,7 +19,8 @@
 #include "glm/fwd.hpp"
 
 Camera::Camera(const glm::vec3 position, glm::vec3 direction, glm::vec3 up)
-    : m_position{position}, m_direction{direction}, m_up{up} {
+    :
+    m_position{position}, m_direction{direction}, m_up{up} {
     m_mouseSensitivity = 0.1f;
     m_controllerSensitivity = 100.f;
     m_increaseSpeed = 0.0f;

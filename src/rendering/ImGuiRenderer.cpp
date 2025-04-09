@@ -3,6 +3,7 @@
 #include "Camera.hpp"
 #include "CharacterEntity.hpp"
 #include "RenderPass.hpp"
+#include "RenderPassCommon.hpp"
 #include "ImGuiRenderer.hpp"
 #include "Utils.hpp"
 
@@ -36,6 +37,16 @@ namespace {
     ImVec2 WindowSize(const Context &context) {
         return {static_cast<float>(context.extent.width),
                 static_cast<float>(context.extent.height)};
+    }
+
+    ImGuiViewport CalcPlayerViewport(VkExtent2D extent, size_t activePlayerCount, size_t playerId) {
+        ImGuiViewport viewport = {};
+
+        VkViewport vkViewport = CalcViewport(extent, activePlayerCount, playerId);
+        viewport.WorkPos = {vkViewport.x, vkViewport.y};
+        viewport.WorkSize = {vkViewport.width, vkViewport.height};
+
+        return viewport;
     }
 }
 
@@ -204,11 +215,11 @@ ImGuiRenderer::AddMainMenuSceneSelection(const Context &context,
     ImGui::SetCursorPosX((windowSize.x - sceneSelectionDropdownWidth) / 2.0f);
     ImGui::PushItemWidth(sceneSelectionDropdownWidth);
 
-    if (ImGui::BeginCombo("##Main Menu Scene Selection", scenePathSelection->c_str())) {
+    if (ImGui::BeginCombo("##Main Menu Scene Selection", scenePathSelection->string().c_str())) {
         for (size_t i = 0; i < scenePaths.size(); ++i) {
             bool isSelected = scenePathSelection == scenePaths[i];
 
-            if (ImGui::Selectable(scenePaths[i]->c_str(), isSelected)) {
+            if (ImGui::Selectable(scenePaths[i]->string().c_str(), isSelected)) {
                 activeItem = scenePaths[i];
             }
 
@@ -257,11 +268,11 @@ ImGuiRenderer::NewSceneSelection(const std::vector<std::filesystem::path *> &sce
 
     ImGui::Text("Select Level");
 
-    if (ImGui::BeginCombo("##Scene Selection", scenePathSelection->c_str())) {
+    if (ImGui::BeginCombo("##Scene Selection", scenePathSelection->string().c_str())) {
         for (size_t i = 0; i < scenePaths.size(); ++i) {
             bool isSelected = scenePathSelection == scenePaths[i];
 
-            if (ImGui::Selectable(scenePaths[i]->c_str(), isSelected)) {
+            if (ImGui::Selectable(scenePaths[i]->string().c_str(), isSelected)) {
                 activeItem = scenePaths[i];
             }
 
@@ -290,7 +301,7 @@ void ImGuiRenderer::EndMainMenu() {
     ImGui::End();
 }
 
-void ImGuiRenderer::NewHeartSprite(const ImVec2 &offset) {
+void ImGuiRenderer::NewHeartSprite(const ImVec2 &offset, size_t playerId) {
     // TODO: Remove hardcoded image size
     MyTextureData &myTexData = textureDatas["heart"];
     ImVec2 imageSize = ImVec2(myTexData.Width * 0.02f, myTexData.Height * 0.02f);
@@ -320,7 +331,7 @@ void ImGuiRenderer::NewHeartSprite(const ImVec2 &offset) {
                              ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
                              ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
 
-    ImGui::Begin("Heart", nullptr, flags);
+    ImGui::Begin(fmt::format("Heart##{}", playerId).c_str(), nullptr, flags);
     ImGui::Image((ImTextureID)myTexData.DS, imageSize);
 
     ImGui::PopStyleVar(sv);
@@ -328,8 +339,9 @@ void ImGuiRenderer::NewHeartSprite(const ImVec2 &offset) {
     ImGui::End();
 }
 
-void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data) {
-    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data,
+                                    size_t activePlayerCount, size_t playerId) {
+    ImGuiViewport viewport = CalcPlayerViewport(Context::get().extent, activePlayerCount, playerId);
 
     size_t deathCount = data.deathCount;
 
@@ -349,7 +361,7 @@ void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data) {
     }
 
     // Bottom right of viewport. NOTE: hardcoded bottom right positioning
-    ImVec2 pos = ImVec2(viewport->WorkPos.x + viewport->WorkSize.x, viewport->WorkPos.y + viewport->WorkSize.y);
+    ImVec2 pos = ImVec2(viewport.WorkPos.x + viewport.WorkSize.x, viewport.WorkPos.y + viewport.WorkSize.y);
     ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
 
     // Make the window fit the text exactly
@@ -367,21 +379,22 @@ void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data) {
                              ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
                              ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
 
-    ImGui::Begin("Death Counter Window", nullptr, flags);
+    ImGui::Begin(fmt::format("Death Counter Window##{}", playerId).c_str(), nullptr, flags);
 
     // Text
     ImGui::Text("%s", str.c_str());
 
     // Heart
     ImVec2 offset = {pos.x - textSize.x, pos.y};
-    NewHeartSprite(offset);
+    NewHeartSprite(offset, playerId);
 
     ImGui::PopStyleVar(sv);
 
     ImGui::End();
 }
 
-void ImGuiRenderer::NewDeathPopup(const gui::DeathPopupData &data) {
+void ImGuiRenderer::NewDeathPopup(const gui::DeathPopupData &data,
+                                  size_t activePlayerCount, size_t playerId) {
     if (!enableDeathPopup) {
         // Early return
         return;
@@ -393,7 +406,7 @@ void ImGuiRenderer::NewDeathPopup(const gui::DeathPopupData &data) {
         return;
     }
 
-    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+    ImGuiViewport viewport = CalcPlayerViewport(Context::get().extent, activePlayerCount, playerId);
 
     std::string str = fmt::format("YOU DIED");
 
@@ -409,7 +422,7 @@ void ImGuiRenderer::NewDeathPopup(const gui::DeathPopupData &data) {
     }
 
     // Middle of viewport. NOTE: hardcoded middle of viewport positioning
-    ImVec2 pos = ImVec2(viewport->WorkPos.x + viewport->WorkSize.x / 2.0f, viewport->WorkPos.y + viewport->WorkSize.y / 2.0f);
+    ImVec2 pos = ImVec2(viewport.WorkPos.x + viewport.WorkSize.x / 2.0f, viewport.WorkPos.y + viewport.WorkSize.y / 2.0f);
     ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
 
     // Make the window fit the text exactly
@@ -427,7 +440,7 @@ void ImGuiRenderer::NewDeathPopup(const gui::DeathPopupData &data) {
                              ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
                              ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
 
-    ImGui::Begin("Death Popup Window", nullptr, flags);
+    ImGui::Begin(fmt::format("Death Popup Window##{}", playerId).c_str(), nullptr, flags);
 
     // Text
     ImGui::Text("%s", str.c_str());
@@ -437,7 +450,8 @@ void ImGuiRenderer::NewDeathPopup(const gui::DeathPopupData &data) {
     ImGui::End();
 }
 
-void ImGuiRenderer::NewFinishPopup(const gui::FinishPopupData &data) {
+void ImGuiRenderer::NewFinishPopup(const gui::FinishPopupData &data,
+                                   size_t activePlayerCount, size_t playerId) {
     if (!enableFinishPopup) {
         // Early return
         return;
@@ -449,7 +463,7 @@ void ImGuiRenderer::NewFinishPopup(const gui::FinishPopupData &data) {
         return;
     }
 
-    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+    ImGuiViewport viewport = CalcPlayerViewport(Context::get().extent, activePlayerCount, playerId);
 
     std::string str = fmt::format("FINISH POPUP");
 
@@ -465,7 +479,7 @@ void ImGuiRenderer::NewFinishPopup(const gui::FinishPopupData &data) {
     }
 
     // Middle of viewport. NOTE: hardcoded middle of viewport positioning
-    ImVec2 pos = ImVec2(viewport->WorkPos.x + viewport->WorkSize.x / 2.0f, viewport->WorkPos.y + viewport->WorkSize.y / 2.0f);
+    ImVec2 pos = ImVec2(viewport.WorkPos.x + viewport.WorkSize.x / 2.0f, viewport.WorkPos.y + viewport.WorkSize.y / 2.0f);
     ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
 
     // Make the window fit the text exactly
@@ -483,7 +497,7 @@ void ImGuiRenderer::NewFinishPopup(const gui::FinishPopupData &data) {
                              ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
                              ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
 
-    ImGui::Begin("Finish Popup Window", nullptr, flags);
+    ImGui::Begin(fmt::format("Finish Popup Window##{}", playerId).c_str(), nullptr, flags);
 
     // Text
     ImGui::Text("%s", str.c_str());
@@ -493,8 +507,9 @@ void ImGuiRenderer::NewFinishPopup(const gui::FinishPopupData &data) {
     ImGui::End();
 }
 
-void ImGuiRenderer::NewTimer(const gui::TimerData &data) {
-    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+void ImGuiRenderer::NewTimer(const gui::TimerData &data,
+                             size_t activePlayerCount, size_t playerId) {
+    ImGuiViewport viewport = CalcPlayerViewport(Context::get().extent, activePlayerCount, playerId);
 
     float time = data.time;
 
@@ -514,7 +529,7 @@ void ImGuiRenderer::NewTimer(const gui::TimerData &data) {
     }
 
     // Top right of viewport. NOTE: hardcoded top right positioning
-    ImVec2 pos = ImVec2(viewport->WorkPos.x + viewport->WorkSize.x, viewport->WorkPos.y);
+    ImVec2 pos = ImVec2(viewport.WorkPos.x + viewport.WorkSize.x, viewport.WorkPos.y);
     ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
 
     // Make the window fit the text exactly
@@ -532,7 +547,7 @@ void ImGuiRenderer::NewTimer(const gui::TimerData &data) {
                              ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
                              ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
 
-    ImGui::Begin("Timer Window", nullptr, flags);
+    ImGui::Begin(fmt::format("Timer Window##{}", playerId).c_str(), nullptr, flags);
 
     // Text
     ImGui::Text("%s", str.c_str());
@@ -639,7 +654,8 @@ void ImGuiRenderer::NewActivePlayerCountOverride(
             scene->SetActivePlayerCountOverrideInactive();
         } else {
             size_t playerCount = 0;
-            assert(sscanf(settings.activeItem, "%zu", &playerCount));
+            [[maybe_unused]] int ret = sscanf(settings.activeItem, "%zu", &playerCount);
+            assert(ret);
             scene->SetActivePlayerCountOverride(playerCount);
         }
     }
@@ -693,9 +709,11 @@ void ImGuiRenderer::Update(Scene *scene)
     auto *sunLight = lights[0];
 
     if (!initialized) {
-        sunLight->view = -43.0f;
-        sunLight->far = 50.0f;
-        sunLight->near = -125.0f;
+        SunElevation = 0.89f; // default elevation // -21
+        SunAzimuthal = 0.0f; // default azimuth // 45
+        //sunLight.view = -43.0f;
+        //sunLight.far = 50.0f;
+        //sunLight.near = -125.0f;
         initialized = true;
     }
 
@@ -709,8 +727,8 @@ void ImGuiRenderer::Update(Scene *scene)
 
         ImGui::Text("Light Camera Settings");
         ImGui::SliderFloat("View", &sunLight->view, -200.0f, 200.0f, "%.2f");
-        ImGui::SliderFloat("Near", &sunLight->near, -200.0f, 1.0f, "%.2f");
-        ImGui::SliderFloat("Far", &sunLight->far, 0.0f, 50.0f, "%.2f");
+        ImGui::SliderFloat("Near", &sunLight->near_, -200.0f, 1.0f, "%.2f");
+        ImGui::SliderFloat("Far", &sunLight->far_, 0.0f, 50.0f, "%.2f");
 
         ImGui::SliderFloat("Shadow bias: ", &vkutil::ShadowBias, 0.0f, 10.0f);
         ImGui::SliderFloat("Shadow slope: ", &vkutil::ShadowSlope, 0.0f, 10.0f);
@@ -756,7 +774,7 @@ void ImGuiRenderer::Update(Scene *scene)
     {
         ImGui::Begin("Debug Textures");
         for (size_t i = 0; i < textureIDs.size(); ++i) {
-            ImGui::Image(textureIDs[i], ImVec2(800, 600));
+            ImGui::Image(textureIDs[i], ImVec2(800 / 2, 600 / 2));
         }
         ImGui::End();
     }

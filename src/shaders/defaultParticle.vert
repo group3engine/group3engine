@@ -1,21 +1,16 @@
 #version 450
 
+#include "uniforms.glsl"
+
 struct Particle{
     mat4 transform;
     vec3 colour;
     int isEnabled;
 };
 
-layout(set = 0, binding = 0) uniform SceneUniform
-{
-    mat4 view;
-    mat4 projection;
-    vec4 cameraPosition;
-    vec2 viewportSize;
-    float fov;
-    float nearPlane;
-    float farPlane;
-} ubo;
+layout(set = 0, binding = 0) uniform block {
+    CameraUBO ubo;
+};
 
 layout (set = 2, binding = 0) readonly buffer ParticleUniform
 {

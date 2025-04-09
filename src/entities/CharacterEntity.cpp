@@ -11,6 +11,7 @@
 #include "Camera.hpp"
 #include "Engine.hpp"
 #include "GLFW.hpp"
+#include "RenderPassCommon.hpp"
 #include "SampleGLTFFilePaths.hpp"
 #include "Scene.hpp"
 
@@ -113,6 +114,11 @@ void CharacterEntity::PrePhysicsUpdate() {
     mSampleJoltCharacter->PrePhysicsUpdate(preUpdateParams);
 }
 
+void CharacterEntity::PreUpdate(double deltaTime) {
+    // process the input
+    ProcessInput();
+}
+
 void CharacterEntity::Update(double deltaTime) {
     // update the death timer
     if(mDeathState == DeathState::eDying) {
@@ -123,8 +129,6 @@ void CharacterEntity::Update(double deltaTime) {
             Reset();
         }
     }
-    // process the input
-    ProcessInput();
     // pre physics update
     PrePhysicsUpdate();
     // update the character position offset
@@ -239,20 +243,26 @@ void CharacterEntity::UpdateUi(double deltaTime) {
         }
     }
 
+    size_t activePlayerCount = GetScene()->GetActivePlayerCount();
+
+    // New timer window
+    mGuiTimerData.time += deltaTime;
+    ImGuiRenderer::NewTimer(mGuiTimerData, activePlayerCount, mPlayerId);
+
     // NOTE: If copying the data into a struct gets annoying, we can just use
     // simple parameters to the gui functions. But using structs might help
     // bundle things more nicely in some cases. This is just an example.
     mGuiDeathCounterData.deathCount = mDeathCount;
-    ImGuiRenderer::NewDeathCounter(mGuiDeathCounterData);
+    ImGuiRenderer::NewDeathCounter(mGuiDeathCounterData, activePlayerCount, mPlayerId);
 
     mDeathVisibleTimer = std::max(0.0f, mDeathVisibleTimer - static_cast<float>(deltaTime));
     mGuiDeathPopupData.visibleTimer = mDeathVisibleTimer;
-    ImGuiRenderer::NewDeathPopup(mGuiDeathPopupData);
+    ImGuiRenderer::NewDeathPopup(mGuiDeathPopupData, activePlayerCount, mPlayerId);
 
     mFinishVisibleTimer = std::max(0.0f, mFinishVisibleTimer - static_cast<float>(deltaTime));
     mGuiFinishPopupData.visibleTimer = mFinishVisibleTimer;
 
-    ImGuiRenderer::NewFinishPopup(mGuiFinishPopupData);
+    ImGuiRenderer::NewFinishPopup(mGuiFinishPopupData, activePlayerCount, mPlayerId);
 }
 
 void CharacterEntity::CreateJoltCharacter()
@@ -403,6 +413,8 @@ void CharacterEntity::Load() {
 }
 
 void CharacterEntity::Awake() {
+    mPlayerId = GetScene()->PostIncrementPlayerCount();
+
     mInitialTransform = GetLocalTransform();
     // create the jolt character
     CreateJoltCharacter();

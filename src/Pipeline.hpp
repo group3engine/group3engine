@@ -97,7 +97,7 @@ class PipelineBuilder {
     }
 
     // Set the pipeline layout
-    PipelineBuilder &SetPipelineLayout(const std::vector<VkDescriptorSetLayout> &layouts, const std::optional<VkPushConstantRange> &pushConstant = std::nullopt) {
+    PipelineBuilder &SetPipelineLayout(const std::vector<VkDescriptorSetLayout> &layouts, const std::optional<std::vector<VkPushConstantRange>> &pushConstant = std::nullopt) {
         descriptorLayouts = layouts;
 
         m_pipelineLayout = {};
@@ -106,8 +106,8 @@ class PipelineBuilder {
         m_pipelineLayout.pSetLayouts = descriptorLayouts.data();
 
         if (pushConstant.has_value()) {
-            m_pipelineLayout.pushConstantRangeCount = 1;
-            m_pipelineLayout.pPushConstantRanges = &pushConstant.value();
+            m_pipelineLayout.pushConstantRangeCount = static_cast<uint32_t>(pushConstant.value().size());
+            m_pipelineLayout.pPushConstantRanges = pushConstant.value().data();
         } else {
             m_pipelineLayout.pushConstantRangeCount = 0;
             m_pipelineLayout.pPushConstantRanges = nullptr;
