@@ -4,6 +4,28 @@
 
 #include "Networking.hpp"
 
+#include <string>
+
+namespace {
+
+void CloseSocket(int socket) {
+    int status = 0;
+
+#ifdef _WIN32
+    status = shutdown(socket, SD_BOTH);
+    if (status == 0) {
+        status = closesocket(socket);
+    }
+#else
+    status = shutdown(socket, SHUT_RDWR);
+    if (status == 0) {
+        status = close(socket);
+    }
+#endif
+}
+
+}
+
 Networking::Networking()
 {
     my_socket = socket(AF_INET, SOCK_DGRAM, 0);
@@ -64,19 +86,7 @@ void Networking::Listen()
 }
 
 void Networking::Close() {
-    int status = 0;
-
-#ifdef _WIN32
-    status = shutdown(my_socket, SD_BOTH);
-    if (status == 0) {
-        status = closesocket(my_socket);
-    }
-#else
-    status = shutdown(my_socket, SHUT_RDWR);
-    if (status == 0) {
-        status = close(my_socket);
-    }
-#endif
+    CloseSocket(my_socket);
 }
 
 
@@ -117,7 +127,7 @@ std::string http_get(const std::string& url) {
     // Connect
     if (connect(sock, res->ai_addr, res->ai_addrlen) < 0) {
         perror("connect");
-        close(sock);
+        CloseSocket(sock);
         freeaddrinfo(res);
         return "";
     }
@@ -126,13 +136,13 @@ std::string http_get(const std::string& url) {
     // Send request
     if (send(sock, request.c_str(), request.length(), 0) < 0) {
         perror("send");
-        close(sock);
+        CloseSocket(sock);
         return "";
     }
 
     // Receive and print response
     char buffer[4096];
-    ssize_t bytesRead;
+    std::ptrdiff_t bytesRead;
     while ((bytesRead = recv(sock, buffer, sizeof(buffer) - 1, 0)) > 0) {
         buffer[bytesRead] = '\0';
     }
@@ -144,12 +154,12 @@ std::string http_get(const std::string& url) {
         response = header.substr(headerEnd + 4); // Skip the header
     } else {
         std::cerr << "Invalid HTTP response" << std::endl;
-        close(sock);
+        CloseSocket(sock);
         return "";
     }
 
     // Close socket
-    close(sock);
+    CloseSocket(sock);
     return response;
 }
 void http_post(const std::string& url, const std::string& data)
@@ -192,7 +202,7 @@ void http_post(const std::string& url, const std::string& data)
     // Connect
     if (connect(sock, res->ai_addr, res->ai_addrlen) < 0) {
         perror("connect");
-        close(sock);
+        CloseSocket(sock);
         freeaddrinfo(res);
         return;
     }
@@ -201,7 +211,7 @@ void http_post(const std::string& url, const std::string& data)
     // Send request
     if (send(sock, request.c_str(), request.length(), 0) < 0) {
         perror("send");
-        close(sock);
+        CloseSocket(sock);
         return;
     }
     // Receive response
@@ -211,5 +221,5 @@ void http_post(const std::string& url, const std::string& data)
 
 
     // Close socket
-    close(sock);
+    CloseSocket(sock);
 }
