@@ -1,5 +1,7 @@
 #version 450
 
+#include "uniforms.glsl"
+
 layout(push_constant) uniform PushConstants {
     mat4 modelMatrix;
 } pushConstants;
@@ -8,16 +10,9 @@ layout (location = 0) in vec3 iPosition;
 layout (location = 1) in vec2 iTexCoord;
 layout (location = 2) in vec3 iNormal;
 
-layout(set = 0, binding = 0) uniform CameraUBO
-{
-    mat4 view;
-    mat4 projection;
-    vec4 cameraPosition;
-    vec2 viewportSize;
-    float fov;
-    float nearPlane;
-    float farPlane;
-} ubo;
+layout(set = 0, binding = 0) uniform block {
+    CameraUBO ubo;
+};
 
 // source: https://www.shadertoy.com/view/3s33zj
 mat3 adjugate( in mat4 m )
