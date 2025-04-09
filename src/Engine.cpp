@@ -99,7 +99,7 @@ bool Engine::Initialize() {
         #endif
     }
 #else
-    assetsPath = assetsPath / "assets";
+    assetsPath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets";
 #endif
 
     // TODO: Could probably store this somewhere else
