@@ -214,7 +214,7 @@ inline float get_hash(uint seed)
     return float(seed) / float(0xffffffffu);
 }
 // function to get random from -1 to 1
-inline float get_random(size_t seed)
+inline float get_next_random(size_t &seed)
 {
     return get_hash(seed++) * 2.0f - 1.0f;
 }
@@ -297,7 +297,7 @@ private:
     Buffer mParticlesBuffer;
     double mTimeStepToEmit;
     double mDistanceStepToEmit;
-    size_t seed = 0.f;
+    size_t seed = 0;
     Context &mContext;
     Scene *mScene = nullptr;
     VkDescriptorSetLayout mDescriptorSetLayout = VK_NULL_HANDLE;
