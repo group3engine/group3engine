@@ -18,7 +18,6 @@
 #ifdef JPH_DEBUG_RENDERER
 // #include <Jolt/Renderer/DebugRenderer.h>
 #include <Jolt/Renderer/DebugRendererSimple.h>
-#endif // JPH_DEBUG_RENDERER
 
 #include <volk.h>
 
@@ -29,7 +28,7 @@
 class Renderer;
 class Scene;
 
-class DebugRendererImp final : public JPH::DebugRendererSimple {
+class DebugRendererImp final : public JPH::DebugRendererSimple{
   public:
     JPH_OVERRIDE_NEW_DELETE
 
@@ -78,4 +77,6 @@ class DebugRendererImp final : public JPH::DebugRendererSimple {
     JPH::Array<WPT::Vertex>            mVertices;
     JPH::Mutex                         mVerticesLock;
 };
+#endif // JPH_DEBUG_RENDERER
+
 #endif // DEBUGRENDERERIMP_H

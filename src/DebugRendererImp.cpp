@@ -3,8 +3,10 @@
 // SPDX-License-Identifier: MIT
 
 // See JoltPhysics/TestFramework/Renderer/DebugRendererImp.cpp
+#ifdef JPH_DEBUG_RENDERER
 
 #include "DebugRendererImp.h"
+
 
 #include <spdlog/spdlog.h>
 
@@ -276,3 +278,5 @@ void DebugRendererImp::Draw() {
     // DrawLines();
     DrawTriangles();
 }
+
+#endif
