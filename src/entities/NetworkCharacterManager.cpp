@@ -132,9 +132,6 @@ void NetworkCharacterManager::Update(double deltaTime)
         // update the state
         child->UpdateState(state);
     }
-
-    // get the chat messages
-//    http_get("wipeoutchat.pythonanywhere.com/GetMessages?gameID=test");
 }
 
 void NetworkCharacterManager::SendChatMessage(std::string playerName, std::string message)
@@ -146,7 +143,9 @@ void NetworkCharacterManager::SendChatMessage(std::string playerName, std::strin
     // send the message
     std::string url = "wipeoutchat.pythonanywhere.com/SendMessage";
     // send the message in a thread
-    http_post(url, jsonToSend);
+    // join the thread
+    std::thread chatSendThread = std::thread(http_post, url, jsonToSend);
+    chatSendThread.detach();
 }
 
 NetworkCharacterManager::NetworkCharacterManager()
