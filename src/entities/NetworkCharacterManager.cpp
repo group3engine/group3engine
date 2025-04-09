@@ -139,3 +139,12 @@ void NetworkCharacterManager::Update(double deltaTime)
     }
 }
 
+void NetworkCharacterManager::SendChatMessage(std::string playerName, std::string message)
+{
+    // generate the json of the message
+    // we need to include the player name, message, timestamp, and map name
+    std::string mapName = Scene::get().GetActiveScene()->GetSceneFilename().string();
+    std::string jsonToSend = "{ \"playerName\": \"" + playerName + "\", \"message\": \"" + message + "\", \"timestamp\": \"" + std::to_string(time(0)) + "\", \"mapName\": \"" + mapName + "\" }";
+    std::cout << jsonToSend << std::endl;
+}
+

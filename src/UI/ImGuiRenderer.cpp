@@ -6,6 +6,7 @@
 #include "RenderPassCommon.hpp"
 #include "ImGuiRenderer.hpp"
 #include "Utils.hpp"
+#include "Themes.hpp"
 
 // Define math operators for the ImGui vector types
 // You're meant to use your own math vector types but I don't think we'll need them
@@ -23,14 +24,14 @@
 
 #include "Config.hpp"
 #include "Engine.hpp"
-
+#include "Fonts.hpp"
 namespace {
     auto PushBackStyleVar = [](size_t i, std::function<void()> f) {
         f();
         return ++i;
     };
 
-    bool enableTextWindowBorder = true;
+    bool enableTextWindowBorder = false;
     bool enableDeathPopup = true;
     bool enableFinishPopup = true;
 
@@ -154,12 +155,14 @@ void ImGuiRenderer::BeginMainMenu(const Context &context) {
     ImGui::Begin(std::string("Main Menu").c_str(), nullptr, flags);
 
     ImGui::PopStyleVar(mainMenuWindowSv);
+    ImGui::PushFont(Fonts::HeadingFont);
 
     std::string mainMenuStr = "Main Menu";
     ImVec2 mainMenuStrSize = ImGui::CalcTextSize(mainMenuStr.c_str());
     ImVec2 mainMenuStrOffset = windowSize - mainMenuStrSize;
     ImGui::SetCursorScreenPos(ImVec2(mainMenuStrOffset.x / 2.0f , mainMenuStrOffset.y / 3.0f));
     ImGui::Text("Main Menu");
+    ImGui::PopFont();
 }
 
 const char *
@@ -173,10 +176,14 @@ ImGuiRenderer::AddMainMenuPlayerCountSelection(const Context &context,
     float sceneSelectionDropdownWidth = windowSize.x * 0.25f;
     ImGui::SetCursorPosX((windowSize.x - sceneSelectionDropdownWidth) / 2.0f);
 
+    ImGui::PushFont(Fonts::SubHeadingFont);
     ImGui::Text("Select Number of Players");
+    ImGui::PopFont();
 
     ImGui::SetCursorPosX((windowSize.x - sceneSelectionDropdownWidth) / 2.0f);
     ImGui::PushItemWidth(sceneSelectionDropdownWidth);
+
+    ImGui::PushFont(Fonts::TextFont);
 
     if (ImGui::BeginCombo("##Main Menu Player Count Selection", playerCountSelection)) {
         for (size_t i = 0; i < playerCounts.size(); ++i) {
@@ -195,6 +202,7 @@ ImGuiRenderer::AddMainMenuPlayerCountSelection(const Context &context,
     }
 
     ImGui::PopItemWidth();
+    ImGui::PopFont();
 
     return activeItem;
 }
@@ -210,10 +218,14 @@ ImGuiRenderer::AddMainMenuSceneSelection(const Context &context,
     float sceneSelectionDropdownWidth = windowSize.x * 0.25f;
     ImGui::SetCursorPosX((windowSize.x - sceneSelectionDropdownWidth) / 2.0f);
 
+    ImGui::PushFont(Fonts::SubHeadingFont);
     ImGui::Text("Select Level");
+    ImGui::PopFont();
 
     ImGui::SetCursorPosX((windowSize.x - sceneSelectionDropdownWidth) / 2.0f);
     ImGui::PushItemWidth(sceneSelectionDropdownWidth);
+
+    ImGui::PushFont(Fonts::TextFont);
 
     if (ImGui::BeginCombo("##Main Menu Scene Selection", scenePathSelection->string().c_str())) {
         for (size_t i = 0; i < scenePaths.size(); ++i) {
@@ -232,6 +244,7 @@ ImGuiRenderer::AddMainMenuSceneSelection(const Context &context,
     }
 
     ImGui::PopItemWidth();
+    ImGui::PopFont();
 
     return activeItem;
 }
@@ -239,9 +252,11 @@ ImGuiRenderer::AddMainMenuSceneSelection(const Context &context,
 const char *ImGuiRenderer::NewPlayerCountSelection(const std::vector<const char *> &playerCounts,
                                                    const char *playerCountSelection) {
     const char *activeItem = playerCountSelection;
-
+    ImGui::PushFont(Fonts::SubHeadingFont);
     ImGui::Text("Select Number of Players");
+    ImGui::PopFont();
 
+    ImGui::PushFont(Fonts::TextFont);
     if (ImGui::BeginCombo("##Player Count Selection", playerCountSelection)) {
         for (size_t i = 0; i < playerCounts.size(); ++i) {
             bool isSelected = playerCountSelection == playerCounts[i];
@@ -257,6 +272,7 @@ const char *ImGuiRenderer::NewPlayerCountSelection(const std::vector<const char 
 
         ImGui::EndCombo();
     }
+    ImGui::PopFont();
 
     return activeItem;
 }
@@ -266,8 +282,11 @@ ImGuiRenderer::NewSceneSelection(const std::vector<std::filesystem::path *> &sce
                                  const std::filesystem::path *scenePathSelection) {
     const std::filesystem::path *activeItem = scenePathSelection;
 
+    ImGui::PushFont(Fonts::SubHeadingFont);
     ImGui::Text("Select Level");
+    ImGui::PopFont();
 
+    ImGui::PushFont(Fonts::TextFont);
     if (ImGui::BeginCombo("##Scene Selection", scenePathSelection->string().c_str())) {
         for (size_t i = 0; i < scenePaths.size(); ++i) {
             bool isSelected = scenePathSelection == scenePaths[i];
@@ -283,18 +302,33 @@ ImGuiRenderer::NewSceneSelection(const std::vector<std::filesystem::path *> &sce
 
         ImGui::EndCombo();
     }
+    ImGui::PopFont();
 
     return activeItem;
 }
 
 void ImGuiRenderer::AddLoadSceneButton(const std::filesystem::path &pendingScenePath,
                                        size_t pendingPlayerCount) {
+    ImGui::PushFont(Fonts::TextFont);
     std::string loadSceneStr = "Load Scene";
     ImGui::SameLine();
     if (ImGui::Button(loadSceneStr.c_str())) {
         SPDLOG_INFO("Load Scene");
         Engine::get().ChangeScene(pendingScenePath, pendingPlayerCount);
     }
+    ImGui::PopFont();
+}
+
+void ImGuiRenderer::AddQuitButton()
+{
+    ImGui::PushFont(Fonts::TextFont);
+    std::string quitStr = "Quit";
+    ImVec2 windowSize = ImGui::GetContentRegionAvail();
+    ImGui::SetCursorPosX((windowSize.x - ImGui::CalcTextSize(quitStr.c_str()).x) * 0.5f);
+    if (ImGui::Button(quitStr.c_str())) {
+        Engine::get().Quit();
+    }
+    ImGui::PopFont();
 }
 
 void ImGuiRenderer::EndMainMenu() {
@@ -864,4 +898,79 @@ void ImGuiRenderer::AddTexture(VkSampler sampler, VkImageView imageView, VkImage
 {
     ImTextureID textureID = ImGui_ImplVulkan_AddTexture(sampler, imageView, imageLayout);
     textureIDs.push_back(static_cast<void*>(textureID));
+}
+
+
+void ImGuiRenderer::ChatWindow(const std::vector<Message> &messages, std::function<void(std::string, std::string)> callback)
+{
+    // Fixed upper left position with a drop\-down style window
+    ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Once);
+    ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_Once);
+    ImGui::SetNextWindowBgAlpha(0.25f);
+    // set the font the subheading font
+    ImGui::PushFont(Fonts::TextFont);
+    if (ImGui::Begin("Chat Window", nullptr, ImGuiTreeNodeFlags_DefaultOpen))
+    {
+       static char playerName[64] = "";
+        ImGui::Text("Player Name"); ImGui::SameLine();
+        ImGui::InputText("##PlayerName", playerName, sizeof(playerName));
+        float availableWidth = ImGui::GetContentRegionAvail().x;
+        float availableHeight = ImGui::GetContentRegionAvail().y;
+        float inputHeight1 = ImGui::GetFrameHeightWithSpacing();
+        float inputHeight2 = ImGui::GetFrameHeightWithSpacing();
+        float chatHeight = availableHeight - (inputHeight1 + inputHeight2) / 2.0f;
+        if (chatHeight < 0.0f)
+            chatHeight = 0.0f;
+        ImGui::SetNextWindowBgAlpha(0.35f);
+       // Hide scrollbar by default, show on hover
+        ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarSize, 4.0f);  // Thin scrollbar
+        ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, ImVec4(1,1,1,1));  // Transparent background
+        ImGui::BeginChild("ChatMessages", ImVec2(availableWidth, chatHeight), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+        for (const auto &msg : messages)
+        {
+            ImGui::Text("%s", msg.playerName.c_str());
+            ImGui::PushFont(Fonts::TextFontSubtle);
+            float textSpace = ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(msg.timestamp.c_str()).x - 20.0f;
+            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + textSpace);
+            ImGui::Text("%s", msg.text.c_str());
+            ImGui::PopTextWrapPos();
+            ImGui::PopFont();
+            ImGui::PushFont(Fonts::TextFontSmall);
+            float tsWidth = ImGui::CalcTextSize(msg.timestamp.c_str()).x;
+            ImGui::SameLine(ImGui::GetWindowWidth() - tsWidth - 10.0f);
+            ImGui::Text("%s", msg.timestamp.c_str());
+            ImGui::PopFont();
+        }
+        ImGui::PopStyleVar();
+        ImGui::PopStyleColor();
+        if(messages.size() > messageCount) {
+            // Auto-scroll to bottom
+            static bool autoScroll = true;
+            if (autoScroll)
+                ImGui::SetScrollHereY(1.0f);
+
+            messageCount = messages.size();
+        }
+        ImGui::EndChild();
+
+
+        // Input field and Send button
+        static char inputBuffer[256] = "";
+        ImGui::InputText("##ChatInput", inputBuffer, sizeof(inputBuffer));
+        // Keep input field and button on the same line regardless of resizing
+        ImGui::SameLine();
+        if (ImGui::Button("Send"))
+        {
+            if (strlen(inputBuffer) > 0)
+            {
+                callback(std::string(playerName), std::string(inputBuffer));
+                inputBuffer[0] = '\0';
+            }
+        }
+
+    }
+    ImGui::PopFont();
+
+
+    ImGui::End();
 }

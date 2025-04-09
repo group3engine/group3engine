@@ -8,6 +8,7 @@
 #include <memory>
 
 #include "Context.hpp"
+#include "Themes.hpp"
 
 class ImVec2;
 
@@ -48,6 +49,12 @@ struct ActivePlayerCountOverride {
 };
 } // namespace Settings
 } // namespace gui
+
+struct Message{
+    std::string playerName;
+    std::string text;
+    std::string timestamp;
+};
 
 namespace ImGuiRenderer
 {
@@ -106,6 +113,7 @@ namespace ImGuiRenderer
 
     void AddLoadSceneButton(const std::filesystem::path &pendingScenePath,
                             size_t pendingPlayerCount);
+    void AddQuitButton();
 
     void EndMainMenu();
 
@@ -122,6 +130,7 @@ namespace ImGuiRenderer
 
     void Text(std::string const &text, ImVec2 position);
 
+    void ChatWindow(const std::vector<Message> &messages, std::function<void(std::string, std::string)> callback);
 
 
     void NewActivePlayerCountOverride(Scene *scene, gui::Settings::ActivePlayerCountOverride &settings);
@@ -140,5 +149,11 @@ namespace ImGuiRenderer
 
     // map of strings to texture data
     inline std::unordered_map<std::string, MyTextureData> textureDatas {};
+
+    // the themes class
+    inline Themes themes;
+
+    // the number of messages, so we can scroll when a new message comes in
+    inline size_t messageCount = 0;
 }
 #endif // RENDERING_IMGUIRENDERER_HPP

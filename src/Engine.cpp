@@ -23,6 +23,7 @@
 #include "SampleGLTFFilePaths.hpp"
 #include "Scene.hpp"
 #include "Utils.hpp"
+#include "Fonts.hpp"
 #include "glm/ext/quaternion_trigonometric.hpp"
 #include "glm/fwd.hpp"
 #include "glm/trigonometric.hpp"
@@ -117,6 +118,9 @@ bool Engine::Initialize() {
 
     SPDLOG_DEBUG("Engine initialised.");
 
+    ImGuiRenderer::themes.applyTheme("Catpuccin Mocha");
+    Fonts::LoadFonts();
+
 
 
     return m_isRunning;
@@ -176,8 +180,10 @@ void Engine::Run() {
             playerCountSelection = ImGuiRenderer::AddMainMenuPlayerCountSelection(m_context, playerCounts, playerCountSelection);
             scenePathSelection = ImGuiRenderer::AddMainMenuSceneSelection(m_context, scenePaths, scenePathSelection);
             ImGuiRenderer::AddLoadSceneButton(*scenePathSelection, std::stoi(playerCountSelection));
+            ImGuiRenderer::AddQuitButton();
             ImGuiRenderer::EndMainMenu();
         }
+
 
         ImGuiRenderer::EndFrame();
 
@@ -295,7 +301,7 @@ void Engine::Update(double deltaTime) {
         playerCountSelection = ImGuiRenderer::NewPlayerCountSelection(playerCounts, playerCountSelection);
         scenePathSelection = ImGuiRenderer::NewSceneSelection(scenePaths, scenePathSelection);
         ImGuiRenderer::AddLoadSceneButton(*scenePathSelection, std::stoi(playerCountSelection));
-
+        ImGuiRenderer::AddQuitButton();
         ImGuiRenderer::Update(mScene);
     }
 

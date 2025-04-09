@@ -123,7 +123,7 @@ void CharacterEntity::Update(double deltaTime) {
         Engine::get().SetTimeScale(0.f);
         // free the mouse
         auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
-        flag = false
+        flag = false;
         glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
     }
