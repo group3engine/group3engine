@@ -9,7 +9,7 @@
 
 #include "Config.hpp"
 
-#define SHADER_DIR std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/"
+#define SHADER_DIR assetsPath / "shaders/"
 #define SKINNED_FRAGMENT_SHADER SHADER_DIR / "default.frag.spv"
 #define SKINNED_VERTEX_SHADER SHADER_DIR / "skinned.vert.spv"
 

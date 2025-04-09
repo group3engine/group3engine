@@ -4,6 +4,28 @@
 
 #include "Networking.hpp"
 
+#include <string>
+
+namespace {
+
+void CloseSocket(int socket) {
+    int status = 0;
+
+#ifdef _WIN32
+    status = shutdown(socket, SD_BOTH);
+    if (status == 0) {
+        status = closesocket(socket);
+    }
+#else
+    status = shutdown(socket, SHUT_RDWR);
+    if (status == 0) {
+        status = close(socket);
+    }
+#endif
+}
+
+}
+
 Networking::Networking()
 {
     my_socket = socket(AF_INET, SOCK_DGRAM, 0);
@@ -64,17 +86,140 @@ void Networking::Listen()
 }
 
 void Networking::Close() {
-    int status = 0;
+    CloseSocket(my_socket);
+}
 
-#ifdef _WIN32
-    status = shutdown(my_socket, SD_BOTH);
-    if (status == 0) {
-        status = closesocket(my_socket);
+
+
+std::string http_get(const std::string& url) {
+    // Extract host and path from the URL
+    std::string host = url;
+    std::string path = "/";
+    auto slashPos = url.find('/');
+    if (slashPos != std::string::npos) {
+        host = url.substr(0, slashPos);
+        path = url.substr(slashPos);
     }
-#else
-    status = shutdown(my_socket, SHUT_RDWR);
-    if (status == 0) {
-        status = close(my_socket);
+
+    const char* port = "80";
+    std::string request =
+            "GET " + path + " HTTP/1.1\r\n" +
+            "Host: " + host + "\r\n" +
+            "Connection: close\r\n\r\n";
+
+    // DNS resolution
+    addrinfo hints{}, *res;
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    if (getaddrinfo(host.c_str(), port, &hints, &res) != 0) {
+        perror("getaddrinfo");
+        return "";
     }
-#endif
+
+    // Open socket
+    int sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+    if (sock < 0) {
+        perror("socket");
+        freeaddrinfo(res);
+        return "";
+    }
+
+    // Connect
+    if (connect(sock, res->ai_addr, res->ai_addrlen) < 0) {
+        perror("connect");
+        CloseSocket(sock);
+        freeaddrinfo(res);
+        return "";
+    }
+    freeaddrinfo(res);
+
+    // Send request
+    if (send(sock, request.c_str(), request.length(), 0) < 0) {
+        perror("send");
+        CloseSocket(sock);
+        return "";
+    }
+
+    // Receive and print response
+    char buffer[4096];
+    std::ptrdiff_t bytesRead;
+    while ((bytesRead = recv(sock, buffer, sizeof(buffer) - 1, 0)) > 0) {
+        buffer[bytesRead] = '\0';
+    }
+    // parse out the header
+    std::string header(buffer);
+    std::string response;
+    size_t headerEnd = header.find("\r\n\r\n");
+    if (headerEnd != std::string::npos) {
+        response = header.substr(headerEnd + 4); // Skip the header
+    } else {
+        std::cerr << "Invalid HTTP response" << std::endl;
+        CloseSocket(sock);
+        return "";
+    }
+
+    // Close socket
+    CloseSocket(sock);
+    return response;
+}
+void http_post(const std::string& url, const std::string& data)
+{
+    // Extract host and path from the URL
+    std::string host = url;
+    std::string path = "/";
+    auto slashPos = url.find('/');
+    if (slashPos != std::string::npos) {
+        host = url.substr(0, slashPos);
+        path = url.substr(slashPos);
+    }
+
+    const char* port = "80";
+    std::string request =
+            "POST " + path + " HTTP/1.1\r\n" +
+            "Host: " + host + "\r\n" +
+            "Content-Type: application/json\r\n" +
+            "Content-Length: " + std::to_string(data.size()) + "\r\n" +
+            "Connection: close\r\n\r\n" +
+            data;
+
+    // DNS resolution
+    addrinfo hints{}, *res;
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    if (getaddrinfo(host.c_str(), port, &hints, &res) != 0) {
+        perror("getaddrinfo");
+        return;
+    }
+
+    // Open socket
+    int sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+    if (sock < 0) {
+        perror("socket");
+        freeaddrinfo(res);
+        return;
+    }
+
+    // Connect
+    if (connect(sock, res->ai_addr, res->ai_addrlen) < 0) {
+        perror("connect");
+        CloseSocket(sock);
+        freeaddrinfo(res);
+        return;
+    }
+    freeaddrinfo(res);
+
+    // Send request
+    if (send(sock, request.c_str(), request.length(), 0) < 0) {
+        perror("send");
+        CloseSocket(sock);
+        return;
+    }
+    // Receive response
+    char buffer[4096];
+    while (recv(sock, buffer, sizeof(buffer), 0) > 0) {
+    }
+
+
+    // Close socket
+    CloseSocket(sock);
 }

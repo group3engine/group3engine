@@ -12,5 +12,6 @@ add_subdirectory(vkutil)
 add_subdirectory(animation)
 add_subdirectory(entities)
 add_subdirectory(samples)
+add_subdirectory(UI)
 
 target_include_directories(src PRIVATE ${CMAKE_CURRENT_LIST_DIR})

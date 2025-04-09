@@ -4,8 +4,11 @@
 #include <functional>
 #include <glm/glm.hpp>
 #include <array>
+#include <filesystem>
 
 class Context;
+
+    inline std::filesystem::path assetsPath = {};
 
 #define VK_CHECK(call, message)                                                             \
     do {                                                                                    \
@@ -90,6 +93,7 @@ namespace vkutil {
 
 namespace GlobalUtil {
     inline double deltaTime;
+inline double unscaledDeltaTime;
 }
 
 namespace vkutil {
