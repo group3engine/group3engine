@@ -218,6 +218,7 @@ void Engine::ChangeSceneFR(const std::filesystem::path &scenePath, size_t player
     ImGuiRenderer::RemoveTextures();
 
     mScene->Unload();
+    LightManager::getInstance().Unload();
     mMaterialManager->Destroy();
     mMeshManager->Destroy();
     mTextureManager->Destroy();
