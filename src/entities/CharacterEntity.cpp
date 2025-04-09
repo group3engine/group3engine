@@ -122,7 +122,7 @@ void CharacterEntity::Update(double deltaTime) {
 #ifdef PLATINUM
     if (IsKeyPressed(KEY::eESCAPE))
 #else
-    if (IsKeyPressed(Key::eP))
+    if (IsKeyPressed(KEY::eP))
 #endif
     {
         // Engine::get().Quit();
@@ -222,7 +222,7 @@ void CharacterEntity::UnscaledUpdate(double deltaTime)
 #ifdef PLATINUM
         if (IsKeyPressed(KEY::eESCAPE))
 #else
-        if (IsKeyPressed(Key::eP))
+        if (IsKeyPressed(KEY::eP))
 #endif
         {
             Engine::get().SetTimeScale(1.f);
