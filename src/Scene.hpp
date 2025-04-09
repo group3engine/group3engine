@@ -162,7 +162,7 @@ class Scene {
         mActivePlayerCountOverride.playerCount = activePlayerCount;
     }
         // CSM requires player camera transforms to compute splits
-    const std::array<CameraTransform, GlobalConfig::maxPlayers> GetPlayerCameraTransforms() const { return mPlayerCameraTransforms; }
+    const std::array<CameraTransform, GlobalConfig::maxPlayers> &GetPlayerCameraTransforms() const { return mPlayerCameraTransforms; }
 
 private:
     Scene *mCurrentScene = nullptr;
