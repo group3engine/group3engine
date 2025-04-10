@@ -123,7 +123,7 @@ void Platform::StartUp(int windowWidth, int windowHeight) {
     windowWidth = mode->width;
     windowHeight = mode->height;
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
+    glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
     glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
 #endif
 
