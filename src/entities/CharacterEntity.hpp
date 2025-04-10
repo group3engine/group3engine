@@ -131,7 +131,7 @@ class CharacterEntity : public Entity {
 
     bool mInClimb = false;
 
-    Transform mClimbTransform = {};
+    glm::vec3 mClimbDirection = glm::vec3(0.f, 0.f, 0.f);
 };
 
 

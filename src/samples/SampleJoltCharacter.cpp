@@ -76,12 +76,13 @@ void SampleJoltCharacter::PrePhysicsUpdate(const PreUpdateParams &inParams)
 void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime, bool inClimb)
 {
 
-
+    float inMovementY = inMovementDirection.GetY();
 	bool player_controls_horizontal_velocity = sControlMovementDuringJump || mCharacter->IsSupported();
 	if (player_controls_horizontal_velocity)
 	{
 		// Smooth the player input
 		mDesiredVelocity = sEnableCharacterInertia? 0.25f * inMovementDirection * sCharacterSpeed + 0.75f * mDesiredVelocity : inMovementDirection * sCharacterSpeed;
+        mDesiredVelocity.SetY(0); // We don't want to move up/down when moving sideways
 
 		// True if the player intended to move
 		mAllowSliding = !inMovementDirection.IsNearZero();
@@ -169,8 +170,7 @@ void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, 
     // if we are in climb, set the upward velocity to the magnitude of the movement direction
     if(inClimb)
     {
-        float climb_speed = inMovementDirection.Length() * sClimbSpeed;
-        new_velocity.SetY(climb_speed);
+        new_velocity.SetY(inMovementY);
     }
     if(!mManualVelocityMode)
     {

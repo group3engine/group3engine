@@ -94,6 +94,11 @@ void CharacterEntity::ProcessInput(){
             cameraForward.y = 0.0f;
             cameraForward = glm::normalize(cameraForward);
             glm::quat rotation = glm::rotation(glm::vec3(1.0f, 0.0f, 0.0f), cameraForward);
+            if(mInClimb)
+            {
+                controlInput.y = controlInput.x;
+                controlInput.x = 0.f;
+            }
             controlInput = rotation * controlInput;
 
             // Check actions
@@ -194,11 +199,7 @@ void CharacterEntity::Update(double deltaTime) {
     // if we are in climb, we want to fce
     if(mInClimb)
     {
-        // get the direction to the climb transform
-        glm::vec3 climbDirection = mClimbTransform.translation - GetCharacterPositionOffset();
-        climbDirection.y = 0;
-        climbDirection = glm::normalize(climbDirection);
-        characterVelocity = climbDirection;
+        characterVelocity = mClimbDirection;
     }
     if (glm::length(characterVelocity) > 0.1f) {
         // set the transform rotation to the direction of the velocity, on top of the initial transform rotation
@@ -363,7 +364,9 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
     if(aOther->CompareTag("climbable"))
     {
         mInClimb = true;
-        mClimbTransform = aOther->GetWorldTransformComponents();
+        mClimbDirection = aOther->GetWorldTransformComponents().translation - GetCharacterPositionOffset();
+        mClimbDirection.y = 0;
+        mClimbDirection = glm::normalize(mClimbDirection);
     }
 
     SPDLOG_INFO("I am {} and I collided with {}", GetName(), aOther->GetName());
@@ -533,6 +536,8 @@ void CharacterEntity::OnCollisionStay(Entity *aOther)
     if (aOther->CompareTag("climbable"))
     {
         mInClimb = true;
-        mClimbTransform = aOther->GetWorldTransformComponents();
+        mClimbDirection = aOther->GetWorldTransformComponents().translation - GetCharacterPositionOffset();
+        mClimbDirection.y = 0;
+        mClimbDirection = glm::normalize(mClimbDirection);
     }
 }
