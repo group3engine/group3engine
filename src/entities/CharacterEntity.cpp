@@ -144,6 +144,16 @@ void CharacterEntity::Update(double deltaTime) {
     }
     // pre physics update
     PrePhysicsUpdate();
+    if(mLeftClimb)
+    {
+        mInClimb = false;
+        mLeftClimb = false;
+    }
+    if(mEnterClimb)
+    {
+        mInClimb = true;
+        mEnterClimb = false;
+    }
     // update the character position offset
     auto characterPhysicsPos = mSampleJoltCharacter->GetCharacterPosition();
     SetCharacterPositionOffset(characterPhysicsPos.GetX(), characterPhysicsPos.GetY(), characterPhysicsPos.GetZ());
@@ -367,7 +377,7 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
 
     if(aOther->CompareTag("climbable"))
     {
-        mInClimb = true;
+        mEnterClimb = true;
         // if the climbable object doesn't have a child, use the distance from us to them
         if(aOther->GetChildren().empty())
         {
@@ -545,7 +555,7 @@ void CharacterEntity::OnCollisionEnd(Entity *aOther)
 {
     if (aOther->CompareTag("climbable"))
     {
-        mInClimb = false;
+        mLeftClimb = true;
     }
 }
 
@@ -553,7 +563,7 @@ void CharacterEntity::OnCollisionStay(Entity *aOther)
 {
     if (aOther->CompareTag("climbable"))
     {
-        mInClimb = true;
+        mEnterClimb = true;
         // if the climbable object doesn't have a child, use the distance from us to them
         if(aOther->GetChildren().empty())
         {

@@ -130,6 +130,8 @@ class CharacterEntity : public Entity {
     bool m_has_save = false;
 
     bool mInClimb = false;
+    bool mLeftClimb = false;
+    bool mEnterClimb = false;
 
     glm::vec3 mClimbDirection = glm::vec3(0.f, 0.f, 0.f);
 };
