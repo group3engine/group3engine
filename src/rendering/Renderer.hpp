@@ -17,6 +17,8 @@
 #include "SSAO.hpp"
 #include "SSR.hpp"
 #include "GBuffer.hpp"
+#include "SH2.hpp"
+#include "Fog.hpp"
 
 class Context;
 
@@ -57,6 +59,7 @@ class Renderer {
     Bloom *GetBloomPass() const { return m_BloomPass.get(); }
     Composite *GetCompositePass() const { return m_CompositePass.get(); }
     PresentPass *GetPresentPass() const { return m_PresentPass.get(); }
+    Fog *GetFogPass() const { return m_Fog.get();}
 
     void AddCameras();
 
@@ -85,9 +88,9 @@ class Renderer {
 
     std::unique_ptr<DepthPrepass> m_DepthPrepass;
     std::unique_ptr<ForwardPass> m_ForwardPass;
-    //std::unique_ptr<GBuffer> m_GBuffer;
     std::unique_ptr<SSAO> m_SSAO;
     std::unique_ptr<SSR> m_SSR;
+    std::unique_ptr<Fog> m_Fog;
     std::unique_ptr<ShadowMap> m_ShadowMap;
     std::unique_ptr<Bloom> m_BloomPass;
     std::unique_ptr<Composite> m_CompositePass;

@@ -112,6 +112,7 @@ Skybox::Skybox(Context& context, Scene *scene, VkRenderPass renderpass) :
 
 
 
+
     // Create the vertex buffer for the cube map
     VkDeviceSize vertexSize = sizeof(cubeVertices[0]) * cubeVertices.size();
     CreateAndUploadBuffer(context, cubeVertices.data(), vertexSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, m_vertexBuffer);

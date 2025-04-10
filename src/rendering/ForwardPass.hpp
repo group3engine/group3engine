@@ -7,7 +7,7 @@
 
 #include "Config.hpp"
 #include "ShadowMap.hpp"
-
+#include "SH2.hpp"
 
 // This is disgusting whoever did it lol
 #define SHADER_DIR std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/"
@@ -26,7 +26,7 @@ class Buffer;
 class ForwardPass {
 
   public:
-    ForwardPass(Context &context, Image &shadowMap, Image &depthPrepass, Scene *scene, const ShadowMap* shadowMapRenderPass);
+    ForwardPass(Context &context, const Image &shadowMap, Image &depthPrepass, Scene *scene, const ShadowMap* shadowMapRenderPass);
     ~ForwardPass();
 
     VkRenderPass Get() const { return m_renderPass; }
@@ -41,6 +41,7 @@ class ForwardPass {
     Image &GetDepthTarget() { return m_DepthTarget; }
     Image &GetNormalRoughnessTarget() { return m_NormalRoughness; }
     Skybox* GetSkybox() { return m_Skybox.get(); }
+
 
   private:
     void CreatePipeline();
@@ -61,7 +62,7 @@ class ForwardPass {
     VkDescriptorSetLayout particleDescriptorSetLayout;
 
     Context &context;
-    Image &shadowMap;
+    const Image &shadowMap;
     Image &depthPrepass;
     Scene *scene;
     const ShadowMap *shadowMapRenderPass;
@@ -74,4 +75,6 @@ class ForwardPass {
     std::pair<VkPipeline, VkPipelineLayout> m_particlePipeline;
 
     std::unique_ptr<Skybox> m_Skybox;
+    std::unique_ptr<SH> m_SHPass;
+
 };

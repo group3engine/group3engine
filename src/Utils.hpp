@@ -68,25 +68,39 @@ namespace vkutil {
         float time;
     };
 
+    struct alignas(16) FogSettings
+    {
+        float MaxDistance;
+        float Density;
+        float StepSize;
+        int MaxSteps;
+    };
+
     struct CascadeMatrices
     {
         glm::mat4 matrices[4];
         glm::vec4 cascadeSplits; // Store 4 splits as a vec4
     };
 
+    struct SHCoefficients {
+        glm::vec3 SHCoefficients[9];
+    };
 
     inline PostProcessing postProcessSettings = {};
     inline SSAOSettings ssaoSettings = {6, 6, 1.4f, 0.003f, 1.5f};
     inline SSRSettings ssrSettings = {20, 1, 1.0f, 0.001f, 0.001f};
+    inline FogSettings fogSettings = { 1.0f, 0.1f, 0.1f, 1 };
     inline uint32_t setRenderingPipeline = 1;
     inline uint32_t setAlphaMakingPipeline = 2;
+
 
     inline float ShadowBias = 0.0f;
     inline float ShadowSlope = 3.4f;
 
     inline VkDescriptorSetLayout materialDescriptorSetLayout;
+    inline SHCoefficients SHCoefficientsStored;
 
-} // namespace vkutil
+    } // namespace vkutil
 
 namespace GlobalUtil {
     inline double deltaTime;
