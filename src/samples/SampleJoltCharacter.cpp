@@ -75,6 +75,8 @@ void SampleJoltCharacter::PrePhysicsUpdate(const PreUpdateParams &inParams)
 
 void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime, bool inClimb)
 {
+
+
 	bool player_controls_horizontal_velocity = sControlMovementDuringJump || mCharacter->IsSupported();
 	if (player_controls_horizontal_velocity)
 	{
@@ -104,11 +106,10 @@ void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, 
 	Vec3 ground_velocity = mCharacter->GetGroundVelocity();
 	Vec3 new_velocity;
 	bool moving_towards_ground = (current_vertical_velocity.GetY() - ground_velocity.GetY()) < 0.1f;
-	if ((mCharacter->GetGroundState() == CharacterVirtual::EGroundState::OnGround	// If on ground
+	if (mCharacter->GetGroundState() == CharacterVirtual::EGroundState::OnGround	// If on ground
 		&& (sEnableCharacterInertia?
 			moving_towards_ground													// Inertia enabled: And not moving away from ground
 			: !mCharacter->IsSlopeTooSteep(mCharacter->GetGroundNormal())))			// Inertia disabled: And not on a slope that is too steep
-            || inClimb) // if we are climbing, we are allowed to jump
 	{
 		// Assume velocity of ground when on ground
 		new_velocity = ground_velocity;
@@ -164,10 +165,20 @@ void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, 
     }
     mAdditionalImpulse = Vec3::sZero();
 
-    if(!mManualVelocityMode) {
+
+    // if we are in climb, set the upward velocity to the magnitude of the movement direction
+    if(inClimb)
+    {
+        float climb_speed = inMovementDirection.Length() * sClimbSpeed;
+        new_velocity.SetY(climb_speed);
+    }
+    if(!mManualVelocityMode)
+    {
         // Update character velocity
         mCharacter->SetLinearVelocity(new_velocity);
     }
+
+
 
 }
 

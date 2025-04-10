@@ -188,7 +188,18 @@ void CharacterEntity::Update(double deltaTime) {
     Vec3 characterVelocityJolt = mSampleJoltCharacter->GetCharacterVelocity();
     glm::vec3 characterVelocity = glm::vec3(characterVelocityJolt.GetX(), characterVelocityJolt.GetY(), characterVelocityJolt.GetZ());
     // set the character to face the direction of the velocity without the y component
+    float characterYSpeed = characterVelocity.y;
     characterVelocity.y = 0;
+
+    // if we are in climb, we want to fce
+    if(mInClimb)
+    {
+        // get the direction to the climb transform
+        glm::vec3 climbDirection = mClimbTransform.translation - GetCharacterPositionOffset();
+        climbDirection.y = 0;
+        climbDirection = glm::normalize(climbDirection);
+        characterVelocity = climbDirection;
+    }
     if (glm::length(characterVelocity) > 0.1f) {
         // set the transform rotation to the direction of the velocity, on top of the initial transform rotation
         Transform newTransform = GetLocalTransform();
@@ -227,6 +238,14 @@ void CharacterEntity::Update(double deltaTime) {
         activeAnimation = "death";
         timeScale = 1.0f;
         blend = 0.5f;
+        playWholeAnimation = false;
+    }
+    // if the character is climbing, set the animation to climb
+    if(mInClimb)
+    {
+        activeAnimation = "climb";
+        timeScale = characterYSpeed;
+        blend = 0.1f;
         playWholeAnimation = false;
     }
     // for each child, if there is an animator, call set animation
@@ -344,6 +363,7 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
     if(aOther->CompareTag("climbable"))
     {
         mInClimb = true;
+        mClimbTransform = aOther->GetWorldTransformComponents();
     }
 
     SPDLOG_INFO("I am {} and I collided with {}", GetName(), aOther->GetName());
@@ -505,5 +525,14 @@ void CharacterEntity::OnCollisionEnd(Entity *aOther)
     if (aOther->CompareTag("climbable"))
     {
         mInClimb = false;
+    }
+}
+
+void CharacterEntity::OnCollisionStay(Entity *aOther)
+{
+    if (aOther->CompareTag("climbable"))
+    {
+        mInClimb = true;
+        mClimbTransform = aOther->GetWorldTransformComponents();
     }
 }

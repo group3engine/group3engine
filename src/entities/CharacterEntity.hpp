@@ -56,9 +56,7 @@ class CharacterEntity : public Entity {
 
     void OnCollisionStart(Entity *aOther) override;
 
-    void OnCollisionStay(Entity *aOther) override {
-//        SPDLOG_INFO("I am {} and I am colliding with {}", mName, aOther->mName);
-    }
+    void OnCollisionStay(Entity *aOther) override;
 
     void OnCollisionEnd(Entity *aOther) override;
 
@@ -132,6 +130,8 @@ class CharacterEntity : public Entity {
     bool m_has_save = false;
 
     bool mInClimb = false;
+
+    Transform mClimbTransform = {};
 };
 
 

@@ -94,6 +94,7 @@ public:
 	inline static bool		sControlMovementDuringJump = true;							///< If false the character cannot change movement direction in mid air
 	inline static float		sCharacterSpeed = 6.0f;
 	inline static float		sJumpSpeed = 4.0f;
+    inline static float     sClimbSpeed = 2.0f;
 
 	// The different stances for the character
 	RefConst<Shape>			mStandingShape;
