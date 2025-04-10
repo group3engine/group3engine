@@ -52,6 +52,7 @@ class CharacterEntity : public Entity {
     void UpdateUi(double deltaTime) override;
 
     void Awake() override;
+    void UnscaledUpdate(double deltaTime) override;
 
     void OnCollisionStart(Entity *aOther) override;
 
@@ -132,5 +133,6 @@ class CharacterEntity : public Entity {
 
     bool mInClimb = false;
 };
+
 
 #endif // GROUP3ENGINE_CHARACTERENTITY_HPP

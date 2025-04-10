@@ -32,7 +32,18 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(STATUS "${BoldCyan}Setting build type to '${default_build_type}' as none was specified.${ColourReset}")
   set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE STRING "Choose the type of build." FORCE)
   # Set the possible values of build type for cmake-gui
-  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "Platinum" "MinSizeRel" "RelWithDebInfo")
+endif()
+
+# Define flags for the Platinum build type
+set(CMAKE_CXX_FLAGS_PLATINUM "${CMAKE_CXX_FLAGS_RELEASE} -DPLATINUM" CACHE STRING "Flags for Platinum build type" FORCE)
+set(CMAKE_C_FLAGS_PLATINUM "${CMAKE_C_FLAGS_RELEASE} -DPLATINUM" CACHE STRING "Flags for Platinum build type" FORCE)
+
+# Ensure Platinum is recognized as a valid build type
+if(CMAKE_BUILD_TYPE STREQUAL "Platinum")
+    message(STATUS "Configuring for Platinum build type")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_PLATINUM}")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_PLATINUM}")
 endif()
 
 add_subdirectory(src)
@@ -94,6 +105,9 @@ target_include_directories(src PUBLIC ${JoltPhysics_SOURCE_DIR}/..)
 add_library(cgltf INTERFACE)
 target_include_directories(cgltf INTERFACE extern/cgltf)
 
+add_library(json INTERFACE)
+target_include_directories(json INTERFACE extern/json)
+
 add_library(vma INTERFACE)
 target_include_directories(vma INTERFACE extern/vma)
 
@@ -106,7 +120,7 @@ target_compile_definitions(src PRIVATE GLFW_INCLUDE_NONE GLM_ENABLE_EXPERIMENTAL
 
 target_compile_definitions(src PRIVATE CMAKE_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 
-target_link_libraries(src PRIVATE cgltf glfw glm::glm-header-only Jolt spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32> stb_image Tracy::TracyClient volk_headers vma)
+target_link_libraries(src PRIVATE cgltf glfw glm::glm-header-only Jolt spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32> stb_image Tracy::TracyClient volk_headers vma json)
 
 # Compiler warnings
 if ((CMAKE_CXX_COMPILER_ID STREQUAL "Clang") OR (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
@@ -144,7 +158,16 @@ foreach(GLSL ${GLSL_SOURCE_FILES})
 endforeach()
 
 add_custom_target(compile_shaders DEPENDS ${SPIRV_BINARY_FILES})
+
 add_dependencies(src compile_shaders)
+if(CMAKE_BUILD_TYPE STREQUAL "Platinum")
+    add_custom_target(copy_assets ALL
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_SOURCE_DIR}/assets $<TARGET_FILE_DIR:src>/assets
+            COMMENT "Copying assets directory to the output directory for Platinum build"
+    )
+    add_dependencies(src copy_assets)
+endif()
 
 # Check git submodules
 # https://cliutils.gitlab.io/modern-cmake/chapters/projects/submodule.html

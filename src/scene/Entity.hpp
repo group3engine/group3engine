@@ -163,17 +163,22 @@ class Entity {
         SPDLOG_INFO("I am {} and I am no longer colliding with {}", GetName(), aOther->GetName());
     }
 
-    // called for each entity just before update has been called per entity
+    /// called for each entity just before update has been called per entity
     virtual void PreUpdate(double deltaTime) {}
 
-    // called for each entity after update has been called on all entities
+    /// called for each entity after update has been called on all entities
     virtual void LateUpdate(double deltaTime) {}
 
-    // called after the entire scene has been loaded, once only
+
+
+    /// called after the entire scene has been loaded, once only
     virtual void Awake() {}
 
     /// called every frame, after physics has been updated
     virtual void Update(double deltaTime) {}
+
+    /// called every frame even if timescale is set to 0, deltaTime is not multiplied by timescale
+    virtual void UnscaledUpdate(double deltaTime){}
 
     virtual void UpdateUi(double deltaTime) {}
 

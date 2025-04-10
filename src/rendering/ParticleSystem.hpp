@@ -11,7 +11,7 @@
 #include "GLTFImportStructs.hpp"
 #include "Entity.hpp"
 
-#define SHADER_DIR std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/"
+#define SHADER_DIR assetsPath / "shaders/"
 #define PARTICLE_BILLBOARD_VERTEX_SHADER (SHADER_DIR / "billboardParticle.vert.spv")
 #define PARTICLE_MESH_VERTEX_SHADER (SHADER_DIR / "defaultParticle.vert.spv")
 #define PARTICLE_SHADER_PBR_FRAGMENT (SHADER_DIR / "alpha_masking.frag.spv")
