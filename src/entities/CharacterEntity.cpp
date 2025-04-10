@@ -91,6 +91,11 @@ void CharacterEntity::ProcessInput(){
 
             // Rotate controls to align with the camera
             auto cameraForward = mCamera->GetDirection();
+            // if we are in climb, we want to align with the player instead
+            if(mInClimb)
+            {
+                cameraForward = GetLocalTransform().rotation * glm::vec3(0.f, 0.f, -1.f);
+            }
             cameraForward.y = 0.0f;
             cameraForward = glm::normalize(cameraForward);
             glm::quat rotation = glm::rotation(glm::vec3(1.0f, 0.0f, 0.0f), cameraForward);
