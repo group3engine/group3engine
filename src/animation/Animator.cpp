@@ -95,7 +95,7 @@ void Animator::UpdateAnimationSamples(double aDeltaTime) {
         return;
     }
     // reduce the animation lock time
-    mAnimationLockTimer -= aDeltaTime;
+    mAnimationLockTimer -= std::abs(aDeltaTime);
 
     // for each animation, set the weight to 0 and time to 0
     for (auto &sample : mAnimationSamples) {
@@ -112,7 +112,7 @@ void Animator::UpdateAnimationSamples(double aDeltaTime) {
     // work out the interpolation multipliers (don't if we are in the cases
     // where we don't need to blend - no total blend time or no new animation)
     if (mTotalBlendTime > 0.01f && mLastAnimation != mActiveAnimation) {
-        mCurrentBlendingTime += aDeltaTime;
+        mCurrentBlendingTime += std::abs(aDeltaTime);
         if (mCurrentBlendingTime > mTotalBlendTime) {
             mTotalBlendTime = 0.f;
         } else {
@@ -130,10 +130,14 @@ void Animator::UpdateAnimationSamples(double aDeltaTime) {
                         currentWeight};
         }
         else {
-            mAnimationSamples[mActiveAnimation] = {
-                (std::fmod(mAnimationSamples[mActiveAnimation].time +
+            float newTime = std::fmod(mAnimationSamples[mActiveAnimation].time +
                                aDeltaTime * mAnimationTimeScale,
-                           mAnimations[mActiveAnimation]->GetMaxTime())),
+                           mAnimations[mActiveAnimation]->GetMaxTime());
+            if(aDeltaTime * mAnimationTimeScale < 0.0f && newTime < 0.0f){
+                newTime = mAnimations[mActiveAnimation]->GetMaxTime() + newTime;
+            }
+            mAnimationSamples[mActiveAnimation] = {
+                newTime,
                 currentWeight};
         }
     }

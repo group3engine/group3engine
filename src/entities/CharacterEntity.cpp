@@ -94,10 +94,14 @@ void CharacterEntity::ProcessInput(){
             cameraForward.y = 0.0f;
             cameraForward = glm::normalize(cameraForward);
             glm::quat rotation = glm::rotation(glm::vec3(1.0f, 0.0f, 0.0f), cameraForward);
+
             if(mInClimb)
             {
-                controlInput.y = controlInput.x;
-                controlInput.x = 0.f;
+                // if we are grounded, then only do this if x is forward
+                if(!mSampleJoltCharacter->IsGrounded() || controlInput.x > 0.1f) {
+                    controlInput.y = controlInput.x;
+                    controlInput.x = 0.f;
+                }
             }
             controlInput = rotation * controlInput;
 
@@ -364,9 +368,23 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
     if(aOther->CompareTag("climbable"))
     {
         mInClimb = true;
-        mClimbDirection = aOther->GetWorldTransformComponents().translation - GetCharacterPositionOffset();
-        mClimbDirection.y = 0;
-        mClimbDirection = glm::normalize(mClimbDirection);
+        // if the climbable object doesn't have a child, use the distance from us to them
+        if(aOther->GetChildren().empty())
+        {
+            mClimbDirection = aOther->GetWorldTransformComponents().translation - GetCharacterPositionOffset();
+            mClimbDirection.y = 0;
+            mClimbDirection = glm::normalize(mClimbDirection);
+        }
+            // otherwise, the local transform of the child is the direction
+        else
+        {
+            // get the first child
+            auto child = aOther->GetChildren()[0];
+            // get the local transform of the child
+            mClimbDirection = child->GetLocalTransform().translation;
+            mClimbDirection.y = 0;
+            mClimbDirection = glm::normalize(mClimbDirection);
+        }
     }
 
     SPDLOG_INFO("I am {} and I collided with {}", GetName(), aOther->GetName());
@@ -536,8 +554,22 @@ void CharacterEntity::OnCollisionStay(Entity *aOther)
     if (aOther->CompareTag("climbable"))
     {
         mInClimb = true;
-        mClimbDirection = aOther->GetWorldTransformComponents().translation - GetCharacterPositionOffset();
-        mClimbDirection.y = 0;
-        mClimbDirection = glm::normalize(mClimbDirection);
+        // if the climbable object doesn't have a child, use the distance from us to them
+        if(aOther->GetChildren().empty())
+        {
+            mClimbDirection = aOther->GetWorldTransformComponents().translation - GetCharacterPositionOffset();
+            mClimbDirection.y = 0;
+            mClimbDirection = glm::normalize(mClimbDirection);
+        }
+        // otherwise, the local transform of the child is the direction
+        else
+        {
+            // get the first child
+            auto child = aOther->GetChildren()[0];
+            // get the local transform of the child
+            mClimbDirection = child->GetLocalTransform().translation;
+            mClimbDirection.y = 0;
+            mClimbDirection = glm::normalize(mClimbDirection);
+        }
     }
 }

@@ -43,6 +43,8 @@ public:
 
     // Get velocity of the character (used for animation, don't include ground velocity)
     virtual Vec3			GetCharacterVelocity() const				{ return mCharacter->GetLinearVelocity() - mCharacter->GetGroundVelocity(); }
+    // return if the character is grounded
+    bool IsGrounded() const { return mCharacter->GetGroundState() == CharacterVirtual::EGroundState::OnGround; }
     // add an impulse to the character
     void AddImpulse(Vec3Arg impulse) { mAdditionalImpulse += impulse; mHasAdditionalImpulse = true; }
 
