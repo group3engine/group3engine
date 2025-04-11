@@ -10,7 +10,7 @@
 #include "SH2.hpp"
 
 // This is disgusting whoever did it lol
-#define SHADER_DIR std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/"
+#define SHADER_DIR assetsPath / "shaders/"
 #define OPAQUE_FRAGMENT_SHADER SHADER_DIR / "default.frag.spv"
 #define OPAQUE_VERTEX_SHADER SHADER_DIR / "default.vert.spv"
 #define ALPHA_MASK_FRAGMENT_SHADER SHADER_DIR / "alpha_masking.frag.spv"

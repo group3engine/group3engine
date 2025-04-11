@@ -23,6 +23,7 @@
 #include "SampleGLTFFilePaths.hpp"
 #include "Scene.hpp"
 #include "Utils.hpp"
+#include "Fonts.hpp"
 #include "glm/ext/quaternion_trigonometric.hpp"
 #include "glm/fwd.hpp"
 #include "glm/trigonometric.hpp"
@@ -41,7 +42,12 @@
 #include "imgui.h"
 
 #include "Config.hpp"
-
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif // #ifndef WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#endif
 #define TEMP_DISABLE_PHYSICS 0
 
 namespace {
@@ -71,6 +77,36 @@ Engine::Engine() {
 }
 
 bool Engine::Initialize() {
+
+
+#ifdef PLATINUM
+    // get the file path to the executable
+    {
+        #ifdef _WIN32
+        char path[MAX_PATH];
+        if (GetModuleFileNameA(nullptr, path, MAX_PATH)) {
+            assetsPath = std::filesystem::path(path).parent_path() / "assets";
+        } else {
+            SPDLOG_ERROR("Error getting executable path.");
+            exit(EXIT_FAILURE);
+        }
+        #else
+                char path[PATH_MAX];
+                ssize_t len = readlink("/proc/self/exe", path, sizeof(path) - 1);
+                if (len != -1) {
+                    path[len] = '\0'; // Null-terminate the string
+                    assetsPath = std::filesystem::path(path).parent_path() / "assets";
+                } else {
+                    SPDLOG_ERROR("Error getting executable path.");
+                    exit(EXIT_FAILURE);
+                }
+
+        #endif
+    }
+#else
+    assetsPath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets";
+#endif
+
     // TODO: Could probably store this somewhere else
     int windowWidth = 1280;
     int windowHeight = 720;
@@ -117,6 +153,10 @@ bool Engine::Initialize() {
 
     SPDLOG_DEBUG("Engine initialised.");
 
+    ImGuiRenderer::themes.applyTheme("Catpuccin Mocha");
+    Fonts::LoadFonts();
+
+
 
 
     return m_isRunning;
@@ -159,7 +199,8 @@ void Engine::Run() {
         mIsMainMenu = mScene->GetSceneFilename() == "main_menu";
 
         double currentFrameTime = glfwGetTime();
-        GlobalUtil::deltaTime = currentFrameTime - m_lastFrameTime;
+        GlobalUtil::unscaledDeltaTime = currentFrameTime - m_lastFrameTime;
+        GlobalUtil::deltaTime = GlobalUtil::unscaledDeltaTime * m_timeScale;
         m_lastFrameTime = currentFrameTime;
 
         // See imgui.cpp
@@ -170,13 +211,15 @@ void Engine::Run() {
 
         Update(GlobalUtil::deltaTime);
 
-        if (mIsMainMenu) {
+        if (mIsMainMenu || m_timeScale == 0.f) {
             ImGuiRenderer::BeginMainMenu(m_context);
             playerCountSelection = ImGuiRenderer::AddMainMenuPlayerCountSelection(m_context, playerCounts, playerCountSelection);
             scenePathSelection = ImGuiRenderer::AddMainMenuSceneSelection(m_context, scenePaths, scenePathSelection);
             ImGuiRenderer::AddLoadSceneButton(*scenePathSelection, std::stoi(playerCountSelection));
+            ImGuiRenderer::AddQuitButton();
             ImGuiRenderer::EndMainMenu();
         }
+
 
         ImGuiRenderer::EndFrame();
 
@@ -195,7 +238,7 @@ void Engine::Run() {
 }
 
 void Engine::UpdateLogic() {
-    if (IsKeyDown(KEY::eESCAPE)) {
+    if (m_shouldQuit) {
         glfwSetWindowShouldClose(Platform::get().window, GLFW_TRUE);
     }
 
@@ -218,6 +261,7 @@ void Engine::ChangeSceneFR(const std::filesystem::path &scenePath, size_t player
     ImGuiRenderer::RemoveTextures();
 
     mScene->Unload();
+    LightManager::getInstance().Unload();
     mMaterialManager->Destroy();
     mMeshManager->Destroy();
     mTextureManager->Destroy();
@@ -229,7 +273,7 @@ void Engine::ChangeSceneFR(const std::filesystem::path &scenePath, size_t player
     mTextureManager->Initialise();
 
     // load in heart
-    std::filesystem::path loadingPath = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets" / "loadingImage.png";
+    std::filesystem::path loadingPath = assetsPath/ "loadingImage.png";
     ImGuiRenderer::AddTextures(mTextureManager.get(), loadingPath, "load");
 
 
@@ -253,7 +297,7 @@ void Engine::ChangeSceneFR(const std::filesystem::path &scenePath, size_t player
     m_progress = 75.f;
 
     // Add back UI textures
-    std::filesystem::path path = std::filesystem::path(CMAKE_SOURCE_DIR) / "assets" / "heart.png";
+    std::filesystem::path path = assetsPath/ "heart.png";
     ImGuiRenderer::AddTextures(mTextureManager.get(), path, "heart");
 
     mScene->Awake();
@@ -291,11 +335,12 @@ void Engine::Update(double deltaTime) {
     if (!mIsMainMenu) {
         mScene->UpdateUi(deltaTime);
 
+#ifndef PLATINUM
         playerCountSelection = ImGuiRenderer::NewPlayerCountSelection(playerCounts, playerCountSelection);
         scenePathSelection = ImGuiRenderer::NewSceneSelection(scenePaths, scenePathSelection);
         ImGuiRenderer::AddLoadSceneButton(*scenePathSelection, std::stoi(playerCountSelection));
-
         ImGuiRenderer::Update(mScene);
+#endif
     }
 
     mRenderer->Update(deltaTime);
@@ -347,7 +392,7 @@ void Engine::Render() {
 
 void Engine::RenderLoadingScreen()
 {
-    // load in a new image from assets/loadingImage.png
+    // load in a new image from loadingImage.png
 
     try
     {

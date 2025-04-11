@@ -16,7 +16,6 @@
 #include "ImGuiRenderer.hpp"
 #include "SSAO.hpp"
 #include "SSR.hpp"
-#include "GBuffer.hpp"
 #include "SH2.hpp"
 #include "Fog.hpp"
 

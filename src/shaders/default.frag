@@ -3,6 +3,8 @@
 #define VERSION
 #endif
 
+#include "uniforms.glsl"
+
 layout(location = 0) in vec4 WorldPos;
 layout(location = 1) in vec2 uv;
 layout(location = 2) in mat3 TBNFrame;
@@ -11,16 +13,9 @@ layout(location = 0) out vec4 fragColor;
 layout(location = 1) out vec4 brightColours;
 layout(location = 2) out vec4 NormalMetallic;
 
-layout(set = 0, binding = 0) uniform CameraUBO
-{
-	mat4 view;
-	mat4 projection;
-    vec4 cameraPosition;
-    vec2 viewportSize;
-	float fov;
-	float nearPlane;
-	float farPlane;
-} ubo;
+layout(set = 0, binding = 0) uniform block {
+    CameraUBO ubo;
+};
 
 struct Light
 {

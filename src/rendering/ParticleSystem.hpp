@@ -11,7 +11,7 @@
 #include "GLTFImportStructs.hpp"
 #include "Entity.hpp"
 
-#define SHADER_DIR std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/"
+#define SHADER_DIR assetsPath / "shaders/"
 #define PARTICLE_BILLBOARD_VERTEX_SHADER (SHADER_DIR / "billboardParticle.vert.spv")
 #define PARTICLE_MESH_VERTEX_SHADER (SHADER_DIR / "defaultParticle.vert.spv")
 #define PARTICLE_SHADER_PBR_FRAGMENT (SHADER_DIR / "alpha_masking.frag.spv")
@@ -214,7 +214,7 @@ inline float get_hash(uint seed)
     return float(seed) / float(0xffffffffu);
 }
 // function to get random from -1 to 1
-inline float get_random(size_t seed)
+inline float get_next_random(size_t &seed)
 {
     return get_hash(seed++) * 2.0f - 1.0f;
 }
@@ -297,7 +297,7 @@ private:
     Buffer mParticlesBuffer;
     double mTimeStepToEmit;
     double mDistanceStepToEmit;
-    size_t seed = 0.f;
+    size_t seed = 0;
     Context &mContext;
     Scene *mScene = nullptr;
     VkDescriptorSetLayout mDescriptorSetLayout = VK_NULL_HANDLE;

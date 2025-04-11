@@ -46,6 +46,7 @@ class CharacterEntity : public Entity {
     void UpdateUi(double deltaTime) override;
 
     void Awake() override;
+    void UnscaledUpdate(double deltaTime) override;
 
     void OnCollisionStart(Entity *aOther) override;
 
@@ -117,5 +118,6 @@ class CharacterEntity : public Entity {
   private:
     bool m_has_save = false;
 };
+
 
 #endif // GROUP3ENGINE_CHARACTERENTITY_HPP

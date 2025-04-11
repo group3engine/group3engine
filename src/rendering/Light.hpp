@@ -3,9 +3,9 @@
 #include <glm/glm.hpp>
 #include "Utils.hpp"
 
-constexpr int NUM_POINT_LIGHTS = 25;
-constexpr int NUM_DIRECTIONAL_LIGHTS = 1;
-constexpr int NUM_LIGHTS = NUM_POINT_LIGHTS + NUM_DIRECTIONAL_LIGHTS;
+constexpr size_t NUM_POINT_LIGHTS = 25;
+constexpr size_t NUM_DIRECTIONAL_LIGHTS = 1;
+constexpr size_t NUM_LIGHTS = NUM_POINT_LIGHTS + NUM_DIRECTIONAL_LIGHTS;
 
 struct LightBuffer {
     vkutil::LightUBO lights[NUM_LIGHTS];

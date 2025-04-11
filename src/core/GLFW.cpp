@@ -115,7 +115,23 @@ void Platform::StartUp(int windowWidth, int windowHeight) {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
+    GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+
+#ifdef PLATINUM
+    const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+    // set the window size to the monitor size
+    windowWidth = mode->width;
+    windowHeight = mode->height;
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+    glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
+#endif
+
+#ifdef PLATINUM
+    Platform::get().window = glfwCreateWindow(windowWidth, windowHeight, "Vulkan", monitor, nullptr);
+#else
     Platform::get().window = glfwCreateWindow(windowWidth, windowHeight, "Vulkan", nullptr, nullptr);
+#endif
 
     if (!Platform::get().window) {
         SPDLOG_ERROR("Failed to create GLFW window");
@@ -125,6 +141,7 @@ void Platform::StartUp(int windowWidth, int windowHeight) {
     glfwSetKeyCallback(Platform::get().window, &KeyCallback);
     glfwSetMouseButtonCallback(Platform::get().window, &MouseButtonCallback);
     glfwSetCursorPosCallback(Platform::get().window, &MouseCursorPosCallback);
+
 }
 
 void Platform::ShutDown() {

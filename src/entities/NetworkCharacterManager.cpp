@@ -5,6 +5,7 @@
 #include "NetworkCharacterManager.hpp"
 #include "Input.hpp"
 #include "Scene.hpp"
+#include <json.hpp>
 
 
 
@@ -27,13 +28,12 @@ void NetworkCharacterManager::Update(double deltaTime)
         // convert the player id to an int by the bits
         uint32_t playerIDint;
         std::memcpy(&playerIDint, playerId.data(), sizeof(playerIDint)); // Copy first 4 bytes
-        std::cout << "Player ID: " << playerIDint << std::endl;
         // get the json string - this is the part between the first { and the last }
         std::string jsonString = messageString.substr(messageString.find_first_of('{'), lastBracket - messageString.find_first_of('{') + 1);
         // parse the json string
         // get the position - the values between [ and ] after "position":
-        size_t posStart = jsonString.find("[", jsonString.find("\"position\":"));
-        size_t posEnd = jsonString.find("]", posStart);
+        size_t posStart = jsonString.find('[', jsonString.find("\"position\":"));
+        size_t posEnd = jsonString.find(']', posStart);
         std::string posString = jsonString.substr(posStart + 1, posEnd - posStart - 1);
         // split the string by ,
         std::vector<std::string> posValues;
@@ -48,10 +48,9 @@ void NetworkCharacterManager::Update(double deltaTime)
         float posY = std::stof(posValues[1]);
         float posZ = std::stof(posValues[2]);
         glm::vec3 position = glm::vec3(posX, posY, posZ);
-        std::cout << "Position: " << position.x << ", " << position.y << ", " << position.z << std::endl;
         // get the rotation - the values between [ and ] after "rotation":
-        size_t rotStart = jsonString.find("[", jsonString.find("\"rotation\":"));
-        size_t rotEnd = jsonString.find("]", rotStart);
+        size_t rotStart = jsonString.find('[', jsonString.find("\"rotation\":"));
+        size_t rotEnd = jsonString.find(']', rotStart);
         std::string rotString = jsonString.substr(rotStart + 1, rotEnd - rotStart - 1);
         // split the string by ,
         std::vector<std::string> rotValues;
@@ -67,10 +66,9 @@ void NetworkCharacterManager::Update(double deltaTime)
         float rotZ = std::stof(rotValues[2]);
         float rotW = std::stof(rotValues[3]);
         glm::quat rotation = glm::quat(rotX, rotY, rotZ, rotW);
-        std::cout << "Rotation: " << rotation.x << ", " << rotation.y << ", " << rotation.z << ", " << rotation.w << std::endl;
         // get the scale - the values between [ and ] after "scale":
-        size_t scaleStart = jsonString.find("[", jsonString.find("\"scale\":"));
-        size_t scaleEnd = jsonString.find("]", scaleStart);
+        size_t scaleStart = jsonString.find('[', jsonString.find("\"scale\":"));
+        size_t scaleEnd = jsonString.find(']', scaleStart);
         std::string scaleString = jsonString.substr(scaleStart + 1, scaleEnd - scaleStart - 1);
         // split the string by ,
         std::vector<std::string> scaleValues;
@@ -85,10 +83,9 @@ void NetworkCharacterManager::Update(double deltaTime)
         float scaleY = std::stof(scaleValues[1]);
         float scaleZ = std::stof(scaleValues[2]);
         glm::vec3 scale = glm::vec3(scaleX, scaleY, scaleZ);
-        std::cout << "Scale: " << scale.x << ", " << scale.y << ", " << scale.z << std::endl;
         // get the velocity - the values between [ and ] after "velocity":
-        size_t velStart = jsonString.find("[", jsonString.find("\"velocity\":"));
-        size_t velEnd = jsonString.find("]", velStart);
+        size_t velStart = jsonString.find('[', jsonString.find("\"velocity\":"));
+        size_t velEnd = jsonString.find(']', velStart);
         std::string velString = jsonString.substr(velStart + 1, velEnd - velStart - 1);
         // split the string by ,
         std::vector<std::string> velValues;
@@ -103,9 +100,8 @@ void NetworkCharacterManager::Update(double deltaTime)
         float velY = std::stof(velValues[1]);
         float velZ = std::stof(velValues[2]);
         glm::vec3 velocity = glm::vec3(velX, velY, velZ);
-        std::cout << "Velocity: " << velocity.x << ", " << velocity.y << ", " << velocity.z << std::endl;
         // construct the state
-        State state;
+        State state{};
         state.position = position;
         state.rotation = rotation;
         state.velocity = velocity;
@@ -116,7 +112,6 @@ void NetworkCharacterManager::Update(double deltaTime)
         {
             if(numConnections >= GetChildren().size()-1)
             {
-                //std::cout << "Too many connections, ignoring player id: " << playerIDint << std::endl;
                 continue;
             }
             // if not, add it to the map
@@ -139,3 +134,90 @@ void NetworkCharacterManager::Update(double deltaTime)
     }
 }
 
+void NetworkCharacterManager::SendChatMessage(std::string playerName, std::string message)
+{
+    // generate the json of the message
+    // we need to include the player name, message, timestamp, and map name
+    std::string mapName = Scene::get().GetActiveScene()->GetSceneFilename().string();
+    std::string jsonToSend = "{ \"playerName\": \"" + playerName + "\", \"message\": \"" + message + "\", \"time\": \"" + std::to_string(time(nullptr)) + "\", \"gameID\": \"" + mapName + "\" }";
+    // send the message
+    std::string url = "wipeoutchat.pythonanywhere.com/SendMessage";
+    // send the message in a thread
+    // join the thread
+    std::thread chatSendThread = std::thread(http_post, url, jsonToSend);
+    chatSendThread.detach();
+}
+
+NetworkCharacterManager::NetworkCharacterManager()
+{
+    mType = "NetworkCharacterManager";
+    // start off the receive thread
+    chatGetThread = std::thread(&NetworkCharacterManager::ReceiveMessages, this);
+}
+
+NetworkCharacterManager::~NetworkCharacterManager()
+{
+    chatting = false;
+    if (chatGetThread.joinable())
+    {
+        chatGetThread.join();
+    }
+
+}
+
+void NetworkCharacterManager::ReceiveMessages()
+{
+    while(chatting)
+    {
+        // construct the url
+        std::string url = "wipeoutchat.pythonanywhere.com/GetMessages?gameID=" + Scene::get().GetActiveScene()->GetSceneFilename().string();
+        // get the chat
+        auto messages = http_get(url);
+        try {
+            nlohmann::json data = nlohmann::json::parse(messages);
+            std::vector<Message> messages;
+            messages.reserve(data.size());
+            // for each element in the json array
+            for (const auto &item : data) {
+
+                // get the player name
+                std::string playerName = item["playerName"];
+                // get the message
+                std::string message = item["message"];
+                // get the timestamp
+                std::string timestamp = item["time"];
+                // add the message to the vector
+                messages.emplace_back(playerName, message, timestamp);
+            }
+            // copy the messages to the chat messages
+            {
+                std::lock_guard<std::mutex> lock(messages_mutex);
+                mChatMessages = messages;
+            }
+        }
+        catch (const nlohmann::json::parse_error &e) {
+            SPDLOG_ERROR("Parse error: {}", e.what());
+            continue;
+        }
+        // sleep for 1 second
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+}
+
+std::tuple<std::string, std::string>  JSONPARSE::GetPairFromString(const std::string &aString)
+{
+    // split the string by :
+    size_t colonPos = aString.find(':');
+    std::string key = aString.substr(0, colonPos);
+    std::string value = aString.substr(colonPos + 1);
+    // take the string between the first " and the last "
+    size_t firstQuote = value.find_first_of('"');
+    size_t lastQuote = value.find_last_of('"');
+    value = value.substr(firstQuote + 1, lastQuote - firstQuote - 1);
+    // same for the key
+    firstQuote = key.find_first_of('"');
+    lastQuote = key.find_last_of('"');
+    key = key.substr(firstQuote + 1, lastQuote - firstQuote - 1);
+
+    return std::make_tuple(key, value);
+}

@@ -179,8 +179,8 @@ void ShadowMap::CreatePipeline() {
 
     // Default pipeline
     auto ShadowMapPipelineRes = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
-        .AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "shadow_map.vert.spv", ShaderType::VERTEX)
-        .AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "shadow_map.frag.spv", ShaderType::FRAGMENT)
+        .AddShader(assetsPath / "shaders/" / "shadow_map.vert.spv", ShaderType::VERTEX)
+        .AddShader(assetsPath / "shaders/" / "shadow_map.frag.spv", ShaderType::FRAGMENT)
         .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
         .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_DEPTH_BIAS}})
         .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_FRONT_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, VK_TRUE)
@@ -195,8 +195,8 @@ void ShadowMap::CreatePipeline() {
     m_PipelineLayout = ShadowMapPipelineRes.second;
 
     auto skinnedShadowMapPipelineRes = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
-        .AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "shadow_map_skinned.vert.spv", ShaderType::VERTEX)
-        .AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "shadow_map.frag.spv", ShaderType::FRAGMENT)
+        .AddShader(assetsPath / "shaders/" / "shadow_map_skinned.vert.spv", ShaderType::VERTEX)
+        .AddShader(assetsPath / "shaders/" / "shadow_map.frag.spv", ShaderType::FRAGMENT)
         .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
         .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_DEPTH_BIAS}})
         .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_FRONT_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, VK_TRUE)

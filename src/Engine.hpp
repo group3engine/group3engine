@@ -32,6 +32,10 @@ class Engine {
         return instance;
     }
 
+    void SetTimeScale(float timeScale) { m_timeScale = timeScale; }
+    float GetTimeScale() const { return m_timeScale; }
+    void Quit() {m_shouldQuit = true; }
+
   public:
     bool Initialize();
     void Run();
@@ -44,6 +48,8 @@ class Engine {
     double m_lastFrameTime;
     bool m_isLoading = false;
     float m_progress = 0.0f;
+    float m_timeScale = 1.0f;
+    bool m_shouldQuit = false;
 
     bool m_sceneNeedsChanging = false;
     std::filesystem::path m_scenePath;

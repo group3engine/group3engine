@@ -1,15 +1,10 @@
 #version 450
 
-layout(set = 0, binding = 0) uniform CameraUBO
-{
-	mat4 view;
-	mat4 projection;
-	vec4 cameraPosition;
-	vec2 viewportSize;
-	float fov;
-	float nearPlane;
-	float farPlane;
-} ubo;
+#include "uniforms.glsl"
+
+layout(set = 0, binding = 0) uniform block {
+    CameraUBO ubo;
+};
 
 layout(set = 2, binding = 0) uniform JointBuffer
 {

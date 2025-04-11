@@ -32,12 +32,12 @@ Skybox::Skybox(Context& context, Scene *scene, VkRenderPass renderpass) :
     // This pass will then use that provided path to load skybox
     // This will prevent users from having to navigate into renderer code to change paths
     char* faceTextureData[6]; // Stores the pixel data from stb
-    LoadCubemapFace(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/" / "Skybox/px.png",   &faceTextureData[0]);
-    LoadCubemapFace(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/" / "Skybox/nx.png",   &faceTextureData[1]);
-    LoadCubemapFace(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/" / "Skybox/py.png",   &faceTextureData[2]);
-    LoadCubemapFace(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/" / "Skybox/ny.png",   &faceTextureData[3]);
-    LoadCubemapFace(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/" / "Skybox/pz.png",   &faceTextureData[4]);
-    LoadCubemapFace(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/" / "Skybox/nz.png",   &faceTextureData[5]);
+    LoadCubemapFace(assetsPath / "Skybox/px.png",   &faceTextureData[0]);
+    LoadCubemapFace(assetsPath / "Skybox/nx.png",   &faceTextureData[1]);
+    LoadCubemapFace(assetsPath  / "Skybox/py.png",   &faceTextureData[2]);
+    LoadCubemapFace(assetsPath / "Skybox/ny.png",   &faceTextureData[3]);
+    LoadCubemapFace(assetsPath / "Skybox/pz.png",   &faceTextureData[4]);
+    LoadCubemapFace(assetsPath / "Skybox/nz.png",   &faceTextureData[5]);
 
     constexpr uint32_t width = 2048;
     constexpr uint32_t height = 2048;
@@ -184,8 +184,8 @@ void Skybox::CreatePipeline()
     };
 
     auto skyboxPiplineRes = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
-        .AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "skybox.vert.spv", ShaderType::VERTEX)
-        .AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "skybox.frag.spv", ShaderType::FRAGMENT)
+        .AddShader(assetsPath / "shaders/" / "skybox.vert.spv", ShaderType::VERTEX)
+        .AddShader(assetsPath / "shaders/" / "skybox.frag.spv", ShaderType::FRAGMENT)
         .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
         .SetDynamicState({ {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR} })
         .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE)

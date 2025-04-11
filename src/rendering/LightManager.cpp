@@ -7,14 +7,24 @@
 #include "LightManager.hpp"
 #include "Utils.hpp"
 
+namespace {
+    template<std::size_t N>
+    size_t FirstAvailableLightIndex(const std::bitset<N> &lightMask) {
+        size_t i = 0;
+        for (; i < N; ++i) {
+            if (!lightMask[i]) {
+                return i;
+            }
+        }
+
+        return i;
+    }
+}
 
 std::tuple<Light *, int> LightManager::GetDirectionalLight()
 {
     // find the first available light in the mask
-    int lightIndex = 0;
-    while(lightIndex < NUM_DIRECTIONAL_LIGHTS && mDirectionalLightMask[lightIndex]) {
-        lightIndex++;
-    }
+    size_t lightIndex = FirstAvailableLightIndex(mDirectionalLightMask);
     if (lightIndex == NUM_DIRECTIONAL_LIGHTS) {
         return {nullptr, -1};
     }
@@ -25,10 +35,7 @@ std::tuple<Light *, int> LightManager::GetDirectionalLight()
 std::tuple<Light *, int> LightManager::GetPointLight()
 {
     // find the first available light in the mask
-    int lightIndex = 0;
-    while (lightIndex < NUM_POINT_LIGHTS && mPointLightMask[lightIndex]) {
-        lightIndex++;
-    }
+    size_t lightIndex = FirstAvailableLightIndex(mPointLightMask);
     if (lightIndex == NUM_POINT_LIGHTS) {
         return {nullptr, -1};
     }
@@ -82,6 +89,11 @@ void LightManager::Update()
 void LightManager::UploadLights(VkCommandBuffer cmdBuff)
 {
     m_LightUBO[vkutil::currentFrame].Upload(cmdBuff, &m_LightBuffer, sizeof(LightBuffer));
+}
+
+void LightManager::Unload() {
+    mDirectionalLightMask.reset();
+    mPointLightMask.reset();
 }
 
 void LightManager::Destroy()

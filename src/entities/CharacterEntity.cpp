@@ -10,6 +10,7 @@
 
 #include "Camera.hpp"
 #include "Engine.hpp"
+#include "imgui.h"
 #include "GLFW.hpp"
 #include "RenderPassCommon.hpp"
 #include "SampleGLTFFilePaths.hpp"
@@ -28,6 +29,26 @@ CharacterEntity::~CharacterEntity() {
 }
 
 void CharacterEntity::ProcessInput(){
+    if (IsKeyDown(KEY::eLEFT_SHIFT) && IsMouseButtonPressed(MOUSE_BUTTON::eLEFT)) {
+        auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
+        flag = !flag;
+
+        if (flag) {
+            glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        } else {
+            glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        }
+    }
+    if (IsMouseButtonPressed(MOUSE_BUTTON::eRIGHT)) {
+        auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
+        flag = false;
+    }
+#ifdef PLATINUM
+    // don't process input if we aren't mousing
+    if (!mCamera->inputMap[std::size_t(EInputState::MOUSING)]) {
+        return;
+    }
+#endif
     mCamera->SetInput(EInputState::FORWARD, IsKeyDown(KEY::eW));
     mCamera->SetInput(EInputState::BACKWARD, IsKeyDown(KEY::eS));
     mCamera->SetInput(EInputState::LEFT, IsKeyDown(KEY::eA));
@@ -46,20 +67,7 @@ void CharacterEntity::ProcessInput(){
     mCamera->SetInput(EInputState::ZOOM_IN, IsKeyPressed(KEY::eY));
     mCamera->SetInput(EInputState::ZOOM_OUT, IsKeyPressed(KEY::eU));
 
-    if (IsKeyDown(KEY::eLEFT_SHIFT) && IsMouseButtonPressed(MOUSE_BUTTON::eLEFT)) {
-        auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
-        flag = !flag;
 
-        if (flag) {
-            glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        } else {
-            glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-        }
-    }
-    if (IsMouseButtonPressed(MOUSE_BUTTON::eRIGHT)) {
-        auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
-        flag = false;
-    }
 
     glm::vec3 controlInput = glm::vec3(0.0f);
     bool jump = false;
@@ -111,11 +119,28 @@ void CharacterEntity::Update(double deltaTime) {
     auto characterPhysicsPos = mSampleJoltCharacter->GetCharacterPosition();
     SetCharacterPositionOffset(characterPhysicsPos.GetX(), characterPhysicsPos.GetY(), characterPhysicsPos.GetZ());
 
-    if (IsKeyPressed(KEY::eR))
+#ifdef PLATINUM
+    if (IsKeyPressed(KEY::eESCAPE))
+#else
+    if (IsKeyPressed(KEY::eP))
+#endif
     {
-        // TODO: Handle logic for selecting which scene to switch to
-        Engine::get().ChangeScene(Sample::SampleObby, GetScene()->GetActivePlayerCount());
+        // Engine::get().Quit();
+        Engine::get().SetTimeScale(0.f);
+        // free the mouse
+        auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
+        flag = false;
+        glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
     }
+#ifndef PLATINUM
+    if(IsKeyPressed(KEY::eESCAPE))
+    {
+    // quit the game
+    Engine::get().Quit();
+    }
+#endif
+
 
 
 
@@ -189,6 +214,21 @@ void CharacterEntity::Update(double deltaTime) {
     mCamera->UpdateCameraMovement(GetWorldTransformComponents());
 }
 
+
+void CharacterEntity::UnscaledUpdate(double deltaTime)
+{
+    if (Engine::get().GetTimeScale() == 0.f)
+    {
+#ifdef PLATINUM
+        if (IsKeyPressed(KEY::eESCAPE))
+#else
+        if (IsKeyPressed(KEY::eP))
+#endif
+        {
+            Engine::get().SetTimeScale(1.f);
+        }
+    }
+}
 void CharacterEntity::UpdateUi(double deltaTime) {
     ImGuiRenderer::NewCharacterInfo(this);
 
