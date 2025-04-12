@@ -558,7 +558,7 @@ void CharacterEntity::Die()
 
 void CharacterEntity::OnCollisionEnd(Entity *aOther)
 {
-    if (aOther->CompareTag("climbable"))
+    if (aOther->CompareTag("climbablezone"))
     {
         mLeftClimb = true;
     }
