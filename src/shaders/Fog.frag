@@ -71,7 +71,7 @@ vec3 random_pcg3d(uvec3 v) {
   return vec3(v) * (1.0/float(0xffffffffu));
 }
 
-vec3 VolFog()
+vec4 VolFog()
 {
     vec4 WorldPos = ubo.inverseView * vec4(DepthToPosition(uv).xyz, 1.0);
     vec3 viewDir =  WorldPos.xyz - ubo.cameraPosition.xyz;
@@ -96,7 +96,9 @@ vec3 VolFog()
 
     vec4 sceneColour = texture(renderedScene, uv);
     transmittance = clamp(transmittance, 0.0, 1.0);
-    return mix(sceneColour.rgb, finalColour, 1.0 - transmittance);
+    // return mix(sceneColour.rgb, finalColour, 1.0 - transmittance);
+
+    return vec4(finalColour, 1.0 - transmittance);
 }
 
 void main()
@@ -107,7 +109,7 @@ void main()
         cascadeIndex = viewPos.z < csmMatrices.cascadeSplits[i] ? cascadeIndex = i + 1: cascadeIndex;
     }
 
-   fragColour = vec4(VolFog(), 1.0);
+   fragColour = vec4(VolFog());
 //   switch(cascadeIndex) {
 //		case 0 :
 //			fragColour.rgb *= vec3(1.0f, 0.25f, 0.25f);

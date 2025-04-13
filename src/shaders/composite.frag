@@ -115,11 +115,14 @@ void main()
 	vec4 bloom = texture(bloomPass, uv);
 	vec3 ssao = SD(SSAO);
     vec3 ssr = texture(SSR, uv).rgb;
-    vec3 FoggedScene = texture(Fog, uv).rgb;
+    vec4 FoggedScene = texture(Fog, uv);
+
+    // The fog is now composed with the final lighting
+    vec3 compositeFog = mix(lighting.rgb, FoggedScene.rgb, FoggedScene.a).rgb;
 
     // FoggedScene is now just "lighting".
     // With fog = 0, its just the scene.
-	vec3 hdrColor = vec3(FoggedScene + ssr) * ssao;
+	vec3 hdrColor = vec3(compositeFog + ssr) * ssao;
     hdrColor = hdrColor + bloom.rgb;
 	//vec3 ldrColor = hdrColor / (hdrColor + vec3(1.0));
 

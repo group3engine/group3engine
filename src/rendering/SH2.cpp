@@ -25,22 +25,20 @@ SH::~SH() {
 
 void SH::Execute(VkCommandBuffer cmd) {
     ZoneScopedN("ComputeSH::Execute");
-    TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "ComputeSH",
-                 tracy::Color::Gold);
+    TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "ComputeSH", tracy::Color::Gold);
 
 #ifdef _DEBUG
     vkutil::RenderPassLabel(cmd, "ComputeSH");
 #endif // !DEBUG
     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, m_PipelineLayout, 0, 1, &mDescriptorSets[vkutil::currentFrame], 0, nullptr);
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, m_Pipeline);
-    uint32_t workGroupCountX = (512 + 64 - 1) / 64;
-    vkCmdDispatch(cmd, workGroupCountX, 1, 1);
+    vkCmdDispatch(cmd, 64, 1, 1);
 }
 
 void SH::CreatePipeline() {
 
     auto pipelineResult = PipelineBuilder(context.device, PipelineType::COMPUTE, VertexBinding::NONE, 0)
-        .AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) /"assets/shaders/" / "SH2.comp.spv", ShaderType::COMPUTE)
+        .AddShader(assetsPath / "shaders" / "SH2.comp.spv", ShaderType::COMPUTE)
         .SetPipelineLayout({{mDescriptorSetLayout}})
         .Build();
 
