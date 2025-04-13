@@ -18,6 +18,8 @@
 #include "Arrow.hpp"
 #include "TileBox.hpp"
 #include "TileManager.hpp"
+#include "Sinking.hpp"
+#include "SinkingChild.hpp"
 // Add more includes here
 
 // an enum of all the different entity types
@@ -37,6 +39,8 @@ enum class EntityType {
     ARROW,
     TILEBOX,
     TILEMANAGER,
+    SINKING,
+    SINKINGCHILD,
     // Add more entity types here
 };
 // a map of strings to entity types
@@ -56,6 +60,8 @@ static const std::unordered_map<std::string, EntityType> entityTypeMap = {
     {"arrow",  EntityType::ARROW},
     {"tileBox", EntityType::TILEBOX},
     {"tileManager", EntityType::TILEMANAGER},
+    {"sinking", EntityType::SINKING},
+    {"sinkingChild", EntityType::SINKINGCHILD},
 };
 // a function to convert a string to an entity type
 inline EntityType GetEntityTypeFromString(const std::string& aTypeName) {
@@ -103,7 +109,10 @@ inline Entity* CreateNewEntity(const std::string& aEntityType)
         return new TileBox();
     case EntityType::TILEMANAGER:
         return new TileManager();
-
+    case EntityType::SINKING:
+        return new Sinking();
+    case EntityType::SINKINGCHILD:
+        return new SinkingChild();
     // Add more cases here
     default:
         assert(false);

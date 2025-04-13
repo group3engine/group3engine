@@ -125,6 +125,8 @@ static std::filesystem::path ArrowSample{"GameSamples/ArrowSample/arrow.gltf"};
 static std::filesystem::path TileSample{"GameSamples/TileSample/tile.gltf"};
 static std::filesystem::path SpikePitSample{"GameSamples/SpikePit/spikepit.gltf"};
 static std::filesystem::path LadderSample{"GameSamples/LadderSample/ladder.gltf"};
+static std::filesystem::path SinkingSample{"GameSamples/SinkingPillars/sinking.gltf"};
+
 } // namespace Sample
 
 #endif // GROUP3ENGINE_SAMPLEGLTFFILEPATHS_HPP

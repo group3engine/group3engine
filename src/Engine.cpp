@@ -61,6 +61,7 @@ namespace {
         &Sample::TileSample,
         &Sample::SpikePitSample,
         &Sample::LadderSample,
+        &Sample::SinkingSample,
 
     };
 
