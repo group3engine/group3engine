@@ -8,3 +8,4 @@ float SH2m1(vec3 v) { return 1.092548 * v.y * v.z; }
 float SH20(vec3 v) { return 0.315392 * (3.0 * v.z * v.z - 1.0); }
 float SH21(vec3 v) { return 1.092548 * v.x * v.z; }
 float SH22(vec3 v) { return 0.546274 * (v.x * v.x - v.y * v.y); }
+

@@ -1,4 +1,5 @@
 #version 450
+
 layout(location = 0) in vec2 uv;
 layout(location = 0) out vec4 fragColour;
 
@@ -58,7 +59,6 @@ float isShadow(vec3 WorldPos)
     float currentDepth = fragPositionInLightSpace.z;
     vec4 sampleCoord = vec4(fragPositionInLightSpace.xy, float(cascadeIndex), fragPositionInLightSpace.z);
     float shadow = texture(shadowMap, sampleCoord);
-
 
     return currentDepth > shadow + 0.001 ? 1.0 : 0.0;
 }
