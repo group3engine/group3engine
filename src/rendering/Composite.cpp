@@ -8,7 +8,7 @@
 #include "Utils.hpp"
 #include "Buffer.hpp"
 
-Composite::Composite(Context &context, Scene *scene, Image &LightingPass, Image &BloomPass, Image &SSAO, Image &SSRImage, Image &Fog)
+Composite::Composite(Context &context, Scene *scene, Image &LightingPass, Image &BloomPass, Image &SSAO, Image &SSRImage, Image &Fog, Image &Outline)
     : context{context},
       m_Scene{scene},
       LightingPass{LightingPass},
@@ -16,6 +16,7 @@ Composite::Composite(Context &context, Scene *scene, Image &LightingPass, Image 
       SSAO{SSAO},
       SSRImage{SSRImage},
       Fog {Fog},
+      Outline{Outline},
       m_Pipeline{VK_NULL_HANDLE},
       m_PipelineLayout{VK_NULL_HANDLE},
       m_descriptorSetLayout{VK_NULL_HANDLE},
@@ -124,6 +125,16 @@ void Composite::Resize() {
         };
 
         vkutil::UpdateDescriptorSet(context, 4, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    }
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        VkDescriptorImageInfo imageInfo = {
+            .sampler = vkutil::repeatSamplerAniso,
+            .imageView = Outline.imageView,
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        };
+
+        vkutil::UpdateDescriptorSet(context, 5, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     }
 }
 
@@ -236,7 +247,8 @@ void Composite::BuildDescriptors() {
             vkutil::CreateDescriptorBinding(1, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
             vkutil::CreateDescriptorBinding(2, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
             vkutil::CreateDescriptorBinding(3, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
-            vkutil::CreateDescriptorBinding(4, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+            vkutil::CreateDescriptorBinding(4, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
+            vkutil::CreateDescriptorBinding(5, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
         };
 
         m_descriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
@@ -296,5 +308,15 @@ void Composite::BuildDescriptors() {
         };
 
         vkutil::UpdateDescriptorSet(context, 4, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    }
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        VkDescriptorImageInfo imageInfo = {
+            .sampler = vkutil::repeatSamplerAniso,
+            .imageView = Outline.imageView,
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        };
+
+        vkutil::UpdateDescriptorSet(context, 5, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     }
 }

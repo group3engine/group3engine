@@ -9,7 +9,7 @@ class Scene;
 
 class Composite {
   public:
-    explicit Composite(Context &context, Scene *scene, Image &LightingPass, Image &BloomPass, Image& SSAO, Image& SSRImage, Image& Fog);
+    explicit Composite(Context &context, Scene *scene, Image &LightingPass, Image &BloomPass, Image& SSAO, Image& SSRImage, Image& Fog, Image& Outline);
     ~Composite();
 
     void Execute(VkCommandBuffer cmd) const;
@@ -32,6 +32,7 @@ class Composite {
     Image &SSAO;
     Image &SSRImage;
     Image &Fog;
+    Image &Outline;
 
     VkPipeline m_Pipeline;
     VkPipelineLayout m_PipelineLayout;

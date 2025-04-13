@@ -18,6 +18,7 @@
 #include "SSR.hpp"
 #include "SH2.hpp"
 #include "Fog.hpp"
+#include "Outline.hpp"
 
 class Context;
 
@@ -56,6 +57,7 @@ class Renderer {
     SSAO *GetSSAO() const { return m_SSAO.get(); }
     SSR *GetSSR() const { return m_SSR.get(); }
     Bloom *GetBloomPass() const { return m_BloomPass.get(); }
+    Outline *GetOutlinePass() const { return m_OutlinePass.get(); }
     Composite *GetCompositePass() const { return m_CompositePass.get(); }
     PresentPass *GetPresentPass() const { return m_PresentPass.get(); }
     Fog *GetFogPass() const { return m_Fog.get();}
@@ -92,6 +94,7 @@ class Renderer {
     std::unique_ptr<Fog> m_Fog;
     std::unique_ptr<ShadowMap> m_ShadowMap;
     std::unique_ptr<Bloom> m_BloomPass;
+    std::unique_ptr<Outline> m_OutlinePass;
     std::unique_ptr<Composite> m_CompositePass;
     std::unique_ptr<PresentPass> m_PresentPass;
 

@@ -862,6 +862,12 @@ void ImGuiRenderer::Update(Scene *scene)
         ImGui::SliderInt("Steps: ", &vkutil::fogSettings.MaxSteps, 1, 10);
     }
 
+    if (ImGui::CollapsingHeader("Outlin"))
+    {
+        ImGui::SliderFloat("Outline threshold: ", &vkutil::outlineSettings.sobelThreshold, 0.0f, 10.0f);
+
+    }
+
     static bool enableTextureDebug = false;
     ImGui::Checkbox("Debug Textures", &enableTextureDebug);
     if (enableTextureDebug)

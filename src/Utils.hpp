@@ -61,6 +61,12 @@ namespace vkutil {
         float intensity;
     };
 
+    struct OutlineSettings
+    {
+        int OutlineWidth;
+        float sobelThreshold;
+    };
+
     struct SSRSettings
     {
         int MaxSteps;
@@ -93,6 +99,7 @@ namespace vkutil {
     inline SSAOSettings ssaoSettings = {6, 6, 1.4f, 0.003f, 1.5f};
     inline SSRSettings ssrSettings = {20, 1, 1.0f, 0.001f, 0.001f};
     inline FogSettings fogSettings = { 1.0f, 0.1f, 0.1f, 1 };
+    inline OutlineSettings outlineSettings = { 1, 0.005f};
     inline uint32_t setRenderingPipeline = 1;
     inline uint32_t setAlphaMakingPipeline = 2;
 

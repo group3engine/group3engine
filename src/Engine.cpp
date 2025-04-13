@@ -381,8 +381,8 @@ void Engine::Render() {
         mRenderer->GetSSAO()->Execute(mRenderer->GetCommandBuffer());
         mRenderer->GetSSR()->Execute(mRenderer->GetCommandBuffer());
         mRenderer->GetFogPass()->Execute(mRenderer->GetCommandBuffer());
-
         mRenderer->GetBloomPass()->Execute(mRenderer->GetCommandBuffer());
+        mRenderer->GetOutlinePass()->Execute(mRenderer->GetCommandBuffer());
         mRenderer->GetCompositePass()->Execute(mRenderer->GetCommandBuffer());
         mRenderer->GetPresentPass()->Execute(mRenderer->GetCommandBuffer(), mRenderer->GetImageIndex());
 

@@ -9,6 +9,7 @@ layout(set = 0, binding = 1) uniform sampler2D bloomPass;
 layout(set = 0, binding = 2) uniform sampler2D SSAO;
 layout(set = 0, binding = 3) uniform sampler2D SSR;
 layout(set = 0, binding = 4) uniform sampler2D Fog;
+layout(set = 0, binding = 5) uniform sampler2D outline;
 
 float SpatialDenoisedSSAO()
 {
@@ -126,6 +127,11 @@ void main()
     vec3 ldrColor = ACESFilm(hdrColor);
 	vec3 result = ldrColor;
 	vec3 gammaCorrectedColor = pow(result, vec3(1.0 / 2.2));
+
+    // apply the outline
+    float outlineColor = texture(outline, uv).r;
+
+    gammaCorrectedColor = mix(gammaCorrectedColor, vec3(0.0), outlineColor);
 
 	fragColor = vec4(vec3(gammaCorrectedColor), 1.0);
 }
