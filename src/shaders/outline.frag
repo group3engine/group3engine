@@ -50,8 +50,8 @@ void main()
     float normalVerticalZ = normalTopLeft.z * -1.0 + normalTop.z * -2.0 + normalTopRight.z * -1.0 + normalBottomLeft.z * 1.0 + normalBottom.z * 2.0 + normalBottomRight.z * 1.0;
     float normalHorizontal = abs(normalHorizontalX) + abs(normalHorizontalY) + abs(normalHorizontalZ);
     float normalVertical = abs(normalVerticalX) + abs(normalVerticalY) + abs(normalVerticalZ);
-    normalHorizontal = normalHorizontal * 0.1; // reduce the intensity of the normal edge
-    normalVertical = normalVertical * 0.1; // reduce the intensity of the normal edge
+    normalHorizontal = normalHorizontal * 0.01; // reduce the intensity of the normal edge
+    normalVertical = normalVertical * 0.01; // reduce the intensity of the normal edge
 
 
     float normalEdge = abs(normalHorizontal) + abs(normalVertical);
