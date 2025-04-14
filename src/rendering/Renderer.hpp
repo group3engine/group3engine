@@ -16,7 +16,6 @@
 #include "ImGuiRenderer.hpp"
 #include "SSAO.hpp"
 #include "SSR.hpp"
-#include "GBuffer.hpp"
 
 class Context;
 
