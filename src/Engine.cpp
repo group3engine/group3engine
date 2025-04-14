@@ -56,7 +56,13 @@ namespace {
 
     const std::vector<std::filesystem::path *> scenePaths = {
         &Sample::SampleObby,
-        &Sample::SampleObbyTestScene
+        &Sample::SampleObbyTestScene,
+        &Sample::ArrowSample,
+        &Sample::TileSample,
+        &Sample::SpikePitSample,
+        &Sample::LadderSample,
+        &Sample::SinkingSample,
+
     };
 
     const std::filesystem::path *scenePathSelection = scenePaths[0];

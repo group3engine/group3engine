@@ -121,6 +121,12 @@ static std::filesystem::path Dust2Laugh{"Dust2Laugh/Dust2Laugh.gltf"};
 static std::filesystem::path SampleObby{"Sample obby/obby.gltf"};
 static std::filesystem::path SampleObbyTestScene{"Sample obby/test_scene.gltf"};
 static std::filesystem::path FallGuys{"Fall guys/fall guys map.gltf"};
+static std::filesystem::path ArrowSample{"GameSamples/ArrowSample/arrow.gltf"};
+static std::filesystem::path TileSample{"GameSamples/TileSample/tile.gltf"};
+static std::filesystem::path SpikePitSample{"GameSamples/SpikePit/spikepit.gltf"};
+static std::filesystem::path LadderSample{"GameSamples/LadderSample/ladder.gltf"};
+static std::filesystem::path SinkingSample{"GameSamples/SinkingPillars/sinking.gltf"};
+
 } // namespace Sample
 
 #endif // GROUP3ENGINE_SAMPLEGLTFFILEPATHS_HPP

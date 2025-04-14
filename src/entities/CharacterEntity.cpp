@@ -71,34 +71,59 @@ void CharacterEntity::ProcessInput(){
 
     glm::vec3 controlInput = glm::vec3(0.0f);
     bool jump = false;
-    if(mCamera->isInFollowCharacterMode()) {
-        // Determine controller input
-        if (IsKeyDown(KEY::eA))
-            controlInput.z = -1;
-        if (IsKeyDown(KEY::eD))
-            controlInput.z = 1;
-        if (IsKeyDown(KEY::eW))
-            controlInput.x = 1;
-        if (IsKeyDown(KEY::eS))
-            controlInput.x = -1;
-        if (controlInput != glm::vec3(0.f))
-            controlInput = glm::normalize(controlInput);
-        if (abs(GetGamepadAxis(GAMEPAD_AXIS::eLEFT_Y)) > 0.1f)
-            controlInput.z = -GetGamepadAxis(GAMEPAD_AXIS::eLEFT_Y);
-        if (abs(GetGamepadAxis(GAMEPAD_AXIS::eLEFT_X)) > 0.1f)
-            controlInput.z = GetGamepadAxis(GAMEPAD_AXIS::eLEFT_X);
+    if(mDeathState == DeathState::eLiving) {
+        if (mCamera->isInFollowCharacterMode()) {
+            // Determine controller input
+            if (IsKeyDown(KEY::eA))
+                controlInput.z = -1;
+            if (IsKeyDown(KEY::eD))
+                controlInput.z = 1;
+            if (IsKeyDown(KEY::eW))
+                controlInput.x = 1;
+            if (IsKeyDown(KEY::eS))
+                controlInput.x = -1;
+            if (controlInput != glm::vec3(0.f))
+                controlInput = glm::normalize(controlInput);
+            if (abs(GetGamepadAxis(GAMEPAD_AXIS::eLEFT_Y)) > 0.1f)
+                controlInput.z = -GetGamepadAxis(GAMEPAD_AXIS::eLEFT_Y);
+            if (abs(GetGamepadAxis(GAMEPAD_AXIS::eLEFT_X)) > 0.1f)
+                controlInput.z = GetGamepadAxis(GAMEPAD_AXIS::eLEFT_X);
 
-        // Rotate controls to align with the camera
-        auto cameraForward = mCamera->GetDirection();
-        cameraForward.y = 0.0f;
-        cameraForward = glm::normalize(cameraForward);
-        glm::quat rotation = glm::rotation(glm::vec3(1.0f, 0.0f, 0.0f), cameraForward);
-        controlInput = rotation * controlInput;
+            // Rotate controls to align with the camera
+            auto cameraForward = mCamera->GetDirection();
+            // if we are in climb, we want to align with the player instead
+            if(mInClimb)
+            {
+                cameraForward = GetLocalTransform().rotation * glm::vec3(0.f, 0.f, -1.f);
+            }
+            cameraForward.y = 0.0f;
+            cameraForward = glm::normalize(cameraForward);
+            glm::quat rotation = glm::rotation(glm::vec3(1.0f, 0.0f, 0.0f), cameraForward);
 
-        // Check actions
-        jump = IsKeyPressed(KEY::eSPACE) || IsGamepadButtonPressed(GAMEPAD_BUTTON::eA);
+            if(mInClimb)
+            {
+                // if we are grounded, then only do this if x is forward
+                if(!mSampleJoltCharacter->IsGrounded() || controlInput.x > 0.1f) {
+                    controlInput.y = controlInput.x;
+                    controlInput.x = 0.f;
+                }
+            }
+            controlInput = rotation * controlInput;
+
+            // Check actions
+            jump = IsKeyPressed(KEY::eSPACE) || IsGamepadButtonPressed(GAMEPAD_BUTTON::eA);
+            if (IsKeyPressed(KEY::eF)) {
+                // for each child, if there is an animator, call set animation
+                for (auto &child: GetChildren()) {
+                    if (child->HasAnimator()) {
+                        child->GetAnimator().SetActiveAnimation("dance", 0.1, true, true);
+                        child->GetAnimator().SetTimeScale(1.f);
+                    }
+                }
+            }
+        }
     }
-    mSampleJoltCharacter->ProcessInput(controlInput, jump);
+    mSampleJoltCharacter->ProcessInput(controlInput, jump, mInClimb);
 }
 
 void CharacterEntity::PrePhysicsUpdate() {
@@ -113,8 +138,27 @@ void CharacterEntity::PreUpdate(double deltaTime) {
 }
 
 void CharacterEntity::Update(double deltaTime) {
+    // update the death timer
+    if(mDeathState == DeathState::eDying) {
+        mDeathTimer -= deltaTime;
+        if(mDeathTimer <= 0.0) {
+            mDeathState = DeathState::eDead;
+            mInternalEvents.push(InternalEvent::eDeath);
+            Reset();
+        }
+    }
     // pre physics update
     PrePhysicsUpdate();
+    if(mLeftClimb)
+    {
+        mInClimb = false;
+        mLeftClimb = false;
+    }
+    if(mEnterClimb)
+    {
+        mInClimb = true;
+        mEnterClimb = false;
+    }
     // update the character position offset
     auto characterPhysicsPos = mSampleJoltCharacter->GetCharacterPosition();
     SetCharacterPositionOffset(characterPhysicsPos.GetX(), characterPhysicsPos.GetY(), characterPhysicsPos.GetZ());
@@ -168,7 +212,14 @@ void CharacterEntity::Update(double deltaTime) {
     Vec3 characterVelocityJolt = mSampleJoltCharacter->GetCharacterVelocity();
     glm::vec3 characterVelocity = glm::vec3(characterVelocityJolt.GetX(), characterVelocityJolt.GetY(), characterVelocityJolt.GetZ());
     // set the character to face the direction of the velocity without the y component
+    float characterYSpeed = characterVelocity.y;
     characterVelocity.y = 0;
+
+    // if we are in climb, we want to fce
+    if(mInClimb)
+    {
+        characterVelocity = mClimbDirection;
+    }
     if (glm::length(characterVelocity) > 0.1f) {
         // set the transform rotation to the direction of the velocity, on top of the initial transform rotation
         Transform newTransform = GetLocalTransform();
@@ -201,6 +252,21 @@ void CharacterEntity::Update(double deltaTime) {
         break;
     case EJumpState::None:
         break;
+    }
+    // if the character is dying, set the animation to dying
+    if(mDeathState == DeathState::eDying) {
+        activeAnimation = "death";
+        timeScale = 1.0f;
+        blend = 0.5f;
+        playWholeAnimation = false;
+    }
+    // if the character is climbing, set the animation to climb
+    if(mInClimb)
+    {
+        activeAnimation = "climb";
+        timeScale = characterYSpeed;
+        blend = 0.1f;
+        playWholeAnimation = false;
     }
     // for each child, if there is an animator, call set animation
     for (auto &child : GetChildren()) {
@@ -296,7 +362,7 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
     if(aOther->CompareTag("deathzone")) {
         SPDLOG_INFO("I am {} and I collided with a death zone", GetName());
         mInternalEvents.push(InternalEvent::eDeath);
-        Reset();
+        Die();
     }
 
     // if its a checkpoint, set the checkpoint
@@ -312,6 +378,28 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
     {
         // do finish zone things
         mInternalUiEvents.push(InternalUiEvent::eFinishPopup);
+    }
+
+    if(aOther->CompareTag("climbable"))
+    {
+        mEnterClimb = true;
+        // if the climbable object doesn't have a child, use the distance from us to them
+        if(aOther->GetChildren().empty())
+        {
+            mClimbDirection = aOther->GetWorldTransformComponents().translation - GetCharacterPositionOffset();
+            mClimbDirection.y = 0;
+            mClimbDirection = glm::normalize(mClimbDirection);
+        }
+            // otherwise, the local transform of the child is the direction
+        else
+        {
+            // get the first child
+            auto child = aOther->GetChildren()[0];
+            // get the local transform of the child
+            mClimbDirection = child->GetLocalTransform().translation;
+            mClimbDirection.y = 0;
+            mClimbDirection = glm::normalize(mClimbDirection);
+        }
     }
 
     SPDLOG_INFO("I am {} and I collided with {}", GetName(), aOther->GetName());
@@ -455,6 +543,48 @@ void CharacterEntity::MoveToSpawn()
         {
             SetCheckpoint(entity->GetWorldTransformComponents().translation + glm::vec3(0.f, 2.5f, 0.f));
             Reset();
+        }
+    }
+}
+
+void CharacterEntity::Die()
+{
+    // set the death state to dying
+    mDeathState = DeathState::eDying;
+    // set the death timer to death time
+    mDeathTimer = mDeathTime;
+
+}
+
+void CharacterEntity::OnCollisionEnd(Entity *aOther)
+{
+    if (aOther->CompareTag("climbablezone"))
+    {
+        mLeftClimb = true;
+    }
+}
+
+void CharacterEntity::OnCollisionStay(Entity *aOther)
+{
+    if (aOther->CompareTag("climbable"))
+    {
+        mEnterClimb = true;
+        // if the climbable object doesn't have a child, use the distance from us to them
+        if(aOther->GetChildren().empty())
+        {
+            mClimbDirection = aOther->GetWorldTransformComponents().translation - GetCharacterPositionOffset();
+            mClimbDirection.y = 0;
+            mClimbDirection = glm::normalize(mClimbDirection);
+        }
+        // otherwise, the local transform of the child is the direction
+        else
+        {
+            // get the first child
+            auto child = aOther->GetChildren()[0];
+            // get the local transform of the child
+            mClimbDirection = child->GetLocalTransform().translation;
+            mClimbDirection.y = 0;
+            mClimbDirection = glm::normalize(mClimbDirection);
         }
     }
 }

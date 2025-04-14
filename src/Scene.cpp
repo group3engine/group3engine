@@ -285,10 +285,13 @@ void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
                         // set the motion type as static
                         EMotionType motionType = EMotionType::Static;
 
+                        // if its a sensor set the layer to SENSOR, otherwise set it to NON_MOVING
+                        ObjectLayer layer = entity->IsSensor() ? Layers::SENSORS : Layers::NON_MOVING;
+
                         // Set the body creation settings as static and not moving
                         BodyCreationSettings bodyCreationSettings = {
                         result.Get(), RVec3(entity_transform.translation.x, entity_transform.translation.y, entity_transform.translation.z), Quat(entity_transform.rotation.x, entity_transform.rotation.y, entity_transform.rotation.z, entity_transform.rotation.w),
-                        motionType, Layers::NON_MOVING};
+                        motionType, layer};
 
                         // set if it is a sensor
                         bodyCreationSettings.mIsSensor = entity->IsSensor();
@@ -299,11 +302,10 @@ void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
                         // initialise the body in the physics manager and do not activate it
                         entity_rigid_body->Init(PhysicsManager::get(), false);
 
-                        if(entity->IsSensor())
-                        {
-                            // only do this part if its supposed to DO something when collided with (i.e. sensors)
-                            PhysicsManager::get().RegisterEntity(entity, entity_rigid_body->mBodyId);
-                        }
+
+                        // only do this part if its supposed to DO something when collided with (i.e. sensors)
+                        PhysicsManager::get().RegisterEntity(entity, entity_rigid_body->mBodyId);
+
 
                         PhysicsManager::get().mPhysicsSystem.OptimizeBroadPhase();
                         entity->AddRigidBody(std::move(entity_rigid_body));
@@ -352,11 +354,10 @@ void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
                         // initialise the body in the physics manager and activate it
                         entity_rigid_body->Init(PhysicsManager::get(), true);
 
-                        if(entity->IsSensor())
-                        {
-                            // only do this part if its supposed to DO something when collided with (i.e. sensors)
-                            PhysicsManager::get().RegisterEntity(entity, entity_rigid_body->mBodyId);
-                        }
+
+                        // only do this part if its supposed to DO something when collided with (i.e. sensors)
+                        PhysicsManager::get().RegisterEntity(entity, entity_rigid_body->mBodyId);
+
                         PhysicsManager::get().mPhysicsSystem.OptimizeBroadPhase();
                         entity->AddRigidBody(std::move(entity_rigid_body));
                     }
@@ -404,11 +405,10 @@ void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
                         // initialise the body in the physics manager and activate it
                         entity_rigid_body->Init(PhysicsManager::get(), true);
 
-                        if(entity->IsSensor())
-                        {
-                            // only do this part if its supposed to DO something when collided with (i.e. sensors)
-                            PhysicsManager::get().RegisterEntity(entity, entity_rigid_body->mBodyId);
-                        }
+
+                        // only do this part if its supposed to DO something when collided with (i.e. sensors)
+                        PhysicsManager::get().RegisterEntity(entity, entity_rigid_body->mBodyId);
+
                         PhysicsManager::get().mPhysicsSystem.OptimizeBroadPhase();
                         entity->AddRigidBody(std::move(entity_rigid_body));
                     }
