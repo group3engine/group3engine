@@ -138,7 +138,7 @@ void Entity::RecordDrawOpaque(VkCommandBuffer aCmdBuff,
 }
 
 void Entity::RecordDrawShadow(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout,uint32_t caseCadeIndex) const {
-    if (mHasMesh && mIsVisible) {
+    if (mHasMesh && mIsVisible && mAnimator == nullptr) {
         // push the model matrix
         vkutil::MeshPushConstants pc = {};
         pc.ModelMatrix = GetWorldTransform();
