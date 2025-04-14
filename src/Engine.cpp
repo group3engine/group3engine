@@ -85,7 +85,9 @@ bool Engine::Initialize() {
         #ifdef _WIN32
         char path[MAX_PATH];
         if (GetModuleFileNameA(nullptr, path, MAX_PATH)) {
-            assetsPath = std::filesystem::path(path).parent_path() / "assets";
+            assetsPath =
+                std::filesystem::path(path).parent_path().parent_path() /
+                "assets";
         } else {
             SPDLOG_ERROR("Error getting executable path.");
             exit(EXIT_FAILURE);
@@ -95,7 +97,9 @@ bool Engine::Initialize() {
                 ssize_t len = readlink("/proc/self/exe", path, sizeof(path) - 1);
                 if (len != -1) {
                     path[len] = '\0'; // Null-terminate the string
-                    assetsPath = std::filesystem::path(path).parent_path() / "assets";
+                    assetsPath =
+                        std::filesystem::path(path).parent_path().parent_path() /
+                        "assets";
                 } else {
                     SPDLOG_ERROR("Error getting executable path.");
                     exit(EXIT_FAILURE);

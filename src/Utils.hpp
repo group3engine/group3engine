@@ -49,7 +49,7 @@ namespace vkutil {
     };
 
     struct PostProcessing {
-        alignas(1) bool Enable;
+        alignas(4) bool Enable = false;
     };
 
     struct SSAOSettings
