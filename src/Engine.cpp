@@ -58,6 +58,7 @@ namespace {
         &Sample::SampleObby,
         &Sample::SampleObbyTestScene,
         &Sample::ArrowSample,
+        &Sample::AxeSample,
         &Sample::TileSample,
         &Sample::SpikePitSample,
         &Sample::LadderSample,
