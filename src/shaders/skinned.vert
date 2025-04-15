@@ -1,6 +1,7 @@
 #version 450
 
 #include "uniforms.glsl"
+#include "Common.glsl"
 
 layout(set = 0, binding = 0) uniform block {
     CameraUBO ubo;
@@ -26,15 +27,7 @@ layout(location = 5) in vec4 weights;
 layout(location = 0) out vec4 WorldPos;
 layout(location = 1) out vec2 uv;
 layout(location = 2) out mat3 TBNFrame;
-layout(location = 5) out vec4 WorldNormal;
 
-// source: https://www.shadertoy.com/view/3s33zj
-mat3 adjugate( in mat4 m )
-{
-	return mat3(cross(m[1].xyz, m[2].xyz),
-	cross(m[2].xyz, m[0].xyz),
-	cross(m[0].xyz, m[1].xyz));
-}
 mat4 rotationX45 = mat4(
 	1.0, 0.0,                 0.0,                0.0,
 	0.0, cos(radians(45.0)), -sin(radians(45.0)), 0.0,
@@ -54,7 +47,6 @@ void main()
 
 	WorldPos = skinMat * vec4(pos, 1.0);
 	gl_Position = ubo.projection * ubo.view * WorldPos;
-	WorldNormal = pc.ModelMatrix * vec4(normal, 0.0);
-    vec3 biTangent = cross(normalize(normal), normalize(tangent.xyz)) * tangent.w;
-    TBNFrame = adjugate(skinMat) * mat3(normalize(tangent.xyz), normalize(biTangent), normalize(normal));
+
+	TBNFrame = tbn(normal, tangent, skinMat);
 }
