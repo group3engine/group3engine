@@ -848,7 +848,7 @@ void ImGuiRenderer::Update(Scene *scene)
     if (ImGui::CollapsingHeader("SSR"))
     {
         ImGui::SliderInt("MaxSteps: ", &vkutil::ssrSettings.MaxSteps, 1, 500);
-        ImGui::SliderFloat("MaxDistance: ", &vkutil::ssrSettings.MaxDistance, 0.0f, 1.0f);
+        ImGui::SliderFloat("MaxDistance: ", &vkutil::ssrSettings.MaxDistance, 0.0f, 100.0f);
         ImGui::SliderInt("BSIterations: ", &vkutil::ssrSettings.BinarySearchIterations, 0, 100);
         ImGui::SliderFloat("Thickness: ", &vkutil::ssrSettings.thickness, 0, 1.0f);
         ImGui::SliderFloat("StepSize: ", &vkutil::ssrSettings.StepSize, 0.0f, 1.5f);

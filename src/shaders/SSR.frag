@@ -72,7 +72,10 @@ vec3 ScreenSpaceReflections()
 
     //vec4 WorldNormal = normalize(inverse(ubo.view) * vec4(DepthToNormal(uv).xyz, 0.0)); // Depth for normals can cause issues when looking straight down. Store normals in a g-buffer target instead
     vec3 worldReflectionDir = normalize(reflect(camDir, WorldNormal.xyz));
-    vec3 sky = texture(skybox, worldReflectionDir).xyz; // Sample skybox once
+
+
+    float lod = WorldNormal.a * float(12.0 - 1.0);
+    vec3 sky = textureLod(skybox, worldReflectionDir, lod).xyz; // Sample skybox once
 
     vec3 WorldSpaceBegin = WorldPos.xyz;
     vec3 worldSpaceEnd = WorldSpaceBegin + worldReflectionDir * MAX_DISTANCE;
@@ -148,7 +151,7 @@ vec3 ScreenSpaceReflections()
         }
     }
     // TODO: Sample cube map if no intersection
-    return vec3(0,0,0);
+    return vec3(sky);
 }
 
 void main()
@@ -156,7 +159,7 @@ void main()
     float roughness = texture(normalRoughness, uv).a;
 
     //fragColour = vec4((texture(normalRoughness, uv).rgb * 2.0 - 1.0), 1.0);
-    //fragColour = vec4(ScreenSpaceReflections().xyz, 1.0);
+    // fragColour = vec4(ScreenSpaceReflections().xyz, 1.0);
     //fragColour = vec4(mix(ScreenSpaceReflections().xyz, (texture(normalRoughness, uv).rgb * 2.0 - 1.0) * 0.05, roughness), 1.0);
 	fragColour = vec4(mix(ScreenSpaceReflections().rgb, vec3(0), roughness), 1.0);
 }
