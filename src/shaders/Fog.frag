@@ -42,7 +42,7 @@ uint cascadeIndex = 0;
 
 vec4 DepthToPosition(vec2 uv)
 {
-	float depth = texture(depthBuffer, uv).x;
+	float depth = min(0.99,texture(depthBuffer, uv).x);
 	vec4 clipSpace = vec4(uv * 2.0 - 1.0, depth, 1.0);
 	vec4 viewSpace = ubo.inverseProjection * clipSpace;
 	viewSpace.xyz /= viewSpace.w;
@@ -87,9 +87,9 @@ vec4 VolFog()
     vec3 LightColour = vec3(0.6, 0.75, 1.0); //  This is a sky like colour
     while(distTravelled < maxDistance)
     {
-        // vec3 currentPos = ubo.cameraPosition.xyz + RayDir * distTravelled;
-        // float visbility = isShadow(currentPos);
-        finalColour += LightColour * 1.0 * density * fog.StepSize /* * visbility */; // Removing visiblitiy for now since there is a issue with the camera causing flickering. Not sure why.
+        vec3 currentPos = ubo.cameraPosition.xyz + RayDir * distTravelled;
+        float visbility = isShadow(currentPos);
+        finalColour += LightColour * 1.0 * density * fog.StepSize * visbility;
         transmittance *= exp(-density * fog.StepSize);
         distTravelled += fog.StepSize;
     }
