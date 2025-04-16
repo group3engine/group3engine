@@ -23,7 +23,6 @@
 
 #include "Buffer.hpp"
 #include "Config.hpp"
-#include "GLTFImportStructs.hpp"
 
 class Renderer;
 class Scene;
@@ -57,7 +56,9 @@ class DebugRendererImp final : public JPH::DebugRendererSimple{
     VkDescriptorSetLayout mUboLayout = VK_NULL_HANDLE;
 
     std::pair<VkPipeline, VkPipelineLayout> mLinePipeline = {nullptr, nullptr};
+    std::pair<VkPipeline, VkPipelineLayout> mTrianglePipeline = {nullptr, nullptr};
 
+    std::vector<Buffer> mLineVertexBuffers;
     std::vector<Buffer> mVertexBuffers;
     std::array<std::vector<VkDescriptorSet>, GlobalConfig::maxPlayers> mDescriptorSets;
 
@@ -69,12 +70,17 @@ class DebugRendererImp final : public JPH::DebugRendererSimple{
         JPH::Color                     mToColor;
     };
 
+    struct TriangleVertex {
+        glm::vec3                      pos;
+        JPH::Color                     color;
+    };
+
     /// The list of line segments
     JPH::Array<Line>                   mLines;
     JPH::Mutex                         mLinesLock;
 
     // Vertices for triangles
-    JPH::Array<WPT::Vertex>            mVertices;
+    JPH::Array<TriangleVertex>         mVertices;
     JPH::Mutex                         mVerticesLock;
 };
 #endif // JPH_DEBUG_RENDERER
