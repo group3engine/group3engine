@@ -341,3 +341,21 @@ void Entity::SetParentTransform(glm::mat4 aParentTransform)  {
     UpdateWorldTransform();
     UpdateChildrenTransform();
 }
+
+void Entity::InitPhysics() {
+    if (mRigidBody.get()) {
+        if (GetPhysicsType() == PhysicsType::STATIC) {
+            // initialise the body in the physics manager and do not activate it
+            mRigidBody->Init(PhysicsManager::get(), false);
+        } else if (GetPhysicsType() == PhysicsType::DYNAMIC) {
+            // initialise the body in the physics manager and activate it
+            mRigidBody->Init(PhysicsManager::get(), true);
+        } else if (GetPhysicsType() == PhysicsType::KINEMATIC) {
+            // initialise the body in the physics manager and activate it
+            mRigidBody->Init(PhysicsManager::get(), true);
+        }
+
+        // TODO: Only do this if the entity is supposed to DO something when collided with (i.e. sensors)
+        PhysicsManager::get().RegisterEntity(this, mRigidBody->mBodyId);
+    }
+}
