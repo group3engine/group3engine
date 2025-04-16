@@ -21,11 +21,13 @@ jobs:
         with:
           submodules: "recursive"
 
+      - uses: seanmiddleditch/gha-setup-ninja@master
+
       - name: Build
         env:
           TARGET_PLATFORM: windows
         run: |
-          cmake -DCMAKE_BUILD_TYPE=Platinum -S . -B build
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Platinum -S . -B build
           cmake --build build -j
           cmake --install build --prefix install
       - name: Zip
