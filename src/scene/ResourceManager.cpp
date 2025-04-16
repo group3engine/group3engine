@@ -307,19 +307,30 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 meshPrimitive.vertices[i].pos = {positions[i * 3],
                                                  positions[i * 3 + 1],
                                                  positions[i * 3 + 2]};
-                meshPrimitive.vertices[i].normal = {
-                    normals[i * 3], normals[i * 3 + 1], normals[i * 3 + 2]};
+
+                glm::vec3 normal = {normals[i * 3], normals[i * 3 + 1], normals[i * 3 + 2]};
+                // Robustness check to prevent nans after normalizing
+                if (normal == glm::vec3(0, 0, 0)) {
+                    normal = glm::vec3(0.001f, 0.001f, 0.001f);
+                }
+                meshPrimitive.vertices[i].normal = normal;
+
                 meshPrimitive.vertices[i].tex = {texcoords[i * 2],
                                                  texcoords[i * 2 + 1]};
+
                 // if the mesh has tangents
                 if (!tangents.empty()){
-                    meshPrimitive.vertices[i].tangent = {
-                            tangents[i * 4],
-                            tangents[i * 4 + 1],
-                            tangents[i * 4 + 2],
-                            tangents[i * 4 + 3]
-                    };
+                    glm::vec4 tangent = {tangents[i * 4], tangents[i * 4 + 1],
+                                         tangents[i * 4 + 2], tangents[i * 4 + 3]};
+                    // Robustness check to prevent nans after normalizing
+                    if (glm::vec3(tangent.x, tangent.y, tangent.z) == glm::vec3(0, 0, 0)) {
+                        tangent.x = 0.001f;
+                        tangent.y = 0.001f;
+                        tangent.z = 0.001f;
+                    }
+                    meshPrimitive.vertices[i].tangent = tangent;
                 }
+
                 // if the mesh has joints and weights
                 if (!joints.empty() && !weights.empty()) {
                     meshPrimitive.vertices[i].joints = {joints[i * 4],
