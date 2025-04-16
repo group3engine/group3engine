@@ -2,8 +2,6 @@
 // SPDX-FileCopyrightText: 2021 Jorrit Rouwe
 // SPDX-License-Identifier: MIT
 
-#define JPH_DEBUG_RENDERER
-
 // See JoltPhysics/TestFramework/Renderer/DebugRendererImp.cpp
 #ifdef JPH_DEBUG_RENDERER
 
