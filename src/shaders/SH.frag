@@ -1,71 +1,13 @@
 #version 450
 
+// This needs to be deleted but I can't seem to remove it by simply deleting without the
+// build breaking for some reason.
+
 layout(location = 0) in vec2 uv;
 layout(location = 0) out vec4 fragColour;
-
-layout (set = 0, binding = 0) uniform samplerCube skybox;
-
-layout (set = 0, binding = 1) buffer SHBuffer
-{
-    vec3 shCoefficients[9];
-}sh;
-
-#define PI 3.141592653589
-#define madfrac(A, B) ((A) * (B) - floor((A) * (B)))
-const float PHI = sqrt(5.0) * 0.5 + 0.5;
-const int N = 512; // Number of samples for SH projection
-
-// SH basis functions
-float SH00() { return 0.282095; }
-float SH1m1(vec3 v) { return 0.488603 * v.y; }
-float SH10(vec3 v) { return 0.488603 * v.z; }
-float SH11(vec3 v) { return 0.488603 * v.x; }
-float SH2m2(vec3 v) { return 1.092548 * v.x * v.y; }
-float SH2m1(vec3 v) { return 1.092548 * v.y * v.z; }
-float SH20(vec3 v) { return 0.315392 * (3.0 * v.z * v.z - 1.0); }
-float SH21(vec3 v) { return 1.092548 * v.x * v.z; }
-float SH22(vec3 v) { return 0.546274 * (v.x * v.x - v.y * v.y); }
-
-
-vec3 spherical_fibonacci(float i, float n) {
-    float phi = 2.0 * PI * madfrac(i, PHI - 1.0);
-    float cos_theta = 1.0 - (2.0 * i + 1.0) * (1.0 / n);
-    float sin_theta = sqrt(clamp(1.0 - cos_theta * cos_theta, 0.0, 1.0));
-    return vec3(cos(phi) * sin_theta, sin(phi) * sin_theta, cos_theta);
-}
-
-
-void projectCubemapToSH() {
-
-    for (int i = 0; i < 9; ++i) {
-        sh.shCoefficients[i] = vec3(0.0);
-    }
-
-    for (float i = 0.0; i < float(N); ++i) {
-        vec3 dir = spherical_fibonacci(i, float(N));
-        vec3 color = textureLod(skybox, dir, 0).rgb;
-
-        sh.shCoefficients[0] += color * SH00();
-        sh.shCoefficients[1] += color * SH1m1(dir);
-        sh.shCoefficients[2] += color * SH10(dir);
-        sh.shCoefficients[3] += color * SH11(dir);
-        sh.shCoefficients[4] += color * SH2m2(dir);
-        sh.shCoefficients[5] += color * SH2m1(dir);
-        sh.shCoefficients[6] += color * SH20(dir);
-        sh.shCoefficients[7] += color * SH21(dir);
-        sh.shCoefficients[8] += color * SH22(dir);
-    }
-
-    // Normalize by the number of samples and solid angle
-    float weight = (4.0 * PI) / float(N);
-    for (int i = 0; i < 9; ++i) {
-        sh.shCoefficients[i] *= weight;
-    }
-}
 
 
 void main()
 {
-    projectCubemapToSH();
-    fragColour = vec4(sh.shCoefficients[0], 1);
+
 }

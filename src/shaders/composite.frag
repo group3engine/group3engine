@@ -116,11 +116,31 @@ void main()
 	vec4 bloom = texture(bloomPass, uv);
 	vec3 ssao = SD(SSAO);
     vec3 ssr = texture(SSR, uv).rgb;
-    vec3 FoggedScene = texture(Fog, uv).rgb;
+    vec4 FoggedScene = texture(Fog, uv);
+    // apply the outline to the lighting
+    float outlineColor = texture(outline, uv).r;
+    lighting = mix(lighting, vec4(0.0), outlineColor);
+
+    // The fog is now composed with the final lighting
+    // band fog.a
+    float fogAlpha = FoggedScene.a;
+    if(fogAlpha < 0.2 && fogAlpha > 0.1)
+    {
+        fogAlpha = 0.2;
+    }
+    else if(fogAlpha < 0.3 && fogAlpha > 0.2)
+    {
+        fogAlpha = 0.3;
+    }
+    else if(fogAlpha < 1.0 && fogAlpha > 0.5)
+    {
+        fogAlpha = 1.0;
+    }
+    vec3 compositeFog = mix(lighting.rgb, FoggedScene.rgb, fogAlpha).rgb;
 
     // FoggedScene is now just "lighting".
     // With fog = 0, its just the scene.
-	vec3 hdrColor = vec3(FoggedScene + ssr) * ssao;
+	vec3 hdrColor = vec3(compositeFog + ssr) * ssao;
     hdrColor = hdrColor + bloom.rgb;
 	//vec3 ldrColor = hdrColor / (hdrColor + vec3(1.0));
 
@@ -128,10 +148,8 @@ void main()
 	vec3 result = ldrColor;
 	vec3 gammaCorrectedColor = pow(result, vec3(1.0 / 2.2));
 
-    // apply the outline
-    float outlineColor = texture(outline, uv).r;
 
-    gammaCorrectedColor = mix(gammaCorrectedColor, vec3(0.0), outlineColor);
+
 
 	fragColor = vec4(vec3(gammaCorrectedColor), 1.0);
 }

@@ -17,6 +17,12 @@ enum class InternalEvent {
     eCount
 };
 
+enum class DeathState{
+    eLiving,
+    eDying,
+    eDead,
+};
+
 enum class InternalUiEvent {
     eDeathPopup,
     eFinishPopup,
@@ -50,19 +56,20 @@ class CharacterEntity : public Entity {
 
     void OnCollisionStart(Entity *aOther) override;
 
-    void OnCollisionStay(Entity *aOther) override {
-//        SPDLOG_INFO("I am {} and I am colliding with {}", mName, aOther->mName);
-    }
+    void OnCollisionStay(Entity *aOther) override;
+
+    void OnCollisionEnd(Entity *aOther) override;
 
     // set the checkpoint
     void SetCheckpoint(glm::vec3 checkpoint) { mLastCheckpoint = checkpoint; Save();}
 
-
+    void Die();
     // reset the character to the last checkpoint
     void Reset() {
         mSampleJoltCharacter->SetCharacterPosition(RVec3(mLastCheckpoint.x,
                                                 mLastCheckpoint.y,
                                                 mLastCheckpoint.z));
+        mDeathState = DeathState::eLiving;
     }
 
     [[nodiscard]] glm::vec3 GetCharacterPositionOffset() const { return mCharacterPositionOffset; }
@@ -104,6 +111,10 @@ class CharacterEntity : public Entity {
     float mDeathVisibleTimer = 0.0f;
     float mFinishVisibleTimer = 0.0f;
 
+    DeathState mDeathState = DeathState::eLiving;
+    double mDeathTimer = 0.0;
+    const double mDeathTime = 1.0;
+
     gui::DeathCounterData mGuiDeathCounterData{};
     gui::DeathPopupData mGuiDeathPopupData{};
     gui::FinishPopupData mGuiFinishPopupData{};
@@ -117,6 +128,12 @@ class CharacterEntity : public Entity {
 
   private:
     bool m_has_save = false;
+
+    bool mInClimb = false;
+    bool mLeftClimb = false;
+    bool mEnterClimb = false;
+
+    glm::vec3 mClimbDirection = glm::vec3(0.f, 0.f, 0.f);
 };
 
 

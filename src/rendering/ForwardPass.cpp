@@ -71,23 +71,6 @@ ForwardPass::ForwardPass(Context &context, const Image &shadowMap, Image &depthP
 
     vkutil::ExecuteSingleTimeCommands(context, [&](VkCommandBuffer cmd) {
         m_SHPass->Execute(cmd);
-
-        //VkMemoryBarrier barrier{
-        //    .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER,
-        //    .pNext = nullptr,
-        //    .srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT,
-        //    .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
-        //};
-
-        //vkCmdPipelineBarrier(
-        //    cmd,
-        //    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-        //    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-        //    0,
-        //    1, &barrier,
-        //    0, nullptr, 0, nullptr
-        //);
-
     });
 
     BuildDescriptorSetLayouts();

@@ -36,8 +36,8 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 # Define flags for the Platinum build type
-set(CMAKE_CXX_FLAGS_PLATINUM "${CMAKE_CXX_FLAGS_RELEASE} -DPLATINUM" CACHE STRING "Flags for Platinum build type" FORCE)
-set(CMAKE_C_FLAGS_PLATINUM "${CMAKE_C_FLAGS_RELEASE} -DPLATINUM" CACHE STRING "Flags for Platinum build type" FORCE)
+set(CMAKE_CXX_FLAGS_PLATINUM "${CMAKE_CXX_FLAGS_RELEASE} -static-libstdc++ -DPLATINUM" CACHE STRING "Flags for Platinum build type" FORCE)
+set(CMAKE_C_FLAGS_PLATINUM "${CMAKE_C_FLAGS_RELEASE}  -DPLATINUM" CACHE STRING "Flags for Platinum build type" FORCE)
 
 # Ensure Platinum is recognized as a valid build type
 if(CMAKE_BUILD_TYPE STREQUAL "Platinum")
@@ -156,18 +156,8 @@ foreach(GLSL ${GLSL_SOURCE_FILES})
     DEPENDS ${GLSL} ${GLSL_HEADER_FILES})
   list(APPEND SPIRV_BINARY_FILES ${SPIRV})
 endforeach()
-
 add_custom_target(compile_shaders DEPENDS ${SPIRV_BINARY_FILES})
-
 add_dependencies(src compile_shaders)
-if(CMAKE_BUILD_TYPE STREQUAL "Platinum")
-    add_custom_target(copy_assets ALL
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${CMAKE_SOURCE_DIR}/assets $<TARGET_FILE_DIR:src>/assets
-            COMMENT "Copying assets directory to the output directory for Platinum build"
-    )
-    add_dependencies(src copy_assets)
-endif()
 
 # Check git submodules
 # https://cliutils.gitlab.io/modern-cmake/chapters/projects/submodule.html
@@ -185,3 +175,14 @@ if(GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
         endif()
     endif()
 endif()
+
+# Copy asset files to the binary directory in Platinum build to replicate install
+if(CMAKE_BUILD_TYPE STREQUAL "Platinum")
+    file(COPY ${CMAKE_SOURCE_DIR}/assets DESTINATION ${CMAKE_BINARY_DIR})
+endif()
+
+# Install
+include(GNUInstallDirs)
+
+install(TARGETS src)
+install(DIRECTORY assets/ DESTINATION assets)

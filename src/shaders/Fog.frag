@@ -1,4 +1,5 @@
 #version 450
+
 layout(location = 0) in vec2 uv;
 layout(location = 0) out vec4 fragColour;
 
@@ -41,7 +42,7 @@ uint cascadeIndex = 0;
 
 vec4 DepthToPosition(vec2 uv)
 {
-	float depth = texture(depthBuffer, uv).x;
+	float depth = min(0.99,texture(depthBuffer, uv).x);
 	vec4 clipSpace = vec4(uv * 2.0 - 1.0, depth, 1.0);
 	vec4 viewSpace = ubo.inverseProjection * clipSpace;
 	viewSpace.xyz /= viewSpace.w;
@@ -59,7 +60,6 @@ float isShadow(vec3 WorldPos)
     vec4 sampleCoord = vec4(fragPositionInLightSpace.xy, float(cascadeIndex), fragPositionInLightSpace.z);
     float shadow = texture(shadowMap, sampleCoord);
 
-
     return currentDepth > shadow + 0.001 ? 1.0 : 0.0;
 }
 
@@ -71,7 +71,7 @@ vec3 random_pcg3d(uvec3 v) {
   return vec3(v) * (1.0/float(0xffffffffu));
 }
 
-vec3 VolFog()
+vec4 VolFog()
 {
     vec4 WorldPos = ubo.inverseView * vec4(DepthToPosition(uv).xyz, 1.0);
     vec3 viewDir =  WorldPos.xyz - ubo.cameraPosition.xyz;
@@ -87,16 +87,18 @@ vec3 VolFog()
     vec3 LightColour = vec3(0.6, 0.75, 1.0); //  This is a sky like colour
     while(distTravelled < maxDistance)
     {
-        // vec3 currentPos = ubo.cameraPosition.xyz + RayDir * distTravelled;
-        // float visbility = isShadow(currentPos);
-        finalColour += LightColour * 1.0 * density * fog.StepSize /* * visbility */; // Removing visiblitiy for now since there is a issue with the camera causing flickering. Not sure why.
+        vec3 currentPos = ubo.cameraPosition.xyz + RayDir * distTravelled;
+        float visbility = isShadow(currentPos);
+        finalColour += LightColour * 1.0 * density * fog.StepSize * visbility;
         transmittance *= exp(-density * fog.StepSize);
         distTravelled += fog.StepSize;
     }
 
     vec4 sceneColour = texture(renderedScene, uv);
     transmittance = clamp(transmittance, 0.0, 1.0);
-    return mix(sceneColour.rgb, finalColour, 1.0 - transmittance);
+    // return mix(sceneColour.rgb, finalColour, 1.0 - transmittance);
+
+    return vec4(finalColour, 1.0 - transmittance);
 }
 
 void main()
@@ -107,7 +109,7 @@ void main()
         cascadeIndex = viewPos.z < csmMatrices.cascadeSplits[i] ? cascadeIndex = i + 1: cascadeIndex;
     }
 
-   fragColour = vec4(VolFog(), 1.0);
+   fragColour = vec4(VolFog());
 //   switch(cascadeIndex) {
 //		case 0 :
 //			fragColour.rgb *= vec3(1.0f, 0.25f, 0.25f);

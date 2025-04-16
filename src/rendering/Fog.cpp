@@ -228,8 +228,8 @@ void Fog::CreateFramebuffer() {
 void Fog::CreatePipeline() {
 
     auto pipelineResult = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::NONE, 0)
-            .AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "fs_tri.vert.spv", ShaderType::VERTEX)
-            .AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "Fog.frag.spv", ShaderType::FRAGMENT)
+            .AddShader(assetsPath / "shaders" / "fs_tri.vert.spv", ShaderType::VERTEX)
+            .AddShader(assetsPath / "shaders" / "Fog.frag.spv", ShaderType::FRAGMENT)
             .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
             .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}})
             .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE)

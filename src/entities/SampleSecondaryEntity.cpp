@@ -79,7 +79,7 @@ void SampleSecondaryEntity::ProcessInput(){
         // Check actions
         jump = IsKeyPressed(KEY::eRIGHT_SHIFT);
     }
-    mSampleJoltCharacter->ProcessInput(controlInput, jump);
+    mSampleJoltCharacter->ProcessInput(controlInput, jump, false);
 }
 
 SampleSecondaryEntity::SampleSecondaryEntity() {

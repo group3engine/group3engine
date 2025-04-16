@@ -4,6 +4,7 @@
 #endif
 
 #include "uniforms.glsl"
+#include "Common.glsl"
 
 layout(location = 0) in vec4 WorldPos;
 layout(location = 1) in vec2 uv;
@@ -110,17 +111,6 @@ SHCoefficients grace = SHCoefficients(
     sh.shCoefficients[8]
 );
 
-// SH Basis Functions
-float SH00() { return 0.282095; }
-float SH1m1(vec3 v) { return 0.488603 * v.y; }
-float SH10(vec3 v) { return 0.488603 * v.z; }
-float SH11(vec3 v) { return 0.488603 * v.x; }
-float SH2m2(vec3 v) { return 1.092548 * v.x * v.y; }
-float SH2m1(vec3 v) { return 1.092548 * v.y * v.z; }
-float SH20(vec3 v) { return 0.315392 * (3.0 * v.z * v.z - 1.0); }
-float SH21(vec3 v) { return 1.092548 * v.x * v.z; }
-float SH22(vec3 v) { return 0.546274 * (v.x * v.x - v.y * v.y); }
-
 vec3 evaluateSH(vec3 normal) {
     vec3 result = vec3(0.0);
     result += sh.shCoefficients[0] * SH00();
@@ -194,8 +184,84 @@ vec3 CookTorranceBRDF(vec3 normal, vec3 halfVector, vec3 viewDir, vec3 lightDir,
 	float denominator = (4 * NdotV * NdotL) + 0.001;
 
 	vec3 specular = numerator / denominator;
+    specular = specular * LightColour.xyz * NdotL;
 
-    vec3 outLight = (L_Diffuse + specular) * LightColour.xyz * NdotL;
+    // band it to 0, 0.25, 0.5, 0.75, 1.0
+    float specularLength = length(specular);
+    vec3 specularColour = normalize(specular);
+    float specularRed = specularColour.r / 2;
+    float specularGreen = specularColour.g / 2;
+    float specularBlue = specularColour.b / 2;
+    float newRed = 0.0;
+    float newGreen = 0.0;
+    float newBlue = 0.0;
+    if(specularRed < 0.05)
+    {
+        newRed = 0.0;
+    }
+    else if(specularRed < 0.25)
+    {
+        newRed = 0.1;
+    }
+    else if(specularRed < 0.6)
+    {
+        newRed = 0.3;
+    }
+    else if(specularRed < 0.8)
+    {
+        newRed = 0.5;
+    }
+    else if (specularRed > 0.8)
+    {
+        newRed = 1.0;
+    }
+
+    if(specularGreen < 0.05)
+    {
+        newGreen = 0.0;
+    }
+    else if(specularGreen < 0.25)
+    {
+        newGreen = 0.1;
+    }
+    else if(specularGreen < 0.6)
+    {
+        newGreen = 0.3;
+    }
+    else if(specularGreen < 0.8)
+    {
+        newGreen = 0.5;
+    }
+    else if (specularGreen > 0.8)
+    {
+        newGreen = 1.0;
+    }
+
+    if(specularBlue < 0.05)
+    {
+        newBlue = 0.0;
+    }
+    else if(specularBlue < 0.25)
+    {
+        newBlue = 0.1;
+    }
+    else if(specularBlue < 0.6)
+    {
+        newBlue = 0.3;
+    }
+    else if(specularBlue < 0.8)
+    {
+        newBlue = 0.5;
+    }
+    else if (specularBlue > 0.8)
+    {
+        newBlue = 1.0;
+    }
+
+    vec3 specularFinal = vec3(newRed, newGreen, newBlue);
+
+    vec3 outLight = (L_Diffuse) * LightColour.xyz * NdotL;
+    outLight += specularFinal;
 
     return vec3(outLight);
 }
@@ -281,8 +347,11 @@ float myPCF(vec3 WorldPos)
             samples++;
 		}
 	}
+    float shadowValue = sum / float(samples);
+    // band the shadow map by threshold 0.5
+    float shadow = step(0.5, shadowValue);
 
-	return sum / float(samples);
+    return shadow;
 }
 
 void main()
