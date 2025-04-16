@@ -431,6 +431,7 @@ void Context::CreateLogicalDevice() {
     features.samplerAnisotropy = VK_TRUE;
     features.geometryShader = VK_TRUE;
     features.fragmentStoresAndAtomics = VK_TRUE;
+    features.fillModeNonSolid = VK_TRUE;
 
     VkPhysicalDeviceScalarBlockLayoutFeaturesEXT scalarBlockFeatures{
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES_EXT,

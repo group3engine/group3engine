@@ -115,7 +115,10 @@ class Entity {
     [[nodiscard]] Animator &GetAnimator(){return *mAnimator;}
 
     /// Get a reference to the rigidbody
-    [[nodiscard]] RigidBody &GetRigidBody(){ return *mRigidBody; }
+    [[nodiscard]] RigidBody &GetRigidBody(){
+      assert(mRigidBody != nullptr);
+      return *mRigidBody;
+    }
 
 
     /// Add a tag to the entity. Tags are also added from the GLTF file.
@@ -169,7 +172,8 @@ class Entity {
     /// called for each entity after update has been called on all entities
     virtual void LateUpdate(double deltaTime) {}
 
-
+    /// called after the entire scene has been loaded, once only
+    virtual void InitPhysics();
 
     /// called after the entire scene has been loaded, once only
     virtual void Awake() {}
@@ -206,9 +210,8 @@ class Entity {
         mHasMesh = true;
     }
 
-    void AddRigidBody(std::unique_ptr<RigidBody> rigidBody) {
-        mRigidBody = std::move(rigidBody);
-        PhysicsManager::get().RegisterEntity(this, mRigidBody->mBodyId);
+    void AddRigidBody(JPH::BodyCreationSettings bodyCreationSettings) {
+        mRigidBody = std::make_unique<RigidBody>(bodyCreationSettings);
         mHasRigidBody = true;
     }
 
@@ -255,7 +258,7 @@ class Entity {
 
     std::vector<Entity *> mChildren;
 
-    std::unique_ptr<RigidBody> mRigidBody;
+    std::unique_ptr<RigidBody> mRigidBody = nullptr;
 
     vector<std::string> mTags;
 
