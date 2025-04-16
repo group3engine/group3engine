@@ -239,6 +239,9 @@ void Engine::Run() {
         {
             ChangeSceneFR(mPendingScenePath, mPendingScenePlayerCount);
             m_sceneNeedsChanging = false;
+            // reset the last frame time to avoid a large delta time
+            m_lastFrameTime = glfwGetTime();
+            m_timeScale = 1.f;
         }
 
         FrameMark;
