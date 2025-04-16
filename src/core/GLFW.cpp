@@ -24,6 +24,7 @@
 **********************************************************************************************/
 
 #include "GLFW.hpp"
+#include "controllers.h"
 
 #include <cstdlib>
 
@@ -114,6 +115,8 @@ static void PollGamepadJoysticks()
 void Platform::StartUp(int windowWidth, int windowHeight) {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+    glfwUpdateGamepadMappings(controllerDB.c_str());
 
     GLFWmonitor *monitor = glfwGetPrimaryMonitor();
 

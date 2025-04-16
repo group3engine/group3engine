@@ -8,6 +8,7 @@ layout(set = 0, binding = 0) uniform sampler2D renderedScene;
 layout(set = 0, binding = 1) uniform sampler2D bloomPass;
 layout(set = 0, binding = 2) uniform sampler2D SSAO;
 layout(set = 0, binding = 3) uniform sampler2D SSR;
+layout(set = 0, binding = 4) uniform sampler2D Fog;
 
 float SpatialDenoisedSSAO()
 {
@@ -103,18 +104,29 @@ vec3 SD(sampler2D inputImage)
     return vec3(result / 16.0);
 }
 
+vec3 ACESFilm(vec3 x){
+    return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0);
+}
+
+
 void main()
 {
 	vec4 lighting = texture(renderedScene, uv);
 	vec4 bloom = texture(bloomPass, uv);
 	vec3 ssao = SD(SSAO);
     vec3 ssr = texture(SSR, uv).rgb;
+    vec4 FoggedScene = texture(Fog, uv);
 
-	vec3 hdrColor = vec3(lighting.rgb) * ssao;
+    // The fog is now composed with the final lighting
+    vec3 compositeFog = mix(lighting.rgb, FoggedScene.rgb, FoggedScene.a).rgb;
+
+    // FoggedScene is now just "lighting".
+    // With fog = 0, its just the scene.
+	vec3 hdrColor = vec3(compositeFog + ssr) * ssao;
     hdrColor = hdrColor + bloom.rgb;
 	//vec3 ldrColor = hdrColor / (hdrColor + vec3(1.0));
 
-    vec3 ldrColor = ACESToneMappingFilm(hdrColor);
+    vec3 ldrColor = ACESFilm(hdrColor);
 	vec3 result = ldrColor;
 	vec3 gammaCorrectedColor = pow(result, vec3(1.0 / 2.2));
 

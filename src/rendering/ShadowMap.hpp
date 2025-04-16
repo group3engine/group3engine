@@ -18,7 +18,7 @@ class ShadowMap {
     void Execute(VkCommandBuffer cmd);
     void Update();
 
-    Image &GetRenderTarget() { return m_ShadowMap; }
+    const Image &GetRenderTarget() const { return m_ShadowMap; }
     static constexpr uint8_t NUM_SHADOW_CASCADES = 4;
 
     struct Cascade
