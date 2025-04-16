@@ -1,0 +1,39 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run build script
+        run: |
+          cmake -DCMAKE_BUILD_TYPE=Platinum -S . -B build && cmake --build build -j && cmake --install build --prefix install
+
+      - name: Zip build folder
+        run: Compress-Archive -Path build -DestinationPath build.zip
+
+      - name: Get current datetime
+        id: current_datetime
+        run: echo "datetime=$(date +'%Y-%m-%d-%H-%M-%S')" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "release-${{ steps.current_datetime.outputs.datetime }}"
+          prerelease: true
+          title: "AUTO RELEASE: ${{ steps.current_datetime.outputs.datetime }}"
+          files: |
+            plugin.zip
+            build.zip
