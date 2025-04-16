@@ -13,7 +13,7 @@
 
 #include "RenderPassCommon.hpp"
 
-ForwardPass::ForwardPass(Context &context, Image &shadowMap, Image &depthPrepass, Scene *scene, const ShadowMap* shadowMapRenderPass)
+ForwardPass::ForwardPass(Context &context, const Image &shadowMap, Image &depthPrepass, Scene *scene, const ShadowMap* shadowMapRenderPass)
     :
       context{context},
       shadowMap{shadowMap},
@@ -63,18 +63,30 @@ ForwardPass::ForwardPass(Context &context, Image &shadowMap, Image &depthPrepass
         VK_IMAGE_ASPECT_COLOR_BIT,
         1);
 
+
+
+    CreateRenderPass();
+    m_Skybox = std::make_unique<Skybox>(context, scene, m_renderPass);
+    m_SHPass = std::make_unique<SH>(context, scene, m_Skybox->GetSkyBoxImage());
+
+    vkutil::ExecuteSingleTimeCommands(context, [&](VkCommandBuffer cmd) {
+        m_SHPass->Execute(cmd);
+    });
+
     BuildDescriptorSetLayouts();
     BuildDescriptors();
-    CreateRenderPass();
+
     CreateFramebuffer();
     CreatePipeline();
 
-    m_Skybox = std::make_unique<Skybox>(context, scene, m_renderPass);
+
+
 }
 
 ForwardPass::~ForwardPass() {
 
     m_Skybox.reset();
+    m_SHPass.reset();
     m_RenderTarget.Destroy(context.device);
     //m_DepthTarget.Destroy(context.device);
     m_NormalRoughness.Destroy(context.device);
@@ -385,7 +397,8 @@ void ForwardPass::BuildDescriptorSetLayouts() {
         vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT), // CameraUBO (projection, view etc..)
         vkutil::CreateDescriptorBinding(1, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT),                              // Light UBO
         vkutil::CreateDescriptorBinding(2, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
-        vkutil::CreateDescriptorBinding(3, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT)
+        vkutil::CreateDescriptorBinding(3, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT),
+        vkutil::CreateDescriptorBinding(4, 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT)
 
     };
 
@@ -443,6 +456,14 @@ void ForwardPass::BuildDescriptors() {
             bufferInfo.offset = 0;
             bufferInfo.range = sizeof(vkutil::CascadeMatrices);
             vkutil::UpdateDescriptorSet(context, 3, bufferInfo, descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+        }
+
+        for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+            VkDescriptorBufferInfo bufferInfo{};
+            bufferInfo.buffer = m_SHPass->GetSHBuffer().buffer;
+            bufferInfo.offset = 0;
+            bufferInfo.range = sizeof(vkutil::SHCoefficients);
+            vkutil::UpdateDescriptorSet(context, 4, bufferInfo, descriptorSets[i], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
         }
     }
 }

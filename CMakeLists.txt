@@ -131,7 +131,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   target_compile_options(src PRIVATE /GR- /permissive- /W4 /w14640)
 endif()
 
-file(GLOB_RECURSE GLSL_SOURCE_FILES "${CMAKE_SOURCE_DIR}/src/shaders/*.vert" "${CMAKE_SOURCE_DIR}/src/shaders/*.frag")
+file(GLOB_RECURSE GLSL_SOURCE_FILES "${CMAKE_SOURCE_DIR}/src/shaders/*.vert" "${CMAKE_SOURCE_DIR}/src/shaders/*.frag" "${CMAKE_SOURCE_DIR}/src/shaders/*.comp")
 file(GLOB_RECURSE GLSL_HEADER_FILES "${CMAKE_SOURCE_DIR}/src/shaders/*.glsl")
 
 if(APPLE)
