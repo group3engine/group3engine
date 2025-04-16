@@ -192,18 +192,8 @@ enum class GAMEPAD_BUTTON {
 // NOTE: Manually doing per platform cases instead of looking at
 // gamepad mappings that GLFW provides
 // https://www.glfw.org/docs/latest/input_guide.html#gamepad_mapping
-#ifndef WIN32
 enum class GAMEPAD_AXIS
-{
-    eLEFT_X             = 0,    // Left stick X axis
-    eLEFT_Y             = 1,    // Left stick Y axis
-    eLEFT_TRIGGER       = 2,    // Left trigger
-    eRIGHT_X            = 3,    // Right stick X axis
-    eRIGHT_Y            = 4,    // Right stick Y axis
-    eRIGHT_TRIGGER      = 5,    // Right trigger
-    eLAST               = 6
-};
-#else
+
 {
     eLEFT_X             = 0,    // Left stick X axis
     eLEFT_Y             = 1,    // Left stick Y axis
@@ -213,7 +203,6 @@ enum class GAMEPAD_AXIS
     eRIGHT_TRIGGER      = 5,    // Right trigger
     eLAST               = 6
 };
-#endif
 struct InputData {
     struct {
         std::array<uint8_t, static_cast<uint16_t>(KEY::eLAST)> currentKeyState{};
