@@ -1,6 +1,7 @@
 #ifndef SCENE_ENTITY_HPP
 #define SCENE_ENTITY_HPP
 
+#include <string>
 #include <utility>
 
 #include <glm/glm.hpp>
@@ -14,11 +15,16 @@
 
 #include <atomic>
 
+class Scene;
+
 enum class PhysicsType {
     STATIC,
     KINEMATIC,
     DYNAMIC
 };
+#define MIN_ANIMATOR_UPDATE_DISTANCE 50.f
+#define MAX_ANIMATOR_UPDATE_DISTANCE 500.f
+#define LOWEST_ANIMATOR_UPDATE_RATE 1000.f
 
 /// The base class for all entities in the scene. Custom entities all have this as their base class
 class Entity {
@@ -97,7 +103,7 @@ class Entity {
     [[nodiscard]] Transform GetWorldTransformComponents() const;
 
     /// Get the #Mesh of the entity
-    [[nodiscard]] const Mesh *GetMesh() const { return mMesh; }
+    [[nodiscard]] Mesh *GetMesh() const { return mMesh; }
 
     /// Query if this entity is a character
     [[nodiscard]] bool IsCharacter() const;
@@ -140,22 +146,39 @@ class Entity {
     /// Get the total time that has passed since the entity was created
     [[nodiscard]] double GetTotalTime() const {return mTotalTime;}
 
+    /// Compares the entity's type with the provided string
+    [[nodiscard]] bool CompareType(std::string const& aCompareType) {return aCompareType == mType;}
+
   public:
     // the following functions are overridable by the user
-    // called on the first frame of a collision
+    /// called on the first frame of a collision
     virtual void OnCollisionStart(Entity *aOther) {}
 
-    // called on any frame except the first frame of a collision - note there is no function provided for the last frame of a collision
+    /// called on any frame except the first frame of a collision - note there is no function provided for the last frame of a collision
     virtual void OnCollisionStay(Entity *aOther) {}
 
-    // called for each entity after update has been called on all entities
+    /// called after the last frame of a collision
+    virtual void OnCollisionEnd(Entity *aOther)
+    {
+        SPDLOG_INFO("I am {} and I am no longer colliding with {}", GetName(), aOther->GetName());
+    }
+
+    /// called for each entity just before update has been called per entity
+    virtual void PreUpdate(double deltaTime) {}
+
+    /// called for each entity after update has been called on all entities
     virtual void LateUpdate(double deltaTime) {}
 
-    // called after the entire scene has been loaded, once only
+
+
+    /// called after the entire scene has been loaded, once only
     virtual void Awake() {}
 
     /// called every frame, after physics has been updated
     virtual void Update(double deltaTime) {}
+
+    /// called every frame even if timescale is set to 0, deltaTime is not multiplied by timescale
+    virtual void UnscaledUpdate(double deltaTime){}
 
     virtual void UpdateUi(double deltaTime) {}
 
@@ -165,17 +188,18 @@ class Entity {
 
     void RecordDrawOpaque(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout) const;
 
-    void RecordDrawShadow(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout) const;
+    void RecordDrawShadow(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout, uint32_t caseCadeIndex) const;
 
     void RecordDrawCutout(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout) const;
 
-    void RecordDrawSkinned(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipeLayout) const;
+    void RecordDrawSkinned(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipeLayout, uint32_t caseCadeIndex) const;
     // move an animator to the entity
     void SetAnimator(Animator *aAnimator);
 
     void AddChild(Entity *aChild) { mChildren.push_back(aChild); }
 
     void SetAsCharacter() {mHasCharacter = true;}
+    void SetHasOffset() {mHasOffset = true;}
 
     void AddMesh(Mesh *mesh) {
         mMesh = mesh;
@@ -197,6 +221,11 @@ class Entity {
     // set the parent transform
     void SetParentTransform(glm::mat4 aParentTransform);
 
+    // TODO: Make friend class with Scene
+    void SetScene(Scene *scene) { mScene = scene; }
+
+  protected:
+    Scene *GetScene() const { return mScene; }
 
   private:
     void SetPhysicsTransform();
@@ -207,8 +236,11 @@ class Entity {
 
   protected:
     glm::vec3 mCharacterPositionOffset{};
+
+    /// the Type of entity this is, overwrite in inherited classes
+    std::string mType = "default";
   private:
-    
+
     std::string mName{};
 
     Entity *mParent = nullptr;
@@ -232,6 +264,7 @@ class Entity {
 
     bool mHasMesh = false;
     bool mHasCharacter = false;
+    bool mHasOffset = false;
 
     Animator *mAnimator = nullptr;
     size_t mFrameNumber = 0;
@@ -249,5 +282,6 @@ class Entity {
 
     float mTotalTime = 0.0f;
 
+    Scene *mScene = nullptr;
 };
 #endif // SCENE_ENTITY_HPP

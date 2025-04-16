@@ -73,13 +73,16 @@ void SampleJoltCharacter::PrePhysicsUpdate(const PreUpdateParams &inParams)
 #endif
 }
 
-void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime)
+void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime, bool inClimb)
 {
+
+    float inMovementY = inMovementDirection.GetY();
 	bool player_controls_horizontal_velocity = (sControlMovementDuringJump || mCharacter->IsSupported()) && !mIsRagdolling;
 	if (player_controls_horizontal_velocity)
 	{
 		// Smooth the player input
 		mDesiredVelocity = sEnableCharacterInertia? 0.25f * inMovementDirection * sCharacterSpeed + 0.75f * mDesiredVelocity : inMovementDirection * sCharacterSpeed;
+        mDesiredVelocity.SetY(0); // We don't want to move up/down when moving sideways
 
 		// True if the player intended to move
 		mAllowSliding = !inMovementDirection.IsNearZero();
@@ -113,7 +116,7 @@ void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, 
 		new_velocity = ground_velocity;
 
 		// Jump
-		if (inJump && moving_towards_ground) {
+  		if (inJump && moving_towards_ground) {
                     new_velocity += sJumpSpeed * mCharacter->GetUp();
                         mJumpState = EJumpState::Start;
                 }
@@ -129,7 +132,14 @@ void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, 
             new_velocity = current_vertical_velocity;
             if(new_velocity.GetY() > 0.2f)
             {
-                mJumpState = EJumpState::Falling;
+                if(mJumpState == EJumpState::None)
+                {
+                    mJumpState = EJumpState::Start;
+                }
+                else
+                {
+                    mJumpState = EJumpState::Falling;
+                }
             }
         }
 
@@ -148,8 +158,28 @@ void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, 
 		new_velocity += current_horizontal_velocity;
 	}
 
-	// Update character velocity
-	mCharacter->SetLinearVelocity(new_velocity);
+    // Add additional impulse
+    if (mHasAdditionalImpulse)
+    {
+        new_velocity += mAdditionalImpulse;
+        mHasAdditionalImpulse = false;
+    }
+    mAdditionalImpulse = Vec3::sZero();
+
+
+    // if we are in climb, set the upward velocity to the magnitude of the movement direction
+    if(inClimb)
+    {
+        new_velocity.SetY(inMovementY);
+    }
+    if(!mManualVelocityMode)
+    {
+        // Update character velocity
+        mCharacter->SetLinearVelocity(new_velocity);
+    }
+
+
+
 }
 
 void SampleJoltCharacter::OnContactCommon(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings)
@@ -225,6 +255,15 @@ void SampleJoltCharacter::OnContactPersisted(const CharacterVirtual *inCharacter
 		if (std::find(mActiveContacts.begin(), mActiveContacts.end(), CharacterVirtual::ContactKey(inBodyID2, inSubShapeID2)) == mActiveContacts.end()) {
 			SPDLOG_ERROR("Got a persisted contact that should have been an add contact");
 		}
+
+        // handle the contact
+        if(mCustomContactListener->GetMap().find(inBodyID2) != mCustomContactListener->GetMap().end()) {
+            mCustomContactListener->GetMap()[inBodyID2]->OnCollisionStay(mCustomContactListener->GetMap()[inCharacter->GetInnerBodyID()]);
+        }
+
+        if(mCustomContactListener->GetMap().find(inCharacter->GetInnerBodyID()) != mCustomContactListener->GetMap().end()) {
+            mCustomContactListener->GetMap()[inCharacter->GetInnerBodyID()]->OnCollisionStay(mCustomContactListener->GetMap()[inBodyID2]);
+        }
 	}
 }
 
@@ -240,6 +279,14 @@ void SampleJoltCharacter::OnContactRemoved(const CharacterVirtual *inCharacter, 
 			SPDLOG_ERROR("Got a remove contact that has not been added");
 		}
 		mActiveContacts.erase(it);
+
+        // handle the contact
+        if(mCustomContactListener->GetMap().find(inBodyID2) != mCustomContactListener->GetMap().end()) {
+            mCustomContactListener->GetMap()[inBodyID2]->OnCollisionEnd(mCustomContactListener->GetMap()[inCharacter->GetInnerBodyID()]);
+        }
+        if(mCustomContactListener->GetMap().find(inCharacter->GetInnerBodyID()) != mCustomContactListener->GetMap().end()) {
+            mCustomContactListener->GetMap()[inCharacter->GetInnerBodyID()]->OnCollisionEnd(mCustomContactListener->GetMap()[inBodyID2]);
+        }
 	}
 
 }

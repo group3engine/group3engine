@@ -41,8 +41,18 @@ public:
 	// Get position of the character
 	virtual RVec3			GetCharacterPosition() const override				{ return mCharacter->GetPosition(); }
 
-        // Get velocity of the character (used for animation, don't include ground velocity)
-        virtual Vec3			GetCharacterVelocity() const				{ return mCharacter->GetLinearVelocity() - mCharacter->GetGroundVelocity(); }
+    // Get velocity of the character (used for animation, don't include ground velocity)
+    virtual Vec3			GetCharacterVelocity() const				{ return mCharacter->GetLinearVelocity() - mCharacter->GetGroundVelocity(); }
+    // return if the character is grounded
+    bool IsGrounded() const { return mCharacter->GetGroundState() == CharacterVirtual::EGroundState::OnGround; }
+    // add an impulse to the character
+    void AddImpulse(Vec3Arg impulse) { mAdditionalImpulse += impulse; mHasAdditionalImpulse = true; }
+
+    // Set the character velocity
+    void SetCharacterVelocity(Vec3Arg velocity) { mCharacter->SetLinearVelocity(velocity); }
+
+    // set to manual velocity mode
+    void SetManualVelocityMode(bool manual) { mManualVelocityMode = manual; }
 
         // Set an impulse to the character
         void SetCharacterImpulse(Vec3 impulse);
@@ -68,7 +78,7 @@ protected:
 	void					OnContactCommon(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings);
 
 	// Handle user input to the character
-	virtual void			HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime) override;
+	virtual void			HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime, bool inClimb) override;
 
 private:
 	// Character movement settings
@@ -93,6 +103,10 @@ private:
 	// Smoothed value of the player input
 	Vec3					mDesiredVelocity = Vec3::sZero();
 
+    // desired additional impulse
+    Vec3               mAdditionalImpulse = Vec3::sZero();
+    bool mHasAdditionalImpulse = false;
+
 	// True when the player is pressing movement controls
 	bool					mAllowSliding = false;
 
@@ -107,6 +121,10 @@ private:
 
         // current jump state
         EJumpState              mJumpState = EJumpState::None;
+        // if we are in manual velocity mode
+        bool                    mManualVelocityMode = false;
+
+
 
 
 };

@@ -44,6 +44,7 @@ const int ten_megabytes = 10 * 1024 * 1024;
 
 
 
+/// The PhysicsManager class is a singleton that manages the physics system and the bodies in it.
 class PhysicsManager {
   private:
     PhysicsManager() = default;
@@ -53,6 +54,7 @@ class PhysicsManager {
     PhysicsManager(const PhysicsManager &) = delete;
     PhysicsManager &operator=(const PhysicsManager &) = delete;
 
+    /// Get the singleton instance of the PhysicsManager
     static PhysicsManager &get() {
         static PhysicsManager instance;
         return instance;
@@ -64,13 +66,13 @@ class PhysicsManager {
     void StartUp();
     void ShutDown();
 
-    // registers a entity as a rigid bodies owner
+    /// registers a entity as a rigid bodies owner
     void RegisterEntity(Entity *entity, BodyID bodyId);
 
-    // Unregister a body from a body-entity mapping
+    /// Unregister a body from a body-entity mapping
     void UnregisterBody(BodyID bodyId);
 
-    // Remove and destroy body from the physics system
+    /// Remove and destroy body from the physics system
     void RemoveAndDestroyBody(BodyID bodyId);
 
   public:

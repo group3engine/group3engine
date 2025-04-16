@@ -18,20 +18,21 @@
 #ifdef JPH_DEBUG_RENDERER
 // #include <Jolt/Renderer/DebugRenderer.h>
 #include <Jolt/Renderer/DebugRendererSimple.h>
-#endif // JPH_DEBUG_RENDERER
 
 #include <volk.h>
 
 #include "Buffer.hpp"
+#include "Config.hpp"
 #include "GLTFImportStructs.hpp"
 
 class Renderer;
+class Scene;
 
-class DebugRendererImp final : public JPH::DebugRendererSimple {
+class DebugRendererImp final : public JPH::DebugRendererSimple{
   public:
     JPH_OVERRIDE_NEW_DELETE
 
-    DebugRendererImp(Renderer *renderer);
+    DebugRendererImp(Renderer *renderer, Scene *scene);
 
     void Destroy();
 
@@ -51,13 +52,14 @@ class DebugRendererImp final : public JPH::DebugRendererSimple {
 
   private:
     Renderer *mRenderer = nullptr;
+    Scene *mScene = nullptr;
 
     VkDescriptorSetLayout mUboLayout = VK_NULL_HANDLE;
 
     std::pair<VkPipeline, VkPipelineLayout> mLinePipeline = {nullptr, nullptr};
 
     std::vector<Buffer> mVertexBuffers;
-    std::vector<VkDescriptorSet> mDescriptorSets;
+    std::array<std::vector<VkDescriptorSet>, GlobalConfig::maxPlayers> mDescriptorSets;
 
     /// A single line segment
     struct Line {
@@ -75,4 +77,6 @@ class DebugRendererImp final : public JPH::DebugRendererSimple {
     JPH::Array<WPT::Vertex>            mVertices;
     JPH::Mutex                         mVerticesLock;
 };
+#endif // JPH_DEBUG_RENDERER
+
 #endif // DEBUGRENDERERIMP_H

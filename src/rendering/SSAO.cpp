@@ -5,12 +5,13 @@
 #include "Context.hpp"
 #include "Pipeline.hpp"
 #include "RenderPass.hpp"
+#include "Scene.hpp"
 
 #include <array>
 #include <random>
 
-SSAO::SSAO(Context &context, Image &depthBuffer, Image& renderedScene, std::shared_ptr<Camera> camera) :
-    context{context}, depthBuffer{depthBuffer}, renderedScene{renderedScene}, camera{camera} {
+SSAO::SSAO(Context &context, Scene *scene, Image &depthBuffer, Image& normalRoughnessImage) :
+    context{context}, m_Scene{scene}, depthBuffer{depthBuffer}, normalRoughnessImage{normalRoughnessImage} {
 
     m_width = context.extent.width;
     m_height = context.extent.height;
@@ -32,9 +33,9 @@ SSAO::SSAO(Context &context, Image &depthBuffer, Image& renderedScene, std::shar
         buffer = CreateBuffer("SSAOSettingsUBO", context, sizeof(vkutil::SSAOSettings), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
     }
 
-    GenerateSSAOSamples();
     GenerateNoiseTexture(4,4);
 
+    BuildDescriptorSetLayouts();
     BuildDescriptors();
     CreateRenderPass();
     CreateFramebuffer();
@@ -49,10 +50,10 @@ SSAO::~SSAO()
     }
     m_RenderTarget.Destroy(context.device);
     m_NoiseTexture.Destroy(context.device);
-    m_SSAOSamples.Destroy();
     vkDestroyPipeline(context.device, m_Pipeline, nullptr);
     vkDestroyPipelineLayout(context.device, m_PipelineLayout, nullptr);
-    vkDestroyDescriptorSetLayout(context.device, m_DescriptorSetLayout, nullptr);
+    vkDestroyDescriptorSetLayout(context.device, mPlayerDescriptorSetLayout, nullptr);
+    vkDestroyDescriptorSetLayout(context.device, mDescriptorSetLayout, nullptr);
     vkDestroyFramebuffer(context.device, m_Framebuffer, nullptr);
     vkDestroyRenderPass(context.device, m_RenderPass, nullptr);
 }
@@ -80,42 +81,43 @@ void SSAO::Resize()
         1
     );
 
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
-    {
-        VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = camera->GetBuffers()[i].buffer;
-        bufferInfo.offset = 0;
-        bufferInfo.range = sizeof(CameraTransform);
-        vkutil::UpdateDescriptorSet(context, 0, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+    for (size_t playerId = 0; playerId < GlobalConfig::maxPlayers; ++playerId) {
+        auto &descriptorSets = mPlayerDescriptorSets[playerId];
+
+        for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+            VkDescriptorBufferInfo bufferInfo{};
+            bufferInfo.buffer = m_Scene->GetCameraBuffers(playerId)[i].buffer;
+            bufferInfo.offset = 0;
+            bufferInfo.range = sizeof(CameraTransform);
+            vkutil::UpdateDescriptorSet(context, 0, bufferInfo, descriptorSets[i],
+                                        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+        }
     }
 
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
-    {
-        VkDescriptorImageInfo imageInfo = {
-            .sampler = vkutil::clampToEdgeSamplerAniso,
-            .imageView = depthBuffer.imageView,
-            .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
-        };
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+        VkDescriptorImageInfo imageInfo = {.sampler = vkutil::clampToEdgeSamplerAniso,
+                                           .imageView = depthBuffer.imageView,
+                                           .imageLayout =
+                                               VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL};
 
-        vkutil::UpdateDescriptorSet(context, 1, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+        vkutil::UpdateDescriptorSet(context, 0, imageInfo, mDescriptorSets[i],
+                                    VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     }
 
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
-    {
-        VkDescriptorImageInfo imageInfo = {
-            .sampler = vkutil::clampToEdgeSamplerAniso,
-            .imageView = renderedScene.imageView,
-            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-        };
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+        VkDescriptorImageInfo imageInfo = {.sampler = vkutil::clampToEdgeSamplerAniso,
+                                           .imageView = normalRoughnessImage.imageView,
+                                           .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
 
-        vkutil::UpdateDescriptorSet(context, 3, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+        vkutil::UpdateDescriptorSet(context, 2, imageInfo, mDescriptorSets[i],
+                                    VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     }
 
     vkDestroyFramebuffer(context.device, m_Framebuffer, nullptr);
     CreateFramebuffer();
 }
 
-void SSAO::Execute(VkCommandBuffer cmd) const
+void SSAO::Execute(VkCommandBuffer cmd)
 {
     ZoneScopedN("SSAO::Execute");
     TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "SSAO", tracy::Color::Goldenrod);
@@ -137,19 +139,43 @@ void SSAO::Execute(VkCommandBuffer cmd) const
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
     renderPassInfo.pClearValues = clearValues.data();
 
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = context.extent.width;
+    viewport.height = context.extent.height;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+    vkCmdSetViewport(cmd, 0, 1, &viewport);
+
+    VkRect2D scissor{};
+    scissor.offset = {0, 0};
+    scissor.extent = {context.extent.width, context.extent.height};
+    vkCmdSetScissor(cmd, 0, 1, &scissor);
+
     vkCmdBeginRenderPass(cmd, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
+    // TODO: Can move more stuff out of these loops
+    size_t playerCount = m_Scene->GetActivePlayerCount();
+    for (size_t playerId = 0; playerId < playerCount; ++playerId) {
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
 
-    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, m_descriptorSets.data(), 0, nullptr);
+        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1,
+                                &mPlayerDescriptorSets[playerId][vkutil::currentFrame], 0, nullptr);
 
-    vkCmdDraw(cmd, 3, 1, 0, 0);
+        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 1, 1,
+                                &mDescriptorSets[vkutil::currentFrame], 0, nullptr);
+
+        vkCmdDraw(cmd, 3, 1, 0, 0);
+    }
 
     vkCmdEndRenderPass(cmd);
 
 #ifdef _DEBUG
     vkutil::EndRenderPassLabel(cmd);
 #endif // !DEBUG
+
+    // ++mPlayerId;
 }
 
 void SSAO::CreateFramebuffer()
@@ -172,12 +198,12 @@ void SSAO::CreateFramebuffer()
 void SSAO::CreatePipeline()
 {
     auto pipelineResult = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::NONE, 0)
-    .AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "fs_tri.vert.spv", ShaderType::VERTEX)
-    .AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "SSAO.frag.spv", ShaderType::FRAGMENT)
+    .AddShader(assetsPath / "shaders/" / "fs_tri.vert.spv", ShaderType::VERTEX)
+    .AddShader(assetsPath / "shaders/" / "SSAO.frag.spv", ShaderType::FRAGMENT)
     .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
     .SetDynamicState({ {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR} })
     .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE)
-    .SetPipelineLayout({ {m_DescriptorSetLayout} })
+    .SetPipelineLayout({ {mPlayerDescriptorSetLayout, mDescriptorSetLayout} })
     .SetSampling(VK_SAMPLE_COUNT_1_BIT)
     .AddBlendAttachmentState()
     .SetDepthState(VK_FALSE, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL)
@@ -207,127 +233,96 @@ void SSAO::CreateRenderPass()
     context.SetObjectName(context.device, (uint64_t)m_RenderPass, VK_OBJECT_TYPE_RENDER_PASS, "SSAORenderPass");
 }
 
-void SSAO::BuildDescriptors()
-{
-    m_descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+void SSAO::BuildDescriptorSetLayouts() {
+    // Build player descriptor set layout
     {
         std::vector<VkDescriptorSetLayoutBinding> bindings = {
-            vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT),
-            vkutil::CreateDescriptorBinding(1, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
-            vkutil::CreateDescriptorBinding(2, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT),
+            vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT)
+        };
+
+        mPlayerDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
+    }
+
+    // Build descriptor set layout
+    {
+        std::vector<VkDescriptorSetLayoutBinding> bindings = {
+            vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
+            vkutil::CreateDescriptorBinding(1, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT),
+            vkutil::CreateDescriptorBinding(2, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
             vkutil::CreateDescriptorBinding(3, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
-            vkutil::CreateDescriptorBinding(4, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
-            vkutil::CreateDescriptorBinding(5, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT)
+            vkutil::CreateDescriptorBinding(4, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT)
         };
 
-        m_DescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
-    }
-
-    vkutil::AllocateDescriptorSets(context, context.descriptorPool, m_DescriptorSetLayout, vkutil::MAX_FRAMES_IN_FLIGHT, m_descriptorSets);
-
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
-    {
-        VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = camera->GetBuffers()[i].buffer;
-        bufferInfo.offset = 0;
-        bufferInfo.range = sizeof(CameraTransform);
-        vkutil::UpdateDescriptorSet(context, 0, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-    }
-
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
-    {
-        VkDescriptorImageInfo imageInfo = {
-            .sampler = vkutil::clampToEdgeSamplerAniso,
-            .imageView = depthBuffer.imageView,
-            .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
-        };
-
-        vkutil::UpdateDescriptorSet(context, 1, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-    }
-
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
-    {
-        VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = m_SSAOUniform[i].buffer;
-        bufferInfo.offset = 0;
-        bufferInfo.range = sizeof(vkutil::SSAOSettings);
-        vkutil::UpdateDescriptorSet(context, 2, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-    }
-
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
-    {
-        VkDescriptorImageInfo imageInfo = {
-            .sampler = vkutil::clampToEdgeSamplerAniso,
-            .imageView = renderedScene.imageView,
-            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-        };
-
-        vkutil::UpdateDescriptorSet(context, 3, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-    }
-
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
-    {
-        VkDescriptorImageInfo imageInfo = {
-            .sampler = vkutil::repeatSamplerAniso,
-            .imageView = m_NoiseTexture.imageView,
-            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-        };
-
-        vkutil::UpdateDescriptorSet(context, 4, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-    }
-
-    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++)
-    {
-        VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = m_SSAOSamples.buffer;
-        bufferInfo.offset = 0;
-        bufferInfo.range = sizeof(SSAOSamples);
-        vkutil::UpdateDescriptorSet(context, 5, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+        mDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
     }
 }
 
-
-void SSAO::GenerateSSAOSamples()
+void SSAO::BuildDescriptors()
 {
-    std::uniform_real_distribution<float> randomFloats(0.0f, 1.0f);
-    std::default_random_engine generator;
+    // Build player descriptors
+    for (size_t playerId = 0; playerId < GlobalConfig::maxPlayers; ++playerId) {
+        auto &descriptorSets = mPlayerDescriptorSets[playerId];
 
-    for (uint32_t i = 0; i < 64; i++)
-    {
-        glm::vec3 sample(
-            randomFloats(generator) * 2.0 - 1.0f,
-            randomFloats(generator) * 2.0 - 1.0f,
-            randomFloats(generator)
-        );
+        descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+        vkutil::AllocateDescriptorSets(context, context.descriptorPool, mPlayerDescriptorSetLayout,
+                                       vkutil::MAX_FRAMES_IN_FLIGHT, descriptorSets);
 
-        sample = glm::normalize(sample);
-        sample *= randomFloats(generator);
-        float scale = float(i) / 64.0f;
-
-        scale = lerp(0.1f, 1.0f, scale * scale);
-        sample *= scale;
-        ssaoSamplesCPUtoGPU.samples[i] = sample;
+        for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+            VkDescriptorBufferInfo bufferInfo{};
+            bufferInfo.buffer = m_Scene->GetCameraBuffers(playerId)[i].buffer;
+            bufferInfo.offset = 0;
+            bufferInfo.range = sizeof(CameraTransform);
+            vkutil::UpdateDescriptorSet(context, 0, bufferInfo, descriptorSets[i],
+                                        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+        }
     }
 
-    // We have the samples, now upload to GPU
-    m_SSAOSamples = CreateBuffer("SSAOSamplesUBO", context, sizeof(SSAOSamples), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
-    m_SSAOSamples.WriteToBuffer(ssaoSamplesCPUtoGPU, sizeof(SSAOSamples));
+    // Build descriptors
+    {
+        mDescriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+        vkutil::AllocateDescriptorSets(context, context.descriptorPool, mDescriptorSetLayout,
+                                       vkutil::MAX_FRAMES_IN_FLIGHT, mDescriptorSets);
 
-     //void *mappedData;
-     //VkResult result = vmaMapMemory(context.allocator, m_SSAOSamples.allocation, &mappedData);
-     //if (result != VK_SUCCESS) {
-     //    std::cerr << "Failed to map staging buffer memory: " << result << std::endl;
-     //    return;
-     //}
+        for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+            VkDescriptorImageInfo imageInfo = {.sampler = vkutil::clampToEdgeSamplerAniso,
+                                               .imageView = depthBuffer.imageView,
+                                               .imageLayout =
+                                                   VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL};
 
-     //glm::vec3 *bufferData = static_cast<glm::vec3 *>(mappedData);
-     //std::cout << "Staging buffer contents:" << std::endl;
-     //for (uint32_t i = 0; i < 64; i++) {
-     //    std::cout << "Sample " << i << ": ("
-     //        << bufferData[i].x << ", " << bufferData[i].y << ", " << bufferData[i].z << ")" << std::endl;
-     //}
+            vkutil::UpdateDescriptorSet(context, 0, imageInfo, mDescriptorSets[i],
+                                        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+        }
 
-     //vmaUnmapMemory(context.allocator, m_SSAOSamples.allocation);
+        for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+            VkDescriptorBufferInfo bufferInfo{};
+            bufferInfo.buffer = m_SSAOUniform[i].buffer;
+            bufferInfo.offset = 0;
+            bufferInfo.range = sizeof(vkutil::SSAOSettings);
+
+            vkutil::UpdateDescriptorSet(context, 1, bufferInfo, mDescriptorSets[i],
+                                        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+        }
+
+        for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+            VkDescriptorImageInfo imageInfo = {.sampler = vkutil::clampToEdgeSamplerAniso,
+                                               .imageView = normalRoughnessImage.imageView,
+                                               .imageLayout =
+                                                   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+
+            vkutil::UpdateDescriptorSet(context, 2, imageInfo, mDescriptorSets[i],
+                                        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+        }
+
+        for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+            VkDescriptorImageInfo imageInfo = {.sampler = vkutil::repeatSamplerAniso,
+                                               .imageView = m_NoiseTexture.imageView,
+                                               .imageLayout =
+                                                   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+
+            vkutil::UpdateDescriptorSet(context, 3, imageInfo, mDescriptorSets[i],
+                                        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+        }
+    }
 }
 
 void SSAO::GenerateNoiseTexture(uint32_t width, uint32_t height) {

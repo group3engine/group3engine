@@ -36,11 +36,8 @@ class CustomContactListener : public JPH::ContactListener {
     virtual void OnContactAdded(const JPH::Body &inBody1, const JPH::Body &inBody2, const JPH::ContactManifold &inManifold, JPH::ContactSettings &ioSettings) override ;
     virtual void OnContactPersisted(const JPH::Body &inBody1, const JPH::Body &inBody2, const JPH::ContactManifold &inManifold, JPH::ContactSettings &ioSettings) override ;
 
-    virtual void OnContactRemoved([[maybe_unused]]const JPH::SubShapeIDPair &inSubShapePair) override {
-        // we can't get the bodies that were in contact from this method (idk ask jolt)
-        // so we can't call the OnCollisionEnd method of the entities
-        // so we don't do anything here
-    }
+    virtual void OnContactRemoved([[maybe_unused]]const JPH::SubShapeIDPair &inSubShapePair) override;
+    
 };
 
 #endif // GROUP3ENGINE_CUSTOMCONTACTLISTENER_HPP

@@ -71,7 +71,8 @@ using namespace std;
 namespace Layers {
 static constexpr ObjectLayer NON_MOVING = 0;
 static constexpr ObjectLayer MOVING = 1;
-static constexpr ObjectLayer NUM_LAYERS = 2;
+static constexpr ObjectLayer SENSORS = 2; // Sensors are used to detect collisions but don't generate any collision response
+static constexpr ObjectLayer NUM_LAYERS = 3;
 }; // namespace Layers
 
 // Class that determines if two object layers can collide

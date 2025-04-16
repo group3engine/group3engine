@@ -12,8 +12,9 @@
 #include <array>
 #include "Utils.hpp"
 
-Bloom::Bloom(Context &context, Image &inputImage)
+Bloom::Bloom(Context &context, Scene *scene, Image &inputImage)
     : context{context},
+      m_Scene{scene},
       inputImage{inputImage},
       m_renderPass{VK_NULL_HANDLE},
       m_HorizontalBlurFramebuffer{VK_NULL_HANDLE},
@@ -282,8 +283,8 @@ void Bloom::Update() {
 
 void Bloom::CreatePipeline() {
     auto pipelineResult = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::NONE, 0)
-                              .AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "fs_tri.vert.spv", ShaderType::VERTEX)
-                              .AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "bloom_blur_x.frag.spv", ShaderType::FRAGMENT)
+                              .AddShader(assetsPath / "shaders/" / "fs_tri.vert.spv", ShaderType::VERTEX)
+                              .AddShader(assetsPath / "shaders/" / "bloom_blur_x.frag.spv", ShaderType::FRAGMENT)
                               .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
                               .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}})
                               .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE)
@@ -298,8 +299,8 @@ void Bloom::CreatePipeline() {
     m_HorizontalBlurPipelineLayout = pipelineResult.second;
 
     auto verticalPipelineResult = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::NONE, 0)
-                                      .AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "fs_tri.vert.spv", ShaderType::VERTEX)
-                                      .AddShader(std::filesystem::path(CMAKE_SOURCE_DIR) / "assets/shaders/" / "bloom_blur_y.frag.spv", ShaderType::FRAGMENT)
+                                      .AddShader(assetsPath / "shaders/" / "fs_tri.vert.spv", ShaderType::VERTEX)
+                                      .AddShader(assetsPath / "shaders/" / "bloom_blur_y.frag.spv", ShaderType::FRAGMENT)
                                       .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
                                       .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}})
                                       .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE)

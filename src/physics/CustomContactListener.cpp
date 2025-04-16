@@ -28,3 +28,17 @@ void CustomContactListener::OnContactPersisted(const Body &inBody1, const Body &
     }
 }
 
+void CustomContactListener::OnContactRemoved(const SubShapeIDPair &inSubShapePair)
+{
+    const BodyID &inBody1 = inSubShapePair.GetBody1ID();
+    const BodyID &inBody2 = inSubShapePair.GetBody2ID();
+    // call the OnCollisionEnd method of both entities
+    if (mBodyEntityMap.find(inBody1) != mBodyEntityMap.end()) {
+        mBodyEntityMap[inBody1]->OnCollisionEnd(mBodyEntityMap[inBody2]);
+    }
+    if (mBodyEntityMap.find(inBody2) != mBodyEntityMap.end()) {
+        mBodyEntityMap[inBody2]->OnCollisionEnd(mBodyEntityMap[inBody1]);
+    }
+
+}
+

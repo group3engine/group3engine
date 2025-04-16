@@ -4,8 +4,11 @@
 #include <functional>
 #include <glm/glm.hpp>
 #include <array>
+#include <filesystem>
 
 class Context;
+
+    inline std::filesystem::path assetsPath = {};
 
 #define VK_CHECK(call, message)                                                             \
     do {                                                                                    \
@@ -15,154 +18,142 @@ class Context;
         }                                                                                   \
     } while (0)
 
-#define ERROR(message) std::cout << "[ERROR]: " << message << std::endl;
-
-constexpr int NUM_LIGHTS = 26;
-
 namespace vkutil {
-enum class RenderType {
-    FORWARD,
-    DEFERRED,
-    MESH_DENSITY
-};
 
-inline size_t MAX_FRAMES_IN_FLIGHT;
-inline int currentFrame;
+    enum class RenderType {
+        FORWARD
+    };
 
-inline VkSampler repeatSamplerAniso;
-inline VkSampler repeatSampler;
-inline VkSampler clampToEdgeSamplerAniso;
+    inline size_t MAX_FRAMES_IN_FLIGHT;
+    inline int currentFrame;
 
-inline float maxAnisotropic;
-extern RenderType renderType;
-} // namespace vkutil
+    inline VkSampler repeatSamplerAniso;
+    inline VkSampler repeatSampler;
+    inline VkSampler clampToEdgeSamplerAniso;
 
-namespace vkutil {
-struct alignas(16) MeshPushConstants {
-    glm::mat4 ModelMatrix;
-};
+    inline float maxAnisotropic;
+    extern RenderType renderType;
+    } // namespace vkutil
 
-struct LightUBO {
-    alignas(4) int type;
-    alignas(16) glm::vec4 LightPosition;
-    alignas(16) glm::vec4 LightColour;
-    alignas(16) glm::mat4 LightSpaceMatrix;
-};
+    namespace vkutil {
+    struct alignas(16) MeshPushConstants {
+        glm::mat4 ModelMatrix;
+        int cascadeIndex;
+    };
 
-struct PostProcessing {
-    alignas(1) bool Enable;
-};
+    struct LightUBO {
+        alignas(4) int type;
+        alignas(16) glm::vec4 LightPosition;
+        alignas(16) glm::vec4 LightColour;
+        alignas(16) glm::mat4 LightSpaceMatrix;
+    };
 
-struct LightBuffer {
-    LightUBO lights[NUM_LIGHTS];
-};
+    struct PostProcessing {
+        alignas(4) bool Enable = false;
+    };
 
-struct GuassianWeightsBuffer {
-    float weights[22];
-    float offsets[22];
-};
+    struct SSAOSettings
+    {
+        int NumDirections;
+        int NumSteps;
+        float Radius;
+        float StepSize;
+        float intensity;
+    };
 
-struct SSAOSettings
-{
-    int NumDirections;
-    int NumSteps;
-    float Radius;
-    float StepSize;
-    float intensity;
-};
+    struct OutlineSettings
+    {
+        int OutlineWidth;
+        float sobelThreshold;
+    };
 
-struct SSRSettings
-{
-    int MaxSteps;
-    int BinarySearchIterations;
-    float MaxDistance;
-    float thickness;
-    float StepSize;
-    float time;
-};
+    struct SSRSettings
+    {
+        int MaxSteps;
+        int BinarySearchIterations;
+        float MaxDistance;
+        float thickness;
+        float StepSize;
+        float time;
+    };
 
-inline PostProcessing postProcessSettings = {};
-inline SSAOSettings ssaoSettings = {6, 6, 1.4f, 0.001f, 1.5f};
-inline SSRSettings ssrSettings = {20, 1, 1.0f, 0.001f, 0.001f};
-inline uint32_t setRenderingPipeline = 1;
-inline uint32_t setAlphaMakingPipeline = 2;
+    struct alignas(16) FogSettings
+    {
+        float MaxDistance;
+        float Density;
+        float StepSize;
+        int MaxSteps;
+    };
 
-inline float ShadowBias = 0.0f;
-inline float ShadowSlope = 3.4f;
+    struct CascadeMatrices
+    {
+        glm::mat4 matrices[4];
+        glm::vec4 cascadeSplits; // Store 4 splits as a vec4
+    };
 
-inline VkDescriptorSetLayout materialDescriptorSetLayout;
-} // namespace vkutil
+    struct SHCoefficients {
+        glm::vec3 SHCoefficients[9];
+    };
+
+    inline PostProcessing postProcessSettings = {};
+    inline SSAOSettings ssaoSettings = {6, 6, 1.4f, 0.003f, 1.5f};
+    inline SSRSettings ssrSettings = {20, 1, 1.0f, 0.001f, 0.001f};
+    inline FogSettings fogSettings = { 30.0f, 0.016f, 0.1f, 1 };
+    inline OutlineSettings outlineSettings = { 1, 0.005f};
+    inline uint32_t setRenderingPipeline = 1;
+    inline uint32_t setAlphaMakingPipeline = 2;
+
+
+    inline float ShadowBias = 0.0f;
+    inline float ShadowSlope = 3.4f;
+
+    inline VkDescriptorSetLayout materialDescriptorSetLayout;
+    inline SHCoefficients SHCoefficientsStored;
+
+    } // namespace vkutil
 
 namespace GlobalUtil {
-inline double deltaTime;
+    inline double deltaTime;
+inline double unscaledDeltaTime;
 }
 
 namespace vkutil {
-void ExecuteSingleTimeCommands(Context const &context, std::function<void(VkCommandBuffer)> recordCommands);
+    void ExecuteSingleTimeCommands(Context const &context, std::function<void(VkCommandBuffer)> recordCommands);
 
-// Sync
-void ImageBarrier(
-    VkCommandBuffer cmd,
-    VkImage img,
-    VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask,
-    VkImageLayout srcLayout, VkImageLayout dstLayout,
-    VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask,
-    VkImageSubresourceRange = VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
-    uint32_t srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-    uint32_t dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED);
+    // Sync
+    void ImageBarrier(
+        VkCommandBuffer cmd,
+        VkImage img,
+        VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask,
+        VkImageLayout srcLayout, VkImageLayout dstLayout,
+        VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask,
+        VkImageSubresourceRange = VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
+        uint32_t srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        uint32_t dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED);
 
-VkDescriptorSetLayout CreateDescriptorSetLayout(Context &context, const std::vector<VkDescriptorSetLayoutBinding> &bindings);
-void AllocateDescriptorSets(Context &context, VkDescriptorPool descriptorPool, const VkDescriptorSetLayout descriptorLayout, uint32_t setCount, std::vector<VkDescriptorSet> &descriptorSet);
-void AllocateDescriptorSet(Context &context, VkDescriptorPool descriptorPool, const VkDescriptorSetLayout descriptorLayout, uint32_t setCount, VkDescriptorSet &descriptorSet);
-VkDescriptorSetLayoutBinding CreateDescriptorBinding(uint32_t binding, uint32_t count, VkDescriptorType type, VkShaderStageFlags shaderStage);
-void CreateDescriptorPool(Context &context, uint32_t maxDescriptors, uint32_t maxSets, VkDescriptorPool &descriptorPool);
-// Update buffer descriptor
-void UpdateDescriptorSet(Context &context, uint32_t binding, VkDescriptorBufferInfo bufferInfo, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType);
-// Update image descriptor
-void UpdateDescriptorSet(Context &context, uint32_t binding, VkDescriptorImageInfo imageInfo, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType);
+    VkDescriptorSetLayout CreateDescriptorSetLayout(Context &context, const std::vector<VkDescriptorSetLayoutBinding> &bindings);
+    void AllocateDescriptorSets(Context &context, VkDescriptorPool descriptorPool, const VkDescriptorSetLayout descriptorLayout, uint32_t setCount, std::vector<VkDescriptorSet> &descriptorSet);
+    void AllocateDescriptorSet(Context &context, VkDescriptorPool descriptorPool, const VkDescriptorSetLayout descriptorLayout, uint32_t setCount, VkDescriptorSet &descriptorSet);
+    VkDescriptorSetLayoutBinding CreateDescriptorBinding(uint32_t binding, uint32_t count, VkDescriptorType type, VkShaderStageFlags shaderStage);
+    void CreateDescriptorPool(Context &context, uint32_t maxDescriptors, uint32_t maxSets, VkDescriptorPool &descriptorPool);
+    // Update buffer descriptor
+    void UpdateDescriptorSet(Context &context, uint32_t binding, VkDescriptorBufferInfo bufferInfo, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType);
+    // Update image descriptor
+    void UpdateDescriptorSet(Context &context, uint32_t binding, VkDescriptorImageInfo imageInfo, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType);
 
-VkSampler CreateSampler(Context &context, VkSamplerAddressMode mode, VkBool32 EnableAnisotropic, VkCompareOp compareOp, VkFilter magFilter = VK_FILTER_LINEAR, VkFilter minFilter = VK_FILTER_LINEAR, VkSamplerMipmapMode samplerMipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR);
+    VkSampler CreateSampler(Context &context, VkSamplerAddressMode mode, VkBool32 EnableAnisotropic, VkCompareOp compareOp, VkFilter magFilter = VK_FILTER_LINEAR, VkFilter minFilter = VK_FILTER_LINEAR, VkSamplerMipmapMode samplerMipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR);
 
-// Don't use this. Needs to be removed.
-void BulkImageUpdate(Context &context, uint32_t binding, std::vector<VkDescriptorImageInfo> imageInfos, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType);
+    // Don't use this. Needs to be removed.
+    void BulkImageUpdate(Context &context, uint32_t binding, std::vector<VkDescriptorImageInfo> imageInfos, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType);
 
-inline void RenderPassLabel(VkCommandBuffer commandBuffer, const char *labelName) {
-    VkDebugUtilsLabelEXT label = {};
-    label.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
-    label.pLabelName = labelName;
-    vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &label);
-}
+    inline void RenderPassLabel(VkCommandBuffer commandBuffer, const char *labelName) {
+        VkDebugUtilsLabelEXT label = {};
+        label.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+        label.pLabelName = labelName;
+        vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &label);
+    }
 
-inline void EndRenderPassLabel(VkCommandBuffer commandBuffer) {
-    vkCmdEndDebugUtilsLabelEXT(commandBuffer);
-}
+    inline void EndRenderPassLabel(VkCommandBuffer commandBuffer) {
+        vkCmdEndDebugUtilsLabelEXT(commandBuffer);
+    }
 } // namespace vkutil
-
-/*
-* Render normal geometry and then render foliage using different pipeline
-* Color the base color into a metallic map
-* Reference learnopengl camera movement and mouse look
-* FIFO PRESENT MODE AND WAIT FOR V-SYNC
-* Textues must be TRILINEAR (check sampler)
-* Mouse movement should be activated on right mouse button click and deacitvated once right mouse is pressed again
-TODO:
-* - Lighting direction + color needs to be uniform pos [−0.2972,7.3100,−11.9532], color = [1,1,1]
-* - BRDF
-* - Different passes (Linear depth, PD, mip-maps[Disable anisotropic filtering for this task] etc)
-* Turn mosiac on and off
-
-// for the post-process
-give ForwardPass it's own RT to render to (needs own render pass + framebuffer etc) - this pass will now make the depth buffer read  + write which can be used for final present pass to determine depth?
-take RT in another pass as shader read only
-do post process
-write to swapchain image
-
-*/
-
-/*
-        - The light needs to be placed somewhere so one light is across lighting deferred and shadow map
-        - shadow frag coord needs to be pre-computed so its one single multiplication and a call to textureProj
-
-        - Add point light to remaining braziers
-        - Make sure to remove debug GLSL compiler flags -g -O0 in glslc.lua
-*/

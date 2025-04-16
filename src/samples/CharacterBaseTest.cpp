@@ -18,7 +18,7 @@
 
 #include "../physics/PhysicsHelpers.hpp"
 
-#include "../Camera.hpp"
+#include "Camera.hpp"
 
 using namespace JPH;
 
@@ -46,9 +46,11 @@ void CharacterBaseTest::Initialize()
 	}
 }
 
-void CharacterBaseTest::ProcessInput(glm::vec3 controlInput, bool jump)
+void CharacterBaseTest::ProcessInput(glm::vec3 controlInput, bool jump, bool inClimb)
+
 {
         mJump = jump;
+        mInClimb = inClimb;
         mControlInput = Vec3(controlInput.x, controlInput.y, controlInput.z);
 }
 
@@ -85,7 +87,7 @@ void CharacterBaseTest::PrePhysicsUpdate(const PreUpdateParams &inParams)
 	}
 
 	// Call handle input after new velocities have been set to avoid frame delay
-	HandleInput(mControlInput, mJump, inParams.mDeltaTime);
+	HandleInput(mControlInput, mJump, inParams.mDeltaTime, mInClimb);
 }
 
 void CharacterBaseTest::GetInitialCamera(CameraState& ioState) const

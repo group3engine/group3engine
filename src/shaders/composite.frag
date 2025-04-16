@@ -8,6 +8,8 @@ layout(set = 0, binding = 0) uniform sampler2D renderedScene;
 layout(set = 0, binding = 1) uniform sampler2D bloomPass;
 layout(set = 0, binding = 2) uniform sampler2D SSAO;
 layout(set = 0, binding = 3) uniform sampler2D SSR;
+layout(set = 0, binding = 4) uniform sampler2D Fog;
+layout(set = 0, binding = 5) uniform sampler2D outline;
 
 float SpatialDenoisedSSAO()
 {
@@ -34,7 +36,7 @@ vec3 SpatialDenoisedSSR(vec2 uv)
     vec2 texelSize = 1.0 / textureSize(SSR, 0);
     vec2 tex = clamp(uv - texelSize * 2.0, texelSize * 2.0, 1.0 - texelSize * 2.0);
 
-    // Gather for R, G, B separately
+    // Gather for R, G, B separately - TextureGather does single values
     vec4 g1r = textureGather(SSR, tex, 0);
     vec4 g1g = textureGather(SSR, tex, 1);
     vec4 g1b = textureGather(SSR, tex, 2);
@@ -83,20 +85,71 @@ vec3 ACESToneMappingFilm(vec3 x) {
   return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
 }
 
+
+vec3 SD(sampler2D inputImage)
+{
+    ivec2 loc = ivec2(gl_FragCoord.xy) - ivec2(2);
+	vec3 total = vec3(0.0);
+
+    vec2 texelSize = 1.0 / vec2(textureSize(inputImage, 0));
+    vec3 result = vec3(0.0);
+    for (int x = -2; x < 2; ++x)
+    {
+        for (int y = -2; y < 2; ++y)
+        {
+            vec2 offset = vec2(float(x), float(y)) * texelSize;
+            result += texture(inputImage, uv + offset).rgb;
+        }
+    }
+
+    return vec3(result / 16.0);
+}
+
+vec3 ACESFilm(vec3 x){
+    return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0);
+}
+
+
 void main()
 {
 	vec4 lighting = texture(renderedScene, uv);
 	vec4 bloom = texture(bloomPass, uv);
-	float ssao = SpatialDenoisedSSAO();
-	//vec3 ssr = SpatialDenoisedSSR(uv);
+	vec3 ssao = SD(SSAO);
+    vec3 ssr = texture(SSR, uv).rgb;
+    vec4 FoggedScene = texture(Fog, uv);
+    // apply the outline to the lighting
+    float outlineColor = texture(outline, uv).r;
+    lighting = mix(lighting, vec4(0.0), outlineColor);
 
-	vec3 hdrColor = (lighting.rgb) * ssao;
+    // The fog is now composed with the final lighting
+    // band fog.a
+    float fogAlpha = FoggedScene.a;
+    if(fogAlpha < 0.2 && fogAlpha > 0.1)
+    {
+        fogAlpha = 0.2;
+    }
+    else if(fogAlpha < 0.3 && fogAlpha > 0.2)
+    {
+        fogAlpha = 0.3;
+    }
+    else if(fogAlpha < 1.0 && fogAlpha > 0.5)
+    {
+        fogAlpha = 1.0;
+    }
+    vec3 compositeFog = mix(lighting.rgb, FoggedScene.rgb, fogAlpha).rgb;
+
+    // FoggedScene is now just "lighting".
+    // With fog = 0, its just the scene.
+	vec3 hdrColor = vec3(compositeFog + ssr) * ssao;
     hdrColor = hdrColor + bloom.rgb;
 	//vec3 ldrColor = hdrColor / (hdrColor + vec3(1.0));
 
-    vec3 ldrColor = ACESToneMappingFilm(hdrColor);
+    vec3 ldrColor = ACESFilm(hdrColor);
 	vec3 result = ldrColor;
 	vec3 gammaCorrectedColor = pow(result, vec3(1.0 / 2.2));
+
+
+
 
 	fragColor = vec4(vec3(gammaCorrectedColor), 1.0);
 }

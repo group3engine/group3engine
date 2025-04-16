@@ -5,10 +5,11 @@
 #include <vector>
 
 class Context;
+class Scene;
 
 class Composite {
   public:
-    explicit Composite(Context &context, Image &LightingPass, Image &BloomPass, Image& SSAO, Image& SSRImage);
+    explicit Composite(Context &context, Scene *scene, Image &LightingPass, Image &BloomPass, Image& SSAO, Image& SSRImage, Image& Fog, Image& Outline);
     ~Composite();
 
     void Execute(VkCommandBuffer cmd) const;
@@ -24,11 +25,14 @@ class Composite {
     void BuildDescriptors();
 
     Context &context;
+    Scene *m_Scene;
     Image m_RenderTarget;
     Image &LightingPass;
     Image &BloomPass;
     Image &SSAO;
     Image &SSRImage;
+    Image &Fog;
+    Image &Outline;
 
     VkPipeline m_Pipeline;
     VkPipelineLayout m_PipelineLayout;

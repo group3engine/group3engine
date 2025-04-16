@@ -7,6 +7,8 @@
 #include <string>
 #include <unordered_set>
 
+#include <spdlog/spdlog.h>
+
 #include "RenderPass.hpp"
 #include "Utils.hpp"
 
@@ -294,6 +296,9 @@ VkRenderPass CreateSwapchainRenderPass(VkDevice device, VkFormat format) {
 }
 } // namespace
 
+
+Context* Context::kcontext = nullptr;
+
 Context::Context()
     : mWindow(nullptr),
       instance(VK_NULL_HANDLE),
@@ -318,6 +323,7 @@ Context::Context()
       transientCommandPool(VK_NULL_HANDLE),
       descriptorPool(VK_NULL_HANDLE),
       vkSetDebugUtilsObjectNameEXT(VK_NULL_HANDLE) {
+    kcontext = this;
 }
 
 void Context::Destroy() {
@@ -424,6 +430,7 @@ void Context::CreateLogicalDevice() {
     VkPhysicalDeviceFeatures features = {};
     features.samplerAnisotropy = VK_TRUE;
     features.geometryShader = VK_TRUE;
+    features.fragmentStoresAndAtomics = VK_TRUE;
 
     VkPhysicalDeviceScalarBlockLayoutFeaturesEXT scalarBlockFeatures{
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES_EXT,
@@ -557,7 +564,7 @@ bool Context::MakeContext(GLFWwindow *window) {
     mWindow = window;
 
     if (volkInitialize() != VK_SUCCESS) {
-        ERROR("Failed to initialize Volk.");
+        SPDLOG_ERROR("Failed to initialize Volk.");
         return false;
     }
 

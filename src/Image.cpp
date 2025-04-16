@@ -222,6 +222,7 @@ Image LoadTextureFromDisk(std::filesystem::path path, Context &context, VkFormat
 }
 
 Image CreateImageTexture2D(const std::string name, Context& context, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags imageaspectFlags, uint32_t mipLevels, VkImageCreateFlags flags, uint32_t arrayLayers) {
+
     VkImageCreateInfo imageInfo{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
     imageInfo.flags = flags;
     imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -254,7 +255,7 @@ Image CreateImageTexture2D(const std::string name, Context& context, uint32_t wi
     VkImageViewCreateInfo viewInfo{};
     viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     viewInfo.image = image;
-    viewInfo.viewType = (flags & VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT) != 0 ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D;
+    viewInfo.viewType = ((imageaspectFlags & VK_IMAGE_ASPECT_DEPTH_BIT) != 0 && arrayLayers > 1) ? VK_IMAGE_VIEW_TYPE_2D_ARRAY : (flags & VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT) != 0 ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D;
     viewInfo.format = format;
     viewInfo.components = VkComponentMapping{};
     viewInfo.subresourceRange = VkImageSubresourceRange{imageaspectFlags, 0, VK_REMAINING_MIP_LEVELS, 0, VK_REMAINING_ARRAY_LAYERS};
