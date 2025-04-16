@@ -307,20 +307,20 @@ void main()
         outLight += brdf * LightColour.xyz * shadowTerm;
     }
 
-//    for (int i = 1; i < NUM_LIGHTS; i++)
-//    {
-//        vec3 lightDir = normalize(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
-//        vec3 viewDir = normalize(ubo.cameraPosition.xyz - WorldPos.xyz);
-//        vec3 halfVector = normalize(viewDir + lightDir);
-//
-//        float dist = length(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
-//        float att = 1.0 / (dist * dist);
-//        vec3 LightColour = lightData.lights[i].LightColour.xyz * att;
-//
-//        float shadowTerm = 1.0;
-//        vec3 brdf = CookTorranceBRDF(pixelNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour);
-//        outLight += brdf * LightColour.xyz * shadowTerm;
-//    }
+    for (int i = 1; i < NUM_LIGHTS; i++)
+    {
+        vec3 lightDir = normalize(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
+        vec3 viewDir = normalize(ubo.cameraPosition.xyz - WorldPos.xyz);
+        vec3 halfVector = normalize(viewDir + lightDir);
+
+        float dist = length(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
+        float att = 1.0 / (dist * dist);
+        vec3 LightColour = lightData.lights[i].LightColour.xyz * att;
+
+        float shadowTerm = 1.0;
+        vec3 brdf = CookTorranceBRDF(pixelNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour);
+        outLight += brdf * LightColour.xyz * shadowTerm;
+    }
 
     vec3 ambient = vec3(0.02) * color;
 

@@ -115,9 +115,6 @@ void DepthPrepass::Execute(VkCommandBuffer cmd) {
 
         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
         m_Scene->DrawOpaque(cmd, m_PipelineLayout);
-
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
-        m_Scene->DrawAlphaMasked(cmd, m_PipelineLayout);
     }
     vkCmdEndRenderPass(cmd);
 
