@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   build_windows:
-    name: Build Linux
+    name: Build Windows
     runs-on: windows-latest
 
     steps:
@@ -24,7 +24,7 @@ jobs:
 
       - name: Build
         env:
-          TARGET_PLATFORM: linux
+          TARGET_PLATFORM: windows
         run: |
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Platinum -S . -B build
           cmake --build build -j
