@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
 
 permissions:
   contents: write
@@ -33,15 +32,11 @@ jobs:
       - name: Zip
         run: |
           Compress-Archive -Path install -DestinationPath release.zip
-      - name: Datetime
-        id: current_datetime
-        run: echo "datetime=$(date +'%Y-%m-%d-%H-%M-%S')" >> $GITHUB_OUTPUT
-      - name: Release
-        uses: "marvinpinto/action-automatic-releases@latest"
+
+      - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "release-${{ steps.current_datetime.outputs.datetime }}"
+          automatic_release_tag: "latest"
           prerelease: true
-          title: "AUTO RELEASE: ${{ steps.current_datetime.outputs.datetime }}"
           files: |
             release.zip
