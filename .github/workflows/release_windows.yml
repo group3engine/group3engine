@@ -29,19 +29,21 @@ jobs:
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Platinum -S . -B build
           cmake --build build -j
           cmake --install build --prefix install
+
       - name: Zip
         run: |
           Compress-Archive -Path install -DestinationPath release_windows.zip
 
-      - name: Get current datetime
-        id: current_datetime
-        run: echo "datetime=$(date +'%Y-%m-%d-%H-%M-%S')" >> $GITHUB_OUTPUT
+      - name: Datetime
+        id: datetime
+        run: |
+          $NOW=& Get-Date -format yyyy-MM-dd-hh-mm-ss
+          echo "NOW=$NOW" >> $env:GITHUB_ENV
 
-      - uses: "marvinpinto/action-automatic-releases@latest"
+      - name: Release
+        uses: softprops/action-gh-release@v2
         with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "release-windows-${{ steps.current_datetime.outputs.datetime }}"
           prerelease: true
-          title: "AUTO RELEASE Windows: ${{ steps.current_datetime.outputs.datetime }}"
-          files: |
-            release_windows.zip
+          name: "AUTO RELEASE Windows: ${{ env.NOW }}"
+          tag_name: "${{ env.NOW }}"
+          files: release_windows.zip
