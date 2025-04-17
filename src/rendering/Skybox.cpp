@@ -42,18 +42,18 @@ Skybox::Skybox(Context& context, Scene *scene, VkRenderPass renderpass) :
         6
     );
 
-    m_PrefilteredSkybox = CreateImageTexture2D(
-        "PrefilteredSkybox",
-        context,
-        2048,
-        2048,
-        VK_FORMAT_R8G8B8A8_SRGB,
-        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT,
-        VK_IMAGE_ASPECT_COLOR_BIT,
-        mipLevels,
-        VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT,
-        6
-    );
+    //m_PrefilteredSkybox = CreateImageTexture2D(
+    //    "PrefilteredSkybox",
+    //    context,
+    //    2048,
+    //    2048,
+    //    VK_FORMAT_R16G16B16A16_SFLOAT,
+    //    VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT,
+    //    VK_IMAGE_ASPECT_COLOR_BIT,
+    //    mipLevels,
+    //    VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT,
+    //    6
+    //);
 
 
     // TODO: The skybox path should be user provided earlier during engine init
@@ -136,73 +136,97 @@ Skybox::Skybox(Context& context, Scene *scene, VkRenderPass renderpass) :
                 VK_PIPELINE_STAGE_TRANSFER_BIT,
                 VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, mipLevels, 0, 6 }
             );
+
+
+            //vkutil::ImageBarrier(
+            //    cmd,
+            //    m_PrefilteredSkybox.image,
+            //    VK_ACCESS_TRANSFER_WRITE_BIT,
+            //    VK_ACCESS_TRANSFER_READ_BIT,
+            //    VK_IMAGE_LAYOUT_UNDEFINED,
+            //    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            //    VK_PIPELINE_STAGE_TRANSFER_BIT,
+            //    VK_PIPELINE_STAGE_TRANSFER_BIT,
+            //    VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, mipLevels, 0, 6 }
+            //);
+
+           //ImageTransition(
+           //    cmd,
+           //    m_PrefilteredSkybox.image,
+           //    VK_FORMAT_R16G16B16A16_SFLOAT,
+           //    VK_IMAGE_LAYOUT_UNDEFINED,
+           //    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+           //    VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT,
+           //    VK_PIPELINE_STAGE_TRANSFER_BIT,
+           //    VK_PIPELINE_STAGE_TRANSFER_BIT
+           //);
     });
 
     std::cout << " ========================================================= MIP MAP STUFF =========================================================" << std::endl;
     // Generate mipmaps for the cubemap
     uint32_t mipWidth = width;
     uint32_t mipHeight = height;
-    vkutil::ExecuteSingleTimeCommands(context, [&](VkCommandBuffer cmd) {
+    //vkutil::ExecuteSingleTimeCommands(context, [&](VkCommandBuffer cmd) {
 
-        // Transition the image layout to be SRC_OPTIMAL -> Should already be in this layout
-        for (uint32_t face = 0; face < 6; face++)
-        {
-            mipWidth = width;
-            mipHeight = height;
+    //    // Transition the image layout to be SRC_OPTIMAL -> Should already be in this layout
+    //    for (uint32_t face = 0; face < 6; face++)
+    //    {
+    //        mipWidth = width;
+    //        mipHeight = height;
 
-            for (uint32_t level = 1; level < mipLevels; level++)
-            {
-                VkImageBlit blit = {};
-                blit.srcSubresource = VkImageSubresourceLayers{VK_IMAGE_ASPECT_COLOR_BIT, level - 1, face, 1};
-                blit.srcOffsets[0] = {0, 0, 0};
-                blit.srcOffsets[1] = {int32_t(mipWidth), int32_t(mipHeight), 1};
+    //        for (uint32_t level = 1; level < mipLevels; level++)
+    //        {
+    //            VkImageBlit blit = {};
+    //            blit.srcSubresource = VkImageSubresourceLayers{VK_IMAGE_ASPECT_COLOR_BIT, level - 1, face, 1};
+    //            blit.srcOffsets[0] = {0, 0, 0};
+    //            blit.srcOffsets[1] = {int32_t(mipWidth), int32_t(mipHeight), 1};
 
-                mipWidth >>= 1;
-                if (mipWidth == 0)
-                    mipWidth = 1;
-                mipHeight >>= 1;
-                if (mipHeight == 0)
-                    mipHeight = 1;
+    //            mipWidth >>= 1;
+    //            if (mipWidth == 0)
+    //                mipWidth = 1;
+    //            mipHeight >>= 1;
+    //            if (mipHeight == 0)
+    //                mipHeight = 1;
 
-                blit.dstSubresource = VkImageSubresourceLayers{VK_IMAGE_ASPECT_COLOR_BIT, level, face, 1};
-                blit.dstOffsets[0] = {0, 0, 0};
-                blit.dstOffsets[1] = {int32_t(mipWidth), int32_t(mipHeight), 1};
+    //            blit.dstSubresource = VkImageSubresourceLayers{VK_IMAGE_ASPECT_COLOR_BIT, level, face, 1};
+    //            blit.dstOffsets[0] = {0, 0, 0};
+    //            blit.dstOffsets[1] = {int32_t(mipWidth), int32_t(mipHeight), 1};
 
-                vkutil::ImageBarrier(
-                    cmd,
-                    m_Skybox.image,
-                    0,
-                    VK_ACCESS_TRANSFER_WRITE_BIT,
-                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,  // or possibly VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
-                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                    VK_PIPELINE_STAGE_TRANSFER_BIT,
-                    VK_PIPELINE_STAGE_TRANSFER_BIT,
-                    { VK_IMAGE_ASPECT_COLOR_BIT, level, 1, face, 1 }
-                );
+    //            vkutil::ImageBarrier(
+    //                cmd,
+    //                m_PrefilteredSkybox.image,
+    //                0,
+    //                VK_ACCESS_TRANSFER_WRITE_BIT,
+    //                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+    //                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+    //                VK_PIPELINE_STAGE_TRANSFER_BIT,
+    //                VK_PIPELINE_STAGE_TRANSFER_BIT,
+    //                { VK_IMAGE_ASPECT_COLOR_BIT, level, 1, face, 1 }
+    //            );
 
-                vkCmdBlitImage(
-                    cmd,
-                    m_Skybox.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                    m_Skybox.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                    1,
-                    &blit,
-                    VK_FILTER_LINEAR
-                );
+    //            vkCmdBlitImage(
+    //                cmd,
+    //                m_PrefilteredSkybox.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+    //                m_PrefilteredSkybox.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+    //                1,
+    //                &blit,
+    //                VK_FILTER_LINEAR
+    //            );
 
 
-                vkutil::ImageBarrier(
-                    cmd, m_Skybox.image,
-                    VK_ACCESS_TRANSFER_WRITE_BIT,
-                    VK_ACCESS_TRANSFER_READ_BIT,
-                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                    VK_PIPELINE_STAGE_TRANSFER_BIT,
-                    VK_PIPELINE_STAGE_TRANSFER_BIT,
-                    VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, level, 1, face, 1});
-            }
-        }
+    //            vkutil::ImageBarrier(
+    //                cmd, m_PrefilteredSkybox.image,
+    //                VK_ACCESS_TRANSFER_WRITE_BIT,
+    //                VK_ACCESS_TRANSFER_READ_BIT,
+    //                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+    //                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+    //                VK_PIPELINE_STAGE_TRANSFER_BIT,
+    //                VK_PIPELINE_STAGE_TRANSFER_BIT,
+    //                VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, level, 1, face, 1});
+    //        }
+    //    }
 
-    });
+    //});
 
 
     vkutil::ExecuteSingleTimeCommands(context, [&](VkCommandBuffer cmd) {
@@ -215,9 +239,22 @@ Skybox::Skybox(Context& context, Scene *scene, VkRenderPass renderpass) :
             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
             VK_PIPELINE_STAGE_TRANSFER_BIT,
-            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
             VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, mipLevels, 0, 6 }
          );
+
+
+         //ImageTransition(
+         //   cmd,
+         //   m_PrefilteredSkybox.image,
+         //   VK_FORMAT_R16G16B16A16_SFLOAT,
+         //   VK_IMAGE_LAYOUT_UNDEFINED,
+         //   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+         //   0,
+         //   VK_ACCESS_SHADER_WRITE_BIT,
+         //   VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+         //   VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
+         //);
     });
 
     // By this point the cube map is ready to be used in a shader so we could begin prefilering

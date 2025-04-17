@@ -70,17 +70,27 @@ layout (set = 1, binding = 3) uniform UNumbers
 
 } uNumbers;
 
+layout (set = 0, binding = 5) uniform samplerCube prefilteredSkybox;
+layout (set = 0, binding = 6) uniform sampler2D BRDFLUT;
+
 #define PI 3.14159265359
 
 uint cascadeIndex = 0;
 
-vec3 Fresnel(vec3 halfVector, vec3 viewDir, vec3 baseColor, float metallic)
+vec3 FresnelSchlickWithRoughness(float cosTheta, vec3 F0, float roughness)
+{
+    vec3 fresnel = F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+    return fresnel;
+}
+
+vec3 Fresnel(vec3 halfVector, vec3 viewDir, vec3 baseColor, float metallic, float roughness)
 {
     vec3 F0 = vec3(0.04);
     F0 = (1 - metallic) * F0 + (metallic * baseColor);
     float HdotV = max(dot(halfVector, viewDir), 0.0);
-    vec3 schlick_approx = F0 + (1 - F0) * pow(clamp(1 - HdotV, 0.0, 1.0), 5);
-    return schlick_approx;
+    //vec3 schlick_approx = F0 + (1 - F0) * pow(clamp(1 - HdotV, 0.0, 1.0), 5);
+    //return schlick_approx;
+    return FresnelSchlickWithRoughness(HdotV, F0, roughness);
 }
 
 struct SHCoefficients {
@@ -111,7 +121,7 @@ SHCoefficients grace = SHCoefficients(
     sh.shCoefficients[8]
 );
 
-vec3 evaluateSH(vec3 normal) {
+vec3 EvaluateSHForDiffuseIBL(vec3 normal) {
     vec3 result = vec3(0.0);
     result += sh.shCoefficients[0] * SH00();
     result += sh.shCoefficients[1] * SH1m1(normal);
@@ -123,6 +133,38 @@ vec3 evaluateSH(vec3 normal) {
     result += sh.shCoefficients[7] * SH21(normal);
     result += sh.shCoefficients[8] * SH22(normal);
     return result;
+}
+
+// https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing
+float PCF(vec3 WorldPos)
+{
+	vec3 texSize = 1.0 / textureSize(shadowMap, 0);
+    // compute the cascade index
+    vec4 viewPos = ubo.view * vec4(WorldPos, 1.0);
+    for(uint i = 0; i < NUM_SHADOW_CASCADES - 1; ++i)
+    {
+        cascadeIndex = viewPos.z < csmMatrices.cascadeSplits[i] ? cascadeIndex = i + 1: cascadeIndex;
+    }
+
+    vec4 fragPositionInLightSpace = csmMatrices.cascadeViewProjection[cascadeIndex] * vec4(WorldPos, 1.0);
+	fragPositionInLightSpace.xyz /= fragPositionInLightSpace.w;
+	fragPositionInLightSpace.xy = fragPositionInLightSpace.xy * 0.5 + 0.5;
+
+	int range = 2; // 4x4
+	int samples = 0;
+	float sum = 0.0;
+	for(int x = -range; x < range; x++)
+	{
+		for(int y = -range; y < range; y++)
+		{
+			vec2 offset = vec2(x,y) * texSize.xy;
+			vec4 sampleCoord = vec4(fragPositionInLightSpace.xy + offset, fragPositionInLightSpace.z, fragPositionInLightSpace.w);
+			sum += texture(shadowMap, vec4(sampleCoord.xy, float(cascadeIndex), sampleCoord.z)); // I don't think textureProj works with sampler2DArrayShadow
+            samples++;
+		}
+	}
+
+	return sum / float(samples);
 }
 
 
@@ -169,61 +211,37 @@ float GGXGeometrySmith(vec3 normal, vec3 lightDir, vec3 viewDir, float roughness
 }
 
 // Compute BRDF
-vec3 CookTorranceBRDF(vec3 normal, vec3 halfVector, vec3 viewDir, vec3 lightDir, float metallic, float roughness, vec3 baseColor, vec3 LightColour)
+vec3 CookTorranceBRDF(vec3 normal, vec3 halfVector, vec3 viewDir, vec3 lightDir, float metallic, float roughness, vec3 baseColor, vec3 LightColour, vec3 WorldPos)
 {
-    vec3 F = Fresnel(halfVector, viewDir, baseColor, metallic);
+    vec3 F = Fresnel(halfVector, viewDir, baseColor, metallic, roughness);
     float D = GGXNormalDistributionFunction(normal, halfVector, roughness);
 	float G = GGXGeometrySmith(normal, lightDir, viewDir, roughness);
 
-    vec3 L_Diffuse = (baseColor / PI) * (vec3(1.0) - F) * (1.0 - metallic) * evaluateSH(normal);
+    vec3 kd = (1.0 - F) * (1.0 - metallic);
+    vec3 L_Diffuse = kd * (baseColor / PI);
 
     float NdotV = max(dot(normal, viewDir), 0.001);
 	float NdotL = max(dot(normal, lightDir), 0.001);
 
 	vec3 numerator = D * G * F;
 	float denominator = (4 * NdotV * NdotL) + 0.001;
-
 	vec3 specular = numerator / denominator;
 
-    vec3 outLight = (L_Diffuse + specular) * LightColour.xyz * NdotL;
+    vec3 directLight = (L_Diffuse + specular) * LightColour.xyz * NdotL;
 
-    return vec3(outLight);
+    vec3 R = reflect(-viewDir, normal);
+    const float max_specular_mip_levels = 12.0;
+    vec3 prefilteredColour = textureLod(prefilteredSkybox, R, roughness * max_specular_mip_levels).rgb;
+    vec2 envBRDF = texture(BRDFLUT, vec2(NdotV, roughness)).rg;
+    vec3 specularIBL = prefilteredColour * (F * envBRDF.x + envBRDF.y);
+
+    vec3 diffuseIBL = kd * EvaluateSHForDiffuseIBL(normal) * baseColor;
+    vec3 indirectLight = diffuseIBL + specularIBL;
+
+    float shadowTerm = 1.0 - PCF(WorldPos.xyz);
+    directLight = directLight * shadowTerm;
+    return vec3(directLight + indirectLight);
 }
-
-
-const vec2 PCFFilter4x4[16] = vec2[](
-vec2(-1.5, 1.5), vec2(-0.5, 1.5), vec2(0.5, 1.5), vec2(1.5, 1.5),
-vec2(-1.5, 0.5), vec2(-0.5, 0.5), vec2(0.5, 0.5), vec2(1.5, 0.5),
-vec2(-1.5, -0.5), vec2(-0.5, -0.5), vec2(0.5, -0.5), vec2(1.5, -0.5),
-vec2(-1.5, -1.5), vec2(-0.5, -1.5), vec2(0.5, -1.5), vec2(1.5, -1.5)
-);
-
-
-//float PCF(vec4 shadowMapPosition)
-//{
-//	vec2 offset = vec2(shadowMapPosition.w / 1024.0f);
-//	float shadow = 0.0;
-//	for (int i = 0; i < 16; i++)
-//	{
-//        vec4 pcfShadowMapPosition = shadowMapPosition + vec4(PCFFilter4x4[i] * offset, 0.0, 0.0);
-//        shadow += textureProj(shadowMap, shadowMapPosition);
-//	}
-//
-//	return shadow / 16.0;
-//}
-
-// https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing
-//float Shadows(vec3 WorldPos)
-//{
-//	// Use direct lighting only. Point light shadows are handleded differently (cube depth)
-//	vec4 fragPositionInLightSpace = lightData.lights[0].LightSpaceMatrix * vec4(WorldPos, 1.0);
-//	fragPositionInLightSpace.xyz /= fragPositionInLightSpace.w;
-//	fragPositionInLightSpace.xy = fragPositionInLightSpace.xy * 0.5 + 0.5;
-//	fragPositionInLightSpace.z = fragPositionInLightSpace.z - 0.005;
-//	float shadow = PCF(fragPositionInLightSpace);
-//
-//	return shadow;
-//}
 
 float Shadow(vec3 WorldPos)
 {
@@ -236,45 +254,6 @@ float Shadow(vec3 WorldPos)
 	return shadow;
 }
 //
-// https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing
-float myPCF(vec3 WorldPos)
-{
-	// Use direct lighting only. Point light shadows are handleded differently (cube depth)
-//	vec4 fragPositionInLightSpace = lightData.lights[0].LightSpaceMatrix * vec4(WorldPos, 1.0);
-//	fragPositionInLightSpace.xyz /= fragPositionInLightSpace.w;
-//	fragPositionInLightSpace.xy = fragPositionInLightSpace.xy * 0.5 + 0.5;
-
-	vec3 texSize = 1.0 / textureSize(shadowMap, 0);
-
-
-    // compute the cascade index
-    vec4 viewPos = ubo.view * vec4(WorldPos, 1.0);
-    for(uint i = 0; i < NUM_SHADOW_CASCADES - 1; ++i)
-    {
-        cascadeIndex = viewPos.z < csmMatrices.cascadeSplits[i] ? cascadeIndex = i + 1: cascadeIndex;
-    }
-
-    vec4 fragPositionInLightSpace = csmMatrices.cascadeViewProjection[cascadeIndex] * vec4(WorldPos, 1.0);
-	fragPositionInLightSpace.xyz /= fragPositionInLightSpace.w;
-	fragPositionInLightSpace.xy = fragPositionInLightSpace.xy * 0.5 + 0.5;
-
-	int range = 2; // 4x4
-	int samples = 0;
-	float sum = 0.0;
-	for(int x = -range; x < range; x++)
-	{
-		for(int y = -range; y < range; y++)
-		{
-			vec2 offset = vec2(x,y) * texSize.xy;
-			vec4 sampleCoord = vec4(fragPositionInLightSpace.xy + offset, fragPositionInLightSpace.z, fragPositionInLightSpace.w);
-			sum += texture(shadowMap, vec4(sampleCoord.xy, float(cascadeIndex), sampleCoord.z)); // I don't think textureProj works with sampler2DArrayShadow
-            samples++;
-		}
-	}
-
-	return sum / float(samples);
-}
-
 void main()
 {
     #ifdef ALPHA
@@ -287,8 +266,6 @@ void main()
     // == Metal and Roughness ==
     float roughness = texture(uTextureMetallicRoughness, uv).g * uNumbers.roughness;
     float metallic = texture(uTextureMetallicRoughness, uv).b * uNumbers.metallness;
-
-    // What if there is no normal map?
     vec3 pixelNormal = normalize(TBNFrame * (texture(uTextureNormal, uv).xyz * 2.f - 1.f));
 
     vec3 outLight = vec3(0.0);
@@ -302,9 +279,8 @@ void main()
 
         vec3 LightColour = lightData.lights[i].LightColour.rgb;
 
-        float shadowTerm = 1.0 - myPCF(WorldPos.xyz);
-        vec3 brdf = CookTorranceBRDF(pixelNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour);
-        outLight += brdf * LightColour.xyz * shadowTerm;
+        vec3 brdf = CookTorranceBRDF(pixelNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour, WorldPos.xyz);
+        outLight += brdf;
     }
 
 //    for (int i = 1; i < NUM_LIGHTS; i++)
@@ -322,29 +298,11 @@ void main()
 //        outLight += brdf * LightColour.xyz * shadowTerm;
 //    }
 
-    vec3 ambient = vec3(0.02) * color;
+    // This is no longer needed since we now have IBL which is the "indirect"
+    // vec3 ambient = vec3(0.02) * color;
 
-    outLight = ambient + outLight + emissive;
-    float dist = length(ubo.cameraPosition - WorldPos);
-    float heightFalloff = exp(-max(0.0, WorldPos.y) * 0.05);
-    float fogDensity = 0.01 * heightFalloff;
-    float fogFactor = exp(-pow(dist * fogDensity, 2.0));
-    fogFactor = clamp(fogFactor, 0.0, 1.0);
-
-    vec3 sunColor = evaluateSH(pixelNormal.rgb); // use Spherical harmonics to get diffuse IBL in this dir
-    vec3 sunDirection = normalize(lightData.lights[0].LightPosition.xyz);
-    float scattering = max(0.0, dot(normalize(ubo.cameraPosition.xyz - WorldPos.xyz), sunDirection));
-    vec3 fogColor = mix(vec3(0.3, 0.3, 0.4), sunColor, scattering * 0.3);
-
-    //fragColor.rgb = mix(fogColor, outLight, fogFactor);
-    //fragColor.rgb = evaluateSH(((pixelNormal.xyz)));
-
-    fragColor.rgb = outLight;
-    //fragColor = vec4(vec3(ambient + outLight + emissive), 1.0);
+    fragColor = vec4(outLight, 1.0);
     NormalMetallic = vec4(pixelNormal.xyz * 0.5 + 0.5, roughness);
-
-
-
 
 //    switch(cascadeIndex) {
 //		case 0 :

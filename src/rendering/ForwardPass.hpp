@@ -8,6 +8,8 @@
 #include "Config.hpp"
 #include "ShadowMap.hpp"
 #include "SH2.hpp"
+#include "PrefilterSkybox.hpp"
+
 
 // This is disgusting whoever did it lol
 #define SHADER_DIR assetsPath / "shaders/"
@@ -75,6 +77,7 @@ class ForwardPass {
     std::pair<VkPipeline, VkPipelineLayout> m_particlePipeline;
 
     std::unique_ptr<Skybox> m_Skybox;
+    std::unique_ptr<PrefilterSkybox> PrefilteredSkybox;
     std::unique_ptr<SH> m_SHPass;
 
 };

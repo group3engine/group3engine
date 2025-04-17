@@ -75,7 +75,7 @@ vec3 ScreenSpaceReflections()
 
 
     float lod = WorldNormal.a * float(12.0 - 1.0);
-    vec3 sky = textureLod(skybox, worldReflectionDir, lod).xyz; // Sample skybox once
+    vec3 sky = textureLod(skybox, worldReflectionDir, 0).xyz; // Sample skybox once
 
     vec3 WorldSpaceBegin = WorldPos.xyz;
     vec3 worldSpaceEnd = WorldSpaceBegin + worldReflectionDir * MAX_DISTANCE;

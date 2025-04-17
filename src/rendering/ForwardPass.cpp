@@ -68,9 +68,41 @@ ForwardPass::ForwardPass(Context &context, const Image &shadowMap, Image &depthP
     CreateRenderPass();
     m_Skybox = std::make_unique<Skybox>(context, scene, m_renderPass);
     m_SHPass = std::make_unique<SH>(context, scene, m_Skybox->GetSkyBoxImage());
+    PrefilteredSkybox = std::make_unique<PrefilterSkybox>(context, m_Skybox->GetSkyBoxImage());
 
+    // Transition the resources to be SHADER_READ for the fragment shader
     vkutil::ExecuteSingleTimeCommands(context, [&](VkCommandBuffer cmd) {
+
         m_SHPass->Execute(cmd);
+        PrefilteredSkybox->Execute(cmd);
+
+        PrefilteredSkybox->TransitionResources(cmd);
+
+        //ImageTransition(
+        //    cmd,
+        //    PrefilteredSkybox->GetPrefilteredSkybox().image,
+        //    VK_FORMAT_R16G16B16A16_SFLOAT,
+        //    VK_IMAGE_LAYOUT_GENERAL,
+        //    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        //    VK_ACCESS_SHADER_WRITE_BIT,
+        //    VK_ACCESS_SHADER_READ_BIT,
+        //    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        //    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        //    VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 6}
+        //);
+
+        //ImageTransition(
+        //    cmd,
+        //    PrefilteredSkybox->GetBRDFLut().image,
+        //    VK_FORMAT_R16G16_SFLOAT,
+        //    VK_IMAGE_LAYOUT_GENERAL,
+        //    VK_IMAGE_LAYOUT_GENERAL,
+        //    VK_ACCESS_SHADER_WRITE_BIT,
+        //    VK_ACCESS_SHADER_READ_BIT,
+        //    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        //    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
+        //);
+
     });
 
     BuildDescriptorSetLayouts();
@@ -78,9 +110,6 @@ ForwardPass::ForwardPass(Context &context, const Image &shadowMap, Image &depthP
 
     CreateFramebuffer();
     CreatePipeline();
-
-
-
 }
 
 ForwardPass::~ForwardPass() {
@@ -393,13 +422,15 @@ void ForwardPass::CreateFramebuffer() {
 }
 
 void ForwardPass::BuildDescriptorSetLayouts() {
+
     std::vector<VkDescriptorSetLayoutBinding> bindings = {
         vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT), // CameraUBO (projection, view etc..)
         vkutil::CreateDescriptorBinding(1, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT),                              // Light UBO
         vkutil::CreateDescriptorBinding(2, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
         vkutil::CreateDescriptorBinding(3, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT),
-        vkutil::CreateDescriptorBinding(4, 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT)
-
+        vkutil::CreateDescriptorBinding(4, 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT),
+        vkutil::CreateDescriptorBinding(5, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
+        vkutil::CreateDescriptorBinding(6, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
     };
 
     meshDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
@@ -446,8 +477,7 @@ void ForwardPass::BuildDescriptors() {
                 .imageView = shadowMap.imageView,
                 .imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL};
 
-            vkutil::UpdateDescriptorSet(context, 2, imageInfo, descriptorSets[i],
-                                        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+            vkutil::UpdateDescriptorSet(context, 2, imageInfo, descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
         }
 
         for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
@@ -464,6 +494,26 @@ void ForwardPass::BuildDescriptors() {
             bufferInfo.offset = 0;
             bufferInfo.range = sizeof(vkutil::SHCoefficients);
             vkutil::UpdateDescriptorSet(context, 4, bufferInfo, descriptorSets[i], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+        }
+
+        for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+            VkDescriptorImageInfo imageInfo = {
+                .sampler = vkutil::clampToEdgeSamplerAniso,
+                .imageView = PrefilteredSkybox->GetPrefilteredSkybox().imageView,
+                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+            };
+
+            vkutil::UpdateDescriptorSet(context, 5, imageInfo, descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+        }
+
+        for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+            VkDescriptorImageInfo imageInfo = {
+                .sampler = vkutil::clampToEdgeSamplerAniso,
+                .imageView = PrefilteredSkybox->GetBRDFLut().imageView,
+                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+            };
+
+            vkutil::UpdateDescriptorSet(context, 6, imageInfo, descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
         }
     }
 }

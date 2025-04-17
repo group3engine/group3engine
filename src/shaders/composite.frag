@@ -122,8 +122,8 @@ void main()
 
     // FoggedScene is now just "lighting".
     // With fog = 0, its just the scene.
-	vec3 hdrColor = vec3(compositeFog + ssr) * ssao;
-    hdrColor = hdrColor + bloom.rgb;
+	vec3 hdrColor = vec3(compositeFog) * ssao;
+    hdrColor = hdrColor;
 	//vec3 ldrColor = hdrColor / (hdrColor + vec3(1.0));
 
     vec3 ldrColor = ACESFilm(hdrColor);
