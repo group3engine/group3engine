@@ -340,4 +340,5 @@ void Entity::SetParentTransform(glm::mat4 aParentTransform)  {
     mParentTransform = aParentTransform;
     UpdateWorldTransform();
     UpdateChildrenTransform();
+    SetPhysicsTransform();
 }
