@@ -85,7 +85,7 @@ void CharacterEntity::ProcessInput(){
             if (controlInput != glm::vec3(0.f))
                 controlInput = glm::normalize(controlInput);
             if (abs(GetGamepadAxis(GAMEPAD_AXIS::eLEFT_Y)) > 0.1f)
-                controlInput.z = -GetGamepadAxis(GAMEPAD_AXIS::eLEFT_Y);
+                controlInput.x = -GetGamepadAxis(GAMEPAD_AXIS::eLEFT_Y);
             if (abs(GetGamepadAxis(GAMEPAD_AXIS::eLEFT_X)) > 0.1f)
                 controlInput.z = GetGamepadAxis(GAMEPAD_AXIS::eLEFT_X);
 
