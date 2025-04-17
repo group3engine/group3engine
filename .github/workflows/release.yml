@@ -30,12 +30,12 @@ jobs:
           cmake --install build --prefix install
       - name: Zip
         run: |
-          Compress-Archive -Path install -DestinationPath release.zip
+          Compress-Archive -Path install -DestinationPath release_linux.zip
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "latest"
+          automatic_release_tag: "latest_linux"
           prerelease: true
           files: |
             release_linux.zip
