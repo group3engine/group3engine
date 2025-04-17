@@ -21,6 +21,11 @@ jobs:
 
       - uses: seanmiddleditch/gha-setup-ninja@master
 
+
+      - name: Install X11
+        run: sudo apt-get update && sudo apt-get install libx11-dev
+
+
       - name: Build
         env:
           TARGET_PLATFORM: windows
