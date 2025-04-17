@@ -1,4 +1,4 @@
-name: Build and Release
+name: Build and Release linux
 
 on:
   push:
@@ -22,8 +22,8 @@ jobs:
       - uses: seanmiddleditch/gha-setup-ninja@master
 
 
-      - name: Install X11
-        run: sudo apt-get update && sudo apt-get install libx11-dev libxrandr-dev
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install libx11-dev libxrandr-dev  libxinerama-dev
 
 
       - name: Build
