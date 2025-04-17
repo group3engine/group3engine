@@ -10,10 +10,11 @@ permissions:
 
 jobs:
   build_windows:
-    name: Build Linux
-    runs-on: ubuntu-latest
+    name: Build Windows
+    runs-on: windows-latest
 
     steps:
+      - uses: ilammy/msvc-dev-cmd@v1
 
       - uses: actions/checkout@v4
         with:
@@ -38,4 +39,4 @@ jobs:
           automatic_release_tag: "latest"
           prerelease: true
           files: |
-            release_linux.zip
+            release_win.zip
