@@ -35,7 +35,7 @@ jobs:
           cmake --install build --prefix install
       - name: Zip
         run: |
-          Compress-Archive -Path install -DestinationPath release_linux.zip
+          zip -r release_linux.zip install
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
