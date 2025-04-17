@@ -44,4 +44,4 @@ jobs:
           prerelease: true
           title: "AUTO RELEASE Windows: ${{ steps.current_datetime.outputs.datetime }}"
           files: |
-            release_win.zip
+            release_windows.zip
