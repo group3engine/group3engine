@@ -45,5 +45,5 @@ jobs:
         with:
           prerelease: true
           name: "AUTO RELEASE Windows: ${{ env.NOW }}"
-          tag_name: "${{ env.NOW }}"
+          tag_name: "release-windows-${{ env.NOW }}"
           files: release_windows.zip

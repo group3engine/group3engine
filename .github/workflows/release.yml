@@ -44,5 +44,5 @@ jobs:
         with:
           prerelease: true
           name: "AUTO RELEASE Linux: ${{ env.NOW }}"
-          tag_name: "${{ env.NOW }}"
+          tag_name: "release-linux-${{ env.NOW }}"
           files: release_linux.zip
