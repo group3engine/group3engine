@@ -11,7 +11,7 @@ permissions:
 jobs:
   build_windows:
     name: Build Linux
-    runs-on: ubuntu-latest
+    runs-on: ubuntu:20.04
 
     steps:
 
@@ -23,12 +23,12 @@ jobs:
 
 
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install libx11-dev libxrandr-dev  libxinerama-dev libxcursor-dev xorg-dev
+        run: sudo apt-get update && sudo apt-get install libx11-dev libxrandr-dev  libxinerama-dev libxcursor-dev xorg-dev -y
 
 
       - name: Build
         env:
-          TARGET_PLATFORM: windows
+          TARGET_PLATFORM: linux
         run: |
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Platinum -S . -B build
           cmake --build build -j
