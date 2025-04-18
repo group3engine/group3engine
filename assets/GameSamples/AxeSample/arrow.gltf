@@ -31,16 +31,20 @@
 		{
 			"extras":{
 				"dropdown_items":"swing_axe, swing_axe_hinge, character, arrow, default",
-				"entity_dropdown":1,
-				"physics_dropdown":0,
-				"sensor_checkbox":0,
+				"entity_dropdown":0,
+				"physics_dropdown":1,
+				"sensor_checkbox":1,
 				"solid_checkbox":0,
 				"invisible_checkbox":0,
 				"new_dropdown_item":"",
 				"new_tag":"",
 				"export_file_path":"/home/wet-dog/repos/group3engine/assets/GameSamples/AxeSample/arrow.gltf",
 				"print_3d":{},
-				"tags":[]
+				"tags":[
+					{
+						"tag":"deathzone"
+					}
+				]
 			},
 			"name":"Scene",
 			"nodes":[
@@ -6168,7 +6172,8 @@
 				"physics_type":"kinematic",
 				"is_sensor":true,
 				"is_solid":false,
-				"is_invisible":false
+				"is_invisible":false,
+				"tags":"deathzone"
 			},
 			"mesh":16,
 			"name":"PendulumBlade"
