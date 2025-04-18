@@ -163,7 +163,7 @@ class Entity {
     /// called after the last frame of a collision
     virtual void OnCollisionEnd(Entity *aOther)
     {
-        SPDLOG_INFO("I am {} and I am no longer colliding with {}", GetName(), aOther->GetName());
+        // SPDLOG_INFO("I am {} and I am no longer colliding with {}", GetName(), aOther->GetName());
     }
 
     /// called for each entity just before update has been called per entity

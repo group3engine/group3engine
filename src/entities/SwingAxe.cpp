@@ -2,68 +2,50 @@
 
 #include <Jolt/Physics/Body/BodyLockMulti.h>
 
-#include "Scene.hpp"
-#include "SwingAxeHinge.hpp"
-
 void SwingAxe::InitPhysics() {
     GetRigidBody().Init(PhysicsManager::get(), true);
 
     PhysicsManager::get().RegisterEntity(this, GetRigidBody().mBodyId);
 
-    // Get body of swing axe hinge
-    SwingAxeHinge *swingAxeHinge = nullptr;
-
-    // See Jolt pendulum example:
-    // https://github.com/wedesoft/jolttest/blob/main/pendulum.cc#L278
-
-    // Find swing axe hinge entity
-    auto &entities = GetScene()->GetEntities();
-    for (auto *entity : entities) {
-        if (entity->CompareType("swing_axe_hinge")) {
-            SPDLOG_INFO("Found swing axe hinge");
-            swingAxeHinge = static_cast<SwingAxeHinge*>(entity);
-        }
-    }
-
-    JPH::PhysicsSystem &physicsSystem = PhysicsManager::get().mPhysicsSystem;
-    const JPH::BodyLockInterface &lockInterface = physicsSystem.GetBodyLockInterface();
-
-    JPH::BodyID hingeBodyId = swingAxeHinge->GetRigidBody().mBodyId;
-    JPH::BodyID axeBodyId = GetRigidBody().mBodyId;
-    std::vector<JPH::BodyID> bodyIds = {hingeBodyId, axeBodyId};
+    mAngleStart = M_PI / 2;
+    // Control how fast the pendulum swings
+    mPendulumLength = 1.0f;
+    // Pendulum mass does not matter in this simulation, mass cancels out
+    mPendulumMass = 1.0f;
+    mInertia = mPendulumMass * mPendulumLength*mPendulumLength;
+    mAngularSpeed = 0.0f;
 
     // Scoped lock
     {
-        JPH::BodyLockMultiWrite lock(lockInterface, bodyIds.data(), bodyIds.size());
+        JPH::BodyLockWrite lock(mLockInterface, GetRigidBody().mBodyId);
 
-        JPH::Body *hingeBody = lock.GetBody(0);
-        JPH::Body *axeBody = lock.GetBody(1);
+        JPH::Body &axeBody = lock.GetBody();
 
         // Swing on axis of swing axe body
-        Vec3 axisX = (axeBody->GetWorldTransform().GetAxisX()).Normalized();
-        Vec3 axisY = (axeBody->GetWorldTransform().GetAxisY()).Normalized();
-        Vec3 axisZ = (axeBody->GetWorldTransform().GetAxisZ()).Normalized();
+        mAxisX = axeBody.GetWorldTransform().GetAxisX().Normalized();
+        mAxisY = axeBody.GetWorldTransform().GetAxisY().Normalized();
+        mAxisZ = axeBody.GetWorldTransform().GetAxisZ().Normalized();
 
-        JPH::HingeConstraintSettings hinge;
-        hinge.mSpace = EConstraintSpace::WorldSpace;
-        hinge.mPoint1 = hinge.mPoint2 = hingeBody->GetPosition();
-        hinge.mHingeAxis1 = hinge.mHingeAxis2 = axisY;
-        hinge.mNormalAxis1 = hinge.mNormalAxis2 = axisX;
-
-        mConstraint = static_cast<JPH::HingeConstraint*>(hinge.Create(*hingeBody, *axeBody));
-        mConstraint->SetMotorState(EMotorState::Velocity);
-        mConstraint->SetTargetAngularVelocity(DegreesToRadians(100));
-
-        physicsSystem.AddConstraint(mConstraint);
+        JPH::Quat rotation = Quat::sRotation(mAxisX, mAngleStart);
+        JPH::Quat newRotation = rotation * axeBody.GetRotation();
+        GetRigidBody().SetRotationJolt(newRotation.Normalized());
     }
 }
 
 void SwingAxe::Update(double deltaTime) {
-    float angle = mConstraint->GetCurrentAngle();
-    SPDLOG_INFO("angle {}", angle);
-    if (angle <= -JPH_PI / 4.0f) {
-        mConstraint->SetTargetAngularVelocity(-mConstraint->GetTargetAngularVelocity());
-        SPDLOG_INFO("Reverse");
+    JPH::Vec3 gravity = mPhysicsSystem.GetGravity();
+
+    JPH::Vec3 pendulumUp;
+    {
+        JPH::BodyLockRead lock(mLockInterface, GetRigidBody().mBodyId);
+        pendulumUp = (lock.GetBody().GetWorldTransform().GetAxisY()).Normalized();
     }
-    swingTime += deltaTime;
+
+    JPH::Vec3 torque = pendulumUp.Cross(mPendulumMass * -gravity) * deltaTime;
+
+    mAngularSpeed += torque.GetX() / mInertia * deltaTime;
+
+    JPH::Quat rotation = Quat::sRotation(mAxisX, mAngularSpeed);
+    JPH::Quat newRotation = rotation * GetRigidBody().GetRotation();
+    GetRigidBody().SetRotationJolt(newRotation.Normalized());
 }
