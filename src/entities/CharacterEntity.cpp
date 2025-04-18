@@ -112,14 +112,14 @@ void CharacterEntity::ProcessInput(){
 
             // Check actions
             jump = IsKeyPressed(KEY::eSPACE) || IsGamepadButtonPressed(GAMEPAD_BUTTON::eA);
-            if (IsKeyPressed(KEY::eF)) {
+            if (IsKeyPressed(KEY::eF) && !mInClimb) {
                 // for each child, if there is an animator, call set animation
-                for (auto &child: GetChildren()) {
-                    if (child->HasAnimator()) {
-                        child->GetAnimator().SetActiveAnimation("dance", 0.1, true, true);
-                        child->GetAnimator().SetTimeScale(1.f);
-                    }
-                }
+                mIsEmoting = true;
+            }
+            if ((IsKeyPressed(KEY::eC) ||
+                IsGamepadButtonPressed(GAMEPAD_BUTTON::eRIGHT_THUMB) ||
+                IsGamepadButtonPressed(GAMEPAD_BUTTON::eB) || IsKeyPressed(KEY::eLEFT_CONTROL)) && !mInClimb) {
+                mIsCrouching = !mIsCrouching;
             }
         }
     }
@@ -233,7 +233,7 @@ void CharacterEntity::Update(double deltaTime) {
     bool playWholeAnimation = false;
     if(glm::length(characterVelocity) > 0.4f) {
         activeAnimation = "running";
-        timeScale = min(glm::length(characterVelocity) / 5.5f, 2.f);
+        timeScale = min(glm::length(characterVelocity) / 15.5f, 2.f);
     }
     // spdlog the current jump state
     switch (mSampleJoltCharacter->GetJumpState()) {
@@ -268,6 +268,30 @@ void CharacterEntity::Update(double deltaTime) {
         blend = 0.1f;
         playWholeAnimation = false;
     }
+
+    // if we aren't idling, then we can't be crouching or emoting
+    if(activeAnimation != "idle")
+    {
+        mIsCrouching = false;
+        mIsEmoting = false;
+    }
+    // if we are emoting, set the animation to emote
+    if(mIsEmoting)
+    {
+        activeAnimation = "dance";
+        timeScale = 1.0f;
+        blend = 0.5f;
+        playWholeAnimation = false;
+    }
+    // if we are crouching, set the animation to crouch
+    if(mIsCrouching)
+    {
+        activeAnimation = "crouch";
+        timeScale = 1.0f;
+        blend = 0.1f;
+        playWholeAnimation = false;
+    }
+
     // for each child, if there is an animator, call set animation
     for (auto &child : GetChildren()) {
             if (child->HasAnimator()) {
