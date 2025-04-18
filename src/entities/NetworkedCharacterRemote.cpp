@@ -37,6 +37,7 @@ void NetworkedCharacterRemote::LateUpdate(double deltaTime) {
     Vec3 characterVelocityJolt = mSampleJoltCharacter->GetCharacterVelocity();
     glm::vec3 characterVelocity = glm::vec3(characterVelocityJolt.GetX(), characterVelocityJolt.GetY(), characterVelocityJolt.GetZ());
     // set the character to face the direction of the velocity without the y component
+    float characterYSpeed = characterVelocity.y;
     characterVelocity.y = 0;
     // work out the active animation, and the time scale
     float timeScale = 1.0f;
@@ -65,6 +66,38 @@ void NetworkedCharacterRemote::LateUpdate(double deltaTime) {
         case EJumpState::None:
             break;
     }
+    // if the character is climbing, set the animation to climb
+    if(mInClimb)
+    {
+        activeAnimation = "climb";
+        timeScale = characterYSpeed;
+        blend = 0.1f;
+        playWholeAnimation = false;
+    }
+
+    // if we aren't idling, then we can't be crouching or emoting
+    if(activeAnimation != "idle")
+    {
+        mIsCrouching = false;
+        mIsEmoting = false;
+    }
+    // if we are emoting, set the animation to emote
+    if(mIsEmoting)
+    {
+        activeAnimation = "dance";
+        timeScale = 1.0f;
+        blend = 0.5f;
+        playWholeAnimation = false;
+    }
+    // if we are crouching, set the animation to crouch
+    if(mIsCrouching)
+    {
+        activeAnimation = "crouch";
+        timeScale = 1.0f;
+        blend = 0.1f;
+        playWholeAnimation = false;
+    }
+
     // for each child, if there is an animator, call set animation
     for (auto &child : GetChildren()) {
         if (child->HasAnimator()) {
@@ -106,6 +139,9 @@ void NetworkedCharacterRemote::UpdateState(State state)
     newTransform.rotation = glm::normalize(state.rotation);
     SetTransform(newTransform);
     mSampleJoltCharacter->SetCharacterVelocity(RVec3(state.velocity.x, state.velocity.y, state.velocity.z));
+    mIsCrouching = state.isCrouching;
+    mIsEmoting = state.isEmoting;
+    mInClimb = state.isInClimb;
 }
 
 

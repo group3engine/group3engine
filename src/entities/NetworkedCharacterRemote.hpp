@@ -12,6 +12,9 @@ struct State
     glm::vec3 position;
     glm::vec3 velocity;
     glm::quat rotation;
+    bool isCrouching = false;
+    bool isEmoting = false;
+    bool isInClimb = false;
 };
 
 class NetworkedCharacterRemote : public Entity {
@@ -50,6 +53,11 @@ public:
 
 
     std::unique_ptr<SampleJoltCharacter> mSampleJoltCharacter;
+
+private:
+    bool mIsCrouching = false;
+    bool mIsEmoting = false;
+    bool mInClimb = false;
 
 };
 

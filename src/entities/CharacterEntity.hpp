@@ -125,16 +125,17 @@ class CharacterEntity : public Entity {
 
     std::stack<InternalEvent> mInternalEvents;
     std::stack<InternalUiEvent> mInternalUiEvents;
+    bool mInClimb = false;
+    bool mIsCrouching = false;
+    bool mIsEmoting = false;
 
   private:
     bool m_has_save = false;
 
-    bool mInClimb = false;
     bool mLeftClimb = false;
     bool mEnterClimb = false;
 
-    bool mIsCrouching = false;
-    bool mIsEmoting = false;
+
 
     glm::vec3 mClimbDirection = glm::vec3(0.f, 0.f, 0.f);
 };
