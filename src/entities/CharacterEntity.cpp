@@ -123,6 +123,10 @@ void CharacterEntity::ProcessInput(){
             }
         }
     }
+    if(mIsCrouching)
+    {
+        controlInput *= 0.25f;
+    }
     mSampleJoltCharacter->ProcessInput(controlInput, jump, mInClimb);
 }
 
@@ -233,7 +237,7 @@ void CharacterEntity::Update(double deltaTime) {
     bool playWholeAnimation = false;
     if(glm::length(characterVelocity) > 0.4f) {
         activeAnimation = "running";
-        timeScale = min(glm::length(characterVelocity) / 15.5f, 2.f);
+        timeScale = min(glm::length(characterVelocity) / 10.5f, 2.f);
     }
     // spdlog the current jump state
     switch (mSampleJoltCharacter->GetJumpState()) {
@@ -267,12 +271,13 @@ void CharacterEntity::Update(double deltaTime) {
         timeScale = characterYSpeed;
         blend = 0.1f;
         playWholeAnimation = false;
+        // we can't crouch if we are climbing
+        mIsCrouching = false;
     }
 
     // if we aren't idling, then we can't be crouching or emoting
     if(activeAnimation != "idle")
     {
-        mIsCrouching = false;
         mIsEmoting = false;
     }
     // if we are emoting, set the animation to emote
@@ -284,12 +289,13 @@ void CharacterEntity::Update(double deltaTime) {
         playWholeAnimation = false;
     }
     // if we are crouching, set the animation to crouch
-    if(mIsCrouching)
-    {
-        activeAnimation = "crouch";
-        timeScale = 1.0f;
-        blend = 0.1f;
-        playWholeAnimation = false;
+    if(mIsCrouching) {
+        if(activeAnimation == "running" || activeAnimation == "idle")
+            activeAnimation = activeAnimation + "_crouch";
+        if(activeAnimation == "running_crouch")
+        {
+            timeScale = 10.0f * timeScale;
+        }
     }
 
     // for each child, if there is an animator, call set animation

@@ -90,12 +90,13 @@ void NetworkedCharacterRemote::LateUpdate(double deltaTime) {
         playWholeAnimation = false;
     }
     // if we are crouching, set the animation to crouch
-    if(mIsCrouching)
-    {
-        activeAnimation = "crouch";
-        timeScale = 1.0f;
-        blend = 0.1f;
-        playWholeAnimation = false;
+    if(mIsCrouching) {
+        if(activeAnimation == "running" || activeAnimation == "idle")
+            activeAnimation = activeAnimation + "_crouch";
+        if(activeAnimation == "running_crouch")
+        {
+            timeScale = 10.0f * timeScale;
+        }
     }
 
     // for each child, if there is an animator, call set animation
