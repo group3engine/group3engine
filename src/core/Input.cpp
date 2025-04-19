@@ -48,22 +48,22 @@ bool IsKeyReleased(KEY key) {
 }
 
 // get an axis value from the gamepad
-float GetGamepadAxis(GAMEPAD_AXIS axis) {
+float GetGamepadAxis(GAMEPAD_AXIS axis, int gamepad) {
     // only return the axis value if it isn't almost zero
-    if (std::abs(gInputData.gamepadAxis.currentAxisState[static_cast<uint8_t>(axis)]) < 0.1f) {
+    if (std::abs(gInputData.gamepadAxis[gamepad].currentAxisState[static_cast<uint8_t>(axis)]) < 0.1f) {
         return 0.0f;
     }
-    return gInputData.gamepadAxis.currentAxisState[static_cast<uint8_t>(axis)];
+    return gInputData.gamepadAxis[gamepad].currentAxisState[static_cast<uint8_t>(axis)];
 }
 
 // Check if a gamepad button has been pressed once
-bool IsGamepadButtonPressed(GAMEPAD_BUTTON button) {
-    return gInputData.gamepadButtons.currentButtonState[static_cast<uint8_t>(button)] == 1 &&
-           gInputData.gamepadButtons.previousButtonState[static_cast<uint8_t>(button)] == 0;
+bool IsGamepadButtonPressed(GAMEPAD_BUTTON button, int gamepad) {
+    return gInputData.gamepadButtons[gamepad].currentButtonState[static_cast<uint8_t>(button)] == 1 &&
+           gInputData.gamepadButtons[gamepad].previousButtonState[static_cast<uint8_t>(button)] == 0;
 }
 
-bool IsGamepadButtonDown(GAMEPAD_BUTTON button) {
-    return gInputData.gamepadButtons.currentButtonState[static_cast<uint8_t>(button)] == 1;
+bool IsGamepadButtonDown(GAMEPAD_BUTTON button, int gamepad) {
+    return gInputData.gamepadButtons[gamepad].currentButtonState[static_cast<uint8_t>(button)] == 1;
 }
 
 

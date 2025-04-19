@@ -98,6 +98,8 @@ class CharacterEntity : public Entity {
     void Save();
     void Load();
 
+    void RegisterControls();
+
   protected:
     Camera *mCamera = nullptr;
     std::unique_ptr<SampleJoltCharacter> mSampleJoltCharacter;
@@ -134,6 +136,8 @@ class CharacterEntity : public Entity {
 
     bool mLeftClimb = false;
     bool mEnterClimb = false;
+
+    std::string playerName{};
 
 
 

@@ -15,6 +15,7 @@
 #include "RenderPassCommon.hpp"
 #include "SampleGLTFFilePaths.hpp"
 #include "Scene.hpp"
+#include "InputMapping.hpp"
 
 namespace {
     std::filesystem::path BuildSaveFilename() {
@@ -74,20 +75,28 @@ void CharacterEntity::ProcessInput(){
     if(mDeathState == DeathState::eLiving) {
         if (mCamera->isInFollowCharacterMode()) {
             // Determine controller input
-            if (IsKeyDown(KEY::eA))
+            if (InputMapping::get().GetValueDown(playerName + "_LEFT") > 0)
                 controlInput.z = -1;
-            if (IsKeyDown(KEY::eD))
+            if (InputMapping::get().GetValueDown(playerName + "_RIGHT") > 0)
                 controlInput.z = 1;
-            if (IsKeyDown(KEY::eW))
+            if (InputMapping::get().GetValueDown(playerName + "_FORWARD") > 0)
                 controlInput.x = 1;
-            if (IsKeyDown(KEY::eS))
+            if (InputMapping::get().GetValueDown(playerName + "_BACKWARD") > 0)
                 controlInput.x = -1;
+            // make sure the magintude of controlInput.xz is either 0 or 1
+            if (controlInput.x != 0.f && controlInput.z != 0.f) {
+                // they are 1 / sqrt(2) * sign
+                controlInput.x = controlInput.x > 0.f ? 1.f / sqrt(2.f) : -1.f / sqrt(2.f);
+                controlInput.z = controlInput.z > 0.f ? 1.f / sqrt(2.f) : -1.f / sqrt(2.f);
+            }
             if (controlInput != glm::vec3(0.f))
                 controlInput = glm::normalize(controlInput);
-            if (abs(GetGamepadAxis(GAMEPAD_AXIS::eLEFT_Y)) > 0.1f)
-                controlInput.x = -GetGamepadAxis(GAMEPAD_AXIS::eLEFT_Y);
-            if (abs(GetGamepadAxis(GAMEPAD_AXIS::eLEFT_X)) > 0.1f)
-                controlInput.z = GetGamepadAxis(GAMEPAD_AXIS::eLEFT_X);
+            float gamepadAxisForwards = InputMapping::get().GetValueDown(playerName + "_FORWARD_BACKWARD");
+            if (abs(gamepadAxisForwards) > 0.1f)
+                controlInput.x = -gamepadAxisForwards;
+            float gamepadAxisLeftRight = InputMapping::get().GetValueDown(playerName + "_LEFT_RIGHT");
+            if (abs(gamepadAxisLeftRight) > 0.1f)
+                controlInput.z = gamepadAxisLeftRight;
 
             // Rotate controls to align with the camera
             auto cameraForward = mCamera->GetDirection();
@@ -111,14 +120,11 @@ void CharacterEntity::ProcessInput(){
             controlInput = rotation * controlInput;
 
             // Check actions
-            jump = IsKeyPressed(KEY::eSPACE) || IsGamepadButtonPressed(GAMEPAD_BUTTON::eA);
-            if (IsKeyPressed(KEY::eF) && !mInClimb) {
-                // for each child, if there is an animator, call set animation
+            jump = InputMapping::get().GetValuePressed(playerName + "_JUMP") > 0;
+            if ((InputMapping::get().GetValuePressed(playerName + "_EMOTE") > 0) && !mInClimb) {
                 mIsEmoting = true;
             }
-            if ((IsKeyPressed(KEY::eC) ||
-                IsGamepadButtonPressed(GAMEPAD_BUTTON::eRIGHT_THUMB) ||
-                IsGamepadButtonPressed(GAMEPAD_BUTTON::eB) || IsKeyPressed(KEY::eLEFT_CONTROL)) && !mInClimb) {
+            if ((InputMapping::get().GetValuePressed(playerName + "_CROUCH") > 0) && !mInClimb) {
                 mIsCrouching = !mIsCrouching;
             }
         }
@@ -386,6 +392,7 @@ CharacterEntity::CharacterEntity() {
     SetAsCharacter();
     Load();
     mType = "character";
+    RegisterControls();
 }
 void CharacterEntity::OnCollisionStart(Entity *aOther) {
 
@@ -617,4 +624,26 @@ void CharacterEntity::OnCollisionStay(Entity *aOther)
             mClimbDirection = glm::normalize(mClimbDirection);
         }
     }
+}
+
+void CharacterEntity::RegisterControls()
+{
+    playerName = "Player" + std::to_string(mPlayerId);
+    // Register controls for the player
+    InputMapping::get().AddKeyBinding(playerName + "_FORWARD", static_cast<int>(KEY::eW));
+    InputMapping::get().AddKeyBinding(playerName + "_BACKWARD", static_cast<int>(KEY::eS));
+    InputMapping::get().AddGamepadAxisBinding(playerName + "_FORWARD_BACKWARD", static_cast<int>(GAMEPAD_AXIS::eLEFT_Y), 0);
+    InputMapping::get().AddKeyBinding(playerName + "_LEFT", static_cast<int>(KEY::eA));
+    InputMapping::get().AddKeyBinding(playerName + "_RIGHT", static_cast<int>(KEY::eD));
+    InputMapping::get().AddGamepadAxisBinding(playerName + "_LEFT_RIGHT", static_cast<int>(GAMEPAD_AXIS::eLEFT_X), 0);
+    InputMapping::get().AddKeyBinding(playerName + "_JUMP", static_cast<int>(KEY::eSPACE));
+    InputMapping::get().AddGamepadButtonBinding(playerName + "_JUMP", static_cast<int>(GAMEPAD_BUTTON::eX), 0);
+    InputMapping::get().AddKeyBinding(playerName + "_CROUCH", static_cast<int>(KEY::eC));
+    InputMapping::get().AddKeyBinding(playerName + "_CROUCH", static_cast<int>(KEY::eLEFT_CONTROL));
+    InputMapping::get().AddGamepadButtonBinding(playerName + "_CROUCH", static_cast<int>(GAMEPAD_BUTTON::eB), 0);
+    InputMapping::get().AddGamepadButtonBinding(playerName + "_CROUCH", static_cast<int>(GAMEPAD_BUTTON::eRIGHT_THUMB), 0);
+    InputMapping::get().AddKeyBinding(playerName + "_EMOTE", static_cast<int>(KEY::eF));
+    InputMapping::get().AddGamepadButtonBinding(playerName + "_EMOTE", static_cast<int>(GAMEPAD_BUTTON::eDPAD_DOWN), 0);
+
+
 }
