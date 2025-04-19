@@ -2,6 +2,12 @@
 
 #include <Jolt/Physics/Body/BodyLockMulti.h>
 
+SwingAxe::SwingAxe() {
+    if (mExtraValues.contains("pendulum_length")) {
+        mPendulumLength = mExtraValues["pendulum_length"];
+    }
+}
+
 void SwingAxe::InitPhysics() {
     GetRigidBody().Init(PhysicsManager::get(), true);
 

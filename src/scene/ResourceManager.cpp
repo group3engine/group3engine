@@ -5,6 +5,7 @@
 #include "ResourceManager.hpp"
 
 #include <iostream>
+#include <span>
 #include <string>
 
 #define CGLTF_IMPLEMENTATION
@@ -21,6 +22,8 @@
 #include <glm/gtx/io.hpp>
 
 #include <spdlog/spdlog.h>
+
+#include <json.hpp>
 
 namespace ResourceLoader {
 
@@ -520,6 +523,15 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         Entity* entityPtr = CreateNewEntity(entityTypeName);
         aEntities.emplace_back(entityPtr);
         Entity &entity = *entityPtr;
+
+        if (gltfNode.extras.data && entityTypeName == "swing_axe") {
+            std::span<char> v{gltfNode.extras.data, strlen(gltfNode.extras.data)};
+            nlohmann::json json = nlohmann::json::parse(v);
+
+            if (json.contains("pendulum_length")) {
+                entity.AddExtraValue("pendulum_length", json["pendulum_length"]);
+            }
+        }
 
         if(physicsTypeName == "static")
         {

@@ -126,6 +126,10 @@ class Entity {
     /// Query if the entity has a tag
     [[nodiscard]] bool CompareTag (const std::string& aTag) const;
 
+    void AddExtraValue(const std::string &name, float value) {
+        mExtraValues[name] = value;
+    }
+
     /// Query if the entity is a sensor (has physics but does not collide with other entities)
     [[nodiscard]] bool IsSensor() const { return mIsSensor; }
 
@@ -242,7 +246,10 @@ class Entity {
 
     /// the Type of entity this is, overwrite in inherited classes
     std::string mType = "default";
-  private:
+
+    std::unordered_map<std::string, float> mExtraValues;
+
+    private:
 
     std::string mName{};
 
