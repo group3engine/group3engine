@@ -13,7 +13,7 @@
 
 
 void NetworkedCharacterRemote::ProcessInput(){
-    mSampleJoltCharacter->ProcessInput(glm::vec3(0), false, false);
+    mSampleJoltCharacter->ProcessInput(glm::vec3(0), false, mInClimb, mIsCrouching);
 }
 
 void NetworkedCharacterRemote::PrePhysicsUpdate() {

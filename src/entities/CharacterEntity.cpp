@@ -127,7 +127,7 @@ void CharacterEntity::ProcessInput(){
     {
         controlInput *= 0.25f;
     }
-    mSampleJoltCharacter->ProcessInput(controlInput, jump, mInClimb);
+    mSampleJoltCharacter->ProcessInput(controlInput, jump, mInClimb, mIsCrouching);
 }
 
 void CharacterEntity::PrePhysicsUpdate() {
