@@ -58,6 +58,7 @@ private:
     bool mIsCrouching = false;
     bool mIsEmoting = false;
     bool mInClimb = false;
+    bool mHasEverBeenGivenState = false;
 
 };
 

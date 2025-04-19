@@ -17,12 +17,16 @@ void NetworkedCharacterRemote::ProcessInput(){
 }
 
 void NetworkedCharacterRemote::PrePhysicsUpdate() {
+    if(!mHasEverBeenGivenState)
+        return;
     PreUpdateParams preUpdateParams{};
     preUpdateParams.mDeltaTime = GlobalUtil::deltaTime;
     mSampleJoltCharacter->PrePhysicsUpdate(preUpdateParams);
 }
 
 void NetworkedCharacterRemote::LateUpdate(double deltaTime) {
+    if(!mHasEverBeenGivenState)
+        return;
     // process the input
     ProcessInput();
     // pre physics update
@@ -143,6 +147,7 @@ void NetworkedCharacterRemote::UpdateState(State state)
     mIsCrouching = state.isCrouching;
     mIsEmoting = state.isEmoting;
     mInClimb = state.isInClimb;
+    mHasEverBeenGivenState = true;
 }
 
 
