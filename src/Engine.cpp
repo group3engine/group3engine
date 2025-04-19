@@ -316,8 +316,6 @@ void Engine::ChangeSceneFR(const std::filesystem::path &scenePath, size_t player
 
     mScene->Awake();
     m_progress = 100.f;
-    // sleep for 1 second
-    std::this_thread::sleep_for(std::chrono::seconds(1));
     // end the loading screen
     m_isLoading = false;
     // wait for loading screen thread to finish
@@ -436,12 +434,18 @@ void Engine::RenderLoadingScreen()
     {
         while (m_isLoading)
         {
+             float mTotalTime = glfwGetTime() - m_lastFrameTime;
+             float mProgress = m_progress;
+             mProgress += mTotalTime * 10.f;
+             mProgress = std::min(mProgress, m_progress + 25.f);
+             mProgress = std::min(mProgress, 99.f);
              ImGuiRenderer::NewFrame();
              ImGuiRenderer::Image("load", ImVec2{0,0}, ImVec2{1,1});
-             ImGuiRenderer::LoadingBar(m_progress, ImVec2(500, 500));
+             ImGuiRenderer::LoadingBar(mProgress, ImVec2(500, 500));
              ImGuiRenderer::EndFrame();
              // render some text with imgui
              mRenderer->RenderUIOnly();
+
         }
     }catch (const std::exception& e) {
         // Handle the exception
