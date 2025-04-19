@@ -221,7 +221,7 @@ Image LoadTextureFromDisk(std::filesystem::path path, Context &context, VkFormat
     return img;
 }
 
-Image CreateImageTexture2D(const std::string name, Context& context, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags imageaspectFlags, uint32_t mipLevels, VkImageCreateFlags flags, uint32_t arrayLayers) {
+Image CreateImageTexture2D(const std::string name, Context& context, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags imageaspectFlags, uint32_t mipLevels, VkImageCreateFlags flags, uint32_t arrayLayers, VkSampleCountFlagBits samples) {
 
     VkImageCreateInfo imageInfo{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
     imageInfo.flags = flags;
@@ -234,7 +234,7 @@ Image CreateImageTexture2D(const std::string name, Context& context, uint32_t wi
     imageInfo.format = format;
     imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
     imageInfo.usage = usage;
-    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.samples = samples;
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 

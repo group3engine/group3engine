@@ -22,12 +22,8 @@ layout(set = 0, binding = 0) uniform CameraUBO
 
 layout(set = 1, binding = 1) uniform SSRSettings
 {
-    int MaxSteps;
-    int BinarySearchIterations;
     float MaxDistance;
     float thickness;
-	float StepSize;
-	float time;
 }ssr;
 
 layout (set = 1, binding = 0) uniform sampler2D depthBuffer;
@@ -126,7 +122,7 @@ vec3 ScreenSpaceReflections()
         float depth = texelFetch(depthBuffer, ivec2(x, y), 0).x;
 
         // depth test to determine hit
-        float depthDiff = (z - 0.001) - depth;
+        float depthDiff = z - depth;
 
         if (depthDiff > 0.0 && depthDiff < ssr.thickness) {
 
@@ -151,15 +147,11 @@ vec3 ScreenSpaceReflections()
         }
     }
     // TODO: Sample cube map if no intersection
-    return vec3(sky);
+    return vec3(0,0,0);
 }
 
 void main()
 {
     float roughness = texture(normalRoughness, uv).a;
-
-    //fragColour = vec4((texture(normalRoughness, uv).rgb * 2.0 - 1.0), 1.0);
-    // fragColour = vec4(ScreenSpaceReflections().xyz, 1.0);
-    //fragColour = vec4(mix(ScreenSpaceReflections().xyz, (texture(normalRoughness, uv).rgb * 2.0 - 1.0) * 0.05, roughness), 1.0);
 	fragColour = vec4(mix(ScreenSpaceReflections().rgb, vec3(0), roughness), 1.0);
 }

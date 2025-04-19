@@ -453,7 +453,8 @@ void Context::CreateLogicalDevice() {
     std::vector<const char *> extensions{
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
         // In order to maintain synchronization between CPU and GPU time domain (Tracy)
-        VK_EXT_CALIBRATED_TIMESTAMPS_EXTENSION_NAME
+        VK_EXT_CALIBRATED_TIMESTAMPS_EXTENSION_NAME,
+        VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME
     };
 
     VkDeviceCreateInfo deviceInfo = {};

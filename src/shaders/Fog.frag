@@ -87,9 +87,9 @@ vec4 VolFog()
     vec3 LightColour = vec3(0.6, 0.75, 1.0); //  This is a sky like colour
     while(distTravelled < maxDistance)
     {
-        // vec3 currentPos = ubo.cameraPosition.xyz + RayDir * distTravelled;
-        // float visbility = isShadow(currentPos);
-        finalColour += LightColour * 1.0 * density * fog.StepSize /* * visbility */; // Removing visiblitiy for now since there is a issue with the camera causing flickering. Not sure why.
+        vec3 currentPos = ubo.cameraPosition.xyz + RayDir * distTravelled;
+        float visbility = isShadow(currentPos);
+        finalColour += LightColour * 1.0 * density * fog.StepSize * visbility; // Removing visiblitiy for now since there is a issue with the camera causing flickering. Not sure why.
         transmittance *= exp(-density * fog.StepSize);
         distTravelled += fog.StepSize;
     }

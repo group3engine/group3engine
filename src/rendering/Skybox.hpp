@@ -26,8 +26,6 @@ class Skybox {
     Context &context;
     Scene *m_Scene;
     Image m_Skybox;
-    Image m_PrefilteredSkybox;
-
     Image m_RenderTarget;
 
     VkPipeline m_Pipeline;

@@ -3,6 +3,7 @@
 #include <memory>
 #include "Image.hpp"
 #include <vector>
+#include "Buffer.hpp"
 
 class Context;
 class Scene;
@@ -42,4 +43,5 @@ class Composite {
 
     uint32_t m_width;
     uint32_t m_height;
+    std::vector<Buffer> m_PostProcessUniform;
 };

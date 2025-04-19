@@ -110,7 +110,7 @@ void main() {
     //vec2 texCoord = vec2(gid.xy) / vec2(imageSize(BRDFLutImage));
     vec2 texSize = vec2(imageSize(BRDFLutImage));
     vec2 texCoord = vec2(gid.x, texSize.y - float(gid.y) - 1.0) / texSize;
-
+    texCoord = clamp(texCoord, vec2(0.001), vec2(0.999));
     vec4 color = vec4(IntegrateBRDF(texCoord.x, texCoord.y), 0.0, 1.0);
     imageStore(BRDFLutImage, ivec2(gid.xy), color);
 }

@@ -125,7 +125,7 @@ void main()
 		float sinTangent = sin(tangentAngle);
 
         occlusion = clamp(attenuation * (sinHorizon - sinTangent), 0.0, 1.0);
-        ao += 1.0 - occlusion;
+        ao += 1.0 - occlusion * ssao.intensity;
     }
 
     ao *= invNumDirections;

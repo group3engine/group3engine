@@ -52,7 +52,9 @@ class ForwardPass {
     void BuildDescriptorSetLayouts();
     void BuildDescriptors();
 
-    Image m_RenderTarget;
+    Image m_RenderTarget; // Render 4x to this one
+    Image m_SingleSampleRenderTarget; // 1x render target
+
     Image m_DepthTarget;
     Image m_BrightnessTexture;
     Image m_NormalRoughness;
@@ -79,5 +81,7 @@ class ForwardPass {
     std::unique_ptr<Skybox> m_Skybox;
     std::unique_ptr<PrefilterSkybox> PrefilteredSkybox;
     std::unique_ptr<SH> m_SHPass;
+
+    VkSampleCountFlagBits MSAA_SAMPLES = VK_SAMPLE_COUNT_4_BIT;
 
 };

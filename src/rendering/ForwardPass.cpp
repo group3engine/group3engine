@@ -75,34 +75,7 @@ ForwardPass::ForwardPass(Context &context, const Image &shadowMap, Image &depthP
 
         m_SHPass->Execute(cmd);
         PrefilteredSkybox->Execute(cmd);
-
         PrefilteredSkybox->TransitionResources(cmd);
-
-        //ImageTransition(
-        //    cmd,
-        //    PrefilteredSkybox->GetPrefilteredSkybox().image,
-        //    VK_FORMAT_R16G16B16A16_SFLOAT,
-        //    VK_IMAGE_LAYOUT_GENERAL,
-        //    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-        //    VK_ACCESS_SHADER_WRITE_BIT,
-        //    VK_ACCESS_SHADER_READ_BIT,
-        //    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-        //    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-        //    VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 6}
-        //);
-
-        //ImageTransition(
-        //    cmd,
-        //    PrefilteredSkybox->GetBRDFLut().image,
-        //    VK_FORMAT_R16G16_SFLOAT,
-        //    VK_IMAGE_LAYOUT_GENERAL,
-        //    VK_IMAGE_LAYOUT_GENERAL,
-        //    VK_ACCESS_SHADER_WRITE_BIT,
-        //    VK_ACCESS_SHADER_READ_BIT,
-        //    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-        //    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
-        //);
-
     });
 
     BuildDescriptorSetLayouts();
@@ -116,6 +89,7 @@ ForwardPass::~ForwardPass() {
 
     m_Skybox.reset();
     m_SHPass.reset();
+    PrefilteredSkybox.reset();
     m_RenderTarget.Destroy(context.device);
     //m_DepthTarget.Destroy(context.device);
     m_NormalRoughness.Destroy(context.device);

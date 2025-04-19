@@ -88,9 +88,9 @@ vec3 Fresnel(vec3 halfVector, vec3 viewDir, vec3 baseColor, float metallic, floa
     vec3 F0 = vec3(0.04);
     F0 = (1 - metallic) * F0 + (metallic * baseColor);
     float HdotV = max(dot(halfVector, viewDir), 0.0);
-    //vec3 schlick_approx = F0 + (1 - F0) * pow(clamp(1 - HdotV, 0.0, 1.0), 5);
-    //return schlick_approx;
-    return FresnelSchlickWithRoughness(HdotV, F0, roughness);
+    vec3 schlick_approx = F0 + (1 - F0) * pow(clamp(1 - HdotV, 0.0, 1.0), 5);
+    return schlick_approx;
+    //return FresnelSchlickWithRoughness(HdotV, F0, roughness);
 }
 
 struct SHCoefficients {
@@ -220,22 +220,26 @@ vec3 CookTorranceBRDF(vec3 normal, vec3 halfVector, vec3 viewDir, vec3 lightDir,
     vec3 kd = (1.0 - F) * (1.0 - metallic);
     vec3 L_Diffuse = kd * (baseColor / PI);
 
-    float NdotV = max(dot(normal, viewDir), 0.001);
-	float NdotL = max(dot(normal, lightDir), 0.001);
+    float NdotV = max(dot(normal, viewDir), 0.0);
+	float NdotL = max(dot(normal, lightDir), 0.0);
 
 	vec3 numerator = D * G * F;
 	float denominator = (4 * NdotV * NdotL) + 0.001;
 	vec3 specular = numerator / denominator;
 
-    vec3 directLight = (L_Diffuse + specular) * LightColour.xyz * NdotL;
+    vec3 directLight = (kd * baseColor / PI + specular) * LightColour.xyz * NdotL;
 
+    vec3 F0 = vec3(0.04);
+    F0 = mix(F0, baseColor, metallic);
+    vec3 FR = FresnelSchlickWithRoughness(NdotV, F0, roughness);
     vec3 R = reflect(-viewDir, normal);
-    const float max_specular_mip_levels = 12.0;
+    const float max_specular_mip_levels = 11.0;
+
     vec3 prefilteredColour = textureLod(prefilteredSkybox, R, roughness * max_specular_mip_levels).rgb;
     vec2 envBRDF = texture(BRDFLUT, vec2(NdotV, roughness)).rg;
-    vec3 specularIBL = prefilteredColour * (F * envBRDF.x + envBRDF.y);
+    vec3 specularIBL = prefilteredColour * (FR * envBRDF.x + envBRDF.y);
 
-    vec3 diffuseIBL = kd * EvaluateSHForDiffuseIBL(normal) * baseColor;
+    vec3 diffuseIBL = kd * (EvaluateSHForDiffuseIBL(normal) * baseColor);
     vec3 indirectLight = diffuseIBL + specularIBL;
 
     float shadowTerm = 1.0 - PCF(WorldPos.xyz);
@@ -278,7 +282,6 @@ void main()
         vec3 halfVector = normalize(viewDir + lightDir);
 
         vec3 LightColour = lightData.lights[i].LightColour.rgb;
-
         vec3 brdf = CookTorranceBRDF(pixelNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour, WorldPos.xyz);
         outLight += brdf;
     }
@@ -299,6 +302,7 @@ void main()
 //    }
 
     // This is no longer needed since we now have IBL which is the "indirect"
+    // Keeping this here for reference
     // vec3 ambient = vec3(0.02) * color;
 
     fragColor = vec4(outLight, 1.0);

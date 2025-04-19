@@ -2,7 +2,7 @@ file(GLOB CPP_SOURCE_FILES "*.cpp" "*.hpp")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_executable(src ${CPP_SOURCE_FILES} "rendering/PrefilterSkybox.cpp")
+add_executable(src ${CPP_SOURCE_FILES} "rendering/PrefilterSkybox.cpp" "rendering/FXAA.cpp")
 
 add_subdirectory(core)
 add_subdirectory(physics)

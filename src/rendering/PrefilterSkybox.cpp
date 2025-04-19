@@ -133,18 +133,6 @@ PrefilterSkybox::PrefilterSkybox(Context &context, Image &skybox)
 
     vkutil::ExecuteSingleTimeCommands(context, [&](VkCommandBuffer cmd) {
 
-         //ImageTransition(
-         //   cmd,
-         //   m_PrefilteredSkybox.image,
-         //   VK_FORMAT_R16G16B16A16_SFLOAT,
-         //   VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-         //   VK_IMAGE_LAYOUT_GENERAL,
-         //   0,
-         //   VK_ACCESS_SHADER_WRITE_BIT,
-         //   VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-         //   VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
-         //);
-
          vkutil::ImageBarrier(
             cmd,
             m_PrefilteredSkybox.image,
@@ -189,6 +177,11 @@ PrefilterSkybox::~PrefilterSkybox()
     }
     vkDestroyPipeline(context.device, m_PrefilterSkyboxPipeline, nullptr);
     vkDestroyPipelineLayout(context.device, m_PrefilterSkyboxPipelineLayout, nullptr);
+
+    vkDestroyPipeline(context.device, m_brdfLUTPipeline, nullptr);
+    vkDestroyPipelineLayout(context.device, m_brdfLUTPipelineLayout, nullptr);
+    vkDestroyDescriptorSetLayout(context.device, m_PrefilterSkyboxDescriptorSetLayout, nullptr);
+    vkDestroyDescriptorSetLayout(context.device, m_brdfLUTDescriptorSetLayout, nullptr);
 }
 
 void PrefilterSkybox::Execute(VkCommandBuffer cmd)

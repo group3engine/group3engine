@@ -63,12 +63,8 @@ namespace vkutil {
 
     struct SSRSettings
     {
-        int MaxSteps;
-        int BinarySearchIterations;
         float MaxDistance;
         float thickness;
-        float StepSize;
-        float time;
     };
 
     struct alignas(16) FogSettings
@@ -79,10 +75,23 @@ namespace vkutil {
         int MaxSteps;
     };
 
+    struct FXAASettings
+    {
+        bool EnableFXAA;
+    };
+
     struct CascadeMatrices
     {
         glm::mat4 matrices[4];
         glm::vec4 cascadeSplits; // Store 4 splits as a vec4
+    };
+
+    struct PostProcessingSettings
+    {
+        float brightness;
+        float contrast;
+        float saturation;
+        int toneMap;
     };
 
     struct SHCoefficients {
@@ -91,8 +100,10 @@ namespace vkutil {
 
     inline PostProcessing postProcessSettings = {};
     inline SSAOSettings ssaoSettings = {6, 6, 1.4f, 0.003f, 1.5f};
-    inline SSRSettings ssrSettings = {20, 1, 1.0f, 0.001f, 0.001f};
+    inline SSRSettings ssrSettings = {3.0f, 0.001f};
     inline FogSettings fogSettings = { 1.0f, 0.1f, 0.1f, 1 };
+    inline FXAASettings fxaaSettings = {true};
+    inline PostProcessingSettings postProcessingSettings = {0.0f, 1.0f, 1.0f, 3};
     inline uint32_t setRenderingPipeline = 1;
     inline uint32_t setAlphaMakingPipeline = 2;
 

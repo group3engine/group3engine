@@ -55,4 +55,5 @@ class DepthPrepass {
 
     uint32_t m_width;
     uint32_t m_height;
+    VkSampleCountFlagBits MSAA_SAMPLES = VK_SAMPLE_COUNT_4_BIT;
 };
