@@ -126,8 +126,8 @@ class Entity {
     /// Query if the entity has a tag
     [[nodiscard]] bool CompareTag (const std::string& aTag) const;
 
-    void AddExtraValue(const std::string &name, float value) {
-        mExtraValues[name] = value;
+    void AddFloatProperty(const std::string &name, float value) {
+        mFloatProperties[name] = value;
     }
 
     /// Query if the entity is a sensor (has physics but does not collide with other entities)
@@ -231,6 +231,10 @@ class Entity {
     // TODO: Make friend class with Scene
     void SetScene(Scene *scene) { mScene = scene; }
 
+    void SetFloatProperties(std::unordered_map<std::string, float> &floatProperties) {
+        mFloatProperties = std::move(floatProperties);
+    }
+
   protected:
     Scene *GetScene() const { return mScene; }
 
@@ -247,7 +251,7 @@ class Entity {
     /// the Type of entity this is, overwrite in inherited classes
     std::string mType = "default";
 
-    std::unordered_map<std::string, float> mExtraValues;
+    std::unordered_map<std::string, float> mFloatProperties;
 
     private:
 
