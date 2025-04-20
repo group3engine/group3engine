@@ -7,8 +7,6 @@
 
 class SwingAxe : public Entity {
   public:
-    SwingAxe();
-
     void InitPhysics() override;
 
     // void Awake() override;
@@ -28,5 +26,7 @@ class SwingAxe : public Entity {
     float mPendulumMass = 0.0f;
     float mInertia = 0.0f;
     float mAngularSpeed = 0.0f;
+
+    std::string mType = "swing_axe";
 };
 #endif // GROUP3ENGINE_SWINGAXE_HPP

@@ -2,12 +2,6 @@
 
 #include <Jolt/Physics/Body/BodyLockMulti.h>
 
-SwingAxe::SwingAxe() {
-    if (mExtraValues.contains("pendulum_length")) {
-        mPendulumLength = mExtraValues["pendulum_length"];
-    }
-}
-
 void SwingAxe::InitPhysics() {
     GetRigidBody().Init(PhysicsManager::get(), true);
 
@@ -15,7 +9,9 @@ void SwingAxe::InitPhysics() {
 
     mAngleStart = M_PI / 2;
     // Control how fast the pendulum swings
-    mPendulumLength = 1.0f;
+    if (mFloatProperties.contains("pendulum_length")) {
+        mPendulumLength = mFloatProperties["pendulum_length"];
+    }
     // Pendulum mass does not matter in this simulation, mass cancels out
     mPendulumMass = 1.0f;
     mInertia = mPendulumMass * mPendulumLength*mPendulumLength;
