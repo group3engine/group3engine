@@ -119,7 +119,7 @@ static std::filesystem::path Laughing{"Sitting Laughing/laugh.gltf"};
 static std::filesystem::path Dust2{"Dust2/dust2.gltf"};
 static std::filesystem::path Dust2Laugh{"Dust2Laugh/Dust2Laugh.gltf"};
 static std::filesystem::path SampleObby{"Sample obby/obby.gltf"};
-static std::filesystem::path SampleObbyTestScene{"Sample obby/test_scene.gltf"};
+static std::filesystem::path SampleObbyTestScene{"Sample obby/testing/test_scene.gltf"};
 static std::filesystem::path FallGuys{"Fall guys/fall guys map.gltf"};
 static std::filesystem::path ArrowSample{"GameSamples/ArrowSample/arrow.gltf"};
 static std::filesystem::path AxeSample{"GameSamples/AxeSample/arrow.gltf"};
@@ -131,3 +131,5 @@ static std::filesystem::path SinkingSample{"GameSamples/SinkingPillars/sinking.g
 } // namespace Sample
 
 #endif // GROUP3ENGINE_SAMPLEGLTFFILEPATHS_HPP
+//[error] [RigidBody.cpp:30] Body ID invalid, the physics system has run out of
+//bodies.
