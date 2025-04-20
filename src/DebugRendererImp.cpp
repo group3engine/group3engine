@@ -25,76 +25,102 @@ namespace {
 
 DebugRendererImp::DebugRendererImp(Renderer *renderer, Scene *scene)
     : mRenderer(renderer), mScene(scene) {
+    mLineVertexBuffers.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
     mVertexBuffers.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
 
+    std::vector<VkDescriptorSetLayoutBinding> bindings = {
+        // CameraUBO (projection, view etc.)
+        vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)};
+
+    auto &context = mRenderer->GetContext();
+
+    mUboLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
+
+    for (size_t playerId = 0; playerId < GlobalConfig::maxPlayers; ++playerId) {
+        auto &descriptorSets = mDescriptorSets[playerId];
+
+        descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+        vkutil::AllocateDescriptorSets(context, context.descriptorPool, mUboLayout,
+                                        vkutil::MAX_FRAMES_IN_FLIGHT, descriptorSets);
+
+        // Camera UBO
+        for (size_t i = 0; i < std::size_t(vkutil::MAX_FRAMES_IN_FLIGHT); i++) {
+            VkDescriptorBufferInfo bufferInfo{};
+            bufferInfo.buffer = mScene->GetCameraBuffers(playerId)[i].buffer;
+            bufferInfo.offset = 0;
+            bufferInfo.range = sizeof(CameraTransform);
+            vkutil::UpdateDescriptorSet(context, 0, bufferInfo, descriptorSets[i],
+                                        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+        }
+    }
+
     // TODO: Fix vertex attribute description to work with Line struct
-    // {
-    //     std::vector<VkDescriptorSetLayoutBinding> bindings = {
-    //         // CameraUBO (projection, view etc.)
-    //         vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)};
+    {
+        VkVertexInputBindingDescription bindingDescription{
+            .binding = 0,
+            .stride = offsetof(Line, mTo),
+            .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+        };
 
-    //     auto &context = mRenderer->GetContext();
-    //     const auto *camera = mScene->GetActiveCamera();
+        std::vector<VkVertexInputAttributeDescription> attributeDescription = {
+            {
+                .location = 0,
+                .binding = 0,
+                .format = VK_FORMAT_R32G32B32_SFLOAT,
+                .offset = offsetof(Line, mFrom)
+            },
+            {
+                .location = 1,
+                .binding = 0,
+                .format = VK_FORMAT_R8G8B8A8_UNORM,
+                .offset = offsetof(Line, mFromColor)
+            }
+        };
 
-    //     mUboLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
-
-    //     vkutil::AllocateDescriptorSets(context, context.descriptorPool, mUboLayout, vkutil::MAX_FRAMES_IN_FLIGHT, mDescriptorSets);
-
-    //     // Camera UBO
-    //     for (size_t i = 0; i < std::size_t(vkutil::MAX_FRAMES_IN_FLIGHT); i++) {
-    //         VkDescriptorBufferInfo bufferInfo{};
-    //         bufferInfo.buffer = mScene->GetCameraBuffers(0)[i].buffer;
-    //         bufferInfo.offset = 0;
-    //         bufferInfo.range = sizeof(CameraTransform);
-    //         vkutil::UpdateDescriptorSet(context, 0, bufferInfo, mDescriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-    //     }
-
-    //     mLinePipeline = PipelineBuilder(mRenderer->GetContext().device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
-    //         .AddShader(LINE_VERTEX_SHADER, ShaderType::VERTEX)
-    //         .AddShader(LINE_FRAGMENT_SHADER, ShaderType::FRAGMENT)
-    //         .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_LINE_LIST)
-    //         .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}})
-    //         .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE)
-    //         .SetPipelineLayout({mUboLayout})
-    //         .SetSampling(VK_SAMPLE_COUNT_1_BIT)
-    //         .AddBlendAttachmentState()
-    //         .AddBlendAttachmentState()
-    //         .SetDepthState(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL)
-    //         .SetRenderPass(mRenderer->GetForwardPass()->Get())
-    //         .Build();
-    // }
+        mLinePipeline = PipelineBuilder(mRenderer->GetContext().device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
+            .AddShader(LINE_VERTEX_SHADER, ShaderType::VERTEX)
+            .AddShader(LINE_FRAGMENT_SHADER, ShaderType::FRAGMENT)
+            .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_LINE_LIST)
+            .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}})
+            .SetRasterizationState(VK_POLYGON_MODE_LINE, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE)
+            .SetPipelineLayout({mUboLayout})
+            .SetSampling(VK_SAMPLE_COUNT_1_BIT)
+            .AddBlendAttachmentState()
+            .AddBlendAttachmentState()
+            .AddBlendAttachmentState()
+            .SetDepthState(VK_TRUE, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL)
+            .SetRenderPass(mRenderer->GetForwardPass()->Get())
+            .OverrideBindingDescription(bindingDescription)
+            .OverrideAttributeDescription(attributeDescription)
+            .Build();
+    }
 
     // TODO: Update vertex attribute description to work with a Triangle struct.
     // The Vertex struct used elsewhere is larger than needed here.
     {
-        std::vector<VkDescriptorSetLayoutBinding> bindings = {
-            // CameraUBO (projection, view etc.)
-            vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)};
+        VkVertexInputBindingDescription bindingDescription{
+            .binding = 0,
+            .stride = sizeof(TriangleVertex),
+            .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+        };
 
-        auto &context = mRenderer->GetContext();
-
-        mUboLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
-
-        for (size_t playerId = 0; playerId < GlobalConfig::maxPlayers; ++playerId) {
-            auto &descriptorSets = mDescriptorSets[playerId];
-
-            descriptorSets.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
-            vkutil::AllocateDescriptorSets(context, context.descriptorPool, mUboLayout,
-                                           vkutil::MAX_FRAMES_IN_FLIGHT, descriptorSets);
-
-            // Camera UBO
-            for (size_t i = 0; i < std::size_t(vkutil::MAX_FRAMES_IN_FLIGHT); i++) {
-                VkDescriptorBufferInfo bufferInfo{};
-                bufferInfo.buffer = mScene->GetCameraBuffers(playerId)[i].buffer;
-                bufferInfo.offset = 0;
-                bufferInfo.range = sizeof(CameraTransform);
-                vkutil::UpdateDescriptorSet(context, 0, bufferInfo, descriptorSets[i],
-                                            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+        std::vector<VkVertexInputAttributeDescription> attributeDescription = {
+            {
+                .location = 0,
+                .binding = 0,
+                .format = VK_FORMAT_R32G32B32_SFLOAT,
+                .offset = offsetof(TriangleVertex, pos)
+            },
+            {
+                .location = 1,
+                .binding = 0,
+                .format = VK_FORMAT_R8G8B8A8_UNORM,
+                .offset = offsetof(TriangleVertex, color)
             }
-        }
+        };
 
         // NOTE: Wireframe triangles
-        mLinePipeline = PipelineBuilder(mRenderer->GetContext().device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
+        mTrianglePipeline = PipelineBuilder(mRenderer->GetContext().device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
             .AddShader(TRIANGLE_VERTEX_SHADER, ShaderType::VERTEX)
             .AddShader(TRIANGLE_FRAGMENT_SHADER, ShaderType::FRAGMENT)
             .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
@@ -105,8 +131,10 @@ DebugRendererImp::DebugRendererImp(Renderer *renderer, Scene *scene)
             .AddBlendAttachmentState()
             .AddBlendAttachmentState()
             .AddBlendAttachmentState()
-            .SetDepthState(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL)
+            .SetDepthState(VK_TRUE, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL)
             .SetRenderPass(mRenderer->GetForwardPass()->Get())
+            .OverrideBindingDescription(bindingDescription)
+            .OverrideAttributeDescription(attributeDescription)
             .Build();
     }
 }
@@ -116,6 +144,9 @@ void DebugRendererImp::Destroy() {
 
     vkDestroyPipeline(mRenderer->GetContext().device, mLinePipeline.first, nullptr);
     vkDestroyPipelineLayout(mRenderer->GetContext().device, mLinePipeline.second, nullptr);
+
+    vkDestroyPipeline(mRenderer->GetContext().device, mTrianglePipeline.first, nullptr);
+    vkDestroyPipelineLayout(mRenderer->GetContext().device, mTrianglePipeline.second, nullptr);
 
     vkDestroyDescriptorSetLayout(mRenderer->GetContext().device, mUboLayout, nullptr);
 }
@@ -141,9 +172,9 @@ void DebugRendererImp::DrawTriangle(RVec3Arg inV1, RVec3Arg inV2, RVec3Arg inV3,
     lock_guard lock(mVerticesLock);
 
     // Construct triangle
-    WPT::Vertex v1{glm::vec3{inV1.GetX(), inV1.GetY(), inV1.GetZ()}};
-    WPT::Vertex v2{glm::vec3{inV2.GetX(), inV2.GetY(), inV2.GetZ()}};
-    WPT::Vertex v3{glm::vec3{inV3.GetX(), inV3.GetY(), inV3.GetZ()}};
+    TriangleVertex v1{glm::vec3{inV1.GetX(), inV1.GetY(), inV1.GetZ()}, inColor};
+    TriangleVertex v2{glm::vec3{inV2.GetX(), inV2.GetY(), inV2.GetZ()}, inColor};
+    TriangleVertex v3{glm::vec3{inV3.GetX(), inV3.GetY(), inV3.GetZ()}, inColor};
     mVertices.push_back(v1);
     mVertices.push_back(v2);
     mVertices.push_back(v3);
@@ -167,10 +198,10 @@ void DebugRendererImp::DrawLines() {
         VkDeviceSize size = sizeof(Line) * mLines.size();
         CreateAndUploadBuffer(mRenderer->GetContext(), mLines.data(), size,
                               VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                              mVertexBuffers[vkutil::currentFrame]);
+                              mLineVertexBuffers[vkutil::currentFrame]);
 
         // Draw
-        VkBuffer vertex_buffers[] = {mVertexBuffers[vkutil::currentFrame].buffer};
+        VkBuffer vertex_buffers[] = {mLineVertexBuffers[vkutil::currentFrame].buffer};
         VkDeviceSize offsets[] = {0};
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertex_buffers, offsets);
 
@@ -197,7 +228,7 @@ void DebugRendererImp::DrawLines() {
                                     linePipelineLayout, 0, 1, &descriptorSets[vkutil::currentFrame],
                                     0, nullptr);
 
-            vkCmdDraw(commandBuffer, mLines.size(), 1, 0, 0);
+            vkCmdDraw(commandBuffer, mLines.size() * 2, 1, 0, 0);
         }
     }
 
@@ -205,7 +236,7 @@ void DebugRendererImp::DrawLines() {
 
     // Push the vertex buffer to be freed the next time this frame is used. Do
     // this to delay the vertex buffer being freed so it can be used this frame.
-    auto &vtxBuff = mVertexBuffers[vkutil::currentFrame];
+    auto &vtxBuff = mLineVertexBuffers[vkutil::currentFrame];
     FreedBuffer freedBuffer = {vtxBuff.buffer, vtxBuff.allocation, vtxBuff.allocator};
     mRenderer->mFreedBuffers[vkutil::currentFrame].push_back(freedBuffer);
 }
@@ -223,7 +254,7 @@ void DebugRendererImp::DrawTriangles() {
         VkCommandBuffer commandBuffer = mRenderer->GetCommandBuffer();
 
         // Create vertex buffer
-        VkDeviceSize size = sizeof(Triangle) * mVertices.size();
+        VkDeviceSize size = sizeof(TriangleVertex) * mVertices.size();
         CreateAndUploadBuffer(mRenderer->GetContext(), mVertices.data(), size,
                               VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                               mVertexBuffers[vkutil::currentFrame]);
@@ -233,10 +264,10 @@ void DebugRendererImp::DrawTriangles() {
         VkDeviceSize offsets[] = {0};
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertex_buffers, offsets);
 
-        VkPipeline linePipeline = mLinePipeline.first;
-        VkPipelineLayout linePipelineLayout = mLinePipeline.second;
+        VkPipeline trianglePipeline = mTrianglePipeline.first;
+        VkPipelineLayout trianglePipelineLayout = mTrianglePipeline.second;
 
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, linePipeline);
+        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, trianglePipeline);
 
         size_t playerCount = mScene->GetActivePlayerCount();
         for (size_t playerId = 0; playerId < playerCount; ++playerId) {
@@ -253,7 +284,7 @@ void DebugRendererImp::DrawTriangles() {
             vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                    linePipelineLayout, 0, 1, &descriptorSets[vkutil::currentFrame],
+                                    trianglePipelineLayout, 0, 1, &descriptorSets[vkutil::currentFrame],
                                     0, nullptr);
 
             vkCmdDraw(commandBuffer, mVertices.size(), 1, 0, 0);
@@ -275,7 +306,7 @@ void DebugRendererImp::Draw() {
                  mRenderer->GetCommandBuffer(), "DebugRenderer::Draw",
                  tracy::Color::Coral4);
 
-    // DrawLines();
+    DrawLines();
     DrawTriangles();
 }
 

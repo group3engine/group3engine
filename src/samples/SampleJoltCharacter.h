@@ -43,6 +43,8 @@ public:
 
     // Get velocity of the character (used for animation, don't include ground velocity)
     virtual Vec3			GetCharacterVelocity() const				{ return mCharacter->GetLinearVelocity() - mCharacter->GetGroundVelocity(); }
+    // return if the character is grounded
+    bool IsGrounded() const { return mCharacter->GetGroundState() == CharacterVirtual::EGroundState::OnGround; }
     // add an impulse to the character
     void AddImpulse(Vec3Arg impulse) { mAdditionalImpulse += impulse; mHasAdditionalImpulse = true; }
 
@@ -66,7 +68,7 @@ protected:
 	void					OnContactCommon(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings);
 
 	// Handle user input to the character
-	virtual void			HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime) override;
+	virtual void			HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime, bool inClimb) override;
 
 private:
 	// Character movement settings

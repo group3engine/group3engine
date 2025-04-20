@@ -56,7 +56,14 @@ namespace {
 
     const std::vector<std::filesystem::path *> scenePaths = {
         &Sample::SampleObby,
-        &Sample::SampleObbyTestScene
+        &Sample::SampleObbyTestScene,
+        &Sample::ArrowSample,
+        &Sample::AxeSample,
+        &Sample::TileSample,
+        &Sample::SpikePitSample,
+        &Sample::LadderSample,
+        &Sample::SinkingSample,
+
     };
 
     const std::filesystem::path *scenePathSelection = scenePaths[0];
@@ -85,7 +92,9 @@ bool Engine::Initialize() {
         #ifdef _WIN32
         char path[MAX_PATH];
         if (GetModuleFileNameA(nullptr, path, MAX_PATH)) {
-            assetsPath = std::filesystem::path(path).parent_path() / "assets";
+            assetsPath =
+                std::filesystem::path(path).parent_path().parent_path() /
+                "assets";
         } else {
             SPDLOG_ERROR("Error getting executable path.");
             exit(EXIT_FAILURE);
@@ -95,7 +104,9 @@ bool Engine::Initialize() {
                 ssize_t len = readlink("/proc/self/exe", path, sizeof(path) - 1);
                 if (len != -1) {
                     path[len] = '\0'; // Null-terminate the string
-                    assetsPath = std::filesystem::path(path).parent_path() / "assets";
+                    assetsPath =
+                        std::filesystem::path(path).parent_path().parent_path() /
+                        "assets";
                 } else {
                     SPDLOG_ERROR("Error getting executable path.");
                     exit(EXIT_FAILURE);
@@ -229,6 +240,9 @@ void Engine::Run() {
         {
             ChangeSceneFR(mPendingScenePath, mPendingScenePlayerCount);
             m_sceneNeedsChanging = false;
+            // reset the last frame time to avoid a large delta time
+            m_lastFrameTime = glfwGetTime();
+            m_timeScale = 1.f;
         }
 
         FrameMark;
@@ -350,9 +364,33 @@ void Engine::Update(double deltaTime) {
 void Engine::DrawPhysics() {
     ZoneScopedN("DrawPhysics");
 
-    JPH::BodyManager::DrawSettings bodyDrawSettings;
-    bodyDrawSettings.mDrawShape = true;
+    JPH::BodyManager::DrawSettings bodyDrawSettings = {
+        .mDrawGetSupportFunction = false,                                        ///< Draw the GetSupport() function, used for convex collision detection
+        .mDrawSupportDirection = false,                                          ///< When drawing the support function, also draw which direction mapped to a specific support point
+        .mDrawGetSupportingFace = false,                                         ///< Draw the faces that were found colliding during collision detection
+        .mDrawShape = true,                                                      ///< Draw the shapes of all bodies
+        .mDrawShapeWireframe = false,                                            ///< When mDrawShape is true and this is true, the shapes will be drawn in wireframe instead of solid.
+        .mDrawShapeColor = BodyManager::EShapeColor::MotionTypeColor,            ///< Coloring scheme to use for shapes
+        .mDrawBoundingBox = false,                                               ///< Draw a bounding box per body
+        .mDrawCenterOfMassTransform = true,                                      ///< Draw the center of mass for each body
+        .mDrawWorldTransform = true,                                             ///< Draw the world transform (which can be different than the center of mass) for each body
+        .mDrawVelocity = false,                                                  ///< Draw the velocity vector for each body
+        .mDrawMassAndInertia = false,                                            ///< Draw the mass and inertia (as the box equivalent) for each body
+        .mDrawSleepStats = false,                                                ///< Draw stats regarding the sleeping algorithm of each body
+        .mDrawSoftBodyVertices = false,                                          ///< Draw the vertices of soft bodies
+        .mDrawSoftBodyVertexVelocities = false,                                  ///< Draw the velocities of the vertices of soft bodies
+        .mDrawSoftBodyEdgeConstraints = false,                                   ///< Draw the edge constraints of soft bodies
+        .mDrawSoftBodyBendConstraints = false,                                   ///< Draw the bend constraints of soft bodies
+        .mDrawSoftBodyVolumeConstraints = false,                                 ///< Draw the volume constraints of soft bodies
+        .mDrawSoftBodySkinConstraints = false,                                   ///< Draw the skin constraints of soft bodies
+        .mDrawSoftBodyLRAConstraints = false,                                    ///< Draw the LRA constraints of soft bodies
+        .mDrawSoftBodyPredictedBounds = false,                                   ///< Draw the predicted bounds of soft bodies
+        .mDrawSoftBodyConstraintColor = ESoftBodyConstraintColor::ConstraintType ///< Coloring scheme to use for soft body constraints
+    };
     PhysicsManager::get().mPhysicsSystem.DrawBodies(bodyDrawSettings, mDebugRenderer.get());
+    // TODO: Draw constraints
+    //       - Which needs DrawLine to be implemented
+    PhysicsManager::get().mPhysicsSystem.DrawConstraints(mDebugRenderer.get());
 }
 #endif // JPH_DEBUG_RENDERER
 

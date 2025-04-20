@@ -95,7 +95,7 @@ void Animator::UpdateAnimationSamples(double aDeltaTime) {
         return;
     }
     // reduce the animation lock time
-    mAnimationLockTimer -= aDeltaTime;
+    mAnimationLockTimer -= std::abs(aDeltaTime);
 
     // for each animation, set the weight to 0 and time to 0
     for (auto &sample : mAnimationSamples) {
@@ -112,7 +112,7 @@ void Animator::UpdateAnimationSamples(double aDeltaTime) {
     // work out the interpolation multipliers (don't if we are in the cases
     // where we don't need to blend - no total blend time or no new animation)
     if (mTotalBlendTime > 0.01f && mLastAnimation != mActiveAnimation) {
-        mCurrentBlendingTime += aDeltaTime;
+        mCurrentBlendingTime += std::abs(aDeltaTime);
         if (mCurrentBlendingTime > mTotalBlendTime) {
             mTotalBlendTime = 0.f;
         } else {
@@ -122,7 +122,7 @@ void Animator::UpdateAnimationSamples(double aDeltaTime) {
     }
 
     if (mActiveAnimation != -1) {
-        if(mAnimationLockTimer > 0.0f){
+        if(mAnimationLockTimer > 0.0f || !mActiveAnimationIsLooping){
             // if the lock timer is still active, then don't modulus the time, but still increment it
                 mAnimationSamples[mActiveAnimation] = {
                         mAnimationSamples[mActiveAnimation].time +
@@ -130,10 +130,14 @@ void Animator::UpdateAnimationSamples(double aDeltaTime) {
                         currentWeight};
         }
         else {
-            mAnimationSamples[mActiveAnimation] = {
-                (std::fmod(mAnimationSamples[mActiveAnimation].time +
+            float newTime = std::fmod(mAnimationSamples[mActiveAnimation].time +
                                aDeltaTime * mAnimationTimeScale,
-                           mAnimations[mActiveAnimation]->GetMaxTime())),
+                           mAnimations[mActiveAnimation]->GetMaxTime());
+            if(aDeltaTime * mAnimationTimeScale < 0.0f && newTime < 0.0f){
+                newTime = mAnimations[mActiveAnimation]->GetMaxTime() + newTime;
+            }
+            mAnimationSamples[mActiveAnimation] = {
+                newTime,
                 currentWeight};
         }
     }
@@ -184,7 +188,7 @@ void Animator::SetActiveAnimation(const std::string &aName) {
     }
 }
 
-void Animator::SetActiveAnimation(const std::string &aName, float blendTime, bool lockForFirstLoop = false) {
+void Animator::SetActiveAnimation(const std::string &aName, float blendTime, bool lockForFirstLoop, bool isLooping) {
     // if the lock timer is still active, then don't change the animation
     if (mAnimationLockTimer > 0.0f) {
             return;
@@ -192,6 +196,7 @@ void Animator::SetActiveAnimation(const std::string &aName, float blendTime, boo
     if (aName != mCurrentAnimationName && mActiveAnimation != -1) {
         mTotalBlendTime = blendTime;
         mLastAnimation = mActiveAnimation;
+        mLastAnimationIsLooping = mActiveAnimationIsLooping;
         mCurrentBlendingTime = 0.f;
     }
     for (size_t i = 0; i < mAnimations.size(); i++) {
@@ -205,6 +210,7 @@ void Animator::SetActiveAnimation(const std::string &aName, float blendTime, boo
                 mAnimationSamples[static_cast<int>(i)].time = 0;
             }
             mActiveAnimation = static_cast<int>(i);
+            mActiveAnimationIsLooping = isLooping;
             return;
         }
     }

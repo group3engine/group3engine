@@ -36,8 +36,8 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 # Define flags for the Platinum build type
-set(CMAKE_CXX_FLAGS_PLATINUM "${CMAKE_CXX_FLAGS_RELEASE} -DPLATINUM" CACHE STRING "Flags for Platinum build type" FORCE)
-set(CMAKE_C_FLAGS_PLATINUM "${CMAKE_C_FLAGS_RELEASE} -DPLATINUM" CACHE STRING "Flags for Platinum build type" FORCE)
+set(CMAKE_CXX_FLAGS_PLATINUM "${CMAKE_CXX_FLAGS_RELEASE} -static-libstdc++ -DPLATINUM" CACHE STRING "Flags for Platinum build type" FORCE)
+set(CMAKE_C_FLAGS_PLATINUM "${CMAKE_C_FLAGS_RELEASE}  -DPLATINUM" CACHE STRING "Flags for Platinum build type" FORCE)
 
 # Ensure Platinum is recognized as a valid build type
 if(CMAKE_BUILD_TYPE STREQUAL "Platinum")
@@ -83,6 +83,7 @@ add_subdirectory(extern/glfw)
 add_subdirectory(extern/glm)
 add_subdirectory(extern/spdlog)
 add_subdirectory(extern/imgui)
+add_subdirectory(extern/Vulkan-Headers)
 add_subdirectory(extern/volk)
 
 option(TRACY_ENABLE "" ON)
@@ -114,13 +115,15 @@ target_include_directories(vma INTERFACE extern/vma)
 add_library(stb_image INTERFACE)
 target_include_directories(stb_image INTERFACE extern/stb_image)
 
+target_link_libraries(volk PUBLIC Vulkan::Headers)
+
 # The GLFW_INCLUDE_NONE macro will explicitly prevent the GLFW header from including the OpenGL header
 # GLM_ENABLE_EXPERIMENTAL is necessary for #include <glm/gtx/transform.hpp>
 target_compile_definitions(src PRIVATE GLFW_INCLUDE_NONE GLM_ENABLE_EXPERIMENTAL GLM_FORCE_XYZW_ONLY GLM_FORCE_QUAT_DATA_XYZW GLM_FORCE_QUAT_CTOR_XYZW GLM_FORCE_RADIANS GLM_FORCE_SIZE_T_LENGTH)
 
 target_compile_definitions(src PRIVATE CMAKE_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 
-target_link_libraries(src PRIVATE cgltf glfw glm::glm-header-only Jolt spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32> stb_image Tracy::TracyClient volk_headers vma json)
+target_link_libraries(src PRIVATE cgltf glfw glm::glm-header-only Jolt spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32> stb_image Tracy::TracyClient volk vma json)
 
 # Compiler warnings
 if ((CMAKE_CXX_COMPILER_ID STREQUAL "Clang") OR (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
@@ -156,18 +159,8 @@ foreach(GLSL ${GLSL_SOURCE_FILES})
     DEPENDS ${GLSL} ${GLSL_HEADER_FILES})
   list(APPEND SPIRV_BINARY_FILES ${SPIRV})
 endforeach()
-
 add_custom_target(compile_shaders DEPENDS ${SPIRV_BINARY_FILES})
-
 add_dependencies(src compile_shaders)
-if(CMAKE_BUILD_TYPE STREQUAL "Platinum")
-    add_custom_target(copy_assets ALL
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${CMAKE_SOURCE_DIR}/assets $<TARGET_FILE_DIR:src>/assets
-            COMMENT "Copying assets directory to the output directory for Platinum build"
-    )
-    add_dependencies(src copy_assets)
-endif()
 
 # Check git submodules
 # https://cliutils.gitlab.io/modern-cmake/chapters/projects/submodule.html
@@ -185,3 +178,14 @@ if(GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
         endif()
     endif()
 endif()
+
+# Copy asset files to the binary directory in Platinum build to replicate install
+if(CMAKE_BUILD_TYPE STREQUAL "Platinum")
+    file(COPY ${CMAKE_SOURCE_DIR}/assets DESTINATION ${CMAKE_BINARY_DIR})
+endif()
+
+# Install
+include(GNUInstallDirs)
+
+install(TARGETS src)
+install(DIRECTORY assets/ DESTINATION assets)
