@@ -796,7 +796,8 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             SPDLOG_ERROR("The animation {} targets multiple skins. This is not supported. Make "
                          "sure your animations only target one skin.",
                          animation->GetName());
-            exit(EXIT_FAILURE);
+            continue;
+            //exit(EXIT_FAILURE);
         }
 
         animationPointers.push_back(animation);
