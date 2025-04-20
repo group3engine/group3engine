@@ -495,6 +495,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
 
                 else {
                     std::cout << tokens + i << std::endl;
+
                     SPDLOG_ERROR("Unexpected token while parsing extras.");
                     exit(EXIT_FAILURE);
                 }

@@ -48,7 +48,8 @@ void Renderer::CreateRenderPasses() {
     m_Fog = std::make_unique<Fog>(context, m_scene,  m_DepthPrepass->GetRenderTarget(), m_ForwardPass->GetRenderTarget(), m_ForwardPass->GetSkybox()->GetSkyBoxImage(), m_ShadowMap.get());
     m_BloomPass = std::make_unique<Bloom>(context, m_scene, m_ForwardPass->GetBrightnessTarget());
     m_CompositePass = std::make_unique<Composite>(context, m_scene, m_ForwardPass->GetRenderTarget(), m_BloomPass->GetRenderTarget(), m_SSAO->GetRenderTarget(), m_SSR->GetRenderTarget(), m_Fog->GetRenderTarget());
-    m_PresentPass = std::make_unique<PresentPass>(context, m_scene, m_CompositePass->GetRenderTarget());
+    m_FXAA = std::make_unique<FXAA>(context, m_CompositePass->GetRenderTarget());
+    m_PresentPass = std::make_unique<PresentPass>(context, m_scene, m_FXAA->GetRenderTarget());
 
     // ImGui
     ImGuiRenderer::Initialize(context);
@@ -92,6 +93,7 @@ void Renderer::Destroy() {
 
     m_DepthPrepass.reset();
     m_ForwardPass.reset();
+    m_FXAA.reset();
     //m_GBuffer.reset();
     m_Fog.reset();
     m_ShadowMap.reset();
@@ -248,12 +250,12 @@ void Renderer::BeginFrame(VkCommandBuffer cmd) {
         context.RecreateSwapchain();
         m_DepthPrepass->Resize();
         m_ForwardPass->Resize();
-        //m_GBuffer->Resize();
         m_Fog->Resize();
         m_SSAO->Resize();
         m_SSR->Resize();
         m_BloomPass->Resize();
         m_CompositePass->Resize();
+        m_FXAA->Resize();
         m_PresentPass->Resize();
 
     } else if (getImageIndex != VK_SUCCESS && getImageIndex != VK_SUBOPTIMAL_KHR) {
@@ -420,12 +422,12 @@ void Renderer::Present(uint32_t imageIndex) {
         context.RecreateSwapchain();
         m_DepthPrepass->Resize();
         m_ForwardPass->Resize();
-        //m_GBuffer->Resize();
         m_Fog->Resize();
         m_SSAO->Resize();
         m_SSR->Resize();
         m_BloomPass->Resize();
         m_CompositePass->Resize();
+        m_FXAA->Resize();
         m_PresentPass->Resize();
     }
 }
@@ -440,6 +442,8 @@ void Renderer::Update(double deltaTime) {
     m_ShadowMap->Update();
     m_Fog->Update();
     m_ForwardPass->Update();
+    m_CompositePass->Update();
+    m_FXAA->Update();
     m_PresentPass->Update();
 }
 

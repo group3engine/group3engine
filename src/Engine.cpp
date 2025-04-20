@@ -422,6 +422,7 @@ void Engine::Render() {
 
         mRenderer->GetBloomPass()->Execute(mRenderer->GetCommandBuffer());
         mRenderer->GetCompositePass()->Execute(mRenderer->GetCommandBuffer());
+        mRenderer->GetFXAAPass()->Execute(mRenderer->GetCommandBuffer());
         mRenderer->GetPresentPass()->Execute(mRenderer->GetCommandBuffer(), mRenderer->GetImageIndex());
 
         mRenderer->EndFrame(mRenderer->GetCommandBuffer());

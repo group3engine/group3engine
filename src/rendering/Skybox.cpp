@@ -15,13 +15,14 @@ Skybox::Skybox(Context& context, Scene *scene, VkRenderPass renderpass) :
 {
     // When transitioning this image, the subresource in subresourceRange needs to be set to 6
     // to transition all layers of the imag, otherwise you transition only the first
+
     m_Skybox = CreateImageTexture2D(
         "Skybox",
         context,
         2048,
         2048,
         VK_FORMAT_R8G8B8A8_SRGB,
-        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
         VK_IMAGE_ASPECT_COLOR_BIT,
         1,
         VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT,
@@ -100,18 +101,31 @@ Skybox::Skybox(Context& context, Scene *scene, VkRenderPass renderpass) :
             vkutil::ImageBarrier(
                 cmd,
                 m_Skybox.image,
+                VK_ACCESS_TRANSFER_WRITE_BIT,
                 VK_ACCESS_TRANSFER_READ_BIT,
-                VK_ACCESS_SHADER_READ_BIT,
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                 VK_PIPELINE_STAGE_TRANSFER_BIT,
-                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                VK_PIPELINE_STAGE_TRANSFER_BIT,
                 VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 6 }
             );
     });
 
 
+    vkutil::ExecuteSingleTimeCommands(context, [&](VkCommandBuffer cmd) {
 
+         vkutil::ImageBarrier(
+            cmd,
+            m_Skybox.image,
+            VK_ACCESS_TRANSFER_READ_BIT,
+            VK_ACCESS_SHADER_READ_BIT,
+            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+            VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 6 }
+         );
+    });
 
     // Create the vertex buffer for the cube map
     VkDeviceSize vertexSize = sizeof(cubeVertices[0]) * cubeVertices.size();

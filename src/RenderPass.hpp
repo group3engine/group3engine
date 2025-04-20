@@ -13,6 +13,7 @@ class RenderPass {
         m_ColorAttachmentRefs.resize(1);
         m_InputAttachmentRefs.resize(1);
         m_DepthAttachmentRefs.resize(1);
+        m_ResolveAttachmentRefs.resize(1);
     }
 
     // Add an attachment to the render pass
@@ -41,6 +42,15 @@ class RenderPass {
         ref.attachment = attachmentIndex;
         ref.layout = layout;
         m_ColorAttachmentRefs[subpassIndex].push_back(ref);
+        return *this;
+    }
+
+    RenderPass &AddResolveAttachmentRef(uint32_t subpassIndex, uint32_t attachmentIndex, VkImageLayout layout) {
+        assert(subpassIndex < m_NumSubpasses);
+        VkAttachmentReference ref{};
+        ref.attachment = attachmentIndex;
+        ref.layout = layout;
+        m_ResolveAttachmentRefs[subpassIndex].push_back(ref);
         return *this;
     }
 
@@ -95,6 +105,12 @@ class RenderPass {
             subpass.inputAttachmentCount = static_cast<uint32_t>(m_InputAttachmentRefs[i].size());
             subpass.pInputAttachments = m_InputAttachmentRefs[i].data();
 
+            if (m_ResolveAttachmentRefs[i].size() > 0) {
+                subpass.pResolveAttachments = m_ResolveAttachmentRefs[i].data();
+            }
+
+            subpass.pResolveAttachments = m_ResolveAttachmentRefs[i].data();
+
             // Depth attachment (optional)
             if (m_DepthAttachmentRefs[i].has_value()) {
                 subpass.pDepthStencilAttachment = &m_DepthAttachmentRefs[i].value();
@@ -129,6 +145,7 @@ class RenderPass {
     // Attachments and subpasses
     std::vector<VkAttachmentDescription> m_Attachments;
     std::vector<std::vector<VkAttachmentReference>> m_ColorAttachmentRefs;
+    std::vector < std::vector<VkAttachmentReference>> m_ResolveAttachmentRefs;
     std::vector<std::vector<VkAttachmentReference>> m_InputAttachmentRefs;
     std::vector<std::optional<VkAttachmentReference>> m_DepthAttachmentRefs;
     std::vector<VkSubpassDependency> m_Dependencies;
