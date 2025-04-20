@@ -221,7 +221,7 @@ Image LoadTextureFromDisk(std::filesystem::path path, Context &context, VkFormat
     return img;
 }
 
-Image CreateImageTexture2D(const std::string name, Context& context, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags imageaspectFlags, uint32_t mipLevels, VkImageCreateFlags flags, uint32_t arrayLayers) {
+Image CreateImageTexture2D(const std::string name, Context& context, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags imageaspectFlags, uint32_t mipLevels, VkImageCreateFlags flags, uint32_t arrayLayers, VkSampleCountFlagBits samples) {
 
     VkImageCreateInfo imageInfo{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
     imageInfo.flags = flags;
@@ -234,7 +234,7 @@ Image CreateImageTexture2D(const std::string name, Context& context, uint32_t wi
     imageInfo.format = format;
     imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
     imageInfo.usage = usage;
-    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.samples = samples;
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
@@ -255,7 +255,7 @@ Image CreateImageTexture2D(const std::string name, Context& context, uint32_t wi
     VkImageViewCreateInfo viewInfo{};
     viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     viewInfo.image = image;
-    viewInfo.viewType = ((imageaspectFlags & VK_IMAGE_ASPECT_DEPTH_BIT) != 0 && arrayLayers > 1) ? VK_IMAGE_VIEW_TYPE_2D_ARRAY : (flags & VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT) != 0 ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D;
+    viewInfo.viewType = ((arrayLayers > 1) && (flags & VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT) == 0) ? VK_IMAGE_VIEW_TYPE_2D_ARRAY : (flags & VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT) != 0 ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D;
     viewInfo.format = format;
     viewInfo.components = VkComponentMapping{};
     viewInfo.subresourceRange = VkImageSubresourceRange{imageaspectFlags, 0, VK_REMAINING_MIP_LEVELS, 0, VK_REMAINING_ARRAY_LAYERS};

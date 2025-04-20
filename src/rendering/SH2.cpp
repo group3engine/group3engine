@@ -33,6 +33,10 @@ void SH::Execute(VkCommandBuffer cmd) {
     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, m_PipelineLayout, 0, 1, &mDescriptorSets[vkutil::currentFrame], 0, nullptr);
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, m_Pipeline);
     vkCmdDispatch(cmd, 64, 1, 1);
+
+#ifdef _DEBUG
+    vkutil::EndRenderPassLabel(cmd);
+#endif
 }
 
 void SH::CreatePipeline() {

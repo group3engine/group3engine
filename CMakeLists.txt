@@ -83,6 +83,7 @@ add_subdirectory(extern/glfw)
 add_subdirectory(extern/glm)
 add_subdirectory(extern/spdlog)
 add_subdirectory(extern/imgui)
+add_subdirectory(extern/Vulkan-Headers)
 add_subdirectory(extern/volk)
 
 option(TRACY_ENABLE "" ON)
@@ -114,13 +115,15 @@ target_include_directories(vma INTERFACE extern/vma)
 add_library(stb_image INTERFACE)
 target_include_directories(stb_image INTERFACE extern/stb_image)
 
+target_link_libraries(volk PUBLIC Vulkan::Headers)
+
 # The GLFW_INCLUDE_NONE macro will explicitly prevent the GLFW header from including the OpenGL header
 # GLM_ENABLE_EXPERIMENTAL is necessary for #include <glm/gtx/transform.hpp>
 target_compile_definitions(src PRIVATE GLFW_INCLUDE_NONE GLM_ENABLE_EXPERIMENTAL GLM_FORCE_XYZW_ONLY GLM_FORCE_QUAT_DATA_XYZW GLM_FORCE_QUAT_CTOR_XYZW GLM_FORCE_RADIANS GLM_FORCE_SIZE_T_LENGTH)
 
 target_compile_definitions(src PRIVATE CMAKE_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 
-target_link_libraries(src PRIVATE cgltf glfw glm::glm-header-only Jolt spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32> stb_image Tracy::TracyClient volk_headers vma json)
+target_link_libraries(src PRIVATE cgltf glfw glm::glm-header-only Jolt spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32> stb_image Tracy::TracyClient volk vma json)
 
 # Compiler warnings
 if ((CMAKE_CXX_COMPILER_ID STREQUAL "Clang") OR (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))

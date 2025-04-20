@@ -28,7 +28,7 @@ void SampleJoltCharacter::Initialize()
 	settings->mPredictiveContactDistance = sPredictiveContactDistance;
 	settings->mSupportingVolume = Plane(Vec3::sAxisY(), -cCharacterRadiusStanding); // Accept contacts that touch the lower sphere of the capsule
 	settings->mEnhancedInternalEdgeRemoval = sEnhancedInternalEdgeRemoval;
-    settings->mInnerBodyShape = RotatedTranslatedShapeSettings(Vec3(0, cCharacterHeightStanding, 0), Quat::sIdentity(), new CapsuleShape(cCharacterHeightStanding, cCharacterRadiusStanding)).Create().Get();
+    settings->mInnerBodyShape = mStandingShape;
 	settings->mInnerBodyLayer = Layers::MOVING;
 	mCharacter = new CharacterVirtual(settings, RVec3::sZero(), Quat::sIdentity(), 0, mPhysicsSystem);
 
@@ -75,6 +75,8 @@ void SampleJoltCharacter::PrePhysicsUpdate(const PreUpdateParams &inParams)
 
 void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime, bool inClimb)
 {
+
+
 
     float inMovementY = inMovementDirection.GetY();
 	bool player_controls_horizontal_velocity = sControlMovementDuringJump || mCharacter->IsSupported();
@@ -178,6 +180,22 @@ void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, 
         mCharacter->SetLinearVelocity(new_velocity);
     }
 
+    // set the shape based on the crouching and falling state
+    if (mIsCrouching)
+    {
+        mCharacter->SetShape(mCrouchingShape, FLT_MAX, mPhysicsSystem->GetDefaultBroadPhaseLayerFilter(Layers::MOVING), mPhysicsSystem->GetDefaultLayerFilter(Layers::MOVING), { }, { }, *mTempAllocator);
+        mCharacter->SetInnerBodyShape(mCrouchingShape);
+    }
+    else if(mJumpState == EJumpState::Falling)
+    {
+        mCharacter->SetShape(mFallingShape, FLT_MAX, mPhysicsSystem->GetDefaultBroadPhaseLayerFilter(Layers::MOVING), mPhysicsSystem->GetDefaultLayerFilter(Layers::MOVING), { }, { }, *mTempAllocator);
+        mCharacter->SetInnerBodyShape(mFallingShape);
+    }
+    else
+    {
+        mCharacter->SetShape(mStandingShape, FLT_MAX, mPhysicsSystem->GetDefaultBroadPhaseLayerFilter(Layers::MOVING), mPhysicsSystem->GetDefaultLayerFilter(Layers::MOVING), { }, { }, *mTempAllocator);
+        mCharacter->SetInnerBodyShape(mStandingShape);
+    }
 
 
 }

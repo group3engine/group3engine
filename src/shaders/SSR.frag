@@ -1,33 +1,21 @@
 #version 450
 
+#include "uniforms.glsl"
+
 // NOTE: Some data when 2 player was implemented has broken something
 // Works with a single player but stopped working correctly when two players was introduced
 
 layout(location = 0) in vec2 uv;
 layout(location = 0) out vec4 fragColour;
 
-layout(set = 0, binding = 0) uniform CameraUBO
-{
-	mat4 view;
-	mat4 projection;
-	mat4 inverseProjection;
-	mat4 inverseView;
-    vec4 cameraPosition;
-    vec2 viewportSize;
-	float fov;
-	float nearPlane;
-	float farPlane;
-} ubo;
-
+layout(set = 0, binding = 0) uniform block {
+    CameraUBO ubo;
+};
 
 layout(set = 1, binding = 1) uniform SSRSettings
 {
-    int MaxSteps;
-    int BinarySearchIterations;
     float MaxDistance;
     float thickness;
-	float StepSize;
-	float time;
 }ssr;
 
 layout (set = 1, binding = 0) uniform sampler2D depthBuffer;
@@ -72,7 +60,10 @@ vec3 ScreenSpaceReflections()
 
     //vec4 WorldNormal = normalize(inverse(ubo.view) * vec4(DepthToNormal(uv).xyz, 0.0)); // Depth for normals can cause issues when looking straight down. Store normals in a g-buffer target instead
     vec3 worldReflectionDir = normalize(reflect(camDir, WorldNormal.xyz));
-    vec3 sky = texture(skybox, worldReflectionDir).xyz; // Sample skybox once
+
+
+    float lod = WorldNormal.a * float(12.0 - 1.0);
+    vec3 sky = textureLod(skybox, worldReflectionDir, 0).xyz; // Sample skybox once
 
     vec3 WorldSpaceBegin = WorldPos.xyz;
     vec3 worldSpaceEnd = WorldSpaceBegin + worldReflectionDir * MAX_DISTANCE;
@@ -123,7 +114,7 @@ vec3 ScreenSpaceReflections()
         float depth = texelFetch(depthBuffer, ivec2(x, y), 0).x;
 
         // depth test to determine hit
-        float depthDiff = (z - 0.001) - depth;
+        float depthDiff = z - depth;
 
         if (depthDiff > 0.0 && depthDiff < ssr.thickness) {
 
@@ -154,9 +145,5 @@ vec3 ScreenSpaceReflections()
 void main()
 {
     float roughness = texture(normalRoughness, uv).a;
-
-    //fragColour = vec4((texture(normalRoughness, uv).rgb * 2.0 - 1.0), 1.0);
-    //fragColour = vec4(ScreenSpaceReflections().xyz, 1.0);
-    //fragColour = vec4(mix(ScreenSpaceReflections().xyz, (texture(normalRoughness, uv).rgb * 2.0 - 1.0) * 0.05, roughness), 1.0);
 	fragColour = vec4(mix(ScreenSpaceReflections().rgb, vec3(0), roughness), 1.0);
 }
