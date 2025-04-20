@@ -413,12 +413,13 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 } else if (key == "is_invisible") {
                     extras.is_invisible = value;
                 } else if (key == "float_properties") {
-                    for (auto &[propertyKey, propertyValue] : value.items()) {
-                        if (propertyKey == "pendulum_length") {
+                    // Float properties are currently stored as an array of json
+                    // objects. One json object per property/key-value pair
+                    assert(value.is_array());
+                    for (auto &object : value) {
+                        // Float properties are arbitrary values, no error checking keys
+                        for (auto &[propertyKey, propertyValue] : object.items()) {
                             extras.float_properties[propertyKey] = propertyValue;
-                        } else {
-                            SPDLOG_ERROR("Unexpected token while parsing float properties.");
-                            // exit(EXIT_FAILURE);
                         }
                     }
                 } else {

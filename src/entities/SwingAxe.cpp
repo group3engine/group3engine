@@ -11,6 +11,9 @@ void SwingAxe::InitPhysics() {
     // Control how fast the pendulum swings
     if (mFloatProperties.contains("pendulum_length")) {
         mPendulumLength = mFloatProperties["pendulum_length"];
+    } else {
+        SPDLOG_ERROR("Swing axe does not have a pendulum length property.");
+        exit(EXIT_FAILURE);
     }
     // Pendulum mass does not matter in this simulation, mass cancels out
     mPendulumMass = 1.0f;
