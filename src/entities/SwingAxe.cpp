@@ -1,7 +1,5 @@
 #include "SwingAxe.hpp"
 
-#include <Jolt/Physics/Body/BodyLockMulti.h>
-
 SwingAxe::SwingAxe() {
     mType = "swing_axe";
 }

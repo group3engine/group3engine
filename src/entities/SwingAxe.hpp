@@ -3,8 +3,6 @@
 
 #include "Entity.hpp"
 
-#include <Jolt/Physics/Constraints/HingeConstraint.h>
-
 class SwingAxe : public Entity {
   public:
     SwingAxe();
