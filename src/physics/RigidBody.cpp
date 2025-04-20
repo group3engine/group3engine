@@ -50,11 +50,11 @@ void RigidBody::SetPosition(glm::vec3 glm_position) {
     updatePosition = true;
 }
 
-JPH::Quat RigidBody::GetRotation() const {
+JPH::Quat RigidBody::GetRotationJolt() const {
     return PhysicsManager::get().mPhysicsSystem.GetBodyInterface().GetRotation(mBodyId);
 }
 
-void RigidBody::SetRotationJolt(JPH::Quat rotation) {
+void RigidBody::SetRotationJolt(const JPH::QuatArg rotation) {
     mNewRotation = rotation;
     updateRotation = true;
 }

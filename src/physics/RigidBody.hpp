@@ -32,9 +32,10 @@ class RigidBody {
     /// Set the position of the rigid body
     void SetPosition(glm::vec3 glm_position);
 
-    /// get the rotation of the rigid body
-    JPH::Quat GetRotation() const;
-    void SetRotationJolt(JPH::Quat);
+    // Get rotation of the rigid body using JPH::Quat instead of glm
+    JPH::Quat GetRotationJolt() const;
+    // Set rotation of the rigid body using JPH::Quat instead of glm
+    void SetRotationJolt(const JPH::QuatArg rotation);
 
     /// set the rotation of the rigid body
     void SetRotation(glm::quat glm_position);
