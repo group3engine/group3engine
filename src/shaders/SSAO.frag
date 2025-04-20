@@ -1,21 +1,13 @@
 #version 450
 
+#include "uniforms.glsl"
+
 layout(location = 0) in vec2 uv;
 layout(location = 0) out vec4 fragColour;
 
-layout(set = 0, binding = 0) uniform CameraUBO
-{
-	mat4 view;
-	mat4 projection;
-	mat4 inverseProjection;
-	mat4 inverseView;
-    vec4 cameraPosition;
-    vec2 viewportSize;
-	float fov;
-	float nearPlane;
-	float farPlane;
-} ubo;
-
+layout(set = 0, binding = 0) uniform block {
+    CameraUBO ubo;
+};
 
 layout(set = 1, binding = 1) uniform SSAOSettings
 {
