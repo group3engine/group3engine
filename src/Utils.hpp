@@ -90,9 +90,9 @@ namespace vkutil {
     };
 
     inline PostProcessing postProcessSettings = {};
-    inline SSAOSettings ssaoSettings = {1, 1, 1.4f, 0.003f, 1.5f};
-    inline SSRSettings ssrSettings = {1, 1, 1.0f, 0.001f, 0.001f};
-    inline FogSettings fogSettings = { 30.0f, 0.016f, 0.1f, 0 };
+    inline SSAOSettings ssaoSettings = {6, 6, 1.4f, 0.003f, 1.5f};
+    inline SSRSettings ssrSettings = {20, 1, 1.0f, 0.001f, 0.001f};
+    inline FogSettings fogSettings = { 30.0f, 0.016f, 0.1f, 1 };
     inline uint32_t setRenderingPipeline = 1;
     inline uint32_t setAlphaMakingPipeline = 2;
 
