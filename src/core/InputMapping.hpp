@@ -10,6 +10,67 @@
 
 #include "InputData.hpp"
 
+enum class BindingType {
+    Key,
+    GamepadButton,
+    GamepadAxis,
+    MouseButton,
+    MouseAxis,
+};
+struct GamepadButtonMapping {
+    GAMEPAD_BUTTON value;    // Represents button or axis value
+    int index;    // Represents the gamepad index or ID
+};
+struct GamepadAxisMapping {
+    GAMEPAD_AXIS value;    // Represents button or axis value
+    int index;    // Represents the gamepad index or ID
+};
+
+struct Binding {
+    BindingType type;
+    union {
+        KEY key;
+        // button/axis, gamepad
+        GamepadButtonMapping gamepadButton;
+        GamepadAxisMapping gamepadAxis;
+        MOUSE_BUTTON mouseButton;
+        MOUSE_AXIS mouseAxis;
+    } mapping {};
+    // Constructor for key binding
+    Binding(KEY k) : type(BindingType::Key){mapping.key = k;}
+    // Constructor for gamepad button binding
+    Binding(GAMEPAD_BUTTON b, int index) : type(BindingType::GamepadButton){mapping.gamepadButton = {b, index};}
+    // Constructor for gamepad axis binding
+    Binding(GAMEPAD_AXIS a, int index) : type(BindingType::GamepadAxis){mapping.gamepadAxis = {a, index};}
+    // Constructor for mouse button binding
+    Binding(MOUSE_BUTTON b) : type(BindingType::MouseButton){mapping.mouseButton = b;}
+    // Constructor for mouse axis binding
+    Binding(MOUSE_AXIS a) : type(BindingType::MouseAxis){mapping.mouseAxis = a;}
+    // equality operator
+    bool operator==(const Binding &other) const {
+        if (type != other.type) {
+            return false;
+        }
+        switch (type) {
+            case BindingType::Key:
+                return mapping.key == other.mapping.key;
+            case BindingType::GamepadButton:
+                return mapping.gamepadButton.value == other.mapping.gamepadButton.value &&
+                       mapping.gamepadButton.index == other.mapping.gamepadButton.index;
+            case BindingType::GamepadAxis:
+                return mapping.gamepadAxis.value == other.mapping.gamepadAxis.value &&
+                       mapping.gamepadAxis.index == other.mapping.gamepadAxis.index;
+            case BindingType::MouseButton:
+                return mapping.mouseButton == other.mapping.mouseButton;
+            case BindingType::MouseAxis:
+                return mapping.mouseAxis == other.mapping.mouseAxis;
+        }
+        return false;
+    }
+
+
+};
+
 /// @brief The InputMapping class is a singleton that manages the input mappings for the game.
 class InputMapping {
 public:
@@ -18,42 +79,43 @@ public:
     ~InputMapping() = default;
 
     /// @brief Add a keyboard binding for an action.
-    void AddKeyBinding(const std::string &action, KEY key) { mKeyBindings[action].push_back(static_cast<int>(key)); }
+    void AddKeyBinding(const std::string &action, KEY key) { mBindings[action].emplace_back(key); }
     /// @brief Add a gamepad button binding for an action.
-    void AddGamepadButtonBinding(const std::string &action, GAMEPAD_BUTTON button, int gamepad) { mGamepadBindings[action].emplace_back(static_cast<int>(button), gamepad); }
+    void AddGamepadButtonBinding(const std::string &action, GAMEPAD_BUTTON button, int gamepad) { mBindings[action].emplace_back(button, gamepad); }
     /// @brief Add a gamepad axis binding for an action.
-    void AddGamepadAxisBinding(const std::string &action, GAMEPAD_AXIS axis, int gamepad) { mGamepadAxisBindings[action].emplace_back(static_cast<int>(axis), gamepad); }
+    void AddGamepadAxisBinding(const std::string &action, GAMEPAD_AXIS axis, int gamepad) { mBindings[action].emplace_back(axis, gamepad); }
     /// @brief Add a mouse button binding for an action.
-    void AddMouseBinding(const std::string &action, MOUSE_BUTTON button) { mMouseBindings[action].push_back(static_cast<int>(button)); }
+    void AddMouseBinding(const std::string &action, MOUSE_BUTTON button) { mBindings[action].push_back(button); }
     /// @brief Add a mouse axis binding for an action.
-    void AddMouseAxisBinding(const std::string &action, MOUSE_AXIS axis) { mMouseAxisBindings[action].push_back(static_cast<int>(axis)); }
+    void AddMouseAxisBinding(const std::string &action, MOUSE_AXIS axis) { mBindings[action].push_back(axis); }
     /// @brief Remove a keyboard binding for an action.
-    void RemoveKeyBinding(const std::string &action, KEY key) { 
-        RemoveBinding(mKeyBindings, action, static_cast<int>(key)); 
+    void RemoveKeyBinding(const std::string &action, KEY key) {
+        Binding binding = {key};
+        RemoveBinding(action, binding);
     }
     /// @brief Remove a gamepad button binding for an action.
-    void RemoveGamepadBinding(const std::string &action, GAMEPAD_BUTTON button, int gamepad) { 
-        RemoveBinding(mGamepadBindings, action, static_cast<int>(button), gamepad); 
+    void RemoveGamepadBinding(const std::string &action, GAMEPAD_BUTTON button, int gamepad) {
+        Binding binding = {button, gamepad};
+        RemoveBinding(action, binding);
     }
     /// @brief Remove a gamepad axis binding for an action.
-    void RemoveGamepadAxisBinding(const std::string &action, GAMEPAD_AXIS axis, int gamepad) { 
-        RemoveBinding(mGamepadAxisBindings, action, static_cast<int>(axis), gamepad); 
+    void RemoveGamepadAxisBinding(const std::string &action, GAMEPAD_AXIS axis, int gamepad) {
+        Binding binding = {axis, gamepad};
+        RemoveBinding(action, binding);
     }
     /// @brief Remove a mouse button binding for an action.
-    void RemoveMouseBinding(const std::string &action, MOUSE_BUTTON button) { 
-        RemoveBinding(mMouseBindings, action, static_cast<int>(button)); 
+    void RemoveMouseBinding(const std::string &action, MOUSE_BUTTON button) {
+        Binding binding = {button};
+        RemoveBinding(action, binding);
     }
     /// @brief Remove a mouse axis binding for an action.
-    void RemoveMouseAxisBinding(const std::string &action, MOUSE_AXIS axis) { 
-        RemoveBinding(mMouseAxisBindings, action, static_cast<int>(axis)); 
+    void RemoveMouseAxisBinding(const std::string &action, MOUSE_AXIS axis) {
+        Binding binding = {axis};
+        RemoveBinding(action, binding);
     }
     /// @brief Remove all bindings on all devices for an action.
     void RemoveAllBindings(const std::string &action) {
-        mKeyBindings.erase(action);
-        mGamepadBindings.erase(action);
-        mGamepadAxisBindings.erase(action);
-        mMouseBindings.erase(action);
-        mMouseAxisBindings.erase(action);
+        mBindings.erase(action);
     }
 
     /// @brief Get the value of an action. Returns the maximum magnitude value of all bindings for the action.
@@ -66,14 +128,11 @@ public:
 
 
 private:
-    std::unordered_map<std::string, std::vector<int>> mKeyBindings;
-    std::unordered_map<std::string, std::vector<std::tuple<int, int>>> mGamepadBindings;
-    std::unordered_map<std::string, std::vector<std::tuple<int, int>>> mGamepadAxisBindings;
-    std::unordered_map<std::string, std::vector<int>> mMouseBindings;
-    std::unordered_map<std::string, std::vector<int>> mMouseAxisBindings;
 
-    void RemoveBinding(std::unordered_map<std::string, std::vector<int>> &bindings, const std::string &action, int value);
-    void RemoveBinding(std::unordered_map<std::string, std::vector<std::tuple<int, int>>> &bindings, const std::string &action, int value, int gamepad);
+    std::unordered_map<std::string, std::vector<Binding>> mBindings;
+
+    void RemoveBinding(const std::string &action, Binding binding);
+
 
 
     float mGamepadDeadzone = 0.1f; // Deadzone for gamepad axis
