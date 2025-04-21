@@ -109,8 +109,8 @@ void Camera::UpdateCameraRotation(double deltaTime) {
             delta.y = -delta.y; // Prevent inverted y
         }
         // Get the right joystick input
-        delta.x += GetGamepadAxis(GAMEPAD_AXIS::eRIGHT_X) * m_controllerSensitivity * deltaTime;
-        delta.y -= GetGamepadAxis(GAMEPAD_AXIS::eRIGHT_Y) * m_controllerSensitivity * deltaTime;
+        delta.x += GetGamepadAxis(GAMEPAD_AXIS::eRIGHT_X, 0) * m_controllerSensitivity * deltaTime;
+        delta.y -= GetGamepadAxis(GAMEPAD_AXIS::eRIGHT_Y, 0) * m_controllerSensitivity * deltaTime;
 
         // Update the camera angles based on the mouse and controller movement
         UpdateCameraAngles(delta);
