@@ -101,3 +101,14 @@ glm::vec2 GetMousePosition() {
 glm::vec2 GetMouseDelta() {
     return gInputData.mouse.currentPosition - gInputData.mouse.previousPosition;
 }
+
+void NormaliseDPad(float& x, float& y)
+{
+    // if there is only 0 or one axis pressed, return the value. Otherwise, we want to normalize it
+    if(x != 0.f && y != 0.f)
+    {
+        x = x > 0.f ? 1.f / sqrt(2.f) : -1.f / sqrt(2.f);
+        y = y > 0.f ? 1.f / sqrt(2.f) : -1.f / sqrt(2.f);
+    }
+}
+

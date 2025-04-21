@@ -23,25 +23,35 @@ public:
     }
 
     /// @brief Add a keyboard binding for an action.
-    void AddKeyBinding(const std::string &action, int key) { mKeyBindings[action].push_back(key); }
+    void AddKeyBinding(const std::string &action, KEY key) { mKeyBindings[action].push_back(static_cast<int>(key)); }
     /// @brief Add a gamepad button binding for an action.
-    void AddGamepadButtonBinding(const std::string &action, int button, int gamepad) { mGamepadBindings[action].emplace_back(button, gamepad); }
+    void AddGamepadButtonBinding(const std::string &action, GAMEPAD_BUTTON button, int gamepad) { mGamepadBindings[action].emplace_back(static_cast<int>(button), gamepad); }
     /// @brief Add a gamepad axis binding for an action.
-    void AddGamepadAxisBinding(const std::string &action, int axis, int gamepad) { mGamepadAxisBindings[action].emplace_back(axis, gamepad); }
+    void AddGamepadAxisBinding(const std::string &action, GAMEPAD_AXIS axis, int gamepad) { mGamepadAxisBindings[action].emplace_back(static_cast<int>(axis), gamepad); }
     /// @brief Add a mouse button binding for an action.
-    void AddMouseBinding(const std::string &action, int button) { mMouseBindings[action].push_back(button); }
+    void AddMouseBinding(const std::string &action, MOUSE_BUTTON button) { mMouseBindings[action].push_back(static_cast<int>(button)); }
     /// @brief Add a mouse axis binding for an action.
-    void AddMouseAxisBinding(const std::string &action, int axis) { mMouseAxisBindings[action].push_back(axis); }
+    void AddMouseAxisBinding(const std::string &action, MOUSE_AXIS axis) { mMouseAxisBindings[action].push_back(static_cast<int>(axis)); }
     /// @brief Remove a keyboard binding for an action.
-    void RemoveKeyBinding(const std::string &action, int key) { RemoveBinding(mKeyBindings, action, key); }
+    void RemoveKeyBinding(const std::string &action, KEY key) { 
+        RemoveBinding(mKeyBindings, action, static_cast<int>(key)); 
+    }
     /// @brief Remove a gamepad button binding for an action.
-    void RemoveGamepadBinding(const std::string &action, int button, int gamepad) { RemoveBinding(mGamepadBindings, action, button, gamepad); }
+    void RemoveGamepadBinding(const std::string &action, GAMEPAD_BUTTON button, int gamepad) { 
+        RemoveBinding(mGamepadBindings, action, static_cast<int>(button), gamepad); 
+    }
     /// @brief Remove a gamepad axis binding for an action.
-    void RemoveGamepadAxisBinding(const std::string &action, int axis, int gamepad) { RemoveBinding(mGamepadAxisBindings, action, axis, gamepad); }
+    void RemoveGamepadAxisBinding(const std::string &action, GAMEPAD_AXIS axis, int gamepad) { 
+        RemoveBinding(mGamepadAxisBindings, action, static_cast<int>(axis), gamepad); 
+    }
     /// @brief Remove a mouse button binding for an action.
-    void RemoveMouseBinding(const std::string &action, int button) { RemoveBinding(mMouseBindings, action, button); }
+    void RemoveMouseBinding(const std::string &action, MOUSE_BUTTON button) { 
+        RemoveBinding(mMouseBindings, action, static_cast<int>(button)); 
+    }
     /// @brief Remove a mouse axis binding for an action.
-    void RemoveMouseAxisBinding(const std::string &action, int axis) { RemoveBinding(mMouseAxisBindings, action, axis); }
+    void RemoveMouseAxisBinding(const std::string &action, MOUSE_AXIS axis) { 
+        RemoveBinding(mMouseAxisBindings, action, static_cast<int>(axis)); 
+    }
     /// @brief Remove all bindings on all devices for an action.
     void RemoveAllBindings(const std::string &action) {
         mKeyBindings.erase(action);
@@ -52,9 +62,9 @@ public:
     }
 
     /// @brief Get the value of an action. Returns the maximum magnitude value of all bindings for the action.
-    float GetValueDown(const std::string &action) const;
-    /// @brief For buttons and keys, this only returns 1 if the button is pressed down this frame. Get the value of an action.
-    float GetValuePressed(const std::string &action) const;
+    float GetActionDown(const std::string &action) const;
+    /// @brief For buttons and keys, this only returns 1 if the button is first pressed down this frame. Get the value of an action.
+    float GetActionPressed(const std::string &action) const;
 
     /// @brief Set the gamepad deadzone.
     void SetGamepadDeadzone(float deadzone) { mGamepadDeadzone = deadzone; }

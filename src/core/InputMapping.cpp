@@ -6,7 +6,7 @@
 #include "InputData.hpp"
 #include "Input.hpp"
 
-float InputMapping::GetValueDown(const std::string &action) const
+float InputMapping::GetActionDown(const std::string &action) const
 {
     // find the max value of the action
     float maxValue = 0;
@@ -93,7 +93,7 @@ void InputMapping::RemoveBinding(std::unordered_map<std::string, std::vector<std
     }
 }
 
-float InputMapping::GetValuePressed(const std::string &action) const
+float InputMapping::GetActionPressed(const std::string &action) const
 {
     // find the max value of the action
     float maxValue = 0;
