@@ -19,8 +19,8 @@ Skybox::Skybox(Context& context, Scene *scene, VkRenderPass renderpass) :
     m_Skybox = CreateImageTexture2D(
         "Skybox",
         context,
-        2048,
-        2048,
+        SKYBOX_WIDTH,
+        SKYBOX_HEIGHT,
         VK_FORMAT_R8G8B8A8_SRGB,
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
         VK_IMAGE_ASPECT_COLOR_BIT,
@@ -40,8 +40,8 @@ Skybox::Skybox(Context& context, Scene *scene, VkRenderPass renderpass) :
     LoadCubemapFace(assetsPath / "Skybox/pz.png",   &faceTextureData[4]);
     LoadCubemapFace(assetsPath / "Skybox/nz.png",   &faceTextureData[5]);
 
-    constexpr uint32_t width = 2048;
-    constexpr uint32_t height = 2048;
+    uint32_t width = SKYBOX_WIDTH;
+    uint32_t height = SKYBOX_HEIGHT;
     VkDeviceSize imageSize = width * height * 4; // Size of a single face
     VkDeviceSize totalSize = imageSize * 6; // Size of total num of faces
 
@@ -278,9 +278,8 @@ void Skybox::LoadCubemapFace(std::filesystem::path facePath, char** pixelData)
     int w, h, texChannels;
     stbi_set_flip_vertically_on_load(0);
     stbi_uc* pixels = stbi_load(facePath.string().c_str(), &w, &h, &texChannels, 4);
-
-    const uint32_t width = static_cast<uint32_t>(w);
-    const uint32_t height = static_cast<uint32_t>(h);
+    SKYBOX_WIDTH = static_cast<size_t>(w);
+    SKYBOX_HEIGHT = static_cast<size_t>(h);
 
     if (!pixels)
     {

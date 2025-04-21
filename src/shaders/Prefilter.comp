@@ -12,6 +12,7 @@ layout(push_constant) uniform Push
 {
     float roughness;
     uint mipLevel;
+    float baseResolution;
 }pc;
 
 #define PI 3.141592653589
@@ -58,9 +59,7 @@ void main() {
     ivec2 texCoord = ivec2(gid.xy);
     int faceIndex = int(gid.z);
 
-    //vec2 uv = (vec2(texCoord) / 2048.0) * 2.0 - 1.0;
-    const float baseResolution = 2048.0;
-    float mipResolution = baseResolution / float(1 << pc.mipLevel);
+    float mipResolution = pc.baseResolution / float(1 << pc.mipLevel);
     vec2 uv = (vec2(texCoord) / mipResolution) * 2.0 - 1.0;
 
 

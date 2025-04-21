@@ -38,6 +38,7 @@ class PrefilterSkybox
     struct PushConstants {
         float roughness;
         uint32_t mipLevel;
+        float baseResolution;
     };
 
     Image m_BRDFLut;

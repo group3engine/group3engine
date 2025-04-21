@@ -5,7 +5,8 @@
 #include "Volk.hpp"
 
 #include "Config.hpp"
-
+inline size_t SKYBOX_WIDTH = 2;
+inline size_t SKYBOX_HEIGHT = 2;
 // Skybox
 class Context;
 class Skybox {

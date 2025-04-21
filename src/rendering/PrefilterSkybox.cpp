@@ -1,12 +1,13 @@
 #include "Context.hpp"
 #include "PrefilterSkybox.hpp"
 #include "Pipeline.hpp"
+#include "Skybox.hpp"
 
 PrefilterSkybox::PrefilterSkybox(Context &context, Image &skybox)
     : context{context}, skybox{skybox}
 {
-    constexpr uint32_t width = 2048;
-    constexpr uint32_t height = 2048;
+    uint32_t width = SKYBOX_WIDTH;
+    uint32_t height = SKYBOX_HEIGHT;
     mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(width, height)))) + 1;
 
     mipLevelImages.resize(mipLevels);
@@ -199,6 +200,7 @@ void PrefilterSkybox::Execute(VkCommandBuffer cmd)
         PushConstants pushConstants = {};
         pushConstants.mipLevel = mip;
         pushConstants.roughness = static_cast<float>(mip) / static_cast<float>(mipLevels - 1);
+        pushConstants.baseResolution = static_cast<float>(SKYBOX_WIDTH);
         vkCmdPushConstants(cmd, m_PrefilterSkyboxPipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(PushConstants), &pushConstants);
         vkCmdDispatch(cmd, 256, 256, 6);
     }
