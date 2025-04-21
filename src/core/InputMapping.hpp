@@ -13,7 +13,6 @@
 /// @brief The InputMapping class is a singleton that manages the input mappings for the game.
 class InputMapping {
 private:
-    static InputMapping *sInstance;
     InputMapping() = default;
     ~InputMapping() = default;
 public:
