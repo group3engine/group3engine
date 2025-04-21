@@ -313,10 +313,10 @@ void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
         else if(entity->GetPhysicsType() == PhysicsType::KINEMATIC)
         {
             // Create the settings object for a mesh shape
-            JPH::MeshShapeSettings settings(vertices, indexedTriangles);
+            JPH::ConvexHullShapeSettings consettings(list_of_points.data(), list_of_points.size());
 
             // Create shape
-            JPH::Shape::ShapeResult result = settings.Create();
+            JPH::Shape::ShapeResult result = consettings.Create();
             if(result.IsValid()) // if the shape is valid
             {
                 shape = result.Get(); // set the shape as the result
