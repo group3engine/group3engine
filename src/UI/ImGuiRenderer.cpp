@@ -874,6 +874,14 @@ void ImGuiRenderer::Update(Scene *scene)
             ImGui::Combo("Tone Map", &vkutil::postProcessingSettings.toneMap, toneMapOptions, IM_ARRAYSIZE(toneMapOptions));
         }
 
+        // NOTE: Add more to this if anyone wants to add more debug visuals
+        // Just make sure you use the right index in the shader
+        if (ImGui::CollapsingHeader("Renderer Debug"))
+        {
+            const char *types[11] = {"Final", "Normal", "World Position", "Albedo", "Roughness", "Metallic", "Shadows", "Mip visual", "Cascades", "SSAO", "SSR"};
+            ImGui::ListBox("Renderer Debug", &vkutil::rendererDebug.debugMode, types, 11);
+        }
+
         ImGui::End();
     }
 

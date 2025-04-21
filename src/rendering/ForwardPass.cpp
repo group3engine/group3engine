@@ -13,9 +13,10 @@
 
 #include "RenderPassCommon.hpp"
 
-ForwardPass::ForwardPass(Context &context, const Image &shadowMap, Image &depthPrepass, Scene *scene, const ShadowMap* shadowMapRenderPass)
+ForwardPass::ForwardPass(Context &context, const Image &shadowMap, Image &depthPrepass, Scene *scene, const ShadowMap* shadowMapRenderPass, const std::vector<Buffer>& debugUniform)
     :
       context{context},
+      m_DebugUniform{debugUniform},
       shadowMap{shadowMap},
       depthPrepass{depthPrepass},
       scene{scene},
@@ -91,6 +92,7 @@ ForwardPass::~ForwardPass() {
     m_SHPass.reset();
     PrefilteredSkybox.reset();
     m_RenderTarget.Destroy(context.device);
+
     //m_DepthTarget.Destroy(context.device);
     m_NormalRoughness.Destroy(context.device);
     m_BrightnessTexture.Destroy(context.device);
@@ -405,6 +407,7 @@ void ForwardPass::BuildDescriptorSetLayouts() {
         vkutil::CreateDescriptorBinding(4, 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT),
         vkutil::CreateDescriptorBinding(5, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
         vkutil::CreateDescriptorBinding(6, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
+        vkutil::CreateDescriptorBinding(7, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT), // Debug UBO
     };
 
     meshDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
@@ -489,8 +492,17 @@ void ForwardPass::BuildDescriptors() {
 
             vkutil::UpdateDescriptorSet(context, 6, imageInfo, descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
         }
+
+        for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+            VkDescriptorBufferInfo bufferInfo{};
+            bufferInfo.buffer = m_DebugUniform[i].buffer;
+            bufferInfo.offset = 0;
+            bufferInfo.range = sizeof(vkutil::RendererDebug);
+            vkutil::UpdateDescriptorSet(context, 7, bufferInfo, descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+        }
     }
 }
 
-void ForwardPass::Update() {
+void ForwardPass::Update()
+{
 }
