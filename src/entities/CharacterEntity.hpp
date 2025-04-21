@@ -11,6 +11,7 @@
 #include "SampleJoltCharacter.h"
 
 #include "ImGuiRenderer.hpp"
+#include "InputMapping.hpp"
 
 enum class InternalEvent {
     eDeath,
@@ -131,13 +132,14 @@ class CharacterEntity : public Entity {
     bool mIsCrouching = false;
     bool mIsEmoting = false;
 
+    InputMapping mInputMapping{};
+
   private:
     bool m_has_save = false;
 
     bool mLeftClimb = false;
     bool mEnterClimb = false;
 
-    std::string playerName{};
 
 
 

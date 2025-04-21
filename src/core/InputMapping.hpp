@@ -12,15 +12,10 @@
 
 /// @brief The InputMapping class is a singleton that manages the input mappings for the game.
 class InputMapping {
-private:
+public:
+    /// @brief Default constructor.
     InputMapping() = default;
     ~InputMapping() = default;
-public:
-    /// @brief Get the singleton instance of the InputMapping class.
-    static InputMapping &get() {
-        static InputMapping instance;
-        return instance;
-    }
 
     /// @brief Add a keyboard binding for an action.
     void AddKeyBinding(const std::string &action, KEY key) { mKeyBindings[action].push_back(static_cast<int>(key)); }
