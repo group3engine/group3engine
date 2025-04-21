@@ -78,6 +78,8 @@ class ForwardPass {
     std::pair<VkPipeline, VkPipelineLayout> m_alphaMaskPipeline;
     std::pair<VkPipeline, VkPipelineLayout> m_skinnedPipeline;
     std::pair<VkPipeline, VkPipelineLayout> m_particlePipeline;
+    std::pair<VkPipeline, VkPipelineLayout> m_wireframePipeline;
+    std::pair<VkPipeline, VkPipelineLayout> m_skinnedWireframePipeline;
 
     std::unique_ptr<Skybox> m_Skybox;
     std::unique_ptr<PrefilterSkybox> PrefilteredSkybox;

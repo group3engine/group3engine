@@ -878,8 +878,8 @@ void ImGuiRenderer::Update(Scene *scene)
         // Just make sure you use the right index in the shader
         if (ImGui::CollapsingHeader("Renderer Debug"))
         {
-            const char *types[11] = {"Final", "Normal", "World Position", "Albedo", "Roughness", "Metallic", "Shadows", "Mip visual", "Cascades", "SSAO", "SSR"};
-            ImGui::ListBox("Renderer Debug", &vkutil::rendererDebug.debugMode, types, 11);
+            const char *types[12] = {"Final", "Normal", "World Position", "Albedo", "Roughness", "Metallic", "Shadows", "Mip visual", "Cascades", "SSAO", "SSR", "Wireframe"};
+            ImGui::ListBox("Renderer Debug", &vkutil::rendererDebug.debugMode, types, 12);
         }
 
         ImGui::End();

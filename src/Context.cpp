@@ -446,6 +446,7 @@ void Context::CreateLogicalDevice() {
     features.features.samplerAnisotropy = VK_TRUE;
     features.features.geometryShader = VK_TRUE;
     features.features.fragmentStoresAndAtomics = VK_TRUE;
+    features.features.fillModeNonSolid = VK_TRUE;
     features.features.shaderUniformBufferArrayDynamicIndexing = VK_TRUE;
     features.features.shaderSampledImageArrayDynamicIndexing = VK_TRUE;
     features.pNext = &features12;
