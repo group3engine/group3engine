@@ -443,6 +443,7 @@ void Context::CreateLogicalDevice() {
 
     VkPhysicalDeviceFeatures2 features = {};
     features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    features.features.fillModeNonSolid = VK_TRUE;
     features.features.samplerAnisotropy = VK_TRUE;
     features.features.geometryShader = VK_TRUE;
     features.features.fragmentStoresAndAtomics = VK_TRUE;
