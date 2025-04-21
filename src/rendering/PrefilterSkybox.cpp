@@ -1,6 +1,7 @@
 #include "Context.hpp"
 #include "PrefilterSkybox.hpp"
 #include "Pipeline.hpp"
+#include "Engine.hpp"
 
 PrefilterSkybox::PrefilterSkybox(Context &context, Image &skybox)
     : context{context}, skybox{skybox}
@@ -186,6 +187,9 @@ PrefilterSkybox::~PrefilterSkybox()
 
 void PrefilterSkybox::Execute(VkCommandBuffer cmd)
 {
+    // if the current scene is main menu, skip prefiltering
+    if (Engine::get().IsInMainMenu())
+        return;
     ZoneScopedN("Prefilter::Execute");
     TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "Prefilter", tracy::Color::Gold);
 

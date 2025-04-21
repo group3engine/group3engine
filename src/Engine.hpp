@@ -41,6 +41,7 @@ class Engine {
     void Run();
     void Shutdown();
     void ChangeScene(const std::filesystem::path &pendingScenePath, size_t pendingPlayerCount);
+    bool IsInMainMenu() const { return mIsMainMenu; }
 
   private:
     Context m_context;
@@ -58,7 +59,7 @@ class Engine {
     std::filesystem::path mPendingScenePath = Sample::SampleObby;
     size_t mPendingScenePlayerCount = 1;
 
-    bool mIsMainMenu = false;
+    bool mIsMainMenu = true;
 
     void UpdateLogic();
 
