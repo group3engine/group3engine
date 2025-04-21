@@ -59,7 +59,7 @@ void main() {
     int faceIndex = int(gid.z);
 
     //vec2 uv = (vec2(texCoord) / 2048.0) * 2.0 - 1.0;
-    const float baseResolution = 2048.0;
+    const float baseResolution = 128.0;
     float mipResolution = baseResolution / float(1 << pc.mipLevel);
     vec2 uv = (vec2(texCoord) / mipResolution) * 2.0 - 1.0;
 
