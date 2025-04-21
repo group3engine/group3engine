@@ -5,8 +5,8 @@
 PrefilterSkybox::PrefilterSkybox(Context &context, Image &skybox)
     : context{context}, skybox{skybox}
 {
-    constexpr uint32_t width = 2048;
-    constexpr uint32_t height = 2048;
+    constexpr uint32_t width = 128;
+    constexpr uint32_t height = 128;
     mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(width, height)))) + 1;
 
     mipLevelImages.resize(mipLevels);
@@ -200,7 +200,7 @@ void PrefilterSkybox::Execute(VkCommandBuffer cmd)
         pushConstants.mipLevel = mip;
         pushConstants.roughness = static_cast<float>(mip) / static_cast<float>(mipLevels - 1);
         vkCmdPushConstants(cmd, m_PrefilterSkyboxPipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(PushConstants), &pushConstants);
-        vkCmdDispatch(cmd, 256, 256, 6);
+        vkCmdDispatch(cmd, 16, 16   , 6);
     }
 
 #ifdef _DEBUG
