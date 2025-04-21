@@ -626,20 +626,20 @@ void CharacterEntity::OnCollisionStay(Entity *aOther)
 void CharacterEntity::RegisterControls()
 {
     // Register controls for the player
-    mInputMapping.AddKeyBinding("FORWARD", KEY::eW);
-    mInputMapping.AddKeyBinding("BACKWARD", KEY::eS);
-    mInputMapping.AddGamepadAxisBinding("FORWARD_BACKWARD", GAMEPAD_AXIS::eLEFT_Y, 0);
-    mInputMapping.AddKeyBinding("LEFT", KEY::eA);
-    mInputMapping.AddKeyBinding("RIGHT", KEY::eD);
-    mInputMapping.AddGamepadAxisBinding("LEFT_RIGHT", GAMEPAD_AXIS::eLEFT_X, 0);
-    mInputMapping.AddKeyBinding("JUMP", KEY::eSPACE);
-    mInputMapping.AddGamepadButtonBinding("JUMP", GAMEPAD_BUTTON::eX, 0);
-    mInputMapping.AddKeyBinding("CROUCH", KEY::eC);
-    mInputMapping.AddKeyBinding("CROUCH", KEY::eLEFT_CONTROL);
-    mInputMapping.AddGamepadButtonBinding("CROUCH", GAMEPAD_BUTTON::eB, 0);
-    mInputMapping.AddGamepadButtonBinding("CROUCH", GAMEPAD_BUTTON::eRIGHT_THUMB, 0);
-    mInputMapping.AddKeyBinding("EMOTE", KEY::eF);
-    mInputMapping.AddGamepadButtonBinding("EMOTE", GAMEPAD_BUTTON::eDPAD_DOWN, 0);
+    mInputMapping.AddBinding("FORWARD", KEY::eW);
+    mInputMapping.AddBinding("BACKWARD", KEY::eS);
+    mInputMapping.AddBinding("FORWARD_BACKWARD", GAMEPAD_AXIS::eLEFT_Y, 0);
+    mInputMapping.AddBinding("LEFT", KEY::eA);
+    mInputMapping.AddBinding("RIGHT", KEY::eD);
+    mInputMapping.AddBinding("LEFT_RIGHT", GAMEPAD_AXIS::eLEFT_X, 0);
+    mInputMapping.AddBinding("JUMP", KEY::eSPACE);
+    mInputMapping.AddBinding("JUMP", GAMEPAD_BUTTON::eX, 0);
+    mInputMapping.AddBinding("CROUCH", KEY::eC);
+    mInputMapping.AddBinding("CROUCH", KEY::eLEFT_CONTROL);
+    mInputMapping.AddBinding("CROUCH", GAMEPAD_BUTTON::eB, 0);
+    mInputMapping.AddBinding("CROUCH", GAMEPAD_BUTTON::eRIGHT_THUMB, 0);
+    mInputMapping.AddBinding("EMOTE", KEY::eF);
+    mInputMapping.AddBinding("EMOTE", GAMEPAD_BUTTON::eDPAD_DOWN, 0);
 
 
 }
