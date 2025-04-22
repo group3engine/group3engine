@@ -584,10 +584,12 @@ void CharacterEntity::MoveToSpawn()
 
 void CharacterEntity::Die()
 {
-    // set the death state to dying
-    mDeathState = DeathState::eDying;
-    // set the death timer to death time
-    mDeathTimer = mDeathTime;
+    if(mDeathState == DeathState::eLiving) {
+        // set the death state to dying
+        mDeathState = DeathState::eDying;
+        // set the death timer to death time
+        mDeathTimer = mDeathTime;
+    }
 
 }
 
