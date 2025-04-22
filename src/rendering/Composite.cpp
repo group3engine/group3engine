@@ -8,7 +8,7 @@
 #include "Utils.hpp"
 #include "Buffer.hpp"
 
-Composite::Composite(Context &context, Scene *scene, Image &LightingPass, Image &BloomPass, Image &SSAO, Image &SSRImage, Image &Fog)
+Composite::Composite(Context &context, Scene *scene, Image &LightingPass, Image &BloomPass, Image &SSAO, Image &SSRImage, Image &Fog, const std::vector<Buffer>& debugUniform)
     : context{context},
       m_Scene{scene},
       LightingPass{LightingPass},
@@ -16,6 +16,7 @@ Composite::Composite(Context &context, Scene *scene, Image &LightingPass, Image 
       SSAO{SSAO},
       SSRImage{SSRImage},
       Fog {Fog},
+      DebugUniform{debugUniform},
       m_Pipeline{VK_NULL_HANDLE},
       m_PipelineLayout{VK_NULL_HANDLE},
       m_descriptorSetLayout{VK_NULL_HANDLE},
@@ -250,6 +251,7 @@ void Composite::BuildDescriptors() {
             vkutil::CreateDescriptorBinding(3, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
             vkutil::CreateDescriptorBinding(4, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
             vkutil::CreateDescriptorBinding(5, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT),
+            vkutil::CreateDescriptorBinding(6, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT), // Debug UBO
         };
 
         m_descriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
@@ -317,5 +319,13 @@ void Composite::BuildDescriptors() {
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(vkutil::PostProcessingSettings);
         vkutil::UpdateDescriptorSet(context, 5, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+    }
+
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+        VkDescriptorBufferInfo bufferInfo{};
+        bufferInfo.buffer = DebugUniform[i].buffer;
+        bufferInfo.offset = 0;
+        bufferInfo.range = sizeof(vkutil::RendererDebug);
+        vkutil::UpdateDescriptorSet(context, 6, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
     }
 }

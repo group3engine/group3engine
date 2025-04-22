@@ -94,6 +94,11 @@ namespace vkutil {
         int toneMap;
     };
 
+    struct RendererDebug
+    {
+        int debugMode;
+    };
+
     struct SHCoefficients {
         glm::vec3 SHCoefficients[9];
     };
@@ -104,6 +109,7 @@ namespace vkutil {
     inline FogSettings fogSettings = { 1.0f, 0.1f, 0.1f, 1 };
     inline FXAASettings fxaaSettings = {true};
     inline PostProcessingSettings postProcessingSettings = {0.0f, 1.0f, 1.0f, 3};
+    inline RendererDebug rendererDebug = {0};
     inline uint32_t setRenderingPipeline = 1;
     inline uint32_t setAlphaMakingPipeline = 2;
 

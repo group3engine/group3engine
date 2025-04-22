@@ -28,7 +28,7 @@ class Buffer;
 class ForwardPass {
 
   public:
-    ForwardPass(Context &context, const Image &shadowMap, Image &depthPrepass, Scene *scene, const ShadowMap* shadowMapRenderPass);
+    ForwardPass(Context &context, const Image &shadowMap, Image &depthPrepass, Scene *scene, const ShadowMap* shadowMapRenderPass, const std::vector<Buffer>& debugUniform);
     ~ForwardPass();
 
     VkRenderPass Get() const { return m_renderPass; }
@@ -66,6 +66,7 @@ class ForwardPass {
     VkDescriptorSetLayout particleDescriptorSetLayout;
 
     Context &context;
+    const std::vector<Buffer>& m_DebugUniform;
     const Image &shadowMap;
     Image &depthPrepass;
     Scene *scene;
@@ -77,11 +78,12 @@ class ForwardPass {
     std::pair<VkPipeline, VkPipelineLayout> m_alphaMaskPipeline;
     std::pair<VkPipeline, VkPipelineLayout> m_skinnedPipeline;
     std::pair<VkPipeline, VkPipelineLayout> m_particlePipeline;
+    std::pair<VkPipeline, VkPipelineLayout> m_wireframePipeline;
+    std::pair<VkPipeline, VkPipelineLayout> m_skinnedWireframePipeline;
 
     std::unique_ptr<Skybox> m_Skybox;
     std::unique_ptr<PrefilterSkybox> PrefilteredSkybox;
     std::unique_ptr<SH> m_SHPass;
 
     VkSampleCountFlagBits MSAA_SAMPLES = VK_SAMPLE_COUNT_4_BIT;
-
 };

@@ -13,9 +13,10 @@
 
 #include "RenderPassCommon.hpp"
 
-ForwardPass::ForwardPass(Context &context, const Image &shadowMap, Image &depthPrepass, Scene *scene, const ShadowMap* shadowMapRenderPass)
+ForwardPass::ForwardPass(Context &context, const Image &shadowMap, Image &depthPrepass, Scene *scene, const ShadowMap* shadowMapRenderPass, const std::vector<Buffer>& debugUniform)
     :
       context{context},
+      m_DebugUniform{debugUniform},
       shadowMap{shadowMap},
       depthPrepass{depthPrepass},
       scene{scene},
@@ -91,6 +92,7 @@ ForwardPass::~ForwardPass() {
     m_SHPass.reset();
     PrefilteredSkybox.reset();
     m_RenderTarget.Destroy(context.device);
+
     //m_DepthTarget.Destroy(context.device);
     m_NormalRoughness.Destroy(context.device);
     m_BrightnessTexture.Destroy(context.device);
@@ -103,6 +105,13 @@ ForwardPass::~ForwardPass() {
     vkDestroyPipeline(context.device, m_particlePipeline.first, nullptr);
     vkDestroyPipelineLayout(context.device, m_particlePipeline.second, nullptr);
 
+    // Destroy wireframe
+    vkDestroyPipeline(context.device, m_wireframePipeline.first, nullptr);
+    vkDestroyPipelineLayout(context.device, m_wireframePipeline.second, nullptr);
+
+    // Destroy skinned wireframe
+    vkDestroyPipeline(context.device, m_skinnedWireframePipeline.first, nullptr);
+    vkDestroyPipelineLayout(context.device, m_skinnedWireframePipeline.second, nullptr);
 
     vkDestroyFramebuffer(context.device, m_framebuffer, nullptr);
     vkDestroyRenderPass(context.device, m_renderPass, nullptr);
@@ -230,14 +239,26 @@ void ForwardPass::BeginExecute(VkCommandBuffer cmd) {
         vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_opaquePipeline.second, 0, 1,
                                 &mPlayerDescriptorSets[playerId][vkutil::currentFrame], 0, nullptr);
 
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_skinnedPipeline.first);
-        scene->DrawSkinned(cmd, m_skinnedPipeline.second);
+        if (vkutil::rendererDebug.debugMode == 11)
+        {
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_skinnedWireframePipeline.first);
+            scene->DrawSkinned(cmd, m_skinnedPipeline.second);
 
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_opaquePipeline.first);
-        scene->DrawOpaque(cmd, m_opaquePipeline.second);
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_wireframePipeline.first);
+            scene->DrawOpaque(cmd, m_wireframePipeline.second);
+            scene->DrawAlphaMasked(cmd, m_alphaMaskPipeline.second);
 
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_alphaMaskPipeline.first);
-        scene->DrawAlphaMasked(cmd, m_alphaMaskPipeline.second);
+        } else {
+
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_skinnedPipeline.first);
+            scene->DrawSkinned(cmd, m_skinnedPipeline.second);
+
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_opaquePipeline.first);
+            scene->DrawOpaque(cmd, m_opaquePipeline.second);
+
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_alphaMaskPipeline.first);
+            scene->DrawAlphaMasked(cmd, m_alphaMaskPipeline.second);
+        }
     }
 
     // Also drawn per player but per player logic is inside of the particle system
@@ -280,7 +301,24 @@ void ForwardPass::CreatePipeline() {
         .SetRenderPass(m_renderPass)
         .Build();
 
-    m_opaquePipeline = defaultPipelineResult;
+     m_opaquePipeline = defaultPipelineResult;
+
+    auto wireframePipelineResult = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
+        .AddShader(OPAQUE_VERTEX_SHADER, ShaderType::VERTEX)
+        .AddShader(OPAQUE_FRAGMENT_SHADER, ShaderType::FRAGMENT)
+        .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+        .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}})
+        .SetRasterizationState(VK_POLYGON_MODE_LINE, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE)
+        .SetPipelineLayout({{meshDescriptorSetLayout, vkutil::materialDescriptorSetLayout}}, pushConstants)
+        .SetSampling(VK_SAMPLE_COUNT_1_BIT)
+        .AddBlendAttachmentState()
+        .AddBlendAttachmentState()
+        .AddBlendAttachmentState()
+        .SetDepthState(VK_TRUE, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL)
+        .SetRenderPass(m_renderPass)
+        .Build();
+
+    m_wireframePipeline = wireframePipelineResult;
 
     auto alphaMaskPipeline = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
         .AddShader(ALPHA_MASK_VERTEX_SHADER, ShaderType::VERTEX)
@@ -315,6 +353,23 @@ void ForwardPass::CreatePipeline() {
         .Build();
 
     m_skinnedPipeline = skinnedPipeline;
+
+    auto skinnedWireframePipeline = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
+        .AddShader(SKINNED_VERTEX_SHADER, ShaderType::VERTEX)
+        .AddShader(SKINNED_FRAGMENT_SHADER, ShaderType::FRAGMENT)
+        .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+        .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}})
+        .SetRasterizationState(VK_POLYGON_MODE_LINE, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE)
+        .SetPipelineLayout( {{meshDescriptorSetLayout, vkutil::materialDescriptorSetLayout, skinDescriptorSetLayout}}, pushConstants)
+        .SetSampling(VK_SAMPLE_COUNT_1_BIT)
+        .AddBlendAttachmentState()
+        .AddBlendAttachmentState()
+        .AddBlendAttachmentState()
+        .SetDepthState(VK_TRUE, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL)
+        .SetRenderPass(m_renderPass)
+        .Build();
+
+    m_skinnedWireframePipeline = skinnedWireframePipeline;
 
     m_particlePipeline = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
         .AddShader(PARTICLE_MESH_VERTEX_SHADER, ShaderType::VERTEX)
@@ -405,6 +460,7 @@ void ForwardPass::BuildDescriptorSetLayouts() {
         vkutil::CreateDescriptorBinding(4, 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT),
         vkutil::CreateDescriptorBinding(5, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
         vkutil::CreateDescriptorBinding(6, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
+        vkutil::CreateDescriptorBinding(7, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT), // Debug UBO
     };
 
     meshDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
@@ -489,8 +545,17 @@ void ForwardPass::BuildDescriptors() {
 
             vkutil::UpdateDescriptorSet(context, 6, imageInfo, descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
         }
+
+        for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+            VkDescriptorBufferInfo bufferInfo{};
+            bufferInfo.buffer = m_DebugUniform[i].buffer;
+            bufferInfo.offset = 0;
+            bufferInfo.range = sizeof(vkutil::RendererDebug);
+            vkutil::UpdateDescriptorSet(context, 7, bufferInfo, descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+        }
     }
 }
 
-void ForwardPass::Update() {
+void ForwardPass::Update()
+{
 }

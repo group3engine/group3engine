@@ -19,6 +19,11 @@ layout(set = 0, binding = 5) uniform PostProcessSettings
     int toneMap;
 }ppSettings;
 
+layout (set = 0, binding = 6) uniform RendererDebug
+{
+    int debugMode;
+}debugRenderer;
+
 float SpatialDenoisedSSAO()
 {
     vec2 texelSize = 1.0 / textureSize(SSAO, 0);
@@ -173,7 +178,23 @@ void main()
 
     vec3 ldrColor = ppSettings.toneMap == 0 ? hdrColor : ppSettings.toneMap == 1 ? Reinhard(hdrColor) : ppSettings.toneMap == 2 ? Uncharted2ToneMapping(hdrColor) : ACESFilm(hdrColor);
 	vec3 result = ldrColor;
-	vec3 gammaCorrectedColor = pow(result, vec3(1.0 / 2.2));
 
-	fragColor = vec4(vec3(gammaCorrectedColor), 1.0);
+    // Check if we need to apply the post process combinatio since 1 - 7 is debug modes
+    bool applyProcessing = !(debugRenderer.debugMode >= 1 && debugRenderer.debugMode <= 8);
+    // Since lighting = forwardPass where debug is also handled, determine if full processing is needed or not
+    vec3 gammaCorrectedColor = applyProcessing ? pow(result, vec3(1.0 / 2.2)) : lighting.rgb;
+
+    switch(debugRenderer.debugMode)
+    {
+        case 9:
+            fragColor = vec4(ssao, 1.0);
+            break;
+        case 10:
+            fragColor = vec4(ssr, 1.0);
+            break;
+        default:
+            fragColor = vec4(gammaCorrectedColor, 1.0);
+    }
+
+	//fragColor = vec4(vec3(gammaCorrectedColor), 1.0);
 }

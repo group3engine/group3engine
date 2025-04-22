@@ -101,4 +101,5 @@ class Renderer {
     std::vector<Camera *> m_cameras;
 
     uint32_t mImageIndex = 0;
+    std::vector<Buffer> m_DebugUniform;
 };
