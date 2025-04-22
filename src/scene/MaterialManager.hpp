@@ -16,10 +16,10 @@ class MaterialManager {
     // TODO: this is copying a material by value into the vector, not ideal
     void AddMaterial(Material &material) {
         mMaterials.emplace_back(std::move(material));
-        UploadLastMaterial();
+        UploadMaterial(mMaterials.back());
     }
 
-    void UploadLastMaterial();
+    void UploadMaterial(Material &aMaterial);
 
     void ReserveMaterials(size_t size) { mMaterials.reserve(size); }
 

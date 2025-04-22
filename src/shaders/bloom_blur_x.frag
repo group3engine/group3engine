@@ -26,8 +26,8 @@ void main()
     // blur horizontally
     for(int i = 1; i < 11; i++)
     {
-        blurredOutput += getColour(linearOffsets[i], 0.0) * linearWeights[i];
-        blurredOutput += getColour(-linearOffsets[i], 0.0) * linearWeights[i];
+        blurredOutput += getColour(linearOffsets[i] / 3., 0.0) * linearWeights[i];
+        blurredOutput += getColour(-linearOffsets[i] / 3., 0.0) * linearWeights[i];
     }
     oColour = blurredOutput;
 }

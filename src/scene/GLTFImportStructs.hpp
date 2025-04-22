@@ -93,11 +93,13 @@ struct Texture {
 };
 
 struct PBRMaterialNumbers {
-    glm::vec4 baseColorFactor;
-    float metallicFactor;
-    float roughnessFactor;
-    float alphaCutoff;
+    alignas(16) glm::vec4 baseColorFactor;
+    alignas(4) float metallicFactor;
+    alignas(4) float roughnessFactor;
+    alignas(4) float alphaCutoff;
+    alignas(16) glm::vec4 emissiveFactor = glm::vec4(0.0f);
 };
+
 
 struct PBRMetallicRoughnessMaterial {
     Texture *baseColorTexture;
@@ -108,6 +110,7 @@ struct PBRMetallicRoughnessMaterial {
     std::string metallicRoughnessTextureName;
 };
 
+
 struct Material {
     std::string name;
     bool hasPBRMetallicRoughness;
@@ -115,6 +118,8 @@ struct Material {
     Texture *normalTexture;
     std::string normalTextureName;
     VkDescriptorSet descriptorSet;
+    Texture *emissiveTexture;
+    std::string emissiveTextureName;
     Buffer materialBuffer;
     bool alphaCutout;
     float alphaCutoff;
