@@ -50,6 +50,8 @@ class CharacterEntity : public Entity {
     // update override
     void Update(double deltaTime) override;
 
+    void LateUpdate(double deltaTime) override;
+
     void UpdateUi(double deltaTime) override;
 
     void Awake() override;
