@@ -111,7 +111,8 @@ void CharacterEntity::ProcessInput(){
                 // if we are grounded, then only do this if x is forward
                 if(!mSampleJoltCharacter->IsGrounded() || controlInput.x > 0.1f) {
                     controlInput.y = controlInput.x;
-                    controlInput.x = 0.f;
+                    controlInput.x = -1.f;
+                    controlInput.z = 0.f;
                 }
             }
             controlInput = rotation * controlInput;
@@ -583,10 +584,12 @@ void CharacterEntity::MoveToSpawn()
 
 void CharacterEntity::Die()
 {
-    // set the death state to dying
-    mDeathState = DeathState::eDying;
-    // set the death timer to death time
-    mDeathTimer = mDeathTime;
+    if(mDeathState == DeathState::eLiving) {
+        // set the death state to dying
+        mDeathState = DeathState::eDying;
+        // set the death timer to death time
+        mDeathTimer = mDeathTime;
+    }
 
 }
 
@@ -642,4 +645,13 @@ void CharacterEntity::RegisterControls()
     mInputMapping.AddBinding("EMOTE", GAMEPAD_BUTTON::eDPAD_DOWN, 0);
 
 
+}
+
+void CharacterEntity::LateUpdate(double deltaTime)
+{
+    // if we are beginning a jump, we are not in climb
+    if(mSampleJoltCharacter->GetJumpState() == EJumpState::Start)
+    {
+        mInClimb = false;
+    }
 }
