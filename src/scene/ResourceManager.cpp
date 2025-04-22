@@ -332,6 +332,11 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                         tangent.z = 0.001f;
                     }
                     meshPrimitive.vertices[i].tangent = tangent;
+                } else {
+                    SPDLOG_ERROR("Mesh primitive in {} is missing tangents. The glTF may have "
+                                 "failed to export due to ngons or other issues.",
+                                 gltfMesh.name);
+                    assert(false);
                 }
 
                 // if the mesh has joints and weights
