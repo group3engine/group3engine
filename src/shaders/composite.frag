@@ -8,6 +8,21 @@ layout(set = 0, binding = 0) uniform sampler2D renderedScene;
 layout(set = 0, binding = 1) uniform sampler2D bloomPass;
 layout(set = 0, binding = 2) uniform sampler2D SSAO;
 layout(set = 0, binding = 3) uniform sampler2D SSR;
+layout(set = 0, binding = 4) uniform sampler2D Fog;
+
+
+layout(set = 0, binding = 5) uniform PostProcessSettings
+{
+    float brightness;
+    float contrast;
+    float saturation;
+    int toneMap;
+}ppSettings;
+
+layout (set = 0, binding = 6) uniform RendererDebug
+{
+    int debugMode;
+}debugRenderer;
 
 float SpatialDenoisedSSAO()
 {
@@ -83,7 +98,6 @@ vec3 ACESToneMappingFilm(vec3 x) {
   return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
 }
 
-
 vec3 SD(sampler2D inputImage)
 {
     ivec2 loc = ivec2(gl_FragCoord.xy) - ivec2(2);
@@ -103,20 +117,84 @@ vec3 SD(sampler2D inputImage)
     return vec3(result / 16.0);
 }
 
+vec3 ACESFilm(vec3 x){
+    return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0);
+}
+
+vec3 Saturation(vec3 color, float saturation) {
+    vec3 gScale = vec3(0.299, 0.587, 0.114);
+    vec3 grayscale = vec3(dot(color, gScale));
+    vec3 result = mix(grayscale, color, saturation);
+    return clamp(result, 0.0, 1.0);
+}
+vec3 ContrastBrightness(vec3 color, float contrast, float brightness) {
+    return clamp(contrast * (color - vec3(0.5)) + vec3(0.5) + brightness, 0.0, 1.0);
+}
+
+vec3 Reinhard(vec3 color)
+{
+    float luminance = dot(color, vec3(0.299f, 0.587f, 0.114f));
+    float reinhard = luminance / (luminance + 1.0f);
+    return color * (reinhard / luminance);
+}
+
+// https://www.shadertoy.com/view/lslGzl
+vec3 Uncharted2ToneMapping(vec3 color)
+{
+	float A = 0.15;
+	float B = 0.50;
+	float C = 0.10;
+	float D = 0.20;
+	float E = 0.02;
+	float F = 0.30;
+	float W = 11.2;
+	float exposure = 2.;
+	color *= exposure;
+	color = ((color * (A * color + C * B) + D * E) / (color * (A * color + B) + D * F)) - E / F;
+	float white = ((W * (A * W + C * B) + D * E) / (W * (A * W + B) + D * F)) - E / F;
+	color /= white;
+	return color;
+}
+
 void main()
 {
 	vec4 lighting = texture(renderedScene, uv);
 	vec4 bloom = texture(bloomPass, uv);
 	vec3 ssao = SD(SSAO);
     vec3 ssr = texture(SSR, uv).rgb;
+    vec4 FoggedScene = texture(Fog, uv);
 
-	vec3 hdrColor = vec3(lighting.rgb) * ssao;
+    // The fog is now composed with the final lighting
+    vec3 compositeFog = mix(lighting.rgb, FoggedScene.rgb, FoggedScene.a).rgb;
+
+    // FoggedScene is now just "lighting".
+    // With fog = 0, its just the scene.
+	vec3 hdrColor = (compositeFog.rgb + ssr) * ssao;
+    hdrColor = Saturation(hdrColor, ppSettings.saturation);
+    hdrColor = ContrastBrightness(hdrColor, ppSettings.contrast, ppSettings.brightness);
+
     hdrColor = hdrColor + bloom.rgb;
-	//vec3 ldrColor = hdrColor / (hdrColor + vec3(1.0));
+	//vec3 ldrColor = hdrColor / (hdrColor + vec3(1.0)); // Reinhard tone map
 
-    vec3 ldrColor = ACESToneMappingFilm(hdrColor);
+    vec3 ldrColor = ppSettings.toneMap == 0 ? hdrColor : ppSettings.toneMap == 1 ? Reinhard(hdrColor) : ppSettings.toneMap == 2 ? Uncharted2ToneMapping(hdrColor) : ACESFilm(hdrColor);
 	vec3 result = ldrColor;
-	vec3 gammaCorrectedColor = pow(result, vec3(1.0 / 2.2));
 
-	fragColor = vec4(vec3(gammaCorrectedColor), 1.0);
+    // Check if we need to apply the post process combinatio since 1 - 7 is debug modes
+    bool applyProcessing = !(debugRenderer.debugMode >= 1 && debugRenderer.debugMode <= 8);
+    // Since lighting = forwardPass where debug is also handled, determine if full processing is needed or not
+    vec3 gammaCorrectedColor = applyProcessing ? pow(result, vec3(1.0 / 2.2)) : lighting.rgb;
+
+    switch(debugRenderer.debugMode)
+    {
+        case 9:
+            fragColor = vec4(ssao, 1.0);
+            break;
+        case 10:
+            fragColor = vec4(ssr, 1.0);
+            break;
+        default:
+            fragColor = vec4(gammaCorrectedColor, 1.0);
+    }
+
+	//fragColor = vec4(vec3(gammaCorrectedColor), 1.0);
 }

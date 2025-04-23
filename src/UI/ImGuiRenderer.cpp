@@ -442,7 +442,7 @@ void ImGuiRenderer::NewDeathPopup(const gui::DeathPopupData &data,
 
     ImGuiViewport viewport = CalcPlayerViewport(Context::get().extent, activePlayerCount, playerId);
 
-    std::string str = fmt::format("DEATH POPUP");
+    std::string str = fmt::format("YOU DIED");
 
     size_t sv = 0;
 
@@ -779,11 +779,9 @@ void ImGuiRenderer::Update(Scene *scene)
         ImVec4(0.76, 0.5, 0.0, 1.0), "FPS: (%.1f FPS), %.3f ms/frame",
         ImGui::GetIO().Framerate, 1000.0f / ImGui::GetIO().Framerate);
 
-   ImGui::Text("Directional Light: (%.2f, %.2f, %.2f)",
-        LightManager::getInstance().GetLights()[0]->position.x,
-        LightManager::getInstance().GetLights()[0]->position.y,
-        LightManager::getInstance().GetLights()[0]->position.z
-    );
+   auto dir = glm::normalize(LightManager::getInstance().GetLights()[0]->position);
+
+   ImGui::Text("Directional Light: (%.2f, %.2f, %.2f)", dir.x, dir.y, dir.z);
 
     static bool initialized = false;
     static float SunElevation = 0.0f;
@@ -832,29 +830,62 @@ void ImGuiRenderer::Update(Scene *scene)
         }
     }
 
-    // SSAO settings
-    if (ImGui::CollapsingHeader("SSAO"))
-    {
-        ImGui::SliderInt("Directions: ", &vkutil::ssaoSettings.NumDirections, 1, 64);
-        ImGui::SliderInt("Steps: ", &vkutil::ssaoSettings.NumSteps, 1, 64);
-        ImGui::SliderFloat("Radius: ", &vkutil::ssaoSettings.Radius, 0.1f, 10.0f);
-        ImGui::SliderFloat("StepSize: ", &vkutil::ssaoSettings.StepSize, 0.0f, 0.1f);
-        ImGui::SliderFloat("Intensity: ", &vkutil::ssaoSettings.intensity, 0.0f, 10.0f);
+    static bool showGraphics = false;
+    ImGui::Checkbox("Graphics Settings", &showGraphics);
+    if (showGraphics) {
+
+        ImGui::Begin("Graphics");
+        ImGui::SetWindowSize(ImVec2(400, 600));
+        if (ImGui::CollapsingHeader("SSAO"))
+        {
+            ImGui::SliderInt("Directions: ", &vkutil::ssaoSettings.NumDirections, 1, 64);
+            ImGui::SliderInt("Steps: ", &vkutil::ssaoSettings.NumSteps, 1, 64);
+            ImGui::SliderFloat("Radius: ", &vkutil::ssaoSettings.Radius, 0.1f, 10.0f);
+            ImGui::SliderFloat("StepSize: ", &vkutil::ssaoSettings.StepSize, 0.0f, 0.1f);
+            ImGui::SliderFloat("Intensity: ", &vkutil::ssaoSettings.intensity, 0.0f, 10.0f);
+        }
+
+        if (ImGui::CollapsingHeader("SSR"))
+        {
+            ImGui::SliderFloat("MaxDistance: ", &vkutil::ssrSettings.MaxDistance, 0.0f, 100.0f);
+            ImGui::SliderFloat("Thickness: ", &vkutil::ssrSettings.thickness, 0, 1.0f);
+        }
+
+        if (ImGui::CollapsingHeader("Fog"))
+        {
+            ImGui::SliderFloat("Distance: ", &vkutil::fogSettings.MaxDistance, 1.0f, 100.0f);
+            ImGui::SliderFloat("Density: ", &vkutil::fogSettings.Density, 0.1f, 0.3f);
+            ImGui::SliderFloat("SteppingSize: ", &vkutil::fogSettings.StepSize, 0.1f, 1.5f);
+            ImGui::SliderInt("Steps: ", &vkutil::fogSettings.MaxSteps, 1, 10);
+        }
+
+        if (ImGui::CollapsingHeader("FXAA"))
+        {
+            ImGui::Checkbox("Enable FXAA: ", &vkutil::fxaaSettings.EnableFXAA);
+        }
+
+        if (ImGui::CollapsingHeader("Post Processing"))
+        {
+            ImGui::SliderFloat("Brightness: ", &vkutil::postProcessingSettings.brightness, 0.0f, 1.0f);
+            ImGui::SliderFloat("Contrast: ", &vkutil::postProcessingSettings.contrast, 0.0f, 5.0f);
+            ImGui::SliderFloat("Saturation: ", &vkutil::postProcessingSettings.saturation, 0.0f, 2.0f);
+
+            const char *toneMapOptions[] = {"OFF", "Reinhard", "Uncharted2", "ACES"};
+            ImGui::Combo("Tone Map", &vkutil::postProcessingSettings.toneMap, toneMapOptions, IM_ARRAYSIZE(toneMapOptions));
+        }
+
+        // NOTE: Add more to this if anyone wants to add more debug visuals
+        // Just make sure you use the right index in the shader
+        if (ImGui::CollapsingHeader("Renderer Debug"))
+        {
+            const char *types[12] = {"Final", "Normal", "World Position", "Albedo", "Roughness", "Metallic", "Shadows", "Mip visual", "Cascades", "SSAO", "SSR", "Wireframe"};
+            ImGui::ListBox("Renderer Debug", &vkutil::rendererDebug.debugMode, types, 12);
+        }
+
+        ImGui::End();
     }
 
-    // SSR settings
-    //int MaxSteps;
-    //int BinarySearchIterations;
-    //float MaxDistance;
-    //float thickness;
-    if (ImGui::CollapsingHeader("SSR"))
-    {
-        ImGui::SliderInt("MaxSteps: ", &vkutil::ssrSettings.MaxSteps, 1, 500);
-        ImGui::SliderFloat("MaxDistance: ", &vkutil::ssrSettings.MaxDistance, 0.0f, 20.0f);
-        ImGui::SliderInt("BSIterations: ", &vkutil::ssrSettings.BinarySearchIterations, 0, 100);
-        ImGui::SliderFloat("Thickness: ", &vkutil::ssrSettings.thickness, 0, 1.0f);
-        ImGui::SliderFloat("StepSize: ", &vkutil::ssrSettings.StepSize, 0.0f, 0.5f);
-    }
+
 
     static bool enableTextureDebug = false;
     ImGui::Checkbox("Debug Textures", &enableTextureDebug);

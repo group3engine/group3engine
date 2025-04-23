@@ -31,7 +31,8 @@ DepthPrepass::DepthPrepass(Context &context, Scene *scene)
         VK_FORMAT_D32_SFLOAT,
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         VK_IMAGE_ASPECT_DEPTH_BIT,
-        1);
+        1
+    );
 
     CreateRenderPass();
     CreateFramebuffer();
@@ -115,9 +116,6 @@ void DepthPrepass::Execute(VkCommandBuffer cmd) {
 
         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
         m_Scene->DrawOpaque(cmd, m_PipelineLayout);
-
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
-        m_Scene->DrawAlphaMasked(cmd, m_PipelineLayout);
     }
     vkCmdEndRenderPass(cmd);
 

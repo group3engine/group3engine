@@ -1,31 +1,21 @@
 #version 450
 
+#include "uniforms.glsl"
+
 // NOTE: Some data when 2 player was implemented has broken something
 // Works with a single player but stopped working correctly when two players was introduced
 
 layout(location = 0) in vec2 uv;
 layout(location = 0) out vec4 fragColour;
 
-layout(set = 0, binding = 0) uniform CameraUBO
-{
-	mat4 view;
-	mat4 projection;
-    vec4 cameraPosition;
-    vec2 viewportSize;
-	float fov;
-	float nearPlane;
-	float farPlane;
-} ubo;
-
+layout(set = 0, binding = 0) uniform block {
+    CameraUBO ubo;
+};
 
 layout(set = 1, binding = 1) uniform SSRSettings
 {
-    int MaxSteps;
-    int BinarySearchIterations;
     float MaxDistance;
     float thickness;
-	float StepSize;
-	float time;
 }ssr;
 
 layout (set = 1, binding = 0) uniform sampler2D depthBuffer;
@@ -71,6 +61,10 @@ vec3 ScreenSpaceReflections()
     //vec4 WorldNormal = normalize(inverse(ubo.view) * vec4(DepthToNormal(uv).xyz, 0.0)); // Depth for normals can cause issues when looking straight down. Store normals in a g-buffer target instead
     vec3 worldReflectionDir = normalize(reflect(camDir, WorldNormal.xyz));
 
+
+    float lod = WorldNormal.a * float(12.0 - 1.0);
+    vec3 sky = textureLod(skybox, worldReflectionDir, 0).xyz; // Sample skybox once
+
     vec3 WorldSpaceBegin = WorldPos.xyz;
     vec3 worldSpaceEnd = WorldSpaceBegin + worldReflectionDir * MAX_DISTANCE;
 
@@ -89,10 +83,11 @@ vec3 ScreenSpaceReflections()
     float dx = end.x - start.x;
     float dy = end.y - start.y;
     int stepDir = max(abs(int(dx)), abs(int(dy)));
+    //int stepDir = max(16, min(ssr.MaxSteps, max(abs(int(dx)), abs(int(dy)))));
 
 	// early exit if start and end are the same we dont need to traverse the ray
     if (stepDir == 0) {
-        return vec3(0.0);
+        return vec3(0, 0, 0);
     }
 
     float stepRCP = 1.0 / float(stepDir);
@@ -108,7 +103,7 @@ vec3 ScreenSpaceReflections()
         x += x_incr;
         y += y_incr;
 
-        // Check if x, y are outside the bounds of pixel-space-screen-space
+        // see if x, y are outside the bounds of pixel-space-screen-space
         if (x < 0.0 || x >= texSize.x || y < 0.0 || y >= texSize.y) {
             break;
         }
@@ -120,6 +115,7 @@ vec3 ScreenSpaceReflections()
 
         // depth test to determine hit
         float depthDiff = z - depth;
+
         if (depthDiff > 0.0 && depthDiff < ssr.thickness) {
 
 			// sample the colour at the hit point
@@ -127,28 +123,27 @@ vec3 ScreenSpaceReflections()
 
 			// screen-fading at edges
 			vec2 hitPixelNDC = (vec2(x,y) / texSize) * 2.0 - 1.0; // get in NDC [-1, 1]
-			const float blendScreenEdgeFade = 2.0f; // TODO: Make tweakable parameter?
+			const float blendScreenEdgeFade = 1.0f; // TODO: Make tweakable parameter?
 			vec2 vignette = clamp(abs(hitPixelNDC) * blendScreenEdgeFade - (blendScreenEdgeFade - 1.0), 0.0, 1.0);
 			float screenFade = clamp(1.0 - dot(vignette, vignette), 0.0, 1.0);
 
 			// rays which point towards the camera have less contribution (likely hitting the back of a surface)
 			float NdotR = max(dot(normalize(-camDir), (worldReflectionDir)), 0.0);
-            float TowardsCameraVisibility = (1 - clamp(NdotR, 0.0, 1.0));
+            float TowardsCameraVisibility = (1.0 - clamp(NdotR, 0.0, 1.0));
 
 			// fade the ray based on the distance the ray has travelled
 			float DistanceTravelled = (1.0 - clamp(float(i) / float(stepDir), 0.0, 1.0));
-			//return colour * TowardsCameraVisibility * DistanceTravelled * screenFade;
-            return colour;
+			//return mix(colour * (TowardsCameraVisibility) * DistanceTravelled * screenFade, vec3(0,0,0), DistanceTravelled);
+            //return colour;
+            return colour * TowardsCameraVisibility * DistanceTravelled * screenFade;
         }
     }
-
     // TODO: Sample cube map if no intersection
-
-    return vec3(0.0);
+    return vec3(0,0,0);
 }
 
 void main()
 {
-    fragColour = vec4(0.0, 0.0, 0.0, 1.0);
-	//fragColour = vec4(mix(ScreenSpaceReflections().rgb, vec3(0), roughness), 1.0);
+    float roughness = texture(normalRoughness, uv).a;
+	fragColour = vec4(mix(ScreenSpaceReflections().rgb, vec3(0), roughness), 1.0);
 }

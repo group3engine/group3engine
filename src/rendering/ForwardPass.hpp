@@ -7,6 +7,8 @@
 
 #include "Config.hpp"
 #include "ShadowMap.hpp"
+#include "SH2.hpp"
+#include "PrefilterSkybox.hpp"
 
 
 // This is disgusting whoever did it lol
@@ -26,7 +28,7 @@ class Buffer;
 class ForwardPass {
 
   public:
-    ForwardPass(Context &context, Image &shadowMap, Image &depthPrepass, Scene *scene, const ShadowMap* shadowMapRenderPass);
+    ForwardPass(Context &context, const Image &shadowMap, Image &depthPrepass, Scene *scene, const ShadowMap* shadowMapRenderPass, const std::vector<Buffer>& debugUniform);
     ~ForwardPass();
 
     VkRenderPass Get() const { return m_renderPass; }
@@ -42,6 +44,7 @@ class ForwardPass {
     Image &GetNormalRoughnessTarget() { return m_NormalRoughness; }
     Skybox* GetSkybox() { return m_Skybox.get(); }
 
+
   private:
     void CreatePipeline();
     void CreateRenderPass();
@@ -49,7 +52,9 @@ class ForwardPass {
     void BuildDescriptorSetLayouts();
     void BuildDescriptors();
 
-    Image m_RenderTarget;
+    Image m_RenderTarget; // Render 4x to this one
+    Image m_SingleSampleRenderTarget; // 1x render target
+
     Image m_DepthTarget;
     Image m_BrightnessTexture;
     Image m_NormalRoughness;
@@ -61,7 +66,8 @@ class ForwardPass {
     VkDescriptorSetLayout particleDescriptorSetLayout;
 
     Context &context;
-    Image &shadowMap;
+    const std::vector<Buffer>& m_DebugUniform;
+    const Image &shadowMap;
     Image &depthPrepass;
     Scene *scene;
     const ShadowMap *shadowMapRenderPass;
@@ -72,6 +78,12 @@ class ForwardPass {
     std::pair<VkPipeline, VkPipelineLayout> m_alphaMaskPipeline;
     std::pair<VkPipeline, VkPipelineLayout> m_skinnedPipeline;
     std::pair<VkPipeline, VkPipelineLayout> m_particlePipeline;
+    std::pair<VkPipeline, VkPipelineLayout> m_wireframePipeline;
+    std::pair<VkPipeline, VkPipelineLayout> m_skinnedWireframePipeline;
 
     std::unique_ptr<Skybox> m_Skybox;
+    std::unique_ptr<PrefilterSkybox> PrefilteredSkybox;
+    std::unique_ptr<SH> m_SHPass;
+
+    VkSampleCountFlagBits MSAA_SAMPLES = VK_SAMPLE_COUNT_4_BIT;
 };

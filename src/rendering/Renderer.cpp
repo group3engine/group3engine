@@ -38,16 +38,25 @@ Renderer::Renderer(Context &context, Scene *scene)
 }
 
 void Renderer::CreateRenderPasses() {
+
+    // Create the debug uniform buffer and pass to relevant passes
+    m_DebugUniform.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+    for (auto& buffer : m_DebugUniform)
+    {
+        buffer = CreateBuffer("RendererDebugUBO", context, sizeof(vkutil::RendererDebug), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+    }
+
     // Renderer passes
     m_ShadowMap = std::make_unique<ShadowMap>(context, m_scene);
     m_DepthPrepass = std::make_unique<DepthPrepass>(context, m_scene);
-    m_ForwardPass = std::make_unique<ForwardPass>(context, m_ShadowMap->GetRenderTarget(), m_DepthPrepass->GetRenderTarget(), m_scene, m_ShadowMap.get());
-    //m_GBuffer = std::make_unique<GBuffer>(context, m_scene);
+    m_ForwardPass = std::make_unique<ForwardPass>(context, m_ShadowMap->GetRenderTarget(), m_DepthPrepass->GetRenderTarget(), m_scene, m_ShadowMap.get(), m_DebugUniform);
     m_SSAO = std::make_unique<SSAO>(context, m_scene, m_DepthPrepass->GetRenderTarget(), m_ForwardPass->GetNormalRoughnessTarget());
     m_SSR = std::make_unique<SSR>(context, m_scene, m_DepthPrepass->GetRenderTarget(), m_ForwardPass->GetRenderTarget(), m_ForwardPass->GetNormalRoughnessTarget(), m_ForwardPass->GetSkybox()->GetSkyBoxImage());
+    m_Fog = std::make_unique<Fog>(context, m_scene,  m_DepthPrepass->GetRenderTarget(), m_ForwardPass->GetRenderTarget(), m_ForwardPass->GetSkybox()->GetSkyBoxImage(), m_ShadowMap.get());
     m_BloomPass = std::make_unique<Bloom>(context, m_scene, m_ForwardPass->GetBrightnessTarget());
-    m_CompositePass = std::make_unique<Composite>(context, m_scene, m_ForwardPass->GetRenderTarget(), m_BloomPass->GetRenderTarget(), m_SSAO->GetRenderTarget(), m_SSR->GetRenderTarget());
-    m_PresentPass = std::make_unique<PresentPass>(context, m_scene, m_CompositePass->GetRenderTarget());
+    m_CompositePass = std::make_unique<Composite>(context, m_scene, m_ForwardPass->GetRenderTarget(), m_BloomPass->GetRenderTarget(), m_SSAO->GetRenderTarget(), m_SSR->GetRenderTarget(), m_Fog->GetRenderTarget(), m_DebugUniform);
+    m_FXAA = std::make_unique<FXAA>(context, m_CompositePass->GetRenderTarget());
+    m_PresentPass = std::make_unique<PresentPass>(context, m_scene, m_FXAA->GetRenderTarget());
 
     // ImGui
     ImGuiRenderer::Initialize(context);
@@ -67,9 +76,17 @@ void Renderer::Destroy() {
 
     ImGuiRenderer::Shutdown(context);
 
+    // Destroy debug uniform buffer resources
+    for (auto &buffer : m_DebugUniform)
+    {
+        buffer.Destroy();
+    }
+
     m_DepthPrepass.reset();
     m_ForwardPass.reset();
+    m_FXAA.reset();
     //m_GBuffer.reset();
+    m_Fog.reset();
     m_ShadowMap.reset();
     m_BloomPass.reset();
     m_CompositePass.reset();
@@ -224,11 +241,12 @@ void Renderer::BeginFrame(VkCommandBuffer cmd) {
         context.RecreateSwapchain();
         m_DepthPrepass->Resize();
         m_ForwardPass->Resize();
-        //m_GBuffer->Resize();
+        m_Fog->Resize();
         m_SSAO->Resize();
         m_SSR->Resize();
         m_BloomPass->Resize();
         m_CompositePass->Resize();
+        m_FXAA->Resize();
         m_PresentPass->Resize();
 
     } else if (getImageIndex != VK_SUCCESS && getImageIndex != VK_SUBOPTIMAL_KHR) {
@@ -395,11 +413,12 @@ void Renderer::Present(uint32_t imageIndex) {
         context.RecreateSwapchain();
         m_DepthPrepass->Resize();
         m_ForwardPass->Resize();
-        //m_GBuffer->Resize();
+        m_Fog->Resize();
         m_SSAO->Resize();
         m_SSR->Resize();
         m_BloomPass->Resize();
         m_CompositePass->Resize();
+        m_FXAA->Resize();
         m_PresentPass->Resize();
     }
 }
@@ -407,11 +426,17 @@ void Renderer::Present(uint32_t imageIndex) {
 void Renderer::Update(double deltaTime) {
     ZoneScopedN("Renderer::Update");
 
+    m_DebugUniform[vkutil::currentFrame].WriteToBuffer(vkutil::rendererDebug, sizeof(vkutil::RendererDebug));
+
     m_SSAO->Update();
     m_SSR->Update();
+
     // Update passes
     m_ShadowMap->Update();
+    m_Fog->Update();
     m_ForwardPass->Update();
+    m_CompositePass->Update();
+    m_FXAA->Update();
     m_PresentPass->Update();
 }
 

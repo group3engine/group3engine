@@ -369,6 +369,8 @@ FodyWeavers.xsd
 Makefile
 
 build/
+install/
 assets/shaders/
+!/assets/GameSamples/
 
 imgui.ini

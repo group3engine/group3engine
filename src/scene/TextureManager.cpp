@@ -15,7 +15,7 @@ void TextureManager::addTexture(const std::filesystem::path &aTexturePath,
     // load the texture
     Image textureImage = LoadTextureFromDisk(
         aTexturePath, mContext,
-        VK_FORMAT_R8G8B8A8_UNORM); // create the texture
+        VK_FORMAT_R8G8B8A8_UNORM); // create the texture VK_FORMAT_R8G8B8A8_SRGB
     Texture texture;
     texture.name = aTextureName;
     texture.image = std::move(textureImage);

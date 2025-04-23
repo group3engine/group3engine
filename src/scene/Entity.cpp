@@ -144,7 +144,7 @@ void Entity::RecordDrawOpaque(VkCommandBuffer aCmdBuff,
 }
 
 void Entity::RecordDrawShadow(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout,uint32_t caseCadeIndex) const {
-    if (mHasMesh && mIsVisible) {
+    if (mHasMesh && mIsVisible && mAnimator == nullptr) {
         // push the model matrix
         vkutil::MeshPushConstants pc = {};
         pc.ModelMatrix = GetWorldTransform();
@@ -364,4 +364,23 @@ void Entity::SetParentTransform(glm::mat4 aParentTransform)  {
     mParentTransform = aParentTransform;
     UpdateWorldTransform();
     UpdateChildrenTransform();
+    SetPhysicsTransform();
+}
+
+void Entity::InitPhysics() {
+    if (mRigidBody.get()) {
+        if (GetPhysicsType() == PhysicsType::STATIC) {
+            // initialise the body in the physics manager and do not activate it
+            mRigidBody->Init(PhysicsManager::get(), false);
+        } else if (GetPhysicsType() == PhysicsType::DYNAMIC) {
+            // initialise the body in the physics manager and activate it
+            mRigidBody->Init(PhysicsManager::get(), true);
+        } else if (GetPhysicsType() == PhysicsType::KINEMATIC) {
+            // initialise the body in the physics manager and activate it
+            mRigidBody->Init(PhysicsManager::get(), true);
+        }
+
+        // TODO: Only do this if the entity is supposed to DO something when collided with (i.e. sensors)
+        PhysicsManager::get().RegisterEntity(this, mRigidBody->mBodyId);
+    }
 }

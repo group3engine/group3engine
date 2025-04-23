@@ -1,0 +1,57 @@
+#version 450
+
+#include "Common.glsl"
+
+layout(local_size_x = 64) in;
+
+layout (set = 0, binding = 0) uniform samplerCube skybox;
+
+layout (set = 0, binding = 1) buffer SHBuffer
+{
+    vec3 shCoefficients[9];
+}sh;
+
+#define PI 3.141592653589
+#define madfrac(A, B) ((A) * (B) - floor((A) * (B)))
+const float PHI = sqrt(5.0) * 0.5 + 0.5;
+const uint N = 1024; // Set the number of samples for higher or lower quality
+
+vec3 spherical_fibonacci(float i, float n) {
+    float phi = 2.0 * PI * madfrac(i, PHI - 1.0);
+    float cos_theta = 1.0 - (2.0 * i + 1.0) * (1.0 / n);
+    float sin_theta = sqrt(clamp(1.0 - cos_theta * cos_theta, 0.0, 1.0));
+    return vec3(cos(phi) * sin_theta, sin(phi) * sin_theta, cos_theta);
+}
+
+void main() {
+    uint idx = gl_GlobalInvocationID.x;
+
+    if(idx != 0) return;
+
+    if(idx == 0)
+    {
+        for (int i = 0; i < 9; ++i) {
+            sh.shCoefficients[i] = vec3(0.0);
+        }
+
+        for (float i = 0.0; i < float(N); ++i) {
+            vec3 dir = spherical_fibonacci(i, float(N));
+            vec3 color = textureLod(skybox, dir, 0).rgb;
+
+            sh.shCoefficients[0] += color * SH00();
+            sh.shCoefficients[1] += color * SH1m1(dir);
+            sh.shCoefficients[2] += color * SH10(dir);
+            sh.shCoefficients[3] += color * SH11(dir);
+            sh.shCoefficients[4] += color * SH2m2(dir);
+            sh.shCoefficients[5] += color * SH2m1(dir);
+            sh.shCoefficients[6] += color * SH20(dir);
+            sh.shCoefficients[7] += color * SH21(dir);
+            sh.shCoefficients[8] += color * SH22(dir);
+        }
+
+        float weight = (4.0 * PI) / float(N);
+        for (int i = 0; i < 9; ++i) {
+            sh.shCoefficients[i] *= weight;
+        }
+    }
+}

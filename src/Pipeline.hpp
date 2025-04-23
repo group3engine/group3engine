@@ -165,6 +165,16 @@ class PipelineBuilder {
         return *this;
     }
 
+    PipelineBuilder &OverrideBindingDescription(VkVertexInputBindingDescription bindingDescription) {
+        m_bindingDescription = bindingDescription;
+        return *this;
+    }
+
+    PipelineBuilder &OverrideAttributeDescription(const std::vector<VkVertexInputAttributeDescription> attributeDescription) {
+        m_attributeDescription = attributeDescription;
+        return *this;
+    }
+
     // Create the pipeline based on type (graphics or compute)
     std::pair<VkPipeline, VkPipelineLayout> Build() {
 
@@ -195,6 +205,9 @@ class PipelineBuilder {
     VkPipelineRasterizationStateCreateInfo m_rasterInfo{};
 
     VertexBinding binding;
+
+    VkVertexInputBindingDescription m_bindingDescription = Vertex::GetBindingDescription();
+    std::vector<VkVertexInputAttributeDescription> m_attributeDescription = Vertex::GetAttributeDescriptions();
 
     VkShaderModule CreateShaderModule(const std::filesystem::path &shaderPath) {
 
@@ -230,14 +243,11 @@ class PipelineBuilder {
         VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
-        auto bindingDescription = Vertex::GetBindingDescription();
-        auto attributeDescription = Vertex::GetAttributeDescriptions();
-
         if (binding == VertexBinding::BIND) {
             vertexInputInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(1);
-            vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescription.size());
-            vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-            vertexInputInfo.pVertexAttributeDescriptions = attributeDescription.data();
+            vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(m_attributeDescription.size());
+            vertexInputInfo.pVertexBindingDescriptions = &m_bindingDescription;
+            vertexInputInfo.pVertexAttributeDescriptions = m_attributeDescription.data();
         } else {
             vertexInputInfo.vertexBindingDescriptionCount = 0;
             vertexInputInfo.vertexAttributeDescriptionCount = 0;

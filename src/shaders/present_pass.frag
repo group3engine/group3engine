@@ -15,7 +15,7 @@ layout(set = 0, binding = 1) uniform sampler2D renderedScene;
 // https://www.geeks3d.com/20101029/shader-library-pixelation-post-processing-effect-glsl/
 
 void main()
-{	
+{
 	if(ppSettings.Enable) {
 		vec2 texelSize = 1.0 / textureSize(renderedScene, 0); // get size of a single texel
 		vec2 blockSize = vec2(5,3); // block size in pixels
@@ -27,7 +27,7 @@ void main()
 		vec2 blockInUVSpace = snappedBlockSpaceUV * blockSizeInUV;
 
 		// flip signs if snapping to nearest block instead of next block
-		blockInUVSpace -= 0.5 * blockSizeInUV; // get the center 
+		blockInUVSpace -= 0.5 * blockSizeInUV; // get the center
 
 		vec3 sampledColor = texture(renderedScene, blockInUVSpace).rgb;
 
