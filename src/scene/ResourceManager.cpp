@@ -214,6 +214,9 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             material.normalTexture = aTextureManager.GetTexture("normal");
             material.normalTextureName = "normal";
         }
+
+        material.doubleSided = gltfMaterial.double_sided;
+
         if (gltfMaterial.emissive_texture.texture)
         {
             std::string emissiveFileName =
