@@ -281,7 +281,7 @@ void main()
         discard;
     #endif
     vec3 color = texture(uTextureColour, uv).rgb * uNumbers.baseColour.rgb;
-    vec3 emissive = uNumbers.emissiveFactor.rgb;
+    vec3 emissive = uNumbers.emissiveFactor.rgb * texture(uTextureEmissive, uv).rgb;
 
     // == Metal and Roughness ==
     float roughness = texture(uTextureMetallicRoughness, uv).g * uNumbers.roughness;

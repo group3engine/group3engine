@@ -325,13 +325,13 @@ void ForwardPass::CreatePipeline() {
         .AddShader(ALPHA_MASK_FRAGMENT_SHADER, ShaderType::FRAGMENT)
         .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
         .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}})
-        .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE)
+        .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE)
         .SetPipelineLayout({{meshDescriptorSetLayout, vkutil::materialDescriptorSetLayout}}, pushConstants)
         .SetSampling(VK_SAMPLE_COUNT_1_BIT)
         .AddBlendAttachmentState()
         .AddBlendAttachmentState()
         .AddBlendAttachmentState()
-        .SetDepthState(VK_TRUE, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL)
+        .SetDepthState(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL)
         .SetRenderPass(m_renderPass)
         .Build();
 
@@ -399,7 +399,7 @@ void ForwardPass::CreateRenderPass() {
         .AddColorAttachmentRef(0, 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
         .AddColorAttachmentRef(0, 1, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
         .AddColorAttachmentRef(0, 2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
-        .SetDepthAttachmentRef(0, 3, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL)
+        .SetDepthAttachmentRef(0, 3, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
 
         // External -> 0 : Color
         .AddDependency(VK_SUBPASS_EXTERNAL, 0, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_DEPENDENCY_BY_REGION_BIT)
