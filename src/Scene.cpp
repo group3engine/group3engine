@@ -401,10 +401,15 @@ void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
 
 void Scene::Awake()
 {
-    // call the awake function on all entities
+    // Set the scene and call init physics on all entities
     for (auto &entity : m_Entities) {
         entity->SetScene(this);
         entity->InitPhysics();
+    }
+
+    // Call the awake function on all entities
+    // Make sure all entities have had their physics intialised before this
+    for (auto &entity : m_Entities) {
         entity->Awake();
     }
 

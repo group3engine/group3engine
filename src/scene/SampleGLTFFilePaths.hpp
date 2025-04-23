@@ -126,6 +126,7 @@ static std::filesystem::path AxeSample{"GameSamples/AxeSample/arrow.gltf"};
 static std::filesystem::path TileSample{"GameSamples/TileSample/tile.gltf"};
 static std::filesystem::path SpikePitSample{"GameSamples/SpikePit/spikepit.gltf"};
 static std::filesystem::path LadderSample{"GameSamples/LadderSample/ladder.gltf"};
+static std::filesystem::path LeverSample{"GameSamples/LeverSample/lever.gltf"};
 static std::filesystem::path SinkingSample{"GameSamples/SinkingPillars/sinking.gltf"};
 
 } // namespace Sample

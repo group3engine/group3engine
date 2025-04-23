@@ -4,14 +4,10 @@ SwingAxe::SwingAxe() {
     mType = "swing_axe";
 }
 
-void SwingAxe::InitPhysics() {
-    GetRigidBody().Init(PhysicsManager::get(), true);
-
-    PhysicsManager::get().RegisterEntity(this, GetRigidBody().mBodyId);
-
+void SwingAxe::Awake() {
     // Control how fast the pendulum swings
-    if (mFloatProperties.contains("pendulum_length")) {
-        mPendulumLength = mFloatProperties["pendulum_length"];
+    if (auto it = mFloatProperties.find("pendulum_length"); it != mFloatProperties.end()) {
+        mPendulumLength = it->second;
     } else {
         SPDLOG_ERROR("Swing axe does not have a pendulum length property.");
         exit(EXIT_FAILURE);

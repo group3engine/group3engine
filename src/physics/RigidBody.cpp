@@ -33,6 +33,9 @@ void RigidBody::Init(PhysicsManager &physicsManager, bool activate) {
     }
 
     physicsManager.mBodyIds.push_back(mBodyId);
+
+    assert(!hasInitialised);
+    hasInitialised = true;
 }
 
 glm::vec4 RigidBody::GetPosition() const {

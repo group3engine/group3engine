@@ -231,6 +231,8 @@ class Entity {
     // TODO: Make friend class with Scene
     void SetScene(Scene *scene) { mScene = scene; }
 
+    const std::unordered_map<std::string, float> &GetFloatProperties() { return mFloatProperties; }
+
     void SetFloatProperties(std::unordered_map<std::string, float> &floatProperties) {
         mFloatProperties = std::move(floatProperties);
     }

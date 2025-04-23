@@ -63,6 +63,7 @@ namespace {
         &Sample::SpikePitSample,
         &Sample::LadderSample,
         &Sample::SinkingSample,
+        &Sample::LeverSample,
 
     };
 

@@ -81,5 +81,7 @@ private:
     Vec3 mNewAngularVelocity{};
     bool addImpulse = false;
     Vec3 mImpulse{};
+
+    bool hasInitialised = false;
 };
 #endif // PHYSICS_RIGIDBODY_HPP
