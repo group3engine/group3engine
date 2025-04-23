@@ -36,7 +36,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 # Define flags for the Platinum build type
-set(CMAKE_CXX_FLAGS_PLATINUM "${CMAKE_CXX_FLAGS_RELEASE} -static-libstdc++ -DPLATINUM" CACHE STRING "Flags for Platinum build type" FORCE)
+set(CMAKE_CXX_FLAGS_PLATINUM "${CMAKE_CXX_FLAGS_RELEASE} -DPLATINUM" CACHE STRING "Flags for Platinum build type" FORCE)
 set(CMAKE_C_FLAGS_PLATINUM "${CMAKE_C_FLAGS_RELEASE}  -DPLATINUM" CACHE STRING "Flags for Platinum build type" FORCE)
 
 # Ensure Platinum is recognized as a valid build type
