@@ -38,8 +38,7 @@ void ExecuteSingleTimeCommands(Context const &context, std::function<void(VkComm
         .pCommandBuffers = &cmd};
 
     vkQueueSubmit(context.graphicsQueue, 1, &submitInfo, fence);
-    vkQueueWaitIdle(context.graphicsQueue);
-
+    vkWaitForFences(context.device, 1, &fence, VK_TRUE, UINT64_MAX);
     vkFreeCommandBuffers(context.device, context.transientCommandPool, 1, &cmd);
     vkDestroyFence(context.device, fence, nullptr);
 
