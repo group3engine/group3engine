@@ -73,22 +73,22 @@ void Camera::UpdateCameraMovement(const Transform &character_transform) {
         glm::vec3 rightVector = glm::normalize(glm::cross(m_direction, m_up));
 
         if (inputMap[std::size_t(EInputState::FORWARD)]) {
-            m_position += m_cameraSpeed * forward;
+            m_position += m_cameraSpeed * GlobalUtil::deltaTime * forward;
         }
         if (inputMap[std::size_t(EInputState::BACKWARD)]) {
-            m_position -= m_cameraSpeed * forward;
+            m_position -= m_cameraSpeed * GlobalUtil::deltaTime * forward;
         }
         if (inputMap[std::size_t(EInputState::LEFT)]) {
-            m_position -= m_cameraSpeed * rightVector;
+            m_position -= m_cameraSpeed * GlobalUtil::deltaTime * rightVector;
         }
         if (inputMap[std::size_t(EInputState::RIGHT)]) {
-            m_position += m_cameraSpeed * rightVector;
+            m_position += m_cameraSpeed * GlobalUtil::deltaTime * rightVector;
         }
         if (inputMap[std::size_t(EInputState::UP)]) {
-            m_position += m_cameraSpeed * m_up;
+            m_position += m_cameraSpeed * GlobalUtil::deltaTime * m_up;
         }
         if (inputMap[std::size_t(EInputState::DOWN)]) {
-            m_position -= m_cameraSpeed * m_up;
+            m_position -= m_cameraSpeed * GlobalUtil::deltaTime * m_up;
         }
         if (inputMap[std::size_t(EInputState::TELEPORT)]) {
             // call the teleport callback
@@ -109,8 +109,8 @@ void Camera::UpdateCameraRotation(double deltaTime) {
             delta.y = -delta.y; // Prevent inverted y
         }
         // Get the right joystick input
-        delta.x += GetGamepadAxis(GAMEPAD_AXIS::eRIGHT_X) * m_controllerSensitivity * deltaTime;
-        delta.y -= GetGamepadAxis(GAMEPAD_AXIS::eRIGHT_Y) * m_controllerSensitivity * deltaTime;
+        delta.x += GetGamepadAxis(GAMEPAD_AXIS::eRIGHT_X, 0) * m_controllerSensitivity * deltaTime;
+        delta.y -= GetGamepadAxis(GAMEPAD_AXIS::eRIGHT_Y, 0) * m_controllerSensitivity * deltaTime;
 
         // Update the camera angles based on the mouse and controller movement
         UpdateCameraAngles(delta);

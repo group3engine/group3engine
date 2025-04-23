@@ -59,7 +59,7 @@ public:
 	virtual void 			Initialize();
 
 	// Process input
-	void					ProcessInput(glm::vec3 controlInput, bool jump, bool inClimb);
+	void					ProcessInput(glm::vec3 controlInput, bool jump, bool inClimb, bool isCrouching);
 
 	// Update the test, called before the physics update
 	virtual void			PrePhysicsUpdate(const PreUpdateParams &inParams);
@@ -87,8 +87,10 @@ public:
 	virtual void			HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime, bool inClimb) = 0;
 
 	// Character size
-	static constexpr float	cCharacterHeightStanding = 0.8f;
+	static constexpr float	cCharacterHeightStanding = 0.5f;
 	static constexpr float	cCharacterRadiusStanding = 0.3f;
+    static constexpr float  cCharacterHeightCrouching = 0.3f;
+    static constexpr float  cCharacterHeightFalling = 0.3f;
 
 	// Character movement properties
 	inline static bool		sControlMovementDuringJump = true;							///< If false the character cannot change movement direction in mid air
@@ -98,6 +100,8 @@ public:
 
 	// The different stances for the character
 	RefConst<Shape>			mStandingShape;
+    RefConst<Shape>         mCrouchingShape;
+    RefConst<Shape>         mFallingShape;
 
 	JobSystem *		mJobSystem = nullptr;
 	PhysicsSystem *	mPhysicsSystem = nullptr;
@@ -114,7 +118,7 @@ private:
 	};
 
 	// Character shape type
-	static inline EType		sShapeType = EType::Box;
+	static inline EType		sShapeType = EType::Capsule;
 
 	// Scene time (for moving bodies)
 	float					mTime = 0.0f;
@@ -129,5 +133,6 @@ private:
 	Vec3					mControlInput = Vec3::sZero();
 	bool					mJump = false;
     bool                    mInClimb = false;
-	bool					mWasJump = false;
+protected:
+    bool					mIsCrouching = false;
 };

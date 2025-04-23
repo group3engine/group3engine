@@ -65,15 +65,19 @@ static void MouseCursorPosCallback([[maybe_unused]] GLFWwindow *window, double x
 
 static void PollGamepadJoysticks()
 {
-    // Register previous gamepad button and axis states
-    for (uint8_t i = 0; i < static_cast<uint8_t>(GAMEPAD_BUTTON::eLAST); ++i) {
-        gInputData.gamepadButtons.previousButtonState[i] =
-            gInputData.gamepadButtons.currentButtonState[i];
+    // Register previous gamepad button states
+    for(size_t j = 0; j <= GLFW_JOYSTICK_LAST; j++) {
+        for (uint8_t i = 0; i < static_cast<uint8_t>(GAMEPAD_BUTTON::eLAST); ++i) {
+            gInputData.gamepadButtons[j].previousButtonState[i] =
+                    gInputData.gamepadButtons[j].currentButtonState[i];
+        }
     }
 
-    for (uint8_t i = 0; i < static_cast<uint8_t>(GAMEPAD_AXIS::eLAST); ++i) {
-        gInputData.gamepadAxis.previousAxisState[i] =
-            gInputData.gamepadAxis.currentAxisState[i];
+    for (size_t j = 0; j <= GLFW_JOYSTICK_LAST; j++) {
+        for (uint8_t i = 0; i < static_cast<uint8_t>(GAMEPAD_AXIS::eLAST); ++i) {
+            gInputData.gamepadAxis[j].previousAxisState[i] =
+                    gInputData.gamepadAxis[j].currentAxisState[i];
+        }
     }
 
     // Check all possible gamepad connections (GLFW supports up to 16 gamepads)
@@ -87,7 +91,7 @@ static void PollGamepadJoysticks()
                          buttonCount : static_cast<int>(GAMEPAD_BUTTON::eLAST);
 
             for (int i = 0; i < count; i++) {
-                gInputData.gamepadButtons.currentButtonState[i] = buttons[i];
+                gInputData.gamepadButtons[gamepad].currentButtonState[i] = buttons[i];
             }
 
             // Poll axes (focused on analog sticks)
@@ -98,16 +102,11 @@ static void PollGamepadJoysticks()
                              axisCount : static_cast<int>(GAMEPAD_AXIS::eLAST);
 
             for (int i = 0; i < axesCount; i++) {
-                gInputData.gamepadAxis.currentAxisState[i] = axes[i];
+                gInputData.gamepadAxis[gamepad].currentAxisState[i] = axes[i];
             }
 
-            // Only process the first connected gamepad
-            break;
         }
     }
-    // print the right stick
-    //SPDLOG_INFO("Right stick: ({}, {})", gInputData.gamepadAxis.currentAxisState[2], gInputData.gamepadAxis.currentAxisState[3]);
-    //SPDLOG_INFO("All gamepad axis values: ({}, {}, {}, {}, {}, {})", gInputData.gamepadAxis.currentAxisState[0], gInputData.gamepadAxis.currentAxisState[1], gInputData.gamepadAxis.currentAxisState[2], gInputData.gamepadAxis.currentAxisState[3], gInputData.gamepadAxis.currentAxisState[4], gInputData.gamepadAxis.currentAxisState[5]);
 }
 
 

@@ -38,17 +38,25 @@ Renderer::Renderer(Context &context, Scene *scene)
 }
 
 void Renderer::CreateRenderPasses() {
-    // Renderer passes
 
+    // Create the debug uniform buffer and pass to relevant passes
+    m_DebugUniform.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+    for (auto& buffer : m_DebugUniform)
+    {
+        buffer = CreateBuffer("RendererDebugUBO", context, sizeof(vkutil::RendererDebug), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+    }
+
+    // Renderer passes
     m_ShadowMap = std::make_unique<ShadowMap>(context, m_scene);
     m_DepthPrepass = std::make_unique<DepthPrepass>(context, m_scene);
-    m_ForwardPass = std::make_unique<ForwardPass>(context, m_ShadowMap->GetRenderTarget(), m_DepthPrepass->GetRenderTarget(), m_scene, m_ShadowMap.get());
+    m_ForwardPass = std::make_unique<ForwardPass>(context, m_ShadowMap->GetRenderTarget(), m_DepthPrepass->GetRenderTarget(), m_scene, m_ShadowMap.get(), m_DebugUniform);
     m_SSAO = std::make_unique<SSAO>(context, m_scene, m_DepthPrepass->GetRenderTarget(), m_ForwardPass->GetNormalRoughnessTarget());
     m_SSR = std::make_unique<SSR>(context, m_scene, m_DepthPrepass->GetRenderTarget(), m_ForwardPass->GetRenderTarget(), m_ForwardPass->GetNormalRoughnessTarget(), m_ForwardPass->GetSkybox()->GetSkyBoxImage());
     m_Fog = std::make_unique<Fog>(context, m_scene,  m_DepthPrepass->GetRenderTarget(), m_ForwardPass->GetRenderTarget(), m_ForwardPass->GetSkybox()->GetSkyBoxImage(), m_ShadowMap.get());
     m_BloomPass = std::make_unique<Bloom>(context, m_scene, m_ForwardPass->GetBrightnessTarget());
-    m_CompositePass = std::make_unique<Composite>(context, m_scene, m_ForwardPass->GetRenderTarget(), m_BloomPass->GetRenderTarget(), m_SSAO->GetRenderTarget(), m_SSR->GetRenderTarget(), m_Fog->GetRenderTarget());
-    m_PresentPass = std::make_unique<PresentPass>(context, m_scene, m_CompositePass->GetRenderTarget());
+    m_CompositePass = std::make_unique<Composite>(context, m_scene, m_ForwardPass->GetRenderTarget(), m_BloomPass->GetRenderTarget(), m_SSAO->GetRenderTarget(), m_SSR->GetRenderTarget(), m_Fog->GetRenderTarget(), m_DebugUniform);
+    m_FXAA = std::make_unique<FXAA>(context, m_CompositePass->GetRenderTarget());
+    m_PresentPass = std::make_unique<PresentPass>(context, m_scene, m_FXAA->GetRenderTarget());
 
     // ImGui
     ImGuiRenderer::Initialize(context);
@@ -61,28 +69,6 @@ void Renderer::CreateRenderPasses() {
     {
         ImGuiRenderer::AddTexture(vkutil::clampToEdgeSamplerAniso,cascade.imgView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL);
     }
-
-
-    // Keeping this here for now since it can be useful for debugging
-    // Reads the SH coefficients stored in the storage buffer and outputs them
-    //void *mappedData;
-    //VkResult result =
-    //    vmaMapMemory(context.allocator, m_ForwardPass->m_SHPass->GetSHBuffer().allocation, &mappedData);
-
-    //if (result != VK_SUCCESS) {
-    //    std::cerr << "Failed to map staging buffer memory: " << result
-    //              << std::endl;
-    //}
-
-    //glm::vec3 *bufferData = static_cast<glm::vec3 *>(mappedData);
-    //std::cout << "SH Buffer contents:" << std::endl;
-    //for (uint32_t i = 0; i < 9; i++) {
-    //    std::cout << "SH " << i << ": (" << bufferData[i].x << ", "
-    //              << bufferData[i].y << ", " << bufferData[i].z << ")"
-    //              << std::endl;
-    //}
-
-    //vmaUnmapMemory(context.allocator, m_ForwardPass->m_SHPass->GetSHBuffer().allocation);
 }
 
 void Renderer::Destroy() {
@@ -90,8 +76,15 @@ void Renderer::Destroy() {
 
     ImGuiRenderer::Shutdown(context);
 
+    // Destroy debug uniform buffer resources
+    for (auto &buffer : m_DebugUniform)
+    {
+        buffer.Destroy();
+    }
+
     m_DepthPrepass.reset();
     m_ForwardPass.reset();
+    m_FXAA.reset();
     //m_GBuffer.reset();
     m_Fog.reset();
     m_ShadowMap.reset();
@@ -248,12 +241,12 @@ void Renderer::BeginFrame(VkCommandBuffer cmd) {
         context.RecreateSwapchain();
         m_DepthPrepass->Resize();
         m_ForwardPass->Resize();
-        //m_GBuffer->Resize();
         m_Fog->Resize();
         m_SSAO->Resize();
         m_SSR->Resize();
         m_BloomPass->Resize();
         m_CompositePass->Resize();
+        m_FXAA->Resize();
         m_PresentPass->Resize();
 
     } else if (getImageIndex != VK_SUCCESS && getImageIndex != VK_SUBOPTIMAL_KHR) {
@@ -420,18 +413,20 @@ void Renderer::Present(uint32_t imageIndex) {
         context.RecreateSwapchain();
         m_DepthPrepass->Resize();
         m_ForwardPass->Resize();
-        //m_GBuffer->Resize();
         m_Fog->Resize();
         m_SSAO->Resize();
         m_SSR->Resize();
         m_BloomPass->Resize();
         m_CompositePass->Resize();
+        m_FXAA->Resize();
         m_PresentPass->Resize();
     }
 }
 
 void Renderer::Update(double deltaTime) {
     ZoneScopedN("Renderer::Update");
+
+    m_DebugUniform[vkutil::currentFrame].WriteToBuffer(vkutil::rendererDebug, sizeof(vkutil::RendererDebug));
 
     m_SSAO->Update();
     m_SSR->Update();
@@ -440,6 +435,8 @@ void Renderer::Update(double deltaTime) {
     m_ShadowMap->Update();
     m_Fog->Update();
     m_ForwardPass->Update();
+    m_CompositePass->Update();
+    m_FXAA->Update();
     m_PresentPass->Update();
 }
 

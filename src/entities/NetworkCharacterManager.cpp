@@ -100,11 +100,43 @@ void NetworkCharacterManager::Update(double deltaTime)
         float velY = std::stof(velValues[1]);
         float velZ = std::stof(velValues[2]);
         glm::vec3 velocity = glm::vec3(velX, velY, velZ);
+        // get the crouch state - the value after "isCrouching": (may not be present)
+        size_t crouchStart = jsonString.find(':', jsonString.find("\"isCrouching\":"));
+        // check that crouchStart found something
+        bool isCrouching = false;
+        if(crouchStart != std::string::npos)
+        {
+            // get the value after the :
+            size_t crouchEnd = jsonString.find(',', crouchStart);
+            std::string crouchValue = jsonString.substr(crouchStart + 1, crouchEnd - crouchStart - 1);
+            // convert to bool
+            isCrouching = (crouchValue == "true");
+        }
+        size_t emotingStart = jsonString.find(':', jsonString.find("\"isEmoting\":"));
+        bool isEmoting = false;
+        if(emotingStart != std::string::npos)
+        {
+            size_t emotingEnd = jsonString.find(',', emotingStart);
+            std::string emotingValue = jsonString.substr(emotingStart + 1, emotingEnd - emotingStart - 1);
+            isEmoting = (emotingValue == "true");
+        }
+        size_t inClimbStart = jsonString.find(':', jsonString.find("\"isInClimb\":"));
+        bool isInClimb = false;
+        if(inClimbStart != std::string::npos)
+        {
+            size_t inClimbEnd = jsonString.find(',', inClimbStart);
+            std::string inClimbValue = jsonString.substr(inClimbStart + 1, inClimbEnd - inClimbStart - 1);
+            isInClimb = (inClimbValue == "true");
+        }
+
         // construct the state
         State state{};
         state.position = position;
         state.rotation = rotation;
         state.velocity = velocity;
+        state.isCrouching = isCrouching;
+        state.isEmoting = isEmoting;
+        state.isInClimb = isInClimb;
         // add the state to the map
         states[playerIDint] = state;
         // see if the player id is in the map

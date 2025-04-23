@@ -11,6 +11,7 @@
 #include "SampleJoltCharacter.h"
 
 #include "ImGuiRenderer.hpp"
+#include "InputMapping.hpp"
 
 enum class InternalEvent {
     eDeath,
@@ -48,6 +49,8 @@ class CharacterEntity : public Entity {
 
     // update override
     void Update(double deltaTime) override;
+
+    void LateUpdate(double deltaTime) override;
 
     void UpdateUi(double deltaTime) override;
 
@@ -98,6 +101,8 @@ class CharacterEntity : public Entity {
     void Save();
     void Load();
 
+    void RegisterControls();
+
   protected:
     Camera *mCamera = nullptr;
     std::unique_ptr<SampleJoltCharacter> mSampleJoltCharacter;
@@ -125,13 +130,20 @@ class CharacterEntity : public Entity {
 
     std::stack<InternalEvent> mInternalEvents;
     std::stack<InternalUiEvent> mInternalUiEvents;
+    bool mInClimb = false;
+    bool mIsCrouching = false;
+    bool mIsEmoting = false;
+
+    InputMapping mInputMapping{};
 
   private:
     bool m_has_save = false;
 
-    bool mInClimb = false;
     bool mLeftClimb = false;
     bool mEnterClimb = false;
+
+
+
 
     glm::vec3 mClimbDirection = glm::vec3(0.f, 0.f, 0.f);
 };

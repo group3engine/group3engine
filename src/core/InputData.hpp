@@ -171,6 +171,12 @@ enum class MOUSE_BUTTON {
     eLAST               = 8
 };
 
+enum class MOUSE_AXIS {
+    eX                  = 0,
+    eY                  = 1,
+    eLAST               = 2
+};
+
 enum class GAMEPAD_BUTTON {
     eA                 = 0,
     eB                 = 1,
@@ -193,7 +199,17 @@ enum class GAMEPAD_BUTTON {
 // gamepad mappings that GLFW provides
 // https://www.glfw.org/docs/latest/input_guide.html#gamepad_mapping
 enum class GAMEPAD_AXIS
-
+#ifndef WIN32
+{
+    eLEFT_X            = 0,    // Left stick X axis
+    eLEFT_Y            = 1,    // Left stick Y axis
+    eLEFT_TRIGGER      = 2,    // Left trigger
+    eRIGHT_X           = 3,    // Right stick X axis
+    eRIGHT_Y           = 4,    // Right stick Y axis
+    eRIGHT_TRIGGER     = 5,    // Right trigger
+    eLAST              = 6
+};
+#else
 {
     eLEFT_X             = 0,    // Left stick X axis
     eLEFT_Y             = 1,    // Left stick Y axis
@@ -203,6 +219,18 @@ enum class GAMEPAD_AXIS
     eRIGHT_TRIGGER      = 5,    // Right trigger
     eLAST               = 6
 };
+#endif
+struct GamepadButtons
+{
+    std::array<uint8_t, static_cast<uint8_t>(GAMEPAD_BUTTON::eLAST)> currentButtonState{};
+    std::array<uint8_t, static_cast<uint8_t>(GAMEPAD_BUTTON::eLAST)> previousButtonState{};
+} ;
+
+struct GamepadAxis
+{
+    std::array<float, static_cast<uint8_t>(GAMEPAD_AXIS::eLAST)> currentAxisState{};
+    std::array<float, static_cast<uint8_t>(GAMEPAD_AXIS::eLAST)> previousAxisState{};
+} ;
 struct InputData {
     struct {
         std::array<uint8_t, static_cast<uint16_t>(KEY::eLAST)> currentKeyState{};
@@ -217,16 +245,9 @@ struct InputData {
         std::array<uint8_t, static_cast<uint8_t>(MOUSE_BUTTON::eLAST)> previousButtonState{};
     } mouse;
 
-    struct
-    {
-        std::array<uint8_t, static_cast<uint8_t>(GAMEPAD_BUTTON::eLAST)> currentButtonState{};
-        std::array<uint8_t, static_cast<uint8_t>(GAMEPAD_BUTTON::eLAST)> previousButtonState{};
-    } gamepadButtons;
+    std::array<GamepadButtons, 16> gamepadButtons;
+    std::array<GamepadAxis, 16> gamepadAxis;
 
-    struct
-    {
-        std::array<float, static_cast<uint8_t>(GAMEPAD_AXIS::eLAST)> currentAxisState{};
-        std::array<float, static_cast<uint8_t>(GAMEPAD_AXIS::eLAST)> previousAxisState{};
-    } gamepadAxis;
+
 };
 #endif // GROUP3ENGINE_INPUTDATA_HPP

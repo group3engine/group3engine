@@ -31,7 +31,8 @@ DepthPrepass::DepthPrepass(Context &context, Scene *scene)
         VK_FORMAT_D32_SFLOAT,
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         VK_IMAGE_ASPECT_DEPTH_BIT,
-        1);
+        1
+    );
 
     CreateRenderPass();
     CreateFramebuffer();
