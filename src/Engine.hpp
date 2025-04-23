@@ -55,7 +55,7 @@ class Engine {
     std::filesystem::path m_scenePath;
 
     // TODO: Change this when entities call change scene
-    std::filesystem::path mPendingScenePath = Sample::SampleObby;
+    std::filesystem::path mPendingScenePath = Sample::SampleObbyTestScene;
     size_t mPendingScenePlayerCount = 1;
 
     bool mIsMainMenu = false;
