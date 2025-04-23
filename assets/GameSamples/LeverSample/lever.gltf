@@ -30,17 +30,21 @@
 	"scenes":[
 		{
 			"extras":{
-				"dropdown_items":"arrow, character, default, lever, trapdoor",
-				"entity_dropdown":4,
-				"physics_dropdown":1,
+				"dropdown_items":"lever, default, character, arrow, trapdoor",
+				"entity_dropdown":0,
+				"physics_dropdown":0,
 				"sensor_checkbox":0,
-				"solid_checkbox":1,
+				"solid_checkbox":0,
 				"invisible_checkbox":0,
 				"new_dropdown_item":"",
 				"new_tag":"",
-				"export_file_path":"/home/wet-dog/repos/group3engine/assets/GameSamples/LeverSample/lever.gltf",
+				"export_file_path":"/uolstore/home/users/ttwq5782/repos/group3engine/assets/GameSamples/LeverSample/lever.gltf",
 				"print_3d":{},
-				"tags":[],
+				"tags":[
+					{
+						"tag":"proximity_prompt"
+					}
+				],
 				"new_float_property_name":"",
 				"new_float_property_value":0.0,
 				"game_file_path":"//../../repos/group3engine/build/src/src",
@@ -143,10 +147,10 @@
 			},
 			"name":"Sun",
 			"rotation":[
-				-0.5923113226890564,
-				0.24397052824497223,
-				-0.02754216268658638,
-				0.7673898339271545
+				-0.7071067690849304,
+				0.5000000596046448,
+				0,
+				0.5
 			],
 			"translation":[
 				0,
@@ -2090,7 +2094,13 @@
 				"physics_type":"static",
 				"is_sensor":false,
 				"is_solid":false,
-				"is_invisible":false
+				"is_invisible":false,
+				"tags":"proximity_prompt",
+				"float_properties":[
+					{
+						"proximity_prompt":2.0
+					}
+				]
 			},
 			"mesh":25,
 			"name":"SM_Lever_Base",
@@ -21240,7 +21250,6 @@
 				"baseColorTexture":{
 					"index":1
 				},
-				"metallicFactor":0,
 				"metallicRoughnessTexture":{
 					"index":2
 				}
@@ -21442,7 +21451,6 @@
 				"baseColorTexture":{
 					"index":40
 				},
-				"metallicFactor":0,
 				"metallicRoughnessTexture":{
 					"index":41
 				}
