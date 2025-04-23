@@ -55,7 +55,6 @@ namespace {
     std::filesystem::path mainMenuPath{"MainMenu/main_menu.gltf"};
 
     const std::vector<std::filesystem::path *> scenePaths = {
-        &Sample::SampleObby,
         &Sample::SampleObbyTestScene,
         &Sample::ArrowSample,
         &Sample::AxeSample,
