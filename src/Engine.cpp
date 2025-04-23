@@ -216,7 +216,10 @@ void Engine::Run() {
 
         // See imgui.cpp
         // "(So you want to try calling NewFrame() as early as you can in your main loop to be able to use Dear ImGui everywhere)"
-        ImGuiRenderer::NewFrame();
+        {
+            std::lock_guard<std::mutex> lock(m_context.graphicsQueueMutex);
+            ImGuiRenderer::NewFrame();
+        }
 
         PollInputEvents();
 
@@ -321,6 +324,8 @@ void Engine::ChangeSceneFR(const std::filesystem::path &scenePath, size_t player
     // wait for loading screen thread to finish
      while (!mSceneLoadingThread.joinable()) {}
     mSceneLoadingThread.join();
+    vkQueueWaitIdle(m_context.presentQueue);
+
 }
 
 void Engine::Update(double deltaTime) {
@@ -439,7 +444,10 @@ void Engine::RenderLoadingScreen()
              mProgress += mTotalTime * 10.f;
              mProgress = std::min(mProgress, m_progress + 25.f);
              mProgress = std::min(mProgress, 99.f);
-             ImGuiRenderer::NewFrame();
+            {
+                std::lock_guard<std::mutex> lock(m_context.graphicsQueueMutex);
+                ImGuiRenderer::NewFrame();
+            }
              ImGuiRenderer::Image("load", ImVec2{0,0}, ImVec2{1,1});
              ImGuiRenderer::LoadingBar(mProgress, ImVec2(500, 500));
              ImGuiRenderer::EndFrame();

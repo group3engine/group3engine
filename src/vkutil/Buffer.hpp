@@ -27,7 +27,7 @@ class Buffer {
 
     void Destroy();
 
-    void Update(const Context& context, const void *data, VkDeviceSize size_in_bytes); // update buffer with new data
+    void Update(Context& context, const void *data, VkDeviceSize size_in_bytes); // update buffer with new data
     void Upload(VkCommandBuffer cmdBuff, const void *data, VkDeviceSize size_in_bytes);
 
     template <typename T>
@@ -62,4 +62,4 @@ class Buffer {
 };
 
 Buffer CreateBuffer(const std::string &name, Context const &context, VkDeviceSize bSize, VkBufferUsageFlags usage, VmaAllocationCreateFlags memoryFlags, VmaMemoryUsage = VMA_MEMORY_USAGE_AUTO);
-void CreateAndUploadBuffer(Context const &context, const void *data, VkDeviceSize size, VkBufferUsageFlags usage, Buffer &destinationBuffer);
+void CreateAndUploadBuffer(Context &context, const void *data, VkDeviceSize size, VkBufferUsageFlags usage, Buffer &destinationBuffer);

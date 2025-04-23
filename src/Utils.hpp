@@ -111,7 +111,7 @@ inline double unscaledDeltaTime;
 }
 
 namespace vkutil {
-    void ExecuteSingleTimeCommands(Context const &context, std::function<void(VkCommandBuffer)> recordCommands);
+    void ExecuteSingleTimeCommands(Context &context, std::function<void(VkCommandBuffer)> recordCommands);
 
     // Sync
     void ImageBarrier(

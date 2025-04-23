@@ -667,6 +667,7 @@ bool Context::MakeContext(GLFWwindow *window) {
     vkGetDeviceQueue(device, graphicsFamilyIndex, 0, &graphicsQueue);
     vkGetDeviceQueue(device, presentFamilyIndex, 0, &presentQueue);
 
+
     CreateAllocator();
     CreateTransientCommandPool();
     CreateDescriptorPool();
@@ -675,6 +676,11 @@ bool Context::MakeContext(GLFWwindow *window) {
     assert(presentQueue != VK_NULL_HANDLE);
 
     vkSetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)vkGetInstanceProcAddr(instance, "vkSetDebugUtilsObjectNameEXT");
+
+    vkCreateDebugUtilsMessengerEXT(instance, &debugInfo, nullptr, &debugMessenger);
+    // name the queues
+    SetObjectName(device, (uint64_t)(graphicsQueue), VK_OBJECT_TYPE_QUEUE, "GraphicsQueue");
+    SetObjectName(device, (uint64_t)(presentQueue), VK_OBJECT_TYPE_QUEUE, "PresentQueue");
 
     CreateSwapchain();
 
