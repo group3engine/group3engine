@@ -676,8 +676,9 @@ bool Context::MakeContext(GLFWwindow *window) {
     assert(presentQueue != VK_NULL_HANDLE);
 
     vkSetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)vkGetInstanceProcAddr(instance, "vkSetDebugUtilsObjectNameEXT");
-
+    #ifndef NDEBUG
     vkCreateDebugUtilsMessengerEXT(instance, &debugInfo, nullptr, &debugMessenger);
+    #endif
     // name the queues
     SetObjectName(device, (uint64_t)(graphicsQueue), VK_OBJECT_TYPE_QUEUE, "GraphicsQueue");
     SetObjectName(device, (uint64_t)(presentQueue), VK_OBJECT_TYPE_QUEUE, "PresentQueue");
