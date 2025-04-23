@@ -387,11 +387,14 @@ void Renderer::Submit() {
         .signalSemaphoreCount = 1,
         .pSignalSemaphores = &m_renderFinishedSemaphores[vkutil::currentFrame]};
 
+    std::lock_guard<std::mutex> lock(context.graphicsQueueMutex);
+
     VkResult result = vkQueueSubmit(context.graphicsQueue, 1, &subtmitInfo, m_Fences[vkutil::currentFrame]);
 
     if (result != VK_SUCCESS) {
         throw std::runtime_error("Failed to submit command buffers");
     }
+
 }
 
 void Renderer::Present(uint32_t imageIndex) {

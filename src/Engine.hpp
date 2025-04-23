@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <thread>
 
 #include "Camera.hpp"
 #include "Context.hpp"
@@ -84,4 +85,7 @@ class Engine {
     std::unique_ptr<MeshManager> mMeshManager;
     std::unique_ptr<MaterialManager> mMaterialManager;
     std::unique_ptr<TextureManager> mTextureManager;
+
+    // scene loading thread
+    std::thread mSceneLoadingThread;
 };
