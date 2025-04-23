@@ -11,6 +11,8 @@ class Lever : public Entity {
 
     void Awake() override;
 
+    void OnInteract(Entity *other) override;
+
     void Update(double deltaTime) override;
 
     PhysicsSystem &mPhysicsSystem = PhysicsManager::get().mPhysicsSystem;
@@ -19,10 +21,15 @@ class Lever : public Entity {
     Entity *mLeverHandle = nullptr;
     std::vector<Trapdoor *> mTrapdoors;
 
-    // Float properties
+    std::unique_ptr<RigidBody> mSensor;
+
+    // Lever handle float properties
     float mMinAngle = 0.0f;
     float mMaxAngle = 0.0f;
     float mAnimationTime = 0.0f;
+
+    // Lever base float properties
+    float mProximityPromptRadius = 0.0f;
 
     JPH::Vec3 mAxisX;
     JPH::Vec3 mAxisY;

@@ -2,8 +2,6 @@
 
 #include <stack>
 
-#include "Input.hpp"
-
 Lever::Lever() {
     mType = "lever";
 }
@@ -35,6 +33,7 @@ void Lever::Awake() {
     assert(mLeverHandle);
     assert(!mTrapdoors.empty());
 
+    // Find lever handle properties
     const auto &leverHandleProperties = mLeverHandle->GetFloatProperties();
     auto minAngle = leverHandleProperties.find("min_angle");
     auto maxAngle = leverHandleProperties.find("max_angle");
@@ -49,6 +48,15 @@ void Lever::Awake() {
         mAnimationTime = animationTime->second;
     } else {
         SPDLOG_ERROR("Lever handle missing required property.");
+        exit(EXIT_FAILURE);
+    }
+
+    // Find lever base properties
+    auto proximityPrompt = mFloatProperties.find("proximity_prompt");
+    if (proximityPrompt != mFloatProperties.end()) {
+        mProximityPromptRadius = proximityPrompt->second;
+    } else {
+        SPDLOG_ERROR("Lever base missing required property.");
         exit(EXIT_FAILURE);
     }
 
@@ -67,24 +75,39 @@ void Lever::Awake() {
     }
 
     mLeverHandle->GetRigidBody().SetRotationJolt(mInitialRotation);
+
+    // Init proximity prompt sensor
+    // TODO: Factor this out into a class so we can programatically create proximity sensors given a
+    // proximity_prompt float property
+    BodyCreationSettings sensorSettings(new SphereShape(mProximityPromptRadius),
+                                        mLeverHandle->GetRigidBody().GetCenterOfMassPosition(),
+                                        Quat::sIdentity(), EMotionType::Static, Layers::MOVING);
+    sensorSettings.mIsSensor = true;
+
+    mSensor = std::make_unique<RigidBody>(sensorSettings);
+    mSensor->Init(PhysicsManager::get(), false);
+
+    PhysicsManager::get().RegisterEntity(this, mSensor->mBodyId);
 }
 
-void Lever::Update(double deltaTime) {
-    // TODO: Refactor trapdoor so that the class finds its children automatically
+void Lever::OnInteract(Entity *other) {
+    // TODO: Refactor trapdoor so that the class finds and stores its two children doors
+    // automatically. And make it so that calling IsActivated checks the activated status of the
+    // trapdoor children
     auto trapdoorsActivated =
         std::any_of(mTrapdoors.begin(), mTrapdoors.end(), [](auto *e) { return e->IsActivated(); });
 
-    // TODO: Add key binding and factor out input checking into the character
     // TODO: Add E to interact UI
-    // Send an event from the character?
-    if (!mIsPulled && !trapdoorsActivated && IsKeyPressed(KEY::eE)) {
+    if (!mIsPulled && !trapdoorsActivated) {
         mIsPulled = true;
 
         for (auto *trapdoor : mTrapdoors) {
             trapdoor->Activate();
         }
     }
+}
 
+void Lever::Update(double deltaTime) {
     if (mCurrentAnimationTime >= mAnimationTime) {
         // TODO: Refactor this code duplication? If the current animation time has gone past the
         // total animation time then the last part of the animation needs to finish

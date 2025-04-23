@@ -53,6 +53,10 @@ void RigidBody::SetPosition(glm::vec3 glm_position) {
     updatePosition = true;
 }
 
+JPH::RVec3 RigidBody::GetCenterOfMassPosition() const {
+    return PhysicsManager::get().mPhysicsSystem.GetBodyInterface().GetCenterOfMassPosition(mBodyId);
+}
+
 JPH::Quat RigidBody::GetRotationJolt() const {
     return PhysicsManager::get().mPhysicsSystem.GetBodyInterface().GetRotation(mBodyId);
 }
