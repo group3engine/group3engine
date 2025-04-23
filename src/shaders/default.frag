@@ -73,9 +73,47 @@ layout (set = 1, binding = 3) uniform UNumbers
 layout (set = 0, binding = 5) uniform samplerCube prefilteredSkybox;
 layout (set = 0, binding = 6) uniform sampler2D BRDFLUT;
 
+
+layout (set = 0, binding = 7) uniform RendererDebug
+{
+    int debugMode;
+}debugRenderer;
+
 #define PI 3.14159265359
 
 uint cascadeIndex = 0;
+
+// colors for each mip level
+const vec4 colors[10] = {
+    vec4(1.0, 0.0, 0.0, 1.0),
+    vec4(0.0, 1.0, 0.0, 1.0),
+    vec4(0.0, 0.0, 1.0, 1.0),
+    vec4(1.0, 1.0, 0.0, 1.0),
+    vec4(0.0, 1.0, 1.0, 1.0),
+    vec4(1.0, 0.0, 1.0, 1.0),
+    vec4(1.0, 0.5, 0.0, 1.0),
+    vec4(0.5, 0.0, 1.0, 1.0),
+    vec4(0.5, 0.5, 0.5, 1.0),
+    vec4(1.0, 1.0, 1.0, 1.0)
+};
+
+vec3 DebugMipColour()
+{
+    vec2 lodInfo = textureQueryLod(uTextureColour, uv);
+    int numMips = textureQueryLevels(uTextureColour);
+
+    float lod = max(lodInfo.y, 0.0); // clamping this because of texture has no mips as is the case with our 1x1 default it'll return garbage .y value
+    int index = int(floor(lod));
+    float blendFactor = fract(lod);
+
+    int clampedIndex = clamp(index + 1, 0, numMips - 1);
+    vec4 baseColor = colors[index];
+    vec4 nextColor = colors[clampedIndex];
+
+    vec4 blendedColor = mix(baseColor, nextColor, blendFactor);
+
+    return blendedColor.rgb;
+}
 
 vec3 FresnelSchlickWithRoughness(float cosTheta, vec3 F0, float roughness)
 {
@@ -96,30 +134,6 @@ vec3 Fresnel(vec3 halfVector, vec3 viewDir, vec3 baseColor, float metallic, floa
 struct SHCoefficients {
     vec3 l00, l1m1, l10, l11, l2m2, l2m1, l20, l21, l22;
 };
-
-//const SHCoefficients grace = SHCoefficients(
-//    vec3( 0.7953949,  0.4405923,  0.5459412 ),
-//    vec3( 0.3981450,  0.3526911,  0.6097158 ),
-//    vec3(-0.3424573, -0.1838151, -0.2715583 ),
-//    vec3(-0.2944621, -0.0560606,  0.0095193 ),
-//    vec3(-0.1123051, -0.0513088, -0.1232869 ),
-//    vec3(-0.2645007, -0.2257996, -0.4785847 ),
-//    vec3(-0.1569444, -0.0954703, -0.1485053 ),
-//    vec3( 0.5646247,  0.2161586,  0.1402643 ),
-//    vec3( 0.2137442, -0.0547578, -0.3061700 )
-//);
-
-SHCoefficients grace = SHCoefficients(
-    sh.shCoefficients[0],
-    sh.shCoefficients[1],
-    sh.shCoefficients[2],
-    sh.shCoefficients[3],
-    sh.shCoefficients[4],
-    sh.shCoefficients[5],
-    sh.shCoefficients[6],
-    sh.shCoefficients[7],
-    sh.shCoefficients[8]
-);
 
 vec3 EvaluateSHForDiffuseIBL(vec3 normal) {
     vec3 result = vec3(0.0);
@@ -307,6 +321,46 @@ void main()
 
     fragColor = vec4(outLight, 1.0);
     NormalMetallic = vec4(pixelNormal.xyz * 0.5 + 0.5, roughness);
+
+
+    switch(debugRenderer.debugMode) {
+        case 1:
+            fragColor = vec4(pixelNormal.xyz, 1.0);
+            break;
+        case 2:
+            fragColor = vec4(WorldPos.xyz, 1.0);
+            break;
+        case 3:
+            fragColor = vec4(color.rgb, 1.0);
+            break;
+        case 4:
+            fragColor = vec4(vec3(roughness), 1.0);
+            break;
+        case 5:
+            fragColor = vec4(vec3(metallic), 1.0);
+            break;
+        case 6:
+            fragColor = vec4(vec3(1.0 - PCF(WorldPos.xyz)), 1.0);
+            break;
+        case 7:
+            fragColor = vec4(DebugMipColour(), 1.0);
+            break;
+        case 8:
+            switch(cascadeIndex) {
+    		case 0 :
+    			fragColor.rgb *= vec3(1.0f, 0.25f, 0.25f);
+    			break;
+    		case 1 :
+    			fragColor.rgb *= vec3(0.25f, 1.0f, 0.25f);
+    			break;
+    		case 2 :
+    			fragColor.rgb *= vec3(0.25f, 0.25f, 1.0f);
+    			break;
+    		case 3 :
+    			fragColor.rgb *= vec3(1.0f, 1.0f, 0.25f);
+    			break;
+    	    }
+    }
 
 //    switch(cascadeIndex) {
 //		case 0 :
