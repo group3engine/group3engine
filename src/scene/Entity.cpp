@@ -131,6 +131,12 @@ void Entity::RecordDrawOpaque(VkCommandBuffer aCmdBuff,
             vkCmdBindIndexBuffer(aCmdBuff, meshPrimitive.meshGPU->mIndices.buffer, 0,
                                  VK_INDEX_TYPE_UINT32);
 
+            if (meshPrimitive.material->doubleSided) {
+                vkCmdSetCullMode(aCmdBuff, VK_CULL_MODE_NONE);
+            } else {
+                vkCmdSetCullMode(aCmdBuff, VK_CULL_MODE_BACK_BIT);
+            }
+
             // draw the mesh
             vkCmdDrawIndexed(aCmdBuff, meshPrimitive.meshGPU->mIndexCount, 1, 0, 0, 0);
         }
@@ -160,6 +166,12 @@ void Entity::RecordDrawShadow(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipeli
             // bind the index buffer
             vkCmdBindIndexBuffer(aCmdBuff, meshPrimitive.meshGPU->mIndices.buffer, 0,
                                  VK_INDEX_TYPE_UINT32);
+
+            if (meshPrimitive.material->doubleSided) {
+                vkCmdSetCullMode(aCmdBuff, VK_CULL_MODE_NONE);
+            } else {
+                vkCmdSetCullMode(aCmdBuff, VK_CULL_MODE_BACK_BIT);
+            }
 
             // draw the mesh
             vkCmdDrawIndexed(aCmdBuff, meshPrimitive.meshGPU->mIndexCount, 1, 0, 0, 0);
@@ -196,6 +208,12 @@ void Entity::RecordDrawCutout(VkCommandBuffer aCmdBuff,
             // bind the index buffer
             vkCmdBindIndexBuffer(aCmdBuff, meshPrimitive.meshGPU->mIndices.buffer, 0,
                                  VK_INDEX_TYPE_UINT32);
+
+            if (meshPrimitive.material->doubleSided) {
+                vkCmdSetCullMode(aCmdBuff, VK_CULL_MODE_NONE);
+            } else {
+                vkCmdSetCullMode(aCmdBuff, VK_CULL_MODE_BACK_BIT);
+            }
 
             // draw the mesh
             vkCmdDrawIndexed(aCmdBuff, meshPrimitive.meshGPU->mIndexCount, 1, 0, 0, 0);
@@ -236,6 +254,12 @@ void Entity::RecordDrawSkinned(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipeL
             vkCmdBindIndexBuffer(aCmdBuff,
                                  meshPrimitive.meshGPU->mIndices.buffer, 0,
                                  VK_INDEX_TYPE_UINT32);
+
+            if (meshPrimitive.material->doubleSided) {
+                vkCmdSetCullMode(aCmdBuff, VK_CULL_MODE_NONE);
+            } else {
+                vkCmdSetCullMode(aCmdBuff, VK_CULL_MODE_BACK_BIT);
+            }
 
             // draw the mesh
             vkCmdDrawIndexed(aCmdBuff, meshPrimitive.meshGPU->mIndexCount, 1, 0,
@@ -340,6 +364,7 @@ void Entity::SetParentTransform(glm::mat4 aParentTransform)  {
     mParentTransform = aParentTransform;
     UpdateWorldTransform();
     UpdateChildrenTransform();
+    SetPhysicsTransform();
 }
 
 void Entity::InitPhysics() {

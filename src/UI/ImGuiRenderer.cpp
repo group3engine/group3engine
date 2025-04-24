@@ -595,6 +595,8 @@ void ImGuiRenderer::NewTimer(const gui::TimerData &data,
 
 void ImGuiRenderer::LoadingBar(float progress, ImVec2 position)
 {
+    // set the font to be the subtle font
+    ImGui::PushFont(Fonts::LoadingFont);
     // Get the main viewport to determine screen dimensions
     const ImGuiViewport* viewport = ImGui::GetMainViewport();
 
@@ -613,9 +615,13 @@ void ImGuiRenderer::LoadingBar(float progress, ImVec2 position)
     ImGui::SetNextWindowSize(windowSize);
     ImGui::Begin("Loading", nullptr, flags);
     // Display a progress bar; progress value should be in the range [0.0f, 1.0f]
+    ImGui::PushFont(Fonts::LoadingFontSmall);
     ImGui::ProgressBar(progress / 100.f, progressBarSize);
-    ImGui::Text("Loading... %.0f%%", progress);
+    ImGui::PopFont();
+    ImGui::Text("Loading... %.0f%\%", progress);
     ImGui::End();
+    // Pop the font
+    ImGui::PopFont();
 }
 
 void ImGuiRenderer::Image(std::string const &imageName, ImVec2 position, ImVec2 size)

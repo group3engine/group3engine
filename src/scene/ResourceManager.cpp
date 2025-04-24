@@ -107,6 +107,8 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
     defaultMaterial.pbrMetallicRoughness.metallicRoughnessTextureName = "white";
     defaultMaterial.normalTexture = aTextureManager.GetTexture("normal");
     defaultMaterial.normalTextureName = "normal";
+    defaultMaterial.emissiveTexture = aTextureManager.GetTexture("white");
+    defaultMaterial.emissiveTextureName = "white";
 
     aMaterialManager.AddMaterial(defaultMaterial);
 
@@ -177,7 +179,6 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 material.pbrMetallicRoughness.metallicRoughnessTextureName =
                     "white";
             }
-
             material.pbrMetallicRoughness.pbrMaterialNumbers.baseColorFactor =
                 glm::vec4(
                     gltfMaterial.pbr_metallic_roughness.base_color_factor[0],
@@ -212,6 +213,38 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         {
             material.normalTexture = aTextureManager.GetTexture("normal");
             material.normalTextureName = "normal";
+        }
+
+        material.doubleSided = gltfMaterial.double_sided;
+
+        if (gltfMaterial.emissive_texture.texture)
+        {
+            std::string emissiveFileName =
+                    gltfMaterial.emissive_texture.texture->image->uri;
+            std::string emissiveName = DecodeURI(
+                    emissiveFileName, aFilepath.string());
+
+            aTextureManager.addTexture(emissiveName,
+                                       emissiveFileName);
+            material.emissiveTexture =
+                    aTextureManager.GetTexture(emissiveFileName);
+
+            material.emissiveTextureName =
+                    emissiveFileName;
+        }
+        else
+        {
+            material.emissiveTexture = aTextureManager.GetTexture("white");
+            material.emissiveTextureName = "white";
+        }
+        material.pbrMetallicRoughness.pbrMaterialNumbers.emissiveFactor =
+                glm::vec4(gltfMaterial.emissive_factor[0],
+                          gltfMaterial.emissive_factor[1],
+                          gltfMaterial.emissive_factor[2],
+                            0.f);
+        if(gltfMaterial.has_emissive_strength)
+        {
+            material.pbrMetallicRoughness.pbrMaterialNumbers.emissiveFactor *= gltfMaterial.emissive_strength.emissive_strength;
         }
         // TODO: create material descriptor set
         aMaterialManager.AddMaterial(material);

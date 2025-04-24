@@ -16,6 +16,8 @@ namespace Fonts {
     inline ImFont* TextFont = nullptr;
     inline ImFont* TextFontSubtle = nullptr;
     inline ImFont* TextFontSmall = nullptr;
+    inline ImFont* LoadingFont = nullptr;
+    inline ImFont* LoadingFontSmall = nullptr;
 
     bool LoadFonts() ;
 }

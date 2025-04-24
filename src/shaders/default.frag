@@ -60,14 +60,16 @@ layout (set = 1, binding = 0) uniform sampler2D uTextureColour;
 layout (set = 1, binding = 1) uniform sampler2D uTextureMetallicRoughness;
 // normal map
 layout (set = 1, binding = 2) uniform sampler2D uTextureNormal;
+// emissive texture
+layout (set = 1, binding = 3) uniform sampler2D uTextureEmissive;
 // material numbers
-layout (set = 1, binding = 3) uniform UNumbers
+layout (set = 1, binding = 4) uniform UNumbers
 {
 	vec4 baseColour;
 	float metallness;
 	float roughness;
 	float alphaCutoff;
-
+    vec4 emissiveFactor;
 } uNumbers;
 
 layout (set = 0, binding = 5) uniform samplerCube prefilteredSkybox;
@@ -279,7 +281,7 @@ void main()
         discard;
     #endif
     vec3 color = texture(uTextureColour, uv).rgb * uNumbers.baseColour.rgb;
-    vec3 emissive = vec3(0.0);
+    vec3 emissive = uNumbers.emissiveFactor.rgb * texture(uTextureEmissive, uv).rgb;
 
     // == Metal and Roughness ==
     float roughness = texture(uTextureMetallicRoughness, uv).g * uNumbers.roughness;
@@ -300,20 +302,23 @@ void main()
         outLight += brdf;
     }
 
-//    for (int i = 1; i < NUM_LIGHTS; i++)
-//    {
-//        vec3 lightDir = normalize(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
-//        vec3 viewDir = normalize(ubo.cameraPosition.xyz - WorldPos.xyz);
-//        vec3 halfVector = normalize(viewDir + lightDir);
-//
-//        float dist = length(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
-//        float att = 1.0 / (dist * dist);
-//        vec3 LightColour = lightData.lights[i].LightColour.xyz * att;
-//
-//        float shadowTerm = 1.0;
-//        vec3 brdf = CookTorranceBRDF(pixelNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour);
-//        outLight += brdf * LightColour.xyz * shadowTerm;
-//    }
+
+    for (int i = 1; i < NUM_LIGHTS; i++)
+    {
+        vec3 lightDir = normalize(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
+        vec3 viewDir = normalize(ubo.cameraPosition.xyz - WorldPos.xyz);
+        vec3 halfVector = normalize(viewDir + lightDir);
+
+        float dist = length(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
+        float att = 1.0 / (dist * dist);
+        vec3 LightColour = lightData.lights[i].LightColour.xyz * att;
+
+        float shadowTerm = 1.0;
+        vec3 brdf = CookTorranceBRDF(pixelNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour, WorldPos.xyz);
+        outLight += brdf * LightColour.xyz * shadowTerm;
+    }
+    // add the emissive light
+    outLight += emissive;
 
     // This is no longer needed since we now have IBL which is the "indirect"
     // Keeping this here for reference
