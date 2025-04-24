@@ -3,18 +3,25 @@
 
 #include "Entity.hpp"
 
-#include <Jolt/Physics/Constraints/HingeConstraint.h>
-
 class SwingAxe : public Entity {
   public:
-    void InitPhysics() override;
+    SwingAxe();
 
-    // void Awake() override;
+    void InitPhysics() override;
 
     void Update(double deltaTime) override;
 
-    double swingTime = 0.0f;
+    PhysicsSystem &mPhysicsSystem = PhysicsManager::get().mPhysicsSystem;
+    const JPH::BodyLockInterface &mLockInterface = mPhysicsSystem.GetBodyLockInterface();
 
-    JPH::HingeConstraint *mConstraint;
+    float mPendulumLength = 0.0f;
+
+    Vec3 mAxisX;
+    Vec3 mAxisY;
+    Vec3 mAxisZ;
+
+    JPH::Quat initialRotation;
+
+    float mTime = 0.0f;
 };
 #endif // GROUP3ENGINE_SWINGAXE_HPP

@@ -20,8 +20,9 @@
 #include "TileManager.hpp"
 #include "Sinking.hpp"
 #include "SinkingChild.hpp"
+#include "BoulderSpawner.hpp"
+#include "SpikeTrap.hpp"
 #include "SwingAxe.hpp"
-#include "SwingAxeHinge.hpp"
 // Add more includes here
 
 // an enum of all the different entity types
@@ -44,7 +45,8 @@ enum class EntityType {
     SINKING,
     SINKINGCHILD,
     SWINGAXE,
-    SWINGAXEHINGE
+    BOULDERSPAWNER,
+    SPIKETRAP,
     // Add more entity types here
 };
 // a map of strings to entity types
@@ -66,8 +68,9 @@ static const std::unordered_map<std::string, EntityType> entityTypeMap = {
     {"tileManager", EntityType::TILEMANAGER},
     {"sinking", EntityType::SINKING},
     {"sinkingChild", EntityType::SINKINGCHILD},
+    {"boulderSpawner", EntityType::BOULDERSPAWNER},
+    {"spikeTrap", EntityType::SPIKETRAP},
     {"swing_axe", EntityType::SWINGAXE},
-    {"swing_axe_hinge", EntityType::SWINGAXEHINGE},
 };
 // a function to convert a string to an entity type
 inline EntityType GetEntityTypeFromString(const std::string& aTypeName) {
@@ -121,8 +124,10 @@ inline Entity* CreateNewEntity(const std::string& aEntityType)
         return new SinkingChild();
     case EntityType::SWINGAXE:
         return new SwingAxe();
-    case EntityType::SWINGAXEHINGE:
-        return new SwingAxeHinge();
+    case EntityType::BOULDERSPAWNER:
+        return new BoulderSpawner();
+    case EntityType::SPIKETRAP:
+        return new SpikeTrap();
     // Add more cases here
     default:
         assert(false);

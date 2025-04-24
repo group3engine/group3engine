@@ -15,6 +15,8 @@
 #include "RenderPassCommon.hpp"
 #include "SampleGLTFFilePaths.hpp"
 #include "Scene.hpp"
+#include "InputMapping.hpp"
+#include "Input.hpp"
 
 namespace {
     std::filesystem::path BuildSaveFilename() {
@@ -74,20 +76,24 @@ void CharacterEntity::ProcessInput(){
     if(mDeathState == DeathState::eLiving) {
         if (mCamera->isInFollowCharacterMode()) {
             // Determine controller input
-            if (IsKeyDown(KEY::eA))
+            if (mInputMapping.GetActionDown("LEFT") > 0)
                 controlInput.z = -1;
-            if (IsKeyDown(KEY::eD))
+            if (mInputMapping.GetActionDown("RIGHT") > 0)
                 controlInput.z = 1;
-            if (IsKeyDown(KEY::eW))
+            if (mInputMapping.GetActionDown("FORWARD") > 0)
                 controlInput.x = 1;
-            if (IsKeyDown(KEY::eS))
+            if (mInputMapping.GetActionDown("BACKWARD") > 0)
                 controlInput.x = -1;
+            // make sure the magnitude of controlInput.xz is either 0 or 1
+            NormaliseDPad(controlInput.x, controlInput.z);
             if (controlInput != glm::vec3(0.f))
                 controlInput = glm::normalize(controlInput);
-            if (abs(GetGamepadAxis(GAMEPAD_AXIS::eLEFT_Y)) > 0.1f)
-                controlInput.x = -GetGamepadAxis(GAMEPAD_AXIS::eLEFT_Y);
-            if (abs(GetGamepadAxis(GAMEPAD_AXIS::eLEFT_X)) > 0.1f)
-                controlInput.z = GetGamepadAxis(GAMEPAD_AXIS::eLEFT_X);
+            float gamepadAxisForwards = mInputMapping.GetActionDown("FORWARD_BACKWARD");
+            if (abs(gamepadAxisForwards) > abs(controlInput.x))
+                controlInput.x = -gamepadAxisForwards;
+            float gamepadAxisLeftRight = mInputMapping.GetActionDown("LEFT_RIGHT");
+            if (abs(gamepadAxisLeftRight) > abs(controlInput.z))
+                controlInput.z = gamepadAxisLeftRight;
 
             // Rotate controls to align with the camera
             auto cameraForward = mCamera->GetDirection();
@@ -105,20 +111,18 @@ void CharacterEntity::ProcessInput(){
                 // if we are grounded, then only do this if x is forward
                 if(!mSampleJoltCharacter->IsGrounded() || controlInput.x > 0.1f) {
                     controlInput.y = controlInput.x;
-                    controlInput.x = 0.f;
+                    controlInput.x = -1.f;
+                    controlInput.z = 0.f;
                 }
             }
             controlInput = rotation * controlInput;
 
             // Check actions
-            jump = IsKeyPressed(KEY::eSPACE) || IsGamepadButtonPressed(GAMEPAD_BUTTON::eA);
-            if (IsKeyPressed(KEY::eF) && !mInClimb) {
-                // for each child, if there is an animator, call set animation
+            jump = mInputMapping.GetActionPressed("JUMP") > 0;
+            if ((mInputMapping.GetActionPressed("EMOTE") > 0) && !mInClimb) {
                 mIsEmoting = true;
             }
-            if ((IsKeyPressed(KEY::eC) ||
-                IsGamepadButtonPressed(GAMEPAD_BUTTON::eRIGHT_THUMB) ||
-                IsGamepadButtonPressed(GAMEPAD_BUTTON::eB) || IsKeyPressed(KEY::eLEFT_CONTROL)) && !mInClimb) {
+            if ((mInputMapping.GetActionPressed("CROUCH") > 0) && !mInClimb) {
                 mIsCrouching = !mIsCrouching;
             }
         }
@@ -386,6 +390,7 @@ CharacterEntity::CharacterEntity() {
     SetAsCharacter();
     Load();
     mType = "character";
+    RegisterControls();
 }
 void CharacterEntity::OnCollisionStart(Entity *aOther) {
 
@@ -579,10 +584,12 @@ void CharacterEntity::MoveToSpawn()
 
 void CharacterEntity::Die()
 {
-    // set the death state to dying
-    mDeathState = DeathState::eDying;
-    // set the death timer to death time
-    mDeathTimer = mDeathTime;
+    if(mDeathState == DeathState::eLiving) {
+        // set the death state to dying
+        mDeathState = DeathState::eDying;
+        // set the death timer to death time
+        mDeathTimer = mDeathTime;
+    }
 
 }
 
@@ -616,5 +623,35 @@ void CharacterEntity::OnCollisionStay(Entity *aOther)
             mClimbDirection.y = 0;
             mClimbDirection = glm::normalize(mClimbDirection);
         }
+    }
+}
+
+void CharacterEntity::RegisterControls()
+{
+    // Register controls for the player
+    mInputMapping.AddBinding("FORWARD", KEY::eW);
+    mInputMapping.AddBinding("BACKWARD", KEY::eS);
+    mInputMapping.AddBinding("FORWARD_BACKWARD", GAMEPAD_AXIS::eLEFT_Y, 0);
+    mInputMapping.AddBinding("LEFT", KEY::eA);
+    mInputMapping.AddBinding("RIGHT", KEY::eD);
+    mInputMapping.AddBinding("LEFT_RIGHT", GAMEPAD_AXIS::eLEFT_X, 0);
+    mInputMapping.AddBinding("JUMP", KEY::eSPACE);
+    mInputMapping.AddBinding("JUMP", GAMEPAD_BUTTON::eX, 0);
+    mInputMapping.AddBinding("CROUCH", KEY::eC);
+    mInputMapping.AddBinding("CROUCH", KEY::eLEFT_CONTROL);
+    mInputMapping.AddBinding("CROUCH", GAMEPAD_BUTTON::eB, 0);
+    mInputMapping.AddBinding("CROUCH", GAMEPAD_BUTTON::eRIGHT_THUMB, 0);
+    mInputMapping.AddBinding("EMOTE", KEY::eF);
+    mInputMapping.AddBinding("EMOTE", GAMEPAD_BUTTON::eDPAD_DOWN, 0);
+
+
+}
+
+void CharacterEntity::LateUpdate(double deltaTime)
+{
+    // if we are beginning a jump, we are not in climb
+    if(mSampleJoltCharacter->GetJumpState() == EJumpState::Start)
+    {
+        mInClimb = false;
     }
 }

@@ -43,6 +43,7 @@ private:
 
     VkQueue graphicsQueue;
     VkQueue presentQueue;
+    std::mutex graphicsQueueMutex;
 
     VkDebugUtilsMessengerEXT debugMessenger;
     bool enableDebugUtil;

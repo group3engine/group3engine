@@ -26,8 +26,8 @@ void main()
     // blur vertically
     for(int i = 1; i < 11; i++)
     {
-        blurredOutput += getColour(0.0, linearOffsets[i]) * linearWeights[i];
-        blurredOutput += getColour(0.0, -linearOffsets[i]) * linearWeights[i];
+        blurredOutput += getColour(0.0, linearOffsets[i] / 3.) * linearWeights[i];
+        blurredOutput += getColour(0.0, -linearOffsets[i] / 3.) * linearWeights[i];
     }
     oColour = vec4(blurredOutput.rgb, 1.0);
 

@@ -55,7 +55,6 @@ namespace {
     std::filesystem::path mainMenuPath{"MainMenu/main_menu.gltf"};
 
     const std::vector<std::filesystem::path *> scenePaths = {
-        &Sample::SampleObby,
         &Sample::SampleObbyTestScene,
         &Sample::ArrowSample,
         &Sample::AxeSample,
@@ -63,6 +62,9 @@ namespace {
         &Sample::SpikePitSample,
         &Sample::LadderSample,
         &Sample::SinkingSample,
+        &Sample::BoulderSample,
+        &Sample::SpikeTrapSample,
+
 
     };
 
@@ -216,7 +218,10 @@ void Engine::Run() {
 
         // See imgui.cpp
         // "(So you want to try calling NewFrame() as early as you can in your main loop to be able to use Dear ImGui everywhere)"
-        ImGuiRenderer::NewFrame();
+        {
+            std::lock_guard<std::mutex> lock(m_context.graphicsQueueMutex);
+            ImGuiRenderer::NewFrame();
+        }
 
         PollInputEvents();
 
@@ -293,7 +298,7 @@ void Engine::ChangeSceneFR(const std::filesystem::path &scenePath, size_t player
 
     m_isLoading = true;
     m_progress = 0.f;
-    // std::thread loadingScreen(&Engine::RenderLoadingScreen, this);
+    mSceneLoadingThread = std::thread(&Engine::RenderLoadingScreen, this);
 
 
 
@@ -316,13 +321,13 @@ void Engine::ChangeSceneFR(const std::filesystem::path &scenePath, size_t player
 
     mScene->Awake();
     m_progress = 100.f;
-    // sleep for 1 second
-    // std::this_thread::sleep_for(std::chrono::seconds(1));
     // end the loading screen
     m_isLoading = false;
     // wait for loading screen thread to finish
-    // while (!loadingScreen.joinable()) {}
-    // loadingScreen.join();
+     while (!mSceneLoadingThread.joinable()) {}
+    mSceneLoadingThread.join();
+    vkQueueWaitIdle(m_context.presentQueue);
+
 }
 
 void Engine::Update(double deltaTime) {
@@ -437,12 +442,21 @@ void Engine::RenderLoadingScreen()
     {
         while (m_isLoading)
         {
-            // ImGuiRenderer::NewFrame();
-            // ImGuiRenderer::Image("load", ImVec2{0,0}, ImVec2{1,1});
-            // ImGuiRenderer::LoadingBar(m_progress, ImVec2(500, 500));
-            // ImGuiRenderer::EndFrame();
-            // // render some text with imgui
-            // mRenderer->RenderUIOnly();
+             float mTotalTime = glfwGetTime() - m_lastFrameTime;
+             float mProgress = m_progress;
+             mProgress += mTotalTime * 10.f;
+             mProgress = std::min(mProgress, m_progress + 25.f);
+             mProgress = std::min(mProgress, 99.f);
+            {
+                std::lock_guard<std::mutex> lock(m_context.graphicsQueueMutex);
+                ImGuiRenderer::NewFrame();
+            }
+             ImGuiRenderer::Image("load", ImVec2{0,0}, ImVec2{1,1});
+             ImGuiRenderer::LoadingBar(mProgress, ImVec2(500, 500));
+             ImGuiRenderer::EndFrame();
+             // render some text with imgui
+             mRenderer->RenderUIOnly();
+
         }
     }catch (const std::exception& e) {
         // Handle the exception

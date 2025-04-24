@@ -85,6 +85,11 @@ void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, 
 		// Smooth the player input
 		mDesiredVelocity = sEnableCharacterInertia? 0.25f * inMovementDirection * sCharacterSpeed + 0.75f * mDesiredVelocity : inMovementDirection * sCharacterSpeed;
         mDesiredVelocity.SetY(0); // We don't want to move up/down when moving sideways
+        if(inClimb && !IsGrounded())
+        {
+            mDesiredVelocity.SetX(0);
+            mDesiredVelocity.SetZ(0);
+        }
 
 		// True if the player intended to move
 		mAllowSliding = !inMovementDirection.IsNearZero();
@@ -109,7 +114,7 @@ void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, 
 	Vec3 ground_velocity = mCharacter->GetGroundVelocity();
 	Vec3 new_velocity;
 	bool moving_towards_ground = (current_vertical_velocity.GetY() - ground_velocity.GetY()) < 0.1f;
-	if (mCharacter->GetGroundState() == CharacterVirtual::EGroundState::OnGround	// If on ground
+	if ((mCharacter->GetGroundState() == CharacterVirtual::EGroundState::OnGround || inClimb)	// If on ground
 		&& (sEnableCharacterInertia?
 			moving_towards_ground													// Inertia enabled: And not moving away from ground
 			: !mCharacter->IsSlopeTooSteep(mCharacter->GetGroundNormal())))			// Inertia disabled: And not on a slope that is too steep
@@ -121,6 +126,15 @@ void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, 
   		if (inJump && moving_towards_ground) {
                     new_velocity += sJumpSpeed * mCharacter->GetUp();
                         mJumpState = EJumpState::Start;
+                    // if we are in climb, we want to jump away from the wall, so add negative of the direction without y
+                    if(inClimb)
+                    {
+                        Vec3 jumpBack = inMovementDirection;
+                        jumpBack.SetY(0);
+                        new_velocity += jumpBack * sJumpSpeed;
+                        mJumpState = EJumpState::Start;
+                        inClimb = false;
+                    }
                 }
                 else if (mJumpState != EJumpState::None && mJumpState != EJumpState::End) {
                     mJumpState = EJumpState::End;
@@ -129,6 +143,7 @@ void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, 
                 {
                         mJumpState = EJumpState::None;
                 }
+
 	}
 	else {
             new_velocity = current_vertical_velocity;

@@ -22,7 +22,7 @@ void Buffer::Destroy() {
     }
 }
 
-void Buffer::Update(const Context& context, const void *data, VkDeviceSize size_in_bytes)
+void Buffer::Update(Context& context, const void *data, VkDeviceSize size_in_bytes)
 {
     // based on https://gpuopen-librariesandsdks.github.io/VulkanMemoryAllocator/html/usage_patterns.html
 
@@ -221,7 +221,7 @@ Buffer CreateBuffer(const std::string &name, Context const &context, VkDeviceSiz
     return Buffer(name, context.allocator, buffer, allocation, allocInfo, memPropFlags);
 }
 
-void CreateAndUploadBuffer(Context const &context, const void *data, VkDeviceSize size, VkBufferUsageFlags usage, Buffer &destinationBuffer) {
+void CreateAndUploadBuffer(Context &context, const void *data, VkDeviceSize size, VkBufferUsageFlags usage, Buffer &destinationBuffer) {
     // Create the destination buffer
     destinationBuffer = CreateBuffer("buffer", context, size,
                                      usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 0, VMA_MEMORY_USAGE_AUTO);

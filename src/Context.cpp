@@ -443,6 +443,7 @@ void Context::CreateLogicalDevice() {
 
     VkPhysicalDeviceFeatures2 features = {};
     features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    features.features.fillModeNonSolid = VK_TRUE;
     features.features.samplerAnisotropy = VK_TRUE;
     features.features.geometryShader = VK_TRUE;
     features.features.fragmentStoresAndAtomics = VK_TRUE;
@@ -682,6 +683,7 @@ bool Context::MakeContext(GLFWwindow *window) {
     vkGetDeviceQueue(device, graphicsFamilyIndex, 0, &graphicsQueue);
     vkGetDeviceQueue(device, presentFamilyIndex, 0, &presentQueue);
 
+
     CreateAllocator();
     CreateTransientCommandPool();
     CreateDescriptorPool();
@@ -690,6 +692,12 @@ bool Context::MakeContext(GLFWwindow *window) {
     assert(presentQueue != VK_NULL_HANDLE);
 
     vkSetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)vkGetInstanceProcAddr(instance, "vkSetDebugUtilsObjectNameEXT");
+    #ifndef NDEBUG
+    vkCreateDebugUtilsMessengerEXT(instance, &debugInfo, nullptr, &debugMessenger);
+    #endif
+    // name the queues
+    SetObjectName(device, (uint64_t)(graphicsQueue), VK_OBJECT_TYPE_QUEUE, "GraphicsQueue");
+    SetObjectName(device, (uint64_t)(presentQueue), VK_OBJECT_TYPE_QUEUE, "PresentQueue");
 
     CreateSwapchain();
 

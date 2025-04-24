@@ -4,7 +4,23 @@
 
 #include "TextureManager.hpp"
 
+#include <algorithm>
+#include <string>
+#include <cctype>
+
+#include <spdlog/spdlog.h>
+
 #include "Utils.hpp"
+
+namespace {
+bool FindCaseInsensitive(const std::string &str, const std::string &subStr) {
+    auto it = std::search(str.begin(), str.end(), subStr.begin(), subStr.end(),
+                          [](auto ch1, auto ch2) {
+                              return std::toupper(ch1) == std::toupper(ch2);
+                          });
+    return (it != str.end());
+}
+}
 
 void TextureManager::addTexture(const std::filesystem::path &aTexturePath,
                                 const std::string &aTextureName) {
@@ -12,10 +28,46 @@ void TextureManager::addTexture(const std::filesystem::path &aTexturePath,
     if (mTextureMap.find(aTextureName) != mTextureMap.end()) {
         return;
     }
+
+    VkFormat format = VK_FORMAT_R8G8B8A8_SRGB;
+
+    bool isColor =
+        FindCaseInsensitive(aTextureName, "color") || FindCaseInsensitive(aTextureName, "diffuse");
+
+    bool isMetallic = FindCaseInsensitive(aTextureName, "metallic");
+    bool isMetalness = FindCaseInsensitive(aTextureName, "metalness");
+    bool isRoughness = FindCaseInsensitive(aTextureName, "roughness");
+    bool isMetallicRoughness = isMetallic || isMetalness || isRoughness;
+
+    bool isSpecular = FindCaseInsensitive(aTextureName, "specular");
+    bool isGlossiness = FindCaseInsensitive(aTextureName, "glossiness");
+    bool isSpecularGlossiness = isSpecular || isGlossiness;
+
+    bool isNormal = FindCaseInsensitive(aTextureName, "normal");
+
+    if (isColor) {
+        format = VK_FORMAT_R8G8B8A8_SRGB;
+    } else if (isMetallicRoughness || isSpecularGlossiness || isNormal) {
+        format = VK_FORMAT_R8G8B8A8_UNORM;
+    }
+    // AND to check if at least one identifier exists
+    else if ((isColor & isMetallicRoughness & isSpecularGlossiness & isNormal) == 0) {
+        SPDLOG_ERROR(
+            "Detected zero image identifiers in {}. Should contain either color, normal, "
+            "metallic, metalness, roughness, specular, glossiness. Defaulting to sRGB color space.",
+            aTexturePath.filename().string());
+    }
+    // XOR to make sure exactly one identifier exists
+    else if ((isColor ^ isMetallicRoughness ^ isSpecularGlossiness ^ isNormal) == 0) {
+        SPDLOG_ERROR(
+            "Detected more than one image identifier in {}. Defaulting to sRGB color space.",
+            aTexturePath.filename().string());
+    } else {
+        assert(false);
+    }
+
     // load the texture
-    Image textureImage = LoadTextureFromDisk(
-        aTexturePath, mContext,
-        VK_FORMAT_R8G8B8A8_UNORM); // create the texture VK_FORMAT_R8G8B8A8_SRGB
+    Image textureImage = LoadTextureFromDisk(aTexturePath, mContext, format);
     Texture texture;
     texture.name = aTextureName;
     texture.image = std::move(textureImage);

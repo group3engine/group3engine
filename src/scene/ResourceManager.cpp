@@ -5,6 +5,7 @@
 #include "ResourceManager.hpp"
 
 #include <iostream>
+#include <span>
 #include <string>
 
 #define CGLTF_IMPLEMENTATION
@@ -21,6 +22,8 @@
 #include <glm/gtx/io.hpp>
 
 #include <spdlog/spdlog.h>
+
+#include <json.hpp>
 
 namespace ResourceLoader {
 
@@ -104,6 +107,8 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
     defaultMaterial.pbrMetallicRoughness.metallicRoughnessTextureName = "white";
     defaultMaterial.normalTexture = aTextureManager.GetTexture("normal");
     defaultMaterial.normalTextureName = "normal";
+    defaultMaterial.emissiveTexture = aTextureManager.GetTexture("white");
+    defaultMaterial.emissiveTextureName = "white";
 
     aMaterialManager.AddMaterial(defaultMaterial);
 
@@ -174,7 +179,6 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                 material.pbrMetallicRoughness.metallicRoughnessTextureName =
                     "white";
             }
-
             material.pbrMetallicRoughness.pbrMaterialNumbers.baseColorFactor =
                 glm::vec4(
                     gltfMaterial.pbr_metallic_roughness.base_color_factor[0],
@@ -209,6 +213,38 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         {
             material.normalTexture = aTextureManager.GetTexture("normal");
             material.normalTextureName = "normal";
+        }
+
+        material.doubleSided = gltfMaterial.double_sided;
+
+        if (gltfMaterial.emissive_texture.texture)
+        {
+            std::string emissiveFileName =
+                    gltfMaterial.emissive_texture.texture->image->uri;
+            std::string emissiveName = DecodeURI(
+                    emissiveFileName, aFilepath.string());
+
+            aTextureManager.addTexture(emissiveName,
+                                       emissiveFileName);
+            material.emissiveTexture =
+                    aTextureManager.GetTexture(emissiveFileName);
+
+            material.emissiveTextureName =
+                    emissiveFileName;
+        }
+        else
+        {
+            material.emissiveTexture = aTextureManager.GetTexture("white");
+            material.emissiveTextureName = "white";
+        }
+        material.pbrMetallicRoughness.pbrMaterialNumbers.emissiveFactor =
+                glm::vec4(gltfMaterial.emissive_factor[0],
+                          gltfMaterial.emissive_factor[1],
+                          gltfMaterial.emissive_factor[2],
+                            0.f);
+        if(gltfMaterial.has_emissive_strength)
+        {
+            material.pbrMetallicRoughness.pbrMaterialNumbers.emissiveFactor *= gltfMaterial.emissive_strength.emissive_strength;
         }
         // TODO: create material descriptor set
         aMaterialManager.AddMaterial(material);
@@ -329,6 +365,11 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                         tangent.z = 0.001f;
                     }
                     meshPrimitive.vertices[i].tangent = tangent;
+                } else {
+                    SPDLOG_ERROR("Mesh primitive in {} is missing tangents. The glTF may have "
+                                 "failed to export due to ngons or other issues.",
+                                 gltfMesh.name);
+                    assert(false);
                 }
 
                 // if the mesh has joints and weights
@@ -374,163 +415,72 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
     // for each node
     for (size_t ni = 0; ni < data->nodes_count; ni++) {
         const auto &gltfNode = data->nodes[ni];
-        std::string entityTypeName = "default";
-        std::string physicsTypeName = "static"; // default type is static
 
-
-
-        // IDEA: Store parse data in this struct and use C-style char * so
-        // we can use cgltf_parse_json_string. Then, we can store info
-        // in actual entities and construct std::string or enum values
-        // based on the char * string.
-        struct group3_extras {
-            char *entity_type = nullptr;
-            char *physics_type = nullptr;
+        struct Extras {
+            std::string entityType = "default";
+            std::string physicsType = "static";
             std::vector<std::string> tags;
+            std::unordered_map<std::string, float> float_properties;
             bool is_sensor = false;
-            bool is_solid = true;
+            bool is_solid = false;
             bool is_invisible = false;
-        } group3_extras;
+        } extras;
 
         if (gltfNode.extras.data) {
-            // Our existing cgltf_options does not include a memory allocator
-            // If we want to use cgltf_parse_json_string then we need to pass an options with one
-            cgltf_options fixed_options = options;
-            if (fixed_options.memory.alloc_func == NULL) {
-                fixed_options.memory.alloc_func = &cgltf_default_alloc;
-            }
-            if (fixed_options.memory.free_func == NULL) {
-                fixed_options.memory.free_func = &cgltf_default_free;
-            }
+            std::span<char> v{gltfNode.extras.data, strlen(gltfNode.extras.data)};
+            nlohmann::json json = nlohmann::json::parse(v);
 
-
-            jsmn_parser parser;
-
-            jsmn_init(&parser);
-            jsmntok_t tokens[256];
-
-            jsmn_parse(&parser, gltfNode.extras.data, strlen(gltfNode.extras.data), tokens, 256);
-
-
-            // Cast to match cgltf functionality
-            const uint8_t *json_chunk = reinterpret_cast<const uint8_t *>(gltfNode.extras.data);
-
-            // Current token index
-            int i = 0;
-
-            // i = 0, token should be an object
-            CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);
-
-            int size = tokens[i].size;
-            ++i;
-
-            for (int j = 0; j < size; ++j) {
-                // i = 1 now, token should be a string
-                CGLTF_CHECK_KEY(tokens[i]);
-
-                // check the entity type
-                if (cgltf_json_strcmp(tokens + i, json_chunk, "entity_type") == 0) {
-                    // Parse token i + 1, e.g., token 2 (the value of the entity_type key)
-                    // Update i to i + 1, so we can continue parsing
-                    i = cgltf_parse_json_string(&fixed_options, tokens, i + 1, json_chunk, &group3_extras.entity_type);
-                }
-
-                // check the physics type
-                else if (cgltf_json_strcmp(tokens + i, json_chunk, "physics_type") == 0) {
-                    // Parse token i + 1, e.g., token 2 (the value of the entity_type key)
-                    // Update i to i + 1, so we can continue parsing
-                    i = cgltf_parse_json_string(&fixed_options, tokens, i + 1, json_chunk, &group3_extras.physics_type);
-                }
-
-                // check the tags
-                else if (cgltf_json_strcmp(tokens + i, json_chunk, "tags") == 0) {
-                    // Parse token i + 1, e.g., token 2 (the value of the tags key)
-                    // Update i to i + 1, so we can continue parsing
-                    char* tags_cstr = nullptr;
-                    i = cgltf_parse_json_string(&fixed_options, tokens, i + 1, json_chunk, &tags_cstr);
-                    // cast to std::string
-                    if(tags_cstr != nullptr) {
-                        std::string tags = std::string(tags_cstr);
-                        // split on pipes
-                        std::istringstream tokenStream(tags);
-                        std::string token;
-                        while (std::getline(tokenStream, token, '|')) {
-                            group3_extras.tags.push_back(token);
-                            spdlog::info("tag : {}", token);
-                        }
-                        fixed_options.memory.free_func(fixed_options.memory.user_data, tags_cstr);
+            for (auto &[key, value] : json.items()) {
+                if (key == "entity_type") {
+                    extras.entityType = value;
+                } else if (key == "physics_type") {
+                    extras.physicsType = value;
+                } else if (key == "tags") {
+                    std::string tags = value;
+                    // Split on pipes
+                    std::istringstream tokenStream(tags);
+                    std::string token;
+                    while (std::getline(tokenStream, token, '|')) {
+                        extras.tags.push_back(token);
+                        spdlog::info("tag : {}", token);
                     }
-                }
-
-                // check for sensor
-                else if (cgltf_json_strcmp(tokens + i, json_chunk, "is_sensor") == 0) {
-                    // Parse token i + 1, e.g., token 2 (the value of the is_sensor key)
-                    // Update i to i + 1, so we can continue parsing
-                    ++i;
-                    bool is_sensor = cgltf_json_to_bool(tokens + i, json_chunk);
-                    ++i;
-                    group3_extras.is_sensor = is_sensor;
-                }
-
-                // check for solid
-                else if (cgltf_json_strcmp(tokens + i, json_chunk, "is_solid") == 0) {
-                    // Parse token i + 1, e.g., token 2 (the value of the is_solid key)
-                    // Update i to i + 1, so we can continue parsing
-                    ++i;
-                    bool is_solid = cgltf_json_to_bool(tokens + i, json_chunk);
-                    ++i;
-                    group3_extras.is_solid = is_solid;
-                }
-
-                // check for invisible
-                else if  (cgltf_json_strcmp(tokens + i, json_chunk, "is_invisible") == 0)
-                {
-                    // Parse token i + 1, e.g., token 2 (the value of the is_invisible key)
-                    // Update i to i + 1, so we can continue parsing
-                    ++i;
-                    bool is_invisible = cgltf_json_to_bool(tokens + i, json_chunk);
-                    ++i;
-                    group3_extras.is_invisible = is_invisible;
-                }
-
-                else {
-                    std::cout << tokens + i << std::endl;
-
+                } else if (key == "is_sensor") {
+                    extras.is_sensor = value;
+                } else if (key == "is_solid") {
+                    extras.is_solid = value;
+                } else if (key == "is_invisible") {
+                    extras.is_invisible = value;
+                } else if (key == "float_properties") {
+                    // Float properties are currently stored as an array of json
+                    // objects. One json object per property/key-value pair
+                    assert(value.is_array());
+                    for (auto &object : value) {
+                        // Float properties are arbitrary values, no error checking keys
+                        for (auto &[propertyKey, propertyValue] : object.items()) {
+                            extras.float_properties[propertyKey] = propertyValue;
+                        }
+                    }
+                } else {
                     SPDLOG_ERROR("Unexpected token while parsing extras.");
                     exit(EXIT_FAILURE);
                 }
-
             }
-
-            if(group3_extras.entity_type != nullptr) {
-                entityTypeName = group3_extras.entity_type;
-                fixed_options.memory.free_func(fixed_options.memory.user_data, group3_extras.entity_type);
-
-            }
-
-            if(group3_extras.physics_type != nullptr) {
-                physicsTypeName = group3_extras.physics_type;
-                fixed_options.memory.free_func(fixed_options.memory.user_data, group3_extras.physics_type);
-
-            }
-
-
         }
 
-        // select the entity type based on the
-        Entity* entityPtr = CreateNewEntity(entityTypeName);
+        // select the entity type based on the extra
+        Entity* entityPtr = CreateNewEntity(extras.entityType);
         aEntities.emplace_back(entityPtr);
         Entity &entity = *entityPtr;
 
-        if(physicsTypeName == "static")
+        if(extras.physicsType == "static")
         {
             entity.SetPhysicsType(PhysicsType::STATIC);
         }
-        else if(physicsTypeName == "kinematic")
+        else if(extras.physicsType == "kinematic")
         {
             entity.SetPhysicsType(PhysicsType::KINEMATIC);
         }
-        else if(physicsTypeName == "dynamic")
+        else if(extras.physicsType == "dynamic")
         {
             entity.SetPhysicsType(PhysicsType::DYNAMIC);
         }
@@ -540,19 +490,21 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             entity.SetName(gltfNode.name);
         }
         // add the tags
-        for (const auto &tag : group3_extras.tags) {
+        for (const auto &tag : extras.tags) {
             entity.AddTag(tag);
         }
+        // set the float properties
+        entity.SetFloatProperties(extras.float_properties);
         // set the sensor
-        if (group3_extras.is_sensor) {
+        if (extras.is_sensor) {
             entity.SetAsSensor();
         }
         // set the solid
-        if (!group3_extras.is_solid) {
+        if (!extras.is_solid) {
             entity.SetAsNotSolid();
         }
         // set the invisible
-        if (group3_extras.is_invisible) {
+        if (extras.is_invisible) {
             entity.SetAsInvisible();
         }
         // get the transform

@@ -30,28 +30,32 @@ void MaterialManager::DebugOutputMaterials() {
         << '\n';
 }
 
-void MaterialManager::UploadLastMaterial() {
-    auto &material = mMaterials.back();
+void MaterialManager::UploadMaterial(Material &aMaterial) {
     // create the material buffer
     CreateAndUploadBuffer(
-        mContext, &material.pbrMetallicRoughness.pbrMaterialNumbers,
-        sizeof(PBRMaterialNumbers),
+            mContext, &aMaterial.pbrMetallicRoughness.pbrMaterialNumbers,
+            sizeof(PBRMaterialNumbers),
         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-        material.materialBuffer);
+            aMaterial.materialBuffer);
 
     // now create the descriptor set
     std::vector<VkImageView> imageViews;
     imageViews.emplace_back(
-        material.pbrMetallicRoughness.baseColorTexture->image.imageView);
-    imageViews.emplace_back(material.pbrMetallicRoughness
+            aMaterial.pbrMetallicRoughness.baseColorTexture->image.imageView);
+    imageViews.emplace_back(aMaterial.pbrMetallicRoughness
                                 .metallicRoughnessTexture->image.imageView);
-    if(material.normalTexture != nullptr) {
-        imageViews.emplace_back(material.normalTexture->image.imageView);
+    if(aMaterial.normalTexture != nullptr) {
+        imageViews.emplace_back(aMaterial.normalTexture->image.imageView);
     } else {
         imageViews.emplace_back(VK_NULL_HANDLE);
     }
-    material.descriptorSet =
-        create_material_descriptor_set(imageViews, material.materialBuffer);
+    if(aMaterial.emissiveTexture != nullptr) {
+        imageViews.emplace_back(aMaterial.emissiveTexture->image.imageView);
+    } else {
+        imageViews.emplace_back(VK_NULL_HANDLE);
+    }
+    aMaterial.descriptorSet =
+        create_material_descriptor_set(imageViews, aMaterial.materialBuffer);
 }
 
 MaterialManager::MaterialManager(Context &aContext)
@@ -68,16 +72,16 @@ void MaterialManager::Initialise() {
 VkDescriptorSet MaterialManager::create_material_descriptor_set(
     std::vector<VkImageView> const &aImageViews,
     Buffer const &aMaterialBuffer) {
-    assert(aImageViews.size() == 3);
+    assert(aImageViews.size() == 4);
     // allocate the descriptor set for this material
     VkDescriptorSet set = VK_NULL_HANDLE;
     vkutil::AllocateDescriptorSet(mContext, mDescriptorPool, vkutil::materialDescriptorSetLayout, 1,
                                   set);
     // write the descriptor set
-    VkWriteDescriptorSet desc[4]{};
-    VkDescriptorImageInfo textureInfo[3]{};
+    VkWriteDescriptorSet desc[5]{};
+    VkDescriptorImageInfo textureInfo[4]{};
     // write the texture infos
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 4; i++) {
         textureInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         if (i < static_cast<int>(aImageViews.size()) &&
             aImageViews[i] != VK_NULL_HANDLE) {
@@ -88,7 +92,7 @@ VkDescriptorSet MaterialManager::create_material_descriptor_set(
         textureInfo[i].sampler = vkutil::repeatSamplerAniso;
     }
     // write the descriptor sets
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 4; i++) {
         desc[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         desc[i].dstSet = set;
         desc[i].dstBinding = i;
@@ -101,14 +105,14 @@ VkDescriptorSet MaterialManager::create_material_descriptor_set(
     VkDescriptorBufferInfo aMaterialBufferInfo{};
     aMaterialBufferInfo.buffer = aMaterialBuffer.buffer;
     aMaterialBufferInfo.offset = 0;
-    aMaterialBufferInfo.range = VK_WHOLE_SIZE;
+    aMaterialBufferInfo.range = sizeof(PBRMaterialNumbers);
 
-    desc[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    desc[3].dstSet = set;
-    desc[3].dstBinding = 3;
-    desc[3].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    desc[3].descriptorCount = 1;
-    desc[3].pBufferInfo = &aMaterialBufferInfo;
+    desc[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    desc[4].dstSet = set;
+    desc[4].dstBinding = 4;
+    desc[4].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    desc[4].descriptorCount = 1;
+    desc[4].pBufferInfo = &aMaterialBufferInfo;
     // update the descriptor sets
     constexpr auto numSets = sizeof(desc) / sizeof(desc[0]);
     vkUpdateDescriptorSets(mContext.device, numSets, desc, 0, nullptr);
@@ -118,7 +122,7 @@ VkDescriptorSet MaterialManager::create_material_descriptor_set(
 
 VkDescriptorSetLayout MaterialManager::create_material_descriptor_layout() const {
     // base colour, roughness, metalness, and material numbers
-    VkDescriptorSetLayoutBinding bindings[4]{};
+    VkDescriptorSetLayoutBinding bindings[5]{};
     // base colour
     bindings[0].binding = 0; // this must match the binding in the shader
     bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -134,11 +138,16 @@ VkDescriptorSetLayout MaterialManager::create_material_descriptor_layout() const
     bindings[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     bindings[2].descriptorCount = 1;
     bindings[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    // material numbers
+    // emissive texture
     bindings[3].binding = 3; // this must match the binding in the shader
-    bindings[3].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    bindings[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     bindings[3].descriptorCount = 1;
     bindings[3].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    // material numbers
+    bindings[4].binding = 4; // this must match the binding in the shader
+    bindings[4].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    bindings[4].descriptorCount = 1;
+    bindings[4].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
     VkDescriptorSetLayoutCreateInfo layoutInfo{};
     layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
