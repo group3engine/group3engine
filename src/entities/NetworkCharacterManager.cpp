@@ -21,13 +21,13 @@ void NetworkCharacterManager::Update(double deltaTime)
     {
         std::string playerID = "";
         State state{};
+        std::string messageString{};
         try {
 
             // split the message data into the json and the player id
-            std::string messageString(message.data());
-            playerID = std::string(message.data() + messageString.size() + 1);
+            messageString = std::string(message.data());
+            playerID = std::string(message.data() + messageString.size() + 2);
             nlohmann::json jsonData = nlohmann::json::parse(messageString);
-
             // construct the state
             state.position = {
                     jsonData["transform"]["position"][0],
@@ -52,6 +52,7 @@ void NetworkCharacterManager::Update(double deltaTime)
         catch(const nlohmann::json::parse_error &e)
         {
             SPDLOG_ERROR("Parse error: {}", e.what());
+            SPDLOG_ERROR("Message: {}", messageString);
             continue;
         }
         catch(const std::exception &e)
