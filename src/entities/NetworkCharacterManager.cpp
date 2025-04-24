@@ -14,52 +14,66 @@ void NetworkCharacterManager::Update(double deltaTime)
     // get the messages
     auto messages = mNetworking.GetMessages();
     // create a map of states
-    std::unordered_map<uint32_t, State> states;
-    std::vector<uint32_t> playerIDs;
+    std::unordered_map<std::string, State> states;
+    std::vector<std::string> playerIDs;
     // for each message
     for(auto &message : messages)
     {
-        // split the message data into the json and the player id
-        std::string messageString(message.data());
-        std::string playerID(message.data() + messageString.size() + 1);
-        nlohmann::json jsonData = nlohmann::json::parse(messageString);
-
-        // construct the state
+        std::string playerID = "";
         State state{};
-        state.position = {
-            jsonData["transform"]["position"][0],
-            jsonData["transform"]["position"][1],
-            jsonData["transform"]["position"][2]
-        };
-        state.rotation = {
-            jsonData["transform"]["rotation"][0],
-            jsonData["transform"]["rotation"][1],
-            jsonData["transform"]["rotation"][2],
-            jsonData["transform"]["rotation"][3]
-        };
-        state.velocity = {
-            jsonData["velocity"][0],
-            jsonData["velocity"][1],
-            jsonData["velocity"][2]
-        };
-        state.isCrouching = jsonData["isCrouching"];
-        state.isEmoting = jsonData["isEmoting"];
-        state.isInClimb = jsonData["isInClimb"];
-        uint32_t playerIDint;
+        try {
+
+            // split the message data into the json and the player id
+            std::string messageString(message.data());
+            playerID = std::string(message.data() + messageString.size() + 1);
+            nlohmann::json jsonData = nlohmann::json::parse(messageString);
+
+            // construct the state
+            state.position = {
+                    jsonData["transform"]["position"][0],
+                    jsonData["transform"]["position"][1],
+                    jsonData["transform"]["position"][2]
+            };
+            state.rotation = {
+                    jsonData["transform"]["rotation"][0],
+                    jsonData["transform"]["rotation"][1],
+                    jsonData["transform"]["rotation"][2],
+                    jsonData["transform"]["rotation"][3]
+            };
+            state.velocity = {
+                    jsonData["velocity"][0],
+                    jsonData["velocity"][1],
+                    jsonData["velocity"][2]
+            };
+            state.isCrouching = jsonData["isCrouching"];
+            state.isEmoting = jsonData["isEmoting"];
+            state.isInClimb = jsonData["isInClimb"];
+        }
+        catch(const nlohmann::json::parse_error &e)
+        {
+            SPDLOG_ERROR("Parse error: {}", e.what());
+            continue;
+        }
+        catch(const std::exception &e)
+        {
+            SPDLOG_ERROR("Exception: {}", e.what());
+            continue;
+        }
+
         // add the state to the map
-        states[playerIDint] = state;
+        states[playerID] = state;
         // see if the player id is in the map
-        if(mPlayerIdToChildIndex.find(playerIDint) == mPlayerIdToChildIndex.end())
+        if(mPlayerIdToChildIndex.find(playerID) == mPlayerIdToChildIndex.end())
         {
             if(numConnections >= GetChildren().size()-1)
             {
                 continue;
             }
             // if not, add it to the map
-            mPlayerIdToChildIndex[playerIDint] = ++numConnections;
+            mPlayerIdToChildIndex[playerID] = ++numConnections;
         }
         // add the player id to the list
-        playerIDs.push_back(playerIDint);
+        playerIDs.push_back(playerID);
     }
     // apply the states to the children
     for(auto &playerID : playerIDs)

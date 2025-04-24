@@ -38,7 +38,7 @@ public:
 private:
     Networking mNetworking;
     // map of player id to child index
-    std::unordered_map<uint32_t, size_t> mPlayerIdToChildIndex;
+    std::unordered_map<std::string, size_t> mPlayerIdToChildIndex;
     size_t numConnections = 0;
 
     std::thread chatGetThread;
