@@ -18,6 +18,8 @@
 #include "InputMapping.hpp"
 #include "Input.hpp"
 
+#include "Signals.hpp"
+
 namespace {
     std::filesystem::path BuildSaveFilename() {
         std::filesystem::path saveFilename = "save_";
@@ -584,6 +586,12 @@ void CharacterEntity::Awake() {
     {
         Reset();
     }
+
+    GetScene()->mSignalSystem.AddReceiver<CharacterEntity, WinSignal>(this, &CharacterEntity::OnWin);
+}
+
+void CharacterEntity::OnWin(WinSignal *signal) {
+    SPDLOG_INFO("YOU WIN! {}", GetName());
 }
 
 void CharacterEntity::MoveToSpawn()

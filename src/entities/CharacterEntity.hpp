@@ -13,6 +13,8 @@
 #include "ImGuiRenderer.hpp"
 #include "InputMapping.hpp"
 
+class WinSignal;
+
 enum class InternalEvent {
     eDeath,
     eCount
@@ -62,6 +64,8 @@ class CharacterEntity : public Entity {
     void OnCollisionStay(Entity *aOther) override;
 
     void OnCollisionEnd(Entity *aOther) override;
+
+    void OnWin(WinSignal *signal);
 
     // set the checkpoint
     void SetCheckpoint(glm::vec3 checkpoint) { mLastCheckpoint = checkpoint; Save();}

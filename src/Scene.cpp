@@ -125,6 +125,8 @@ void Scene::Unload()
     mSceneFilename = "";
 
     mGuiActivePlayerCountOverride = {};
+
+    mSignalSystem.Clear();
 }
 
 void Scene::LoadGLTF(const std::filesystem::path &aFilepath, size_t playerCount) {
