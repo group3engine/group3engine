@@ -72,9 +72,9 @@ layout (set = 1, binding = 3) uniform UNumbers
 
 layout (set = 0, binding = 5) uniform samplerCube prefilteredSkybox;
 layout (set = 0, binding = 6) uniform sampler2D BRDFLUT;
+layout (set = 0, binding = 7) uniform samplerCube irradianceMap;
 
-
-layout (set = 0, binding = 7) uniform RendererDebug
+layout (set = 0, binding = 8) uniform RendererDebug
 {
     int debugMode;
 }debugRenderer;
@@ -121,14 +121,18 @@ vec3 FresnelSchlickWithRoughness(float cosTheta, vec3 F0, float roughness)
     return fresnel;
 }
 
-vec3 Fresnel(vec3 halfVector, vec3 viewDir, vec3 baseColor, float metallic, float roughness)
+vec3 Fresnel(vec3 halfVector, vec3 viewDir, vec3 baseColor, float metallic)
 {
     vec3 F0 = vec3(0.04);
     F0 = (1 - metallic) * F0 + (metallic * baseColor);
     float HdotV = max(dot(halfVector, viewDir), 0.0);
     vec3 schlick_approx = F0 + (1 - F0) * pow(clamp(1 - HdotV, 0.0, 1.0), 5);
     return schlick_approx;
-    //return FresnelSchlickWithRoughness(HdotV, F0, roughness);
+}
+
+vec3 FresnelSchlick(float HdotV, vec3 F0)
+{
+    return F0 + (1.0 - F0) * pow(clamp(1.0 - HdotV, 0.0, 1.0), 5.0);
 }
 
 struct SHCoefficients {
@@ -147,6 +151,40 @@ vec3 EvaluateSHForDiffuseIBL(vec3 normal) {
     result += sh.shCoefficients[7] * SH21(normal);
     result += sh.shCoefficients[8] * SH22(normal);
     return result;
+}
+
+SHCoefficients grace = SHCoefficients(
+    sh.shCoefficients[0],
+    sh.shCoefficients[1],
+    sh.shCoefficients[2],
+    sh.shCoefficients[3],
+    sh.shCoefficients[4],
+    sh.shCoefficients[5],
+    sh.shCoefficients[6],
+    sh.shCoefficients[7],
+    sh.shCoefficients[8]
+);
+
+
+vec3 calcIrradiance(vec3 nor) {
+    const SHCoefficients c = grace;
+    const float c1 = 0.429043;
+    const float c2 = 0.511664;
+    const float c3 = 0.743125;
+    const float c4 = 0.886227;
+    const float c5 = 0.247708;
+    return (
+        c1 * c.l22 * (nor.x * nor.x - nor.y * nor.y) +
+        c3 * c.l20 * nor.z * nor.z +
+        c4 * c.l00 -
+        c5 * c.l20 +
+        2.0 * c1 * c.l2m2 * nor.x * nor.y +
+        2.0 * c1 * c.l21  * nor.x * nor.z +
+        2.0 * c1 * c.l2m1 * nor.y * nor.z +
+        2.0 * c2 * c.l11  * nor.x +
+        2.0 * c2 * c.l1m1 * nor.y +
+        2.0 * c2 * c.l10  * nor.z
+    );
 }
 
 // https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing
@@ -227,15 +265,18 @@ float GGXGeometrySmith(vec3 normal, vec3 lightDir, vec3 viewDir, float roughness
 // Compute BRDF
 vec3 CookTorranceBRDF(vec3 normal, vec3 halfVector, vec3 viewDir, vec3 lightDir, float metallic, float roughness, vec3 baseColor, vec3 LightColour, vec3 WorldPos)
 {
-    vec3 F = Fresnel(halfVector, viewDir, baseColor, metallic, roughness);
+    vec3 F0 = vec3(0.04);
+    F0 = mix(F0, baseColor, metallic);
+
+    vec3 F = FresnelSchlick(max(dot(halfVector, viewDir), 0.0), F0);
     float D = GGXNormalDistributionFunction(normal, halfVector, roughness);
 	float G = GGXGeometrySmith(normal, lightDir, viewDir, roughness);
 
     vec3 kd = (1.0 - F) * (1.0 - metallic);
     vec3 L_Diffuse = kd * (baseColor / PI);
 
-    float NdotV = max(dot(normal, viewDir), 0.0);
-	float NdotL = max(dot(normal, lightDir), 0.0);
+    float NdotV = max(dot(normal, viewDir), 0.001);
+	float NdotL = max(dot(normal, lightDir), 0.001);
 
 	vec3 numerator = D * G * F;
 	float denominator = (4 * NdotV * NdotL) + 0.001;
@@ -243,17 +284,17 @@ vec3 CookTorranceBRDF(vec3 normal, vec3 halfVector, vec3 viewDir, vec3 lightDir,
 
     vec3 directLight = (kd * baseColor / PI + specular) * LightColour.xyz * NdotL;
 
-    vec3 F0 = vec3(0.04);
-    F0 = mix(F0, baseColor, metallic);
     vec3 FR = FresnelSchlickWithRoughness(NdotV, F0, roughness);
     vec3 R = reflect(-viewDir, normal);
-    const float max_specular_mip_levels = 11.0;
+    const float max_specular_mip_levels = 7.0;
 
     vec3 prefilteredColour = textureLod(prefilteredSkybox, R, roughness * max_specular_mip_levels).rgb;
     vec2 envBRDF = texture(BRDFLUT, vec2(NdotV, roughness)).rg;
     vec3 specularIBL = prefilteredColour * (FR * envBRDF.x + envBRDF.y);
 
-    vec3 diffuseIBL = kd * (EvaluateSHForDiffuseIBL(normal) * baseColor);
+    vec3 iblKD = (1.0 - FR) * (1.0 - metallic);
+    vec3 irradiance = texture(irradianceMap, normal).rgb; // EvaluateSHForDiffuseIBL(normal);
+    vec3 diffuseIBL = irradiance * baseColor * iblKD;
     vec3 indirectLight = diffuseIBL + specularIBL;
 
     float shadowTerm = 1.0 - PCF(WorldPos.xyz);
@@ -288,17 +329,13 @@ void main()
 
     vec3 outLight = vec3(0.0);
 
-    {
-        int i = 0;
+    vec3 lightDir = normalize(lightData.lights[0].LightPosition.xyz);
+    vec3 viewDir = normalize(ubo.cameraPosition.xyz - WorldPos.xyz);
+    vec3 halfVector = normalize(viewDir + lightDir);
 
-        vec3 lightDir = normalize(lightData.lights[i].LightPosition.xyz);
-        vec3 viewDir = normalize(ubo.cameraPosition.xyz - WorldPos.xyz);
-        vec3 halfVector = normalize(viewDir + lightDir);
-
-        vec3 LightColour = lightData.lights[i].LightColour.rgb;
-        vec3 brdf = CookTorranceBRDF(pixelNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour, WorldPos.xyz);
-        outLight += brdf;
-    }
+    vec3 LightColour = lightData.lights[0].LightColour.rgb;
+    vec3 brdf = CookTorranceBRDF(pixelNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour, WorldPos.xyz);
+    outLight += brdf;
 
 //    for (int i = 1; i < NUM_LIGHTS; i++)
 //    {
@@ -325,7 +362,7 @@ void main()
 
     switch(debugRenderer.debugMode) {
         case 1:
-            fragColor = vec4(pixelNormal.xyz, 1.0);
+            fragColor = vec4(pixelNormal.xyz * 0.5 + 0.5, 1.0);
             break;
         case 2:
             fragColor = vec4(WorldPos.xyz, 1.0);
@@ -378,6 +415,6 @@ void main()
 //	}
 
     float brightness = dot(fragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
-    float threshold = step(1.0, brightness); // check if brightness is less than 1.0
+    float threshold = step(1.0, brightness); // check if brightness is greater than 1.0
     brightColours = vec4(fragColor.rgb * threshold, 1.0);
 }

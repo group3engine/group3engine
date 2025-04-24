@@ -31,7 +31,8 @@ ForwardPass::ForwardPass(Context &context, const Image &shadowMap, Image &depthP
         context.swapchainFormat,
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         VK_IMAGE_ASPECT_COLOR_BIT,
-        1);
+        1
+    );
 
     //m_DepthTarget = CreateImageTexture2D(
     //    "ForwardPassDepth",
@@ -70,11 +71,14 @@ ForwardPass::ForwardPass(Context &context, const Image &shadowMap, Image &depthP
     m_Skybox = std::make_unique<Skybox>(context, scene, m_renderPass);
     m_SHPass = std::make_unique<SH>(context, scene, m_Skybox->GetSkyBoxImage());
     PrefilteredSkybox = std::make_unique<PrefilterSkybox>(context, m_Skybox->GetSkyBoxImage());
+    m_IrradianceMap = std::make_unique<IrradianceMap>(context, m_Skybox->GetSkyBoxImage());
 
     // Transition the resources to be SHADER_READ for the fragment shader
     vkutil::ExecuteSingleTimeCommands(context, [&](VkCommandBuffer cmd) {
 
         m_SHPass->Execute(cmd);
+        m_IrradianceMap->Execute(cmd);
+        m_IrradianceMap->Transition(cmd);
         PrefilteredSkybox->Execute(cmd);
         PrefilteredSkybox->TransitionResources(cmd);
     });
@@ -91,6 +95,7 @@ ForwardPass::~ForwardPass() {
     m_Skybox.reset();
     m_SHPass.reset();
     PrefilteredSkybox.reset();
+    m_IrradianceMap.reset();
     m_RenderTarget.Destroy(context.device);
 
     //m_DepthTarget.Destroy(context.device);
@@ -460,7 +465,8 @@ void ForwardPass::BuildDescriptorSetLayouts() {
         vkutil::CreateDescriptorBinding(4, 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT),
         vkutil::CreateDescriptorBinding(5, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
         vkutil::CreateDescriptorBinding(6, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
-        vkutil::CreateDescriptorBinding(7, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT), // Debug UBO
+        vkutil::CreateDescriptorBinding(7, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT), // Irradiance map
+        vkutil::CreateDescriptorBinding(8, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT) // Debug UBO
     };
 
     meshDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
@@ -547,11 +553,22 @@ void ForwardPass::BuildDescriptors() {
         }
 
         for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+
+            VkDescriptorImageInfo imageInfo = {
+                .sampler = vkutil::clampToEdgeSamplerAniso,
+                .imageView = m_IrradianceMap->GetIrradianceMap().imageView,
+                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+            };
+
+            vkutil::UpdateDescriptorSet(context, 7, imageInfo, descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+        }
+
+        for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
             VkDescriptorBufferInfo bufferInfo{};
             bufferInfo.buffer = m_DebugUniform[i].buffer;
             bufferInfo.offset = 0;
             bufferInfo.range = sizeof(vkutil::RendererDebug);
-            vkutil::UpdateDescriptorSet(context, 7, bufferInfo, descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+            vkutil::UpdateDescriptorSet(context, 8, bufferInfo, descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
         }
     }
 }

@@ -173,7 +173,7 @@ void main()
     hdrColor = Saturation(hdrColor, ppSettings.saturation);
     hdrColor = ContrastBrightness(hdrColor, ppSettings.contrast, ppSettings.brightness);
 
-    // hdrColor = hdrColor + bloom.rgb; // NOTE: Bloom is removed here
+    hdrColor = hdrColor + bloom.rgb; // NOTE: Bloom is removed here
 	//vec3 ldrColor = hdrColor / (hdrColor + vec3(1.0)); // Reinhard tone map
 
     vec3 ldrColor = ppSettings.toneMap == 0 ? hdrColor : ppSettings.toneMap == 1 ? Reinhard(hdrColor) : ppSettings.toneMap == 2 ? Uncharted2ToneMapping(hdrColor) : ACESFilm(hdrColor);

@@ -9,7 +9,7 @@
 #include "ShadowMap.hpp"
 #include "SH2.hpp"
 #include "PrefilterSkybox.hpp"
-
+#include "IrradianceMap.hpp"
 
 // This is disgusting whoever did it lol
 #define SHADER_DIR assetsPath / "shaders/"
@@ -84,6 +84,7 @@ class ForwardPass {
     std::unique_ptr<Skybox> m_Skybox;
     std::unique_ptr<PrefilterSkybox> PrefilteredSkybox;
     std::unique_ptr<SH> m_SHPass;
+    std::unique_ptr<IrradianceMap> m_IrradianceMap;
 
     VkSampleCountFlagBits MSAA_SAMPLES = VK_SAMPLE_COUNT_4_BIT;
 };
