@@ -125,6 +125,14 @@ void CharacterEntity::ProcessInput(){
             if ((mInputMapping.GetActionPressed("CROUCH") > 0) && !mInClimb) {
                 mIsCrouching = !mIsCrouching;
             }
+
+            if (mInputMapping.GetActionPressed("INTERACT") > 0) {
+                // NOTE: Having more than one interactable in an area will allow the user to
+                // interact with them all at once
+                for (auto &interactable : mInteractables) {
+                    interactable->OnInteract(this);
+                }
+            }
         }
     }
     if(mIsCrouching)
@@ -372,6 +380,10 @@ void CharacterEntity::UpdateUi(double deltaTime) {
     mGuiFinishPopupData.visibleTimer = mFinishVisibleTimer;
 
     ImGuiRenderer::NewFinishPopup(mGuiFinishPopupData, activePlayerCount, mPlayerId);
+
+    if (!mInteractables.empty()) {
+        ImGuiRenderer::Text("Press E to Interact", ImVec2(0.5f, 0.5f), Fonts::TextFont, activePlayerCount, mPlayerId);
+    }
 }
 
 void CharacterEntity::CreateJoltCharacter()
@@ -435,6 +447,10 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
             mClimbDirection.y = 0;
             mClimbDirection = glm::normalize(mClimbDirection);
         }
+    }
+
+    if (aOther->CompareTag("proximity_prompt")) {
+        mInteractables.push_back(aOther);
     }
 
     SPDLOG_INFO("I am {} and I collided with {}", GetName(), aOther->GetName());
@@ -599,6 +615,10 @@ void CharacterEntity::OnCollisionEnd(Entity *aOther)
     {
         mLeftClimb = true;
     }
+
+    if (aOther->CompareTag("proximity_prompt")) {
+        std::erase_if(mInteractables, [aOther](auto *entity) { return entity == aOther; });
+    }
 }
 
 void CharacterEntity::OnCollisionStay(Entity *aOther)
@@ -643,6 +663,8 @@ void CharacterEntity::RegisterControls()
     mInputMapping.AddBinding("CROUCH", GAMEPAD_BUTTON::eRIGHT_THUMB, 0);
     mInputMapping.AddBinding("EMOTE", KEY::eF);
     mInputMapping.AddBinding("EMOTE", GAMEPAD_BUTTON::eDPAD_DOWN, 0);
+    mInputMapping.AddBinding("INTERACT", KEY::eE);
+    // TODO: Interact gamepad binding?
 
 
 }

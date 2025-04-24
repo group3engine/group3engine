@@ -7,7 +7,7 @@ class SwingAxe : public Entity {
   public:
     SwingAxe();
 
-    void InitPhysics() override;
+    void Awake() override;
 
     void Update(double deltaTime) override;
 
