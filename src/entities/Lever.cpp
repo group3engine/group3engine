@@ -97,7 +97,6 @@ void Lever::OnInteract(Entity *other) {
     auto trapdoorsActivated =
         std::any_of(mTrapdoors.begin(), mTrapdoors.end(), [](auto *e) { return e->IsActivated(); });
 
-    // TODO: Add E to interact UI
     if (!mIsPulled && !trapdoorsActivated) {
         mIsPulled = true;
 
