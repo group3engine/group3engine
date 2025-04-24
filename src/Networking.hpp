@@ -45,8 +45,9 @@ public:
 
         Close();
     }
-    void SendMessage(const std::string &message) {
-        sendto(my_socket, message.c_str(), message.size(), 0, (struct sockaddr *)&client_addr, sizeof(client_addr));
+    void SendMessage(std::array<char, BUFFER_SIZE> message, size_t size)
+    {
+        sendto(my_socket, message.data(), size, 0, (struct sockaddr *)&client_addr, sizeof(client_addr));
     }
     std::vector<std::array<char, BUFFER_SIZE>> GetMessages() {
         // copy the messages to a new vector and return it

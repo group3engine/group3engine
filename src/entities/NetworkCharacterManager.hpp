@@ -19,8 +19,8 @@ public:
     ~NetworkCharacterManager() override;
 
     void Update(double deltaTime) override;
-    void SendMessage(const std::string &message) {
-        mNetworking.SendMessage(message);
+    void SendMessage(const std::array<char, BUFFER_SIZE> &message, size_t size) {
+        mNetworking.SendMessage(message, size);
     }
 
     void SendChatMessage(std::string playerName, std::string message);
