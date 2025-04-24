@@ -17,6 +17,7 @@
 #include "Scene.hpp"
 #include "InputMapping.hpp"
 #include "Input.hpp"
+#include "Saving.hpp"
 
 namespace {
     std::filesystem::path BuildSaveFilename() {
@@ -457,102 +458,21 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
 
 }
 void CharacterEntity::Save() {
-    // Get the user's home directory
-    std::filesystem::path homePath;
-
-#ifdef _WIN32
-    homePath = std::getenv("USERPROFILE");
-#else
-    homePath = std::getenv("HOME");
-#endif
-
-    // Create path to documents folder/group3engine
-    std::filesystem::path savePath = homePath / "Documents" / "group3enginesaves";
-
-    // Create directories if they don't exist
-    std::error_code ec;
-    if (!std::filesystem::exists(savePath)) {
-        std::filesystem::create_directories(savePath, ec);
-        if (ec) {
-            SPDLOG_ERROR("Failed to create save directory: {}", ec.message());
-            return;
-        }
-    }
-
-    // Create the full file path
-    std::filesystem::path saveFile = savePath / BuildSaveFilename();
-
-    // Open file for writing
-    std::ofstream file(saveFile);
-    if (!file.is_open()) {
-        SPDLOG_ERROR("Failed to open save file for writing: {}", saveFile.string());
-        return;
-    }
-
-    // Write character data
-    file << "LastCheckpoint=" << mLastCheckpoint.x << "," << mLastCheckpoint.y << "," << mLastCheckpoint.z << std::endl;
-
-    SPDLOG_INFO("Game saved to {}", saveFile.string());
+    Saving::get().Save("LastCheckpoint", mLastCheckpoint);
     m_has_save = true;
 }
 
 void CharacterEntity::Load() {
-    // Get the user's home directory
-    std::filesystem::path homePath;
-
-#ifdef _WIN32
-    homePath = std::getenv("USERPROFILE");
-#else
-    homePath = std::getenv("HOME");
-#endif
-
-    // Path to save file
-    std::filesystem::path savePath = homePath / "Documents" / "group3enginesaves";
-    std::filesystem::path saveFile = savePath / BuildSaveFilename();
-
-    // Check if file exists
-    if (!std::filesystem::exists(saveFile)) {
-        SPDLOG_INFO("No save file found at {}, using default checkpoint", saveFile.string());
+    if(Saving::get().HasKey("LastCheckpoint"))
+    {
+        mLastCheckpoint = Saving::get().Get<glm::vec3>("LastCheckpoint");
+        m_has_save = true;
         return;
     }
-
-    // Open file for reading
-    std::ifstream file(saveFile);
-    if (!file.is_open()) {
-        SPDLOG_ERROR("Failed to open save file for reading: {}", saveFile.string());
-        return;
+    else
+    {
+        m_has_save = false;
     }
-
-    // Read and parse the save data
-    std::string line;
-    while (std::getline(file, line)) {
-        if (line.find("LastCheckpoint=") == 0) {
-            std::string values = line.substr(std::string("LastCheckpoint=").length());
-
-            // Parse the comma-separated values
-            std::stringstream ss(values);
-            std::string xStr, yStr, zStr;
-
-            if (std::getline(ss, xStr, ',') &&
-                std::getline(ss, yStr, ',') &&
-                std::getline(ss, zStr, ',')) {
-
-                try {
-                    float x = std::stof(xStr);
-                    float y = std::stof(yStr);
-                    float z = std::stof(zStr);
-
-                    mLastCheckpoint = glm::vec3(x, y, z);
-                    SPDLOG_INFO("Loaded checkpoint: ({}, {}, {})", x, y, z);
-                    m_has_save = true;
-                } catch (const std::exception& e) {
-                    SPDLOG_ERROR("Failed to parse checkpoint coordinates: {}", e.what());
-                }
-            }
-            break;
-        }
-    }
-
 }
 
 void CharacterEntity::Awake() {
