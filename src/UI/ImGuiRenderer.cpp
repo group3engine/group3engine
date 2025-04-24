@@ -46,6 +46,8 @@ namespace {
         VkViewport vkViewport = CalcViewport(extent, activePlayerCount, playerId);
         viewport.WorkPos = {vkViewport.x, vkViewport.y};
         viewport.WorkSize = {vkViewport.width, vkViewport.height};
+        viewport.Pos = {vkViewport.x, vkViewport.y};
+        viewport.Size = {vkViewport.width, vkViewport.height};
 
         return viewport;
     }
@@ -709,18 +711,20 @@ void ImGuiRenderer::NewCharacterInfo(const CharacterEntity *character) {
 #endif
 }
 
-void ImGuiRenderer::Text(std::string const &text, ImVec2 position)
-{
+void ImGuiRenderer::Text(std::string const &text, ImVec2 position, ImFont *font,
+                         size_t activePlayerCount, size_t playerId) {
+    ImGuiViewport viewport = CalcPlayerViewport(Context::get().extent, activePlayerCount, playerId);
+
     // flip position 0-1 to 1-0
     position = ImVec2{1.f - position.x, 1.f - position.y};
     size_t sv = 0;
-    // convert the position and size from relative (0-1) coordinates, to pixel coordinates
-    // get the window size
-    // Get the main viewport to determine screen dimensions
-    const ImGuiViewport* viewport = ImGui::GetMainViewport();
 
+    // Make sure to push font before text size calculation
+    ImGui::PushFont(Fonts::TextFont);
+
+    // convert the position and size from relative (0-1) coordinates, to pixel coordinates
     // Calculate position at the bottom of the screen (ignoring the passed position parameter)
-    ImVec2 windowSize = ImVec2(viewport->Size.x, viewport->Size.y);
+    ImVec2 windowSize = ImVec2(viewport.Size.x, viewport.Size.y);
     position = ImVec2(position.x * windowSize.x, position.y * windowSize.y);
     ImVec2 textSize = ImGui::CalcTextSize(text.c_str(), nullptr, true);
     // offset the position by half the text size
@@ -750,14 +754,18 @@ void ImGuiRenderer::Text(std::string const &text, ImVec2 position)
                              ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
                              ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
 
-    ImGui::Begin("text rendering", nullptr, flags);
-    ImGui::Text(text.c_str());
+    static uint64_t textId = 0;
+    ImGui::Begin(fmt::format("text rendering##PlayerId{}TextId{}", playerId, textId).c_str(), nullptr, flags);
+    textId++;
+
+    ImGui::Text("%s", text.c_str());
 
     ImGui::PopStyleVar(sv);
 
+    ImGui::PopFont();
+
     ImGui::End();
 }
-
 
 void ImGuiRenderer::NewFrame() {
     ImGui_ImplVulkan_NewFrame();

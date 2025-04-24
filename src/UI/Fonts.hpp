@@ -6,6 +6,7 @@
 #define GROUP3ENGINE_FONTS_HPP
 
 // C++
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui.h>
 #include <iostream>
 

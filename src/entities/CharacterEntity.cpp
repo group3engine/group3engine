@@ -380,6 +380,10 @@ void CharacterEntity::UpdateUi(double deltaTime) {
     mGuiFinishPopupData.visibleTimer = mFinishVisibleTimer;
 
     ImGuiRenderer::NewFinishPopup(mGuiFinishPopupData, activePlayerCount, mPlayerId);
+
+    if (!mInteractables.empty()) {
+        ImGuiRenderer::Text("Press E to Interact", ImVec2(0.5f, 0.5f), Fonts::TextFont, activePlayerCount, mPlayerId);
+    }
 }
 
 void CharacterEntity::CreateJoltCharacter()
