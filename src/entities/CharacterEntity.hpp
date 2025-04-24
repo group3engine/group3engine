@@ -29,6 +29,7 @@ enum class DeathState{
 enum class InternalUiEvent {
     eDeathPopup,
     eFinishPopup,
+    eWinPopup,
     eCount
 };
 
@@ -123,6 +124,8 @@ class CharacterEntity : public Entity {
     DeathState mDeathState = DeathState::eLiving;
     double mDeathTimer = 0.0;
     const double mDeathTime = 1.0;
+
+    float mWinVisibleTimer = 0.0f;
 
     gui::DeathCounterData mGuiDeathCounterData{};
     gui::DeathPopupData mGuiDeathPopupData{};

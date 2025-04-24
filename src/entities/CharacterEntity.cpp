@@ -355,6 +355,9 @@ void CharacterEntity::UpdateUi(double deltaTime) {
             // Reset death popup timer
             mFinishVisibleTimer = 1.0f;
             break;
+        case InternalUiEvent::eWinPopup:
+            mWinVisibleTimer = 1.0f;
+            break;
         default:
             SPDLOG_ERROR("Unaccounted for switch case.");
             exit(EXIT_FAILURE);
@@ -382,6 +385,11 @@ void CharacterEntity::UpdateUi(double deltaTime) {
     mGuiFinishPopupData.visibleTimer = mFinishVisibleTimer;
 
     ImGuiRenderer::NewFinishPopup(mGuiFinishPopupData, activePlayerCount, mPlayerId);
+
+    mWinVisibleTimer = std::max(0.0f, mWinVisibleTimer - static_cast<float>(deltaTime));
+    if (mWinVisibleTimer) {
+        ImGuiRenderer::Text("You Win!", ImVec2(0.5f, 0.75f), Fonts::TextFont, activePlayerCount, mPlayerId);
+    }
 
     if (!mInteractables.empty()) {
         ImGuiRenderer::Text("Press E to Interact", ImVec2(0.5f, 0.5f), Fonts::TextFont, activePlayerCount, mPlayerId);
@@ -449,10 +457,6 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
             mClimbDirection.y = 0;
             mClimbDirection = glm::normalize(mClimbDirection);
         }
-    }
-
-    if (aOther->CompareTag("proximity_prompt")) {
-        mInteractables.push_back(aOther);
     }
 
     SPDLOG_INFO("I am {} and I collided with {}", GetName(), aOther->GetName());
@@ -587,11 +591,14 @@ void CharacterEntity::Awake() {
         Reset();
     }
 
+    // TODO: What you could do is maybe add and remove these receivers dynamically so the number of
+    // receivers doesn't grow too large. I.e., player gets to 90% of level, start receiving the
+    // on win signal. Then when the player resets to the start of the level remove the receiver
     GetScene()->mSignalSystem.AddReceiver<CharacterEntity, WinSignal>(this, &CharacterEntity::OnWin);
 }
 
 void CharacterEntity::OnWin(WinSignal *signal) {
-    SPDLOG_INFO("YOU WIN! {}", GetName());
+    mInternalUiEvents.push(InternalUiEvent::eWinPopup);
 }
 
 void CharacterEntity::MoveToSpawn()
@@ -652,6 +659,11 @@ void CharacterEntity::OnCollisionStay(Entity *aOther)
             mClimbDirection = glm::normalize(mClimbDirection);
         }
     }
+
+    if (aOther->CompareTag("proximity_prompt") &&
+        aOther->IsInteractable() == EInteractable::Interactable) {
+        mInteractables.push_back(aOther);
+    }
 }
 
 void CharacterEntity::RegisterControls()
@@ -684,4 +696,10 @@ void CharacterEntity::LateUpdate(double deltaTime)
     {
         mInClimb = false;
     }
+
+    // Clear the interactables after every update, their conditions need to be checked next frame
+    // NOTE: It is too difficult to work out how to add and remove interactables in OnCollisionStart
+    // and OnCollision given additional conditions, such as an interactable having been used and no
+    // longer being interactable
+    mInteractables.clear();
 }

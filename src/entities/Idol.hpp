@@ -9,6 +9,10 @@ class Idol : public Entity {
 
     void Awake() override;
 
+    EInteractable IsInteractable() const override {
+        return mIsCollected ? EInteractable::NotInteractable : EInteractable::Interactable;
+    }
+
     void OnInteract(Entity *other) override;
 
     // void Update(double deltaTime) override;

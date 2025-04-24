@@ -22,6 +22,12 @@ enum class PhysicsType {
     KINEMATIC,
     DYNAMIC
 };
+
+enum class EInteractable {
+    Interactable,
+    NotInteractable
+};
+
 #define MIN_ANIMATOR_UPDATE_DISTANCE 50.f
 #define MAX_ANIMATOR_UPDATE_DISTANCE 500.f
 #define LOWEST_ANIMATOR_UPDATE_RATE 1000.f
@@ -157,6 +163,8 @@ class Entity {
     [[nodiscard]] bool CompareType(std::string const& aCompareType) {return aCompareType == mType;}
 
   public:
+    virtual EInteractable IsInteractable() const { return EInteractable::NotInteractable; }
+
     // NOTE: There is no parameter passing with this function
     /// called when an entity wants to interact with another entity
     virtual void OnInteract(Entity *other) {}
