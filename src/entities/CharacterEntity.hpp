@@ -142,10 +142,9 @@ class CharacterEntity : public Entity {
     bool mLeftClimb = false;
     bool mEnterClimb = false;
 
-
-
-
     glm::vec3 mClimbDirection = glm::vec3(0.f, 0.f, 0.f);
+
+    std::vector<Entity *> mInteractables;
 };
 
 

@@ -33,6 +33,9 @@ void RigidBody::Init(PhysicsManager &physicsManager, bool activate) {
     }
 
     physicsManager.mBodyIds.push_back(mBodyId);
+
+    assert(!hasInitialised);
+    hasInitialised = true;
 }
 
 glm::vec4 RigidBody::GetPosition() const {
@@ -48,6 +51,10 @@ glm::vec4 RigidBody::GetPosition() const {
 void RigidBody::SetPosition(glm::vec3 glm_position) {
     mNewPosition = RVec3(glm_position.x, glm_position.y, glm_position.z);
     updatePosition = true;
+}
+
+JPH::RVec3 RigidBody::GetCenterOfMassPosition() const {
+    return PhysicsManager::get().mPhysicsSystem.GetBodyInterface().GetCenterOfMassPosition(mBodyId);
 }
 
 JPH::Quat RigidBody::GetRotationJolt() const {
