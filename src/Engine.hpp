@@ -69,6 +69,7 @@ class Engine {
     void Render();
 
     void RenderLoadingScreen();
+    void LoadRestOfStuff(const std::filesystem::path &scenePath, size_t playerCount);
 
 #ifdef JPH_DEBUG_RENDERER
     void DrawPhysics();

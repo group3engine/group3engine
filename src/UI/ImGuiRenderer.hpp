@@ -137,7 +137,7 @@ namespace ImGuiRenderer
 
     void NewActivePlayerCountOverride(Scene *scene, gui::Settings::ActivePlayerCountOverride &settings);
 
-    void NewCharacterInfo(const CharacterEntity *character);
+    void NewCharacterInfo(std::string const &characterName, float x, float y, float z);
 
     void Initialize(const Context &context);
     void Shutdown(const Context &context);
