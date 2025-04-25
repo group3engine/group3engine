@@ -17,6 +17,7 @@
 
 #include "Input.hpp"
 #include "glm/fwd.hpp"
+#include "SDL.hpp"
 
 Camera::Camera(const glm::vec3 position, glm::vec3 direction, glm::vec3 up)
     :
@@ -109,8 +110,8 @@ void Camera::UpdateCameraRotation(double deltaTime) {
             delta.y = -delta.y; // Prevent inverted y
         }
         // Get the right joystick input
-        delta.x += GetGamepadAxis(GAMEPAD_AXIS::eRIGHT_X, 0) * m_controllerSensitivity * deltaTime;
-        delta.y -= GetGamepadAxis(GAMEPAD_AXIS::eRIGHT_Y, 0) * m_controllerSensitivity * deltaTime;
+        delta.x += GetGamepadAxis(SDL_INPUT::GamepadAxis::GAMEPAD_AXIS_RIGHT_X, 0) * m_controllerSensitivity * deltaTime;
+        delta.y -= GetGamepadAxis(SDL_INPUT::GamepadAxis::GAMEPAD_AXIS_RIGHT_Y, 0) * m_controllerSensitivity * deltaTime;
 
         // Update the camera angles based on the mouse and controller movement
         UpdateCameraAngles(delta);

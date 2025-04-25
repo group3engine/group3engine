@@ -5,7 +5,10 @@
 
     #include "InputData.hpp"
 
+    #include "SDL.hpp"
+
     extern InputData gInputData;
+    extern SDL_INPUT::InputData gSDLInputData;
 
     void PollInputEvents();
 

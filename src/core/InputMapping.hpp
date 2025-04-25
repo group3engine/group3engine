@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "InputData.hpp"
+#include "SDL.hpp"
 
 enum class BindingType {
     Key,
@@ -18,11 +19,11 @@ enum class BindingType {
     MouseAxis,
 };
 struct GamepadButtonMapping {
-    GAMEPAD_BUTTON value;    // Represents button or axis value
+    SDL_INPUT::GamepadButton value;    // Represents button or axis value
     int index;    // Represents the gamepad index or ID
 };
 struct GamepadAxisMapping {
-    GAMEPAD_AXIS value;    // Represents button or axis value
+    SDL_INPUT::GamepadAxis value;    // Represents button or axis value
     int index;    // Represents the gamepad index or ID
 };
 
@@ -39,9 +40,9 @@ struct Binding {
     // Constructor for key binding
     Binding(KEY k) : type(BindingType::Key){mapping.key = k;}
     // Constructor for gamepad button binding
-    Binding(GAMEPAD_BUTTON b, int index) : type(BindingType::GamepadButton){mapping.gamepadButton = {b, index};}
+    Binding(SDL_INPUT::GamepadButton b, int index) : type(BindingType::GamepadButton){mapping.gamepadButton = {b, index};}
     // Constructor for gamepad axis binding
-    Binding(GAMEPAD_AXIS a, int index) : type(BindingType::GamepadAxis){mapping.gamepadAxis = {a, index};}
+    Binding(SDL_INPUT::GamepadAxis a, int index) : type(BindingType::GamepadAxis){mapping.gamepadAxis = {a, index};}
     // Constructor for mouse button binding
     Binding(MOUSE_BUTTON b) : type(BindingType::MouseButton){mapping.mouseButton = b;}
     // Constructor for mouse axis binding
@@ -81,9 +82,9 @@ public:
     /// @brief Add a keyboard binding for an action.
     void AddBinding(const std::string &action, KEY key) { mBindings[action].emplace_back(key); }
     /// @brief Add a gamepad button binding for an action.
-    void AddBinding(const std::string &action, GAMEPAD_BUTTON button, int gamepad) { mBindings[action].emplace_back(button, gamepad); }
+    void AddBinding(const std::string &action, SDL_INPUT::GamepadButton button, int gamepad) { mBindings[action].emplace_back(button, gamepad); }
     /// @brief Add a gamepad axis binding for an action.
-    void AddBinding(const std::string &action, GAMEPAD_AXIS axis, int gamepad) { mBindings[action].emplace_back(axis, gamepad); }
+    void AddBinding(const std::string &action, SDL_INPUT::GamepadAxis axis, int gamepad) { mBindings[action].emplace_back(axis, gamepad); }
     /// @brief Add a mouse button binding for an action.
     void AddBinding(const std::string &action, MOUSE_BUTTON button) { mBindings[action].push_back(button); }
     /// @brief Add a mouse axis binding for an action.
@@ -94,12 +95,12 @@ public:
         RemoveBinding(action, binding);
     }
     /// @brief Remove a gamepad button binding for an action.
-    void RemoveBinding(const std::string &action, GAMEPAD_BUTTON button, int gamepad) {
+    void RemoveBinding(const std::string &action, SDL_INPUT::GamepadButton button, int gamepad) {
         Binding binding = {button, gamepad};
         RemoveBinding(action, binding);
     }
     /// @brief Remove a gamepad axis binding for an action.
-    void RemoveBinding(const std::string &action, GAMEPAD_AXIS axis, int gamepad) {
+    void RemoveBinding(const std::string &action, SDL_INPUT::GamepadAxis axis, int gamepad) {
         Binding binding = {axis, gamepad};
         RemoveBinding(action, binding);
     }

@@ -613,18 +613,18 @@ void CharacterEntity::RegisterControls()
     // Register controls for the player
     mInputMapping.AddBinding("FORWARD", KEY::eW);
     mInputMapping.AddBinding("BACKWARD", KEY::eS);
-    mInputMapping.AddBinding("FORWARD_BACKWARD", GAMEPAD_AXIS::eLEFT_Y, 0);
+    mInputMapping.AddBinding("FORWARD_BACKWARD", SDL_INPUT::GamepadAxis::GAMEPAD_AXIS_LEFT_Y, 0);
     mInputMapping.AddBinding("LEFT", KEY::eA);
     mInputMapping.AddBinding("RIGHT", KEY::eD);
-    mInputMapping.AddBinding("LEFT_RIGHT", GAMEPAD_AXIS::eLEFT_X, 0);
+    mInputMapping.AddBinding("LEFT_RIGHT", SDL_INPUT::GamepadAxis::GAMEPAD_AXIS_LEFT_X, 0);
     mInputMapping.AddBinding("JUMP", KEY::eSPACE);
-    mInputMapping.AddBinding("JUMP", GAMEPAD_BUTTON::eX, 0);
+    mInputMapping.AddBinding("JUMP", SDL_INPUT::GamepadButton::GAMEPAD_BUTTON_A, 0);
     mInputMapping.AddBinding("CROUCH", KEY::eC);
     mInputMapping.AddBinding("CROUCH", KEY::eLEFT_CONTROL);
-    mInputMapping.AddBinding("CROUCH", GAMEPAD_BUTTON::eB, 0);
-    mInputMapping.AddBinding("CROUCH", GAMEPAD_BUTTON::eRIGHT_THUMB, 0);
+    mInputMapping.AddBinding("CROUCH", SDL_INPUT::GamepadButton::GAMEPAD_BUTTON_B, 0);
+    mInputMapping.AddBinding("CROUCH", SDL_INPUT::GamepadButton::GAMEPAD_BUTTON_RIGHT_THUMB, 0);
     mInputMapping.AddBinding("EMOTE", KEY::eF);
-    mInputMapping.AddBinding("EMOTE", GAMEPAD_BUTTON::eDPAD_DOWN, 0);
+    mInputMapping.AddBinding("EMOTE", SDL_INPUT::GamepadButton::GAMEPAD_BUTTON_LEFT_FACE_DOWN, 0);
     mInputMapping.AddBinding("INTERACT", KEY::eE);
     // TODO: Interact gamepad binding?
 
