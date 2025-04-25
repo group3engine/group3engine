@@ -25,6 +25,8 @@
 
 #include <json.hpp>
 
+#include "Debugging.hpp"
+
 namespace ResourceLoader {
 
 Material LoadMaterialDefault() {
@@ -419,6 +421,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         struct Extras {
             std::string entityType = "default";
             std::string physicsType = "static";
+            std::string colliderType = "fallback_shape";
             std::vector<std::string> tags;
             std::unordered_map<std::string, float> float_properties;
             bool is_sensor = false;
@@ -435,6 +438,8 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                     extras.entityType = value;
                 } else if (key == "physics_type") {
                     extras.physicsType = value;
+                } else if (key == "collider_type") {
+                    extras.colliderType = value;
                 } else if (key == "tags") {
                     std::string tags = value;
                     // Split on pipes
@@ -483,6 +488,18 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         else if(extras.physicsType == "dynamic")
         {
             entity.SetPhysicsType(PhysicsType::DYNAMIC);
+        }
+
+        if (extras.colliderType == "convex_hull_shape") {
+            entity.SetColliderType(ColliderType::ConvexHullShape);
+        } else if (extras.colliderType == "mesh_shape") {
+            entity.SetColliderType(ColliderType::MeshShape);
+        } else if (extras.colliderType == "fallback_shape") {
+            entity.SetColliderType(ColliderType::Fallback);
+        } else {
+            entity.SetColliderType(ColliderType::Fallback);
+            SPDLOG_ERROR("Unaccounted for collider type {}", extras.colliderType);
+            DEBUG_BREAK();
         }
 
         // set the name

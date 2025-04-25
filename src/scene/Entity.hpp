@@ -17,6 +17,12 @@
 
 class Scene;
 
+enum class ColliderType {
+    ConvexHullShape,
+    MeshShape,
+    Fallback
+};
+
 enum class PhysicsType {
     STATIC,
     KINEMATIC,
@@ -146,6 +152,9 @@ class Entity {
     void SetPhysicsType(PhysicsType input_physics_type) { mPhysicsType = input_physics_type; }
 
     PhysicsType GetPhysicsType() const { return mPhysicsType; }
+
+    void SetColliderType(ColliderType colliderType) { mColliderType = colliderType; }
+    ColliderType GetColliderType() const { return mColliderType; }
 
     /// Get the number of frames that have passed since the entity was created
     [[nodiscard]] size_t GetFrameNumber() const {return mFrameNumber;}
@@ -280,6 +289,7 @@ class Entity {
     vector<std::string> mTags;
 
     PhysicsType mPhysicsType = PhysicsType::STATIC;
+    ColliderType mColliderType = ColliderType::Fallback;
 
 
     bool mHasMesh = false;
