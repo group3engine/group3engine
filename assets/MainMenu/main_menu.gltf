@@ -53,7 +53,7 @@
 				"physics_type":"static",
 				"is_sensor":false,
 				"is_solid":true,
-				"is_invisible":false
+				"is_invisible":true
 			},
 			"mesh":0,
 			"name":"Cube"

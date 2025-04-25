@@ -1,7 +1,6 @@
 #include "Context.hpp"
 #include "Scene.hpp"
 #include "Camera.hpp"
-#include "CharacterEntity.hpp"
 #include "RenderPass.hpp"
 #include "RenderPassCommon.hpp"
 #include "ImGuiRenderer.hpp"
@@ -705,14 +704,12 @@ void ImGuiRenderer::NewActivePlayerCountOverride(
 #endif
 }
 
-void ImGuiRenderer::NewCharacterInfo(const CharacterEntity *character) {
+void ImGuiRenderer::NewCharacterInfo(std::string const &characterName,
+                                    float x, float y, float z) {
 #ifndef PLATINUM
-    if (ImGui::CollapsingHeader(character->GetName().c_str())) {
+    if (ImGui::CollapsingHeader(characterName.c_str())) {
         // Add camera position
-        ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)",
-                    character->GetCamera()->GetPosition().x,
-                    character->GetCamera()->GetPosition().y,
-                    character->GetCamera()->GetPosition().z);
+        ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)",x,y,z);
     }
 #endif
 }

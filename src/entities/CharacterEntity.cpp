@@ -341,7 +341,10 @@ void CharacterEntity::UnscaledUpdate(double deltaTime)
     }
 }
 void CharacterEntity::UpdateUi(double deltaTime) {
-    ImGuiRenderer::NewCharacterInfo(this);
+    ImGuiRenderer::NewCharacterInfo(GetName(),
+                                    GetCamera()->GetPosition().x,
+                                    GetCamera()->GetPosition().y,
+                                    GetCamera()->GetPosition().z);
 
     while (!mInternalUiEvents.empty()) {
         auto &event = mInternalUiEvents.top();
