@@ -28,6 +28,7 @@
 #include <cmath>
 
 InputData gInputData;
+SDL_INPUT::InputData SDL_INPUT::INPUT;
 
 // Using system from https://github.com/raysan5/raylib/blob/master/src/rcore.c
 
@@ -48,22 +49,18 @@ bool IsKeyReleased(KEY key) {
 }
 
 // get an axis value from the gamepad
-float GetGamepadAxis(GAMEPAD_AXIS axis, int gamepad) {
-    // only return the axis value if it isn't almost zero
-    if (std::abs(gInputData.gamepadAxis[gamepad].currentAxisState[static_cast<uint8_t>(axis)]) < 0.1f) {
-        return 0.0f;
-    }
-    return gInputData.gamepadAxis[gamepad].currentAxisState[static_cast<uint8_t>(axis)];
+float GetGamepadAxis(SDL_INPUT::GamepadAxis axis, int gamepad) {
+    return SDL_INPUT::INPUT.Gamepad.axisState[gamepad][static_cast<uint8_t>(axis)];
 }
 
 // Check if a gamepad button has been pressed once
-bool IsGamepadButtonPressed(GAMEPAD_BUTTON button, int gamepad) {
-    return gInputData.gamepadButtons[gamepad].currentButtonState[static_cast<uint8_t>(button)] == 1 &&
-           gInputData.gamepadButtons[gamepad].previousButtonState[static_cast<uint8_t>(button)] == 0;
+bool IsGamepadButtonPressed(SDL_INPUT::GamepadButton button, int gamepad) {
+    return SDL_INPUT::INPUT.Gamepad.currentButtonState[gamepad][static_cast<uint8_t>(button)] == 1 &&
+              SDL_INPUT::INPUT.Gamepad.previousButtonState[gamepad][static_cast<uint8_t>(button)] == 0;
 }
 
-bool IsGamepadButtonDown(GAMEPAD_BUTTON button, int gamepad) {
-    return gInputData.gamepadButtons[gamepad].currentButtonState[static_cast<uint8_t>(button)] == 1;
+bool IsGamepadButtonDown(SDL_INPUT::GamepadButton button, int gamepad) {
+    return SDL_INPUT::INPUT.Gamepad.currentButtonState[gamepad][static_cast<uint8_t>(button)] == 1;
 }
 
 

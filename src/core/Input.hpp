@@ -2,6 +2,7 @@
 #define GROUP3ENGINE_INPUT_HPP
 
 #include "InputData.hpp"
+#include "SDL.hpp"
 
 /// Returns true if the key transitioned from unpressed to pressed during the current frame.
 bool IsKeyPressed(KEY key);
@@ -21,14 +22,14 @@ bool IsMouseButtonDown(MOUSE_BUTTON button);
 /// Returns true if the mouse button transitioned from pressed to unpressed during the current frame.
 bool IsMouseButtonReleased(MOUSE_BUTTON button);
 
-/// Returns the value of the gamepad axis. Returns 0 if the value is less than the deadzone.
-float GetGamepadAxis(GAMEPAD_AXIS axis, int gamepad);
+/// Returns the value of the gamepad axis
+float GetGamepadAxis(SDL_INPUT::GamepadAxis axis, int gamepad);
 
 /// Returns true if the gamepad button transitioned from unpressed to pressed during the current frame.
-bool IsGamepadButtonPressed(GAMEPAD_BUTTON button, int gamepad);
+bool IsGamepadButtonPressed(SDL_INPUT::GamepadButton button, int gamepad);
 
 /// Returns true if the gamepad button is held down.
-bool IsGamepadButtonDown(GAMEPAD_BUTTON button, int gamepad);
+bool IsGamepadButtonDown(SDL_INPUT::GamepadButton button, int gamepad);
 
 float GetMouseX();
 

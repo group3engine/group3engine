@@ -30,7 +30,7 @@
 
 #include <GLFW/glfw3.h>
 #include <spdlog/spdlog.h>
-#include <SDL3/SDL.h>
+#include "SDL.hpp"
 
 // Using system from https://github.com/raysan5/raylib/blob/master/src/platforms/rcore_desktop_glfw.c
 static void KeyCallback([[maybe_unused]] GLFWwindow *window,
@@ -64,59 +64,14 @@ static void MouseCursorPosCallback([[maybe_unused]] GLFWwindow *window, double x
     gInputData.mouse.currentPosition = {x, y};
 }
 
-static void PollGamepadJoysticks()
-{
-    // Register previous gamepad button states
-    for(size_t j = 0; j <= GLFW_JOYSTICK_LAST; j++) {
-        for (uint8_t i = 0; i < static_cast<uint8_t>(GAMEPAD_BUTTON::eLAST); ++i) {
-            gInputData.gamepadButtons[j].previousButtonState[i] =
-                    gInputData.gamepadButtons[j].currentButtonState[i];
-        }
-    }
-
-    for (size_t j = 0; j <= GLFW_JOYSTICK_LAST; j++) {
-        for (uint8_t i = 0; i < static_cast<uint8_t>(GAMEPAD_AXIS::eLAST); ++i) {
-            gInputData.gamepadAxis[j].previousAxisState[i] =
-                    gInputData.gamepadAxis[j].currentAxisState[i];
-        }
-    }
-
-    // Check all possible gamepad connections (GLFW supports up to 16 gamepads)
-    for (int gamepad = GLFW_JOYSTICK_1; gamepad <= GLFW_JOYSTICK_LAST; gamepad++) {
-        if (glfwJoystickPresent(gamepad)) {
-            // Poll button states
-            int buttonCount;
-            const unsigned char* buttons = glfwGetJoystickButtons(gamepad, &buttonCount);
-
-            int count = (buttonCount < static_cast<int>(GAMEPAD_BUTTON::eLAST)) ?
-                         buttonCount : static_cast<int>(GAMEPAD_BUTTON::eLAST);
-
-            for (int i = 0; i < count; i++) {
-                gInputData.gamepadButtons[gamepad].currentButtonState[i] = buttons[i];
-            }
-
-            // Poll axes (focused on analog sticks)
-            int axisCount;
-            const float* axes = glfwGetJoystickAxes(gamepad, &axisCount);
-
-            int axesCount = (axisCount < static_cast<int>(GAMEPAD_AXIS::eLAST)) ?
-                             axisCount : static_cast<int>(GAMEPAD_AXIS::eLAST);
-
-            for (int i = 0; i < axesCount; i++) {
-                gInputData.gamepadAxis[gamepad].currentAxisState[i] = axes[i];
-            }
-
-        }
-    }
-}
 
 
 
 void Platform::StartUp(int windowWidth, int windowHeight) {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    SDL_INPUT::InitPlatform();
 
-    glfwUpdateGamepadMappings(controllerDB.c_str());
 
     GLFWmonitor *monitor = glfwGetPrimaryMonitor();
 
@@ -145,17 +100,12 @@ void Platform::StartUp(int windowWidth, int windowHeight) {
     glfwSetMouseButtonCallback(Platform::get().window, &MouseButtonCallback);
     glfwSetCursorPosCallback(Platform::get().window, &MouseCursorPosCallback);
 
-    SDL_InitFlags flags = SDL_INIT_GAMEPAD | SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC;
-    if (!SDL_Init(flags)) {
-        SPDLOG_ERROR("Failed to initialize SDL: {}", SDL_GetError());
-        std::exit(EXIT_FAILURE);
-    }
-
 }
 
 void Platform::ShutDown() {
     glfwDestroyWindow(Platform::get().window);
     glfwTerminate();
+    SDL_INPUT::ClosePlatform();
 }
 
 
@@ -180,7 +130,7 @@ void PollInputEvents() {
 
     glfwPollEvents();
 
-    // Poll gamepad joysticks
-    PollGamepadJoysticks();
+    SDL_INPUT::PollInputEvents();
+
 }
 
