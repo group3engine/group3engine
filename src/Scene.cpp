@@ -16,6 +16,41 @@
 
 #include "RenderPassCommon.hpp"
 
+#include "Debugging.hpp"
+
+namespace {
+JPH::Shape::ShapeResult CreateMeshShapeResult(VertexList inVertices,
+                                              IndexedTriangleList inTriangles) {
+    // Create the settings object for a mesh shape
+    JPH::MeshShapeSettings settings(inVertices, inTriangles);
+
+    // Create shape
+    JPH::Shape::ShapeResult result = settings.Create();
+    if (!result.IsValid()) // if the shape is valid
+    {
+        // give an error statement
+        SPDLOG_ERROR("Shape result is invalid. {}", result.GetError());
+    }
+
+    return result;
+}
+
+JPH::Shape::ShapeResult CreateConvexHullShapeResult(const Vec3 *inPoints, int inNumPoints) {
+    // Create the settings object for a mesh shape
+    JPH::ConvexHullShapeSettings consettings(inPoints, inNumPoints);
+
+    // Create shape
+    JPH::Shape::ShapeResult result = consettings.Create();
+    if (!result.IsValid()) // if the shape is valid
+    {
+        // give an error statement
+        SPDLOG_ERROR("Shape result is invalid. {}", result.GetError());
+    }
+
+    return result;
+}
+} // namespace
+
 void Scene::Update(double aDeltaTime) {
     ZoneScopedN("Scene::Update");
     float timeScale = Engine::get().GetTimeScale();
@@ -277,19 +312,12 @@ void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
 
         if(entity->GetPhysicsType() == PhysicsType::STATIC)
         {
-            // Create the settings object for a mesh shape
-            JPH::MeshShapeSettings settings(vertices, indexedTriangles);
-
-            // Create shape
-            JPH::Shape::ShapeResult result = settings.Create();
-            if(result.IsValid()) // if the shape is valid
-            {
-                shape = result.Get(); // set the shape as the result
-            }
-            else // if it isnt valid
-            {
-                // give an error statement
-                SPDLOG_ERROR("Shape result is invalid. {}", result.GetError());
+            Shape::ShapeResult result;
+            if (entity->GetColliderType() == ColliderType::MeshShape ||
+                entity->GetColliderType() == ColliderType::Fallback) {
+                result = CreateMeshShapeResult(vertices, indexedTriangles);
+            } else if (entity->GetColliderType() == ColliderType::ConvexHullShape) {
+                result = CreateConvexHullShapeResult(list_of_points.data(), list_of_points.size());
             }
 
             // get the transform for the entity's physics rigid body
@@ -314,20 +342,11 @@ void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
         }
         else if(entity->GetPhysicsType() == PhysicsType::KINEMATIC)
         {
-            // Create the settings object for a mesh shape
-            JPH::ConvexHullShapeSettings consettings(list_of_points.data(), list_of_points.size());
+            DEBUG_ASSERT(entity->GetColliderType() == ColliderType::Fallback ||
+                         entity->GetColliderType() == ColliderType::ConvexHullShape);
 
-            // Create shape
-            JPH::Shape::ShapeResult result = consettings.Create();
-            if(result.IsValid()) // if the shape is valid
-            {
-                shape = result.Get(); // set the shape as the result
-            }
-            else // if it isnt valid
-            {
-                // give an error statement
-                SPDLOG_ERROR("Shape result is invalid. {}", result.GetError());
-            }
+            Shape::ShapeResult result =
+                CreateConvexHullShapeResult(list_of_points.data(), list_of_points.size());
 
             // get the transform for the entity's physics rigid body
             Transform entity_transform = entity->GetWorldTransformComponents();
@@ -355,20 +374,11 @@ void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
         }
         else if(entity->GetPhysicsType() == PhysicsType::DYNAMIC)
         {
-            // Create the settings object for a mesh shape
-            JPH::ConvexHullShapeSettings consettings(list_of_points.data(), list_of_points.size());
+            DEBUG_ASSERT(entity->GetColliderType() == ColliderType::Fallback ||
+                         entity->GetColliderType() == ColliderType::ConvexHullShape);
 
-            // Create shape
-            JPH::Shape::ShapeResult result = consettings.Create();
-            if(result.IsValid()) // if the shape is valid
-            {
-                shape = result.Get(); // set the shape as the result
-            }
-            else // if it isnt valid
-            {
-                // give an error statement
-                SPDLOG_ERROR("Shape result is invalid. {}", result.GetError());
-            }
+            Shape::ShapeResult result =
+                CreateConvexHullShapeResult(list_of_points.data(), list_of_points.size());
 
             // get the transform for the entity's physics rigid body
             Transform entity_transform = entity->GetWorldTransformComponents();
