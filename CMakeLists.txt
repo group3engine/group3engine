@@ -102,6 +102,10 @@ elseif(WIN32)
   target_compile_definitions(src PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
 endif()
 
+# Turn off unwanted SDL options
+set(SDL_OPENGL OFF CACHE BOOL "" FORCE)
+set(SDL_OPENGLES OFF CACHE BOOL "" FORCE)
+
 add_subdirectory(extern/glfw)
 add_subdirectory(extern/glm)
 add_subdirectory(extern/spdlog)
