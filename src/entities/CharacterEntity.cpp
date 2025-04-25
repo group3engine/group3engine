@@ -8,6 +8,7 @@
 #include <fstream>
 #include <cstdlib>
 
+#include "AudioManager.hpp"
 #include "Camera.hpp"
 #include "Engine.hpp"
 #include "imgui.h"
@@ -121,7 +122,10 @@ void CharacterEntity::ProcessInput(){
             controlInput = rotation * controlInput;
 
             // Check actions
-            jump = mInputMapping.GetActionPressed("JUMP") > 0;
+            if (mInputMapping.GetActionPressed("JUMP") > 0) {
+                jump = true;
+            }
+
             if ((mInputMapping.GetActionPressed("EMOTE") > 0) && !mInClimb) {
                 mIsEmoting = true;
             }
@@ -325,6 +329,15 @@ void CharacterEntity::Update(double deltaTime) {
     mCamera->UpdateCameraMovement(GetWorldTransformComponents());
 }
 
+void CharacterEntity::HandleAudio() {
+    switch (mSampleJoltCharacter->GetJumpState()) {
+    case EJumpState::Start:
+        AudioManager::get().PlaySound();
+        break;
+    default:
+        break;
+    }
+}
 
 void CharacterEntity::UnscaledUpdate(double deltaTime)
 {
@@ -644,4 +657,6 @@ void CharacterEntity::LateUpdate(double deltaTime)
     // and OnCollision given additional conditions, such as an interactable having been used and no
     // longer being interactable
     mInteractables.clear();
+
+    HandleAudio();
 }

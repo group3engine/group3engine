@@ -50,6 +50,8 @@
 #endif
 #define TEMP_DISABLE_PHYSICS 0
 
+#include "AudioManager.hpp"
+
 namespace {
     // TODO: Improve this temporary scene switching mechanism
     std::filesystem::path mainMenuPath{"MainMenu/main_menu.gltf"};
@@ -155,6 +157,8 @@ bool Engine::Initialize() {
     mScene->Load(mainMenuPath, mainMenuPlayerCount);
     m_scenePath = mScene->GetSceneFilename();
 
+    mIsMainMenu = true;
+
     mRenderer->CreateRenderPasses();
     // call the scene awake function
     mScene->Awake();
@@ -170,8 +174,9 @@ bool Engine::Initialize() {
     ImGuiRenderer::themes.applyTheme("Catpuccin Mocha");
     Fonts::LoadFonts();
 
+    AudioManager::get().StartUp();
 
-
+    AudioManager::get().PlayMainMenuMusic();
 
     return m_isRunning;
 }
@@ -193,6 +198,8 @@ void Engine::Shutdown() {
     m_context.Destroy(); // Free vulkan device, allocator, window
     Platform::get().ShutDown();
     PhysicsManager::get().ShutDown();
+
+    AudioManager::get().ShutDown();
 }
 
 void Engine::ChangeScene(const std::filesystem::path &pendingScenePath, size_t pendingPlayerCount) {
@@ -210,8 +217,6 @@ void Engine::Run() {
     m_lastFrameTime = glfwGetTime();
 
     while (m_isRunning && !glfwWindowShouldClose(m_context.mWindow)) {
-        mIsMainMenu = mScene->GetSceneFilename() == "main_menu";
-
         double currentFrameTime = glfwGetTime();
         GlobalUtil::unscaledDeltaTime = currentFrameTime - m_lastFrameTime;
         GlobalUtil::deltaTime = GlobalUtil::unscaledDeltaTime * m_timeScale;
@@ -309,6 +314,13 @@ void Engine::ChangeSceneFR(const std::filesystem::path &scenePath, size_t player
     mSceneLoadingThread.join();
     vkQueueWaitIdle(m_context.presentQueue);
 
+    mIsMainMenu = mScene->GetSceneFilename() == "main_menu";
+
+    if (mIsMainMenu) {
+        AudioManager::get().PlayMainMenuMusic();
+    } else {
+        AudioManager::get().TryStopMainMenuMusic();
+    }
 }
 
 void Engine::Update(double deltaTime) {
