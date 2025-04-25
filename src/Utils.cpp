@@ -5,6 +5,7 @@ namespace vkutil {
 RenderType renderType = RenderType::FORWARD;
 
 void ExecuteSingleTimeCommands(Context &context, std::function<void(VkCommandBuffer)> recordCommands) {
+    std::lock_guard<std::mutex> idk(context.presentQueueMutex);
     VkCommandBufferAllocateInfo allocateCmd = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
         .commandPool = context.transientCommandPool,
