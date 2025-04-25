@@ -115,6 +115,7 @@ class CharacterEntity : public Entity {
 
     size_t mPlayerId = 0;
 
+    bool mIsTiming = false;
     gui::TimerData mGuiTimerData{};
 
     size_t mDeathCount = 0;

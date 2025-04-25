@@ -368,7 +368,9 @@ void CharacterEntity::UpdateUi(double deltaTime) {
     size_t activePlayerCount = GetScene()->GetActivePlayerCount();
 
     // New timer window
-    mGuiTimerData.time += deltaTime;
+    if (mIsTiming) {
+        mGuiTimerData.time += deltaTime;
+    }
     ImGuiRenderer::NewTimer(mGuiTimerData, activePlayerCount, mPlayerId);
 
     // NOTE: If copying the data into a struct gets annoying, we can just use
@@ -591,6 +593,8 @@ void CharacterEntity::Awake() {
         Reset();
     }
 
+    mIsTiming = true;
+
     // TODO: What you could do is maybe add and remove these receivers dynamically so the number of
     // receivers doesn't grow too large. I.e., player gets to 90% of level, start receiving the
     // on win signal. Then when the player resets to the start of the level remove the receiver
@@ -599,6 +603,8 @@ void CharacterEntity::Awake() {
 
 void CharacterEntity::OnWin(WinSignal *signal) {
     mInternalUiEvents.push(InternalUiEvent::eWinPopup);
+
+    mIsTiming = false;
 }
 
 void CharacterEntity::MoveToSpawn()
@@ -611,6 +617,8 @@ void CharacterEntity::MoveToSpawn()
             Reset();
         }
     }
+
+    mIsTiming = true;
 }
 
 void CharacterEntity::Die()
