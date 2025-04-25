@@ -561,10 +561,14 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         }
         // check if the node has a light
         if (gltfNode.light != nullptr) {
+            // get the world transform of the node
+            float worldTransform[16];
+            cgltf_node_transform_world(&gltfNode, worldTransform);
+            // get the translation of the world transform
+            glm::vec3 translation = {worldTransform[12],
+                                        worldTransform[13], worldTransform[14]};
             // get the location of the light
-            glm::vec4 lightLocation = {gltfNode.translation[0],
-                                       gltfNode.translation[1],
-                                       gltfNode.translation[2], 1.0};
+            glm::vec4 lightLocation = {translation, 1.0};
             // get the color of the light (and multiply the intensity)
             glm::vec4 lightColor = {gltfNode.light->color[0],
                                     gltfNode.light->color[1],
