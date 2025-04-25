@@ -299,31 +299,10 @@ void Engine::ChangeSceneFR(const std::filesystem::path &scenePath, size_t player
 
     m_isLoading = true;
     m_progress = 0.f;
-    mSceneLoadingThread = std::thread(&Engine::RenderLoadingScreen, this);
+    mSceneLoadingThread = std::thread(&Engine::LoadRestOfStuff, this, scenePath, playerCount);
 
+    RenderLoadingScreen();
 
-
-#ifndef NDEBUG
-    // Check there are no physics bodies left after scene destruction
-    BodyIDVector bodyIds;
-    PhysicsManager::get().mPhysicsSystem.GetBodies(bodyIds);
-    assert(bodyIds.empty());
-#endif // #ifndef NDEBUG
-    m_progress = 25.f;
-
-    mScene->Load(scenePath, playerCount);
-    m_scenePath = mScene->GetSceneFilename();
-
-    m_progress = 75.f;
-
-    // Add back UI textures
-    std::filesystem::path path = assetsPath/ "heart.png";
-    ImGuiRenderer::AddTextures(mTextureManager.get(), path, "heart");
-
-    mScene->Awake();
-    m_progress = 100.f;
-    // end the loading screen
-    m_isLoading = false;
     // wait for loading screen thread to finish
      while (!mSceneLoadingThread.joinable()) {}
     mSceneLoadingThread.join();
@@ -446,7 +425,14 @@ void Engine::RenderLoadingScreen()
              float mTotalTime = glfwGetTime() - m_lastFrameTime;
              float mProgress = m_progress;
              mProgress += mTotalTime * 10.f;
-             mProgress = std::min(mProgress, m_progress + 25.f);
+             if(m_progress < 25)
+             {
+                 mProgress = std::min(mProgress, 25.f);
+             }
+             else if(m_progress < 85)
+             {
+                 mProgress = std::min(mProgress, 85.f);
+             }
              mProgress = std::min(mProgress, 99.f);
             {
                 std::lock_guard<std::mutex> lock(m_context.graphicsQueueMutex);
@@ -463,4 +449,31 @@ void Engine::RenderLoadingScreen()
         // Handle the exception
         SPDLOG_ERROR(e.what());
     }
+}
+
+void Engine::LoadRestOfStuff(const filesystem::path &scenePath, size_t playerCount)
+{
+
+
+#ifndef NDEBUG
+    // Check there are no physics bodies left after scene destruction
+    BodyIDVector bodyIds;
+    PhysicsManager::get().mPhysicsSystem.GetBodies(bodyIds);
+    assert(bodyIds.empty());
+#endif // #ifndef NDEBUG
+    m_progress = 25.f;
+
+    mScene->Load(scenePath, playerCount);
+    m_scenePath = mScene->GetSceneFilename();
+
+    m_progress = 85.f;
+
+    // Add back UI textures
+    std::filesystem::path path = assetsPath/ "heart.png";
+    ImGuiRenderer::AddTextures(mTextureManager.get(), path, "heart");
+
+    mScene->Awake();
+    m_progress = 100.f;
+    // end the loading screen
+    m_isLoading = false;
 }
