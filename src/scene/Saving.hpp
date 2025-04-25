@@ -4,6 +4,9 @@
 
 #ifndef GROUP3ENGINE_SAVING_HPP
 #define GROUP3ENGINE_SAVING_HPP
+
+#include <mutex>
+
 #include <json.hpp>
 #include <string>
 #include <glm/glm.hpp>
