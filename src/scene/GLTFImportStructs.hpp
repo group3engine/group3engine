@@ -123,7 +123,7 @@ struct Material {
     Buffer materialBuffer;
     bool alphaCutout;
     float alphaCutoff;
-    bool doubleSided = false;
+    bool doubleSided = true;
 
     // move constructor
     Material(Material &&aOther) = default;
