@@ -30,6 +30,7 @@
 
 #include <GLFW/glfw3.h>
 #include <spdlog/spdlog.h>
+#include <SDL3/SDL.h>
 
 // Using system from https://github.com/raysan5/raylib/blob/master/src/platforms/rcore_desktop_glfw.c
 static void KeyCallback([[maybe_unused]] GLFWwindow *window,
@@ -143,6 +144,12 @@ void Platform::StartUp(int windowWidth, int windowHeight) {
     glfwSetKeyCallback(Platform::get().window, &KeyCallback);
     glfwSetMouseButtonCallback(Platform::get().window, &MouseButtonCallback);
     glfwSetCursorPosCallback(Platform::get().window, &MouseCursorPosCallback);
+
+    SDL_InitFlags flags = SDL_INIT_GAMEPAD | SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC;
+    if (!SDL_Init(flags)) {
+        SPDLOG_ERROR("Failed to initialize SDL: {}", SDL_GetError());
+        std::exit(EXIT_FAILURE);
+    }
 
 }
 

@@ -2,6 +2,12 @@ cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
 
 project(group3engine CXX)
 
+
+# set the output directory for built objects.
+# This makes sure that the dynamic library goes into the build directory automatically.
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
+
 if(NOT WIN32)
   string(ASCII 27 Esc)
   set(ColourReset "${Esc}[m")
@@ -102,6 +108,7 @@ add_subdirectory(extern/spdlog)
 add_subdirectory(extern/imgui)
 add_subdirectory(extern/Vulkan-Headers)
 add_subdirectory(extern/volk)
+add_subdirectory(extern/SDL EXCLUDE_FROM_ALL)
 
 option(TRACY_ENABLE "" ON)
 option(TRACY_ON_DEMAND "" ON)
@@ -140,7 +147,7 @@ target_compile_definitions(src PRIVATE GLFW_INCLUDE_NONE GLM_ENABLE_EXPERIMENTAL
 
 target_compile_definitions(src PRIVATE CMAKE_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 
-target_link_libraries(src PRIVATE cgltf glfw glm::glm-header-only Jolt spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32> stb_image Tracy::TracyClient volk vma json)
+target_link_libraries(src PRIVATE cgltf glfw glm::glm-header-only Jolt spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32> stb_image Tracy::TracyClient volk vma json SDL3::SDL3)
 
 # Compiler warnings
 if ((CMAKE_CXX_COMPILER_ID STREQUAL "Clang") OR (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
