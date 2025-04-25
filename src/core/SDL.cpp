@@ -683,7 +683,7 @@ namespace SDL_INPUT
     }
 
 // Scancode to keycode mapping
-    static KeyboardKey ConvertScancodeToKey(SDL_Scancode sdlScancode)
+    KeyboardKey ConvertScancodeToKey(SDL_Scancode sdlScancode)
     {
         if ((sdlScancode >= 0) && (sdlScancode < SCANCODE_MAPPED_NUM)) {
             return mapScancodeToKey[sdlScancode];

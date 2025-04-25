@@ -174,7 +174,7 @@ namespace SDL_INPUT
         float y;
     } Vector2;
 
-    typedef struct {
+    struct InputData {
         struct {
             int exitKey;                    // Default exit key
             std::array<char, MAX_KEYBOARD_KEYS> currentKeyState{};        // Registers current frame key state
@@ -215,10 +215,10 @@ namespace SDL_INPUT
             std::array<std::array<char, MAX_GAMEPAD_BUTTONS>, MAX_GAMEPADS> previousButtonState;    // Previous gamepad buttons state
             std::array<std::array<float, MAX_GAMEPAD_AXIS>, MAX_GAMEPADS> axisState;                // Gamepad axis state
         } Gamepad;
-    } InputData;
+    };
     int InitPlatform();                                      // Initialize platform (graphics, inputs and more)
     void ClosePlatform();                                    // Close platform
-    static KeyboardKey ConvertScancodeToKey(SDL_Scancode sdlScancode);  // Help convert SDL scancodes to raylib key
+    KeyboardKey ConvertScancodeToKey(SDL_Scancode sdlScancode);  // Help convert SDL scancodes to raylib key
 
     void SetGamepadVibration(int gamepad, float leftMotor, float rightMotor, float duration); // Set gamepad vibration
     void PollInputEvents();                                   // Register all input events
