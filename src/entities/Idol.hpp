@@ -3,6 +3,8 @@
 
 #include "Entity.hpp"
 
+class ResetToSpawnSignal;
+
 class Idol : public Entity {
   public:
     Idol();
@@ -14,6 +16,8 @@ class Idol : public Entity {
     }
 
     void OnInteract(Entity *other) override;
+
+    void OnResetToSpawn([[maybe_unused]] ResetToSpawnSignal *signal);
 
     // void Update(double deltaTime) override;
 

@@ -465,6 +465,12 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
         }
     }
 
+    if (aOther->CompareType("spawn_portal")) {
+        if (mHasWon) {
+            MoveToSpawn();
+        }
+    }
+
     SPDLOG_INFO("I am {} and I collided with {}", GetName(), aOther->GetName());
 
 }
@@ -526,7 +532,7 @@ void CharacterEntity::Awake() {
 
 void CharacterEntity::OnWin(WinSignal *signal) {
     mInternalUiEvents.push(InternalUiEvent::eWinPopup);
-
+    mHasWon = true;
     mIsTiming = false;
 }
 
@@ -542,6 +548,11 @@ void CharacterEntity::MoveToSpawn()
     }
 
     mIsTiming = true;
+    mHasWon = false;
+
+    ResetToSpawnSignal resetToSpawnSignal{};
+    resetToSpawnSignal.transmitter = this;
+    GetScene()->mSignalSystem.EmitSignal(&resetToSpawnSignal);
 }
 
 void CharacterEntity::Die()

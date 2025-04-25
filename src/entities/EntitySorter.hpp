@@ -26,6 +26,7 @@
 #include "Lever.hpp"
 #include "Trapdoor.hpp"
 #include "Idol.hpp"
+#include "SpawnPortal.hpp"
 // Add more includes here
 
 // an enum of all the different entity types
@@ -52,7 +53,8 @@ enum class EntityType {
     TRAPDOOR,
     BOULDERSPAWNER,
     SPIKETRAP,
-    IDOL
+    IDOL,
+    SPAWNPORTAL
     // Add more entity types here
 };
 // a map of strings to entity types
@@ -79,7 +81,8 @@ static const std::unordered_map<std::string, EntityType> entityTypeMap = {
     {"trapdoor", EntityType::TRAPDOOR},
     {"boulderSpawner", EntityType::BOULDERSPAWNER},
     {"spikeTrap", EntityType::SPIKETRAP},
-    {"idol", EntityType::IDOL}
+    {"idol", EntityType::IDOL},
+    {"spawn_portal", EntityType::SPAWNPORTAL}
 };
 // a function to convert a string to an entity type
 inline EntityType GetEntityTypeFromString(const std::string& aTypeName) {
@@ -143,6 +146,8 @@ inline Entity* CreateNewEntity(const std::string& aEntityType)
         return new SpikeTrap();
     case EntityType::IDOL:
         return new Idol();
+    case EntityType::SPAWNPORTAL:
+        return new SpawnPortal();
     // Add more cases here
     default:
         assert(false);

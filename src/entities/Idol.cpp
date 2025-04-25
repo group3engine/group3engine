@@ -32,6 +32,8 @@ void Idol::Awake() {
 
     mSensor->Init(PhysicsManager::get(), false);
     PhysicsManager::get().RegisterEntity(this, mSensor->mBodyId);
+
+    GetScene()->mSignalSystem.AddReceiver<Idol, ResetToSpawnSignal>(this, &Idol::OnResetToSpawn);
 }
 
 void Idol::OnInteract(Entity *other) {
@@ -43,4 +45,8 @@ void Idol::OnInteract(Entity *other) {
         winSignal.receiver = other;
         GetScene()->mSignalSystem.EmitSignal(&winSignal);
     }
+}
+
+void Idol::OnResetToSpawn([[maybe_unused]] ResetToSpawnSignal *signal) {
+    mIsCollected = false;
 }
