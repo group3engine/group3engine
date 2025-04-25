@@ -297,6 +297,7 @@ void Engine::ChangeSceneFR(const std::filesystem::path &scenePath, size_t player
     ImGuiRenderer::AddTextures(mTextureManager.get(), loadingPath, "load");
 
 
+
     m_isLoading = true;
     m_progress = 0.f;
     mSceneLoadingThread = std::thread(&Engine::LoadRestOfStuff, this, scenePath, playerCount);
@@ -422,27 +423,30 @@ void Engine::RenderLoadingScreen()
     {
         while (m_isLoading)
         {
-             float mTotalTime = glfwGetTime() - m_lastFrameTime;
-             float mProgress = m_progress;
-             mProgress += mTotalTime * 10.f;
-             if(m_progress < 25)
-             {
-                 mProgress = std::min(mProgress, 25.f);
-             }
-             else if(m_progress < 85)
-             {
-                 mProgress = std::min(mProgress, 85.f);
-             }
-             mProgress = std::min(mProgress, 99.f);
+
             {
-                std::lock_guard<std::mutex> lock(m_context.graphicsQueueMutex);
-                ImGuiRenderer::NewFrame();
+                std::lock_guard<std::mutex> lock(m_context.presentQueueMutex);
+                float mTotalTime = glfwGetTime() - m_lastFrameTime;
+                float mProgress = m_progress;
+                mProgress += mTotalTime * 10.f;
+                if (m_progress < 25) {
+                    mProgress = std::min(mProgress, 25.f);
+                } else if (m_progress < 85) {
+                    mProgress = std::min(mProgress, 85.f);
+                }
+                mProgress = std::min(mProgress, 99.f);
+                {
+                    std::lock_guard<std::mutex> lock(m_context.graphicsQueueMutex);
+                    ImGuiRenderer::NewFrame();
+                }
+                ImGuiRenderer::Image("load", ImVec2{0, 0}, ImVec2{1, 1});
+                ImGuiRenderer::LoadingBar(mProgress, ImVec2(500, 500));
+                ImGuiRenderer::EndFrame();
+                // render some text with imgui
+                mRenderer->RenderUIOnly();
             }
-             ImGuiRenderer::Image("load", ImVec2{0,0}, ImVec2{1,1});
-             ImGuiRenderer::LoadingBar(mProgress, ImVec2(500, 500));
-             ImGuiRenderer::EndFrame();
-             // render some text with imgui
-             mRenderer->RenderUIOnly();
+             // sleep for 50ms
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
         }
     }catch (const std::exception& e) {
