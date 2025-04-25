@@ -447,7 +447,6 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
                     std::string token;
                     while (std::getline(tokenStream, token, '|')) {
                         extras.tags.push_back(token);
-                        spdlog::info("tag : {}", token);
                     }
                 } else if (key == "is_sensor") {
                     extras.is_sensor = value;

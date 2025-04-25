@@ -15,6 +15,7 @@
 #include "SampleGLTFFilePaths.hpp"
 
 #include "RenderPassCommon.hpp"
+#include "Saving.hpp"
 
 #include "Debugging.hpp"
 
@@ -200,6 +201,10 @@ void Scene::LoadGLTF(const std::filesystem::path &aFilepath, size_t playerCount)
 void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
 {
     mSceneFilename = filePath.stem();
+    std::filesystem::path saveFilename = "save_";
+    saveFilename += Scene::get().GetActiveScene()->GetSceneFilename();
+    saveFilename += ".json";
+    Saving::get().UpdateSceneName(saveFilename);
 
     // Current path is the current working directory, i.e., where the root CMakeLists.txt is
     std::filesystem::path basePath = assetsPath;
