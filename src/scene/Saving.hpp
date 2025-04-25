@@ -9,7 +9,10 @@
 #include <glm/glm.hpp>
 #include <thread>
 
-
+// update this if you change the file format to invalidate old files
+#define VERSIONNUMBER 0.1
+// don't use this for any of your custom data please :)
+#define VERSIONSTRING "VERSION unique do not modify"
 /// @brief This class is a singleton that can save and load data for a scene.
 /// This class is thread safe and will save data to a file in the background.
 /// The file is based on the scene name. If you want to save data for multiple scenes, the class must be modified.

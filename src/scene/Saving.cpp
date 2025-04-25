@@ -21,12 +21,27 @@ void Saving::Load()
     {
         file >> mSaveData;
         file.close();
+        // check that the version is correct
+        if (mSaveData.contains(VERSIONSTRING))
+        {
+            if (mSaveData[VERSIONSTRING] != VERSIONNUMBER)
+            {
+                SPDLOG_ERROR("Save file version mismatch. Expected {}, got {}", VERSIONNUMBER, std::string(mSaveData["VERSION"]));
+                mSaveData.clear();
+            }
+        }
+        else
+        {
+            SPDLOG_ERROR("Save file version missing.");
+            mSaveData.clear();
+        }
     }
     else
     {
         // clear the save data if the file doesn't exist
         mSaveData.clear();
     }
+    mSaveData[VERSIONSTRING] = VERSIONNUMBER;
 }
 
 void Saving::SaveThread()
