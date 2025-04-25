@@ -424,25 +424,27 @@ void Engine::RenderLoadingScreen()
         while (m_isLoading)
         {
 
+            
+            float mTotalTime = glfwGetTime() - m_lastFrameTime;
+            float mProgress = m_progress;
+            mProgress += mTotalTime * 10.f;
+            if (m_progress < 25) {
+                mProgress = std::min(mProgress, 25.f);
+            } else if (m_progress < 85) {
+                mProgress = std::min(mProgress, 85.f);
+            }
+            mProgress = std::min(mProgress, 99.f);
             {
-                std::lock_guard<std::mutex> lock(m_context.presentQueueMutex);
-                float mTotalTime = glfwGetTime() - m_lastFrameTime;
-                float mProgress = m_progress;
-                mProgress += mTotalTime * 10.f;
-                if (m_progress < 25) {
-                    mProgress = std::min(mProgress, 25.f);
-                } else if (m_progress < 85) {
-                    mProgress = std::min(mProgress, 85.f);
-                }
-                mProgress = std::min(mProgress, 99.f);
-                {
-                    std::lock_guard<std::mutex> lock(m_context.graphicsQueueMutex);
-                    ImGuiRenderer::NewFrame();
-                }
-                ImGuiRenderer::Image("load", ImVec2{0, 0}, ImVec2{1, 1});
-                ImGuiRenderer::LoadingBar(mProgress, ImVec2(500, 500));
-                ImGuiRenderer::EndFrame();
+                std::lock_guard<std::mutex> lock2(m_context.presentQueueMutex);
+                std::lock_guard<std::mutex> lock(m_context.graphicsQueueMutex);
+                ImGuiRenderer::NewFrame();
+            }
+            ImGuiRenderer::Image("load", ImVec2{0, 0}, ImVec2{1, 1});
+            ImGuiRenderer::LoadingBar(mProgress, ImVec2(500, 500));
+            ImGuiRenderer::EndFrame();
+            {
                 // render some text with imgui
+                std::lock_guard<std::mutex> lock3(m_context.presentQueueMutex);
                 mRenderer->RenderUIOnly();
             }
              // sleep for 50ms
