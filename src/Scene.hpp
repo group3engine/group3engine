@@ -22,6 +22,8 @@
 
 #include "Config.hpp"
 
+#include "SignalSystem.hpp"
+
 struct CameraTransform {
     alignas(16) glm::mat4 view;
     alignas(16) glm::mat4 projection;
@@ -163,6 +165,9 @@ class Scene {
     }
         // CSM requires player camera transforms to compute splits
     const std::array<CameraTransform, GlobalConfig::maxPlayers> &GetPlayerCameraTransforms() const { return mPlayerCameraTransforms; }
+
+public:
+    SignalSystem mSignalSystem;
 
 private:
     Scene *mCurrentScene = nullptr;

@@ -13,6 +13,8 @@
 #include "ImGuiRenderer.hpp"
 #include "InputMapping.hpp"
 
+class WinSignal;
+
 enum class InternalEvent {
     eDeath,
     eCount
@@ -27,6 +29,7 @@ enum class DeathState{
 enum class InternalUiEvent {
     eDeathPopup,
     eFinishPopup,
+    eWinPopup,
     eCount
 };
 
@@ -62,6 +65,8 @@ class CharacterEntity : public Entity {
     void OnCollisionStay(Entity *aOther) override;
 
     void OnCollisionEnd(Entity *aOther) override;
+
+    void OnWin(WinSignal *signal);
 
     // set the checkpoint
     void SetCheckpoint(glm::vec3 checkpoint) { mLastCheckpoint = checkpoint; Save();}
@@ -110,6 +115,7 @@ class CharacterEntity : public Entity {
 
     size_t mPlayerId = 0;
 
+    bool mIsTiming = false;
     gui::TimerData mGuiTimerData{};
 
     size_t mDeathCount = 0;
@@ -119,6 +125,8 @@ class CharacterEntity : public Entity {
     DeathState mDeathState = DeathState::eLiving;
     double mDeathTimer = 0.0;
     const double mDeathTime = 1.0;
+
+    float mWinVisibleTimer = 0.0f;
 
     gui::DeathCounterData mGuiDeathCounterData{};
     gui::DeathPopupData mGuiDeathPopupData{};

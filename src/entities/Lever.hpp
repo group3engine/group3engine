@@ -15,6 +15,10 @@ class Lever : public Entity {
 
     void Update(double deltaTime) override;
 
+    EInteractable IsInteractable() const override {
+        return mIsPulled ? EInteractable::NotInteractable : EInteractable::Interactable;
+    }
+
     PhysicsSystem &mPhysicsSystem = PhysicsManager::get().mPhysicsSystem;
     const JPH::BodyLockInterface &mLockInterface = mPhysicsSystem.GetBodyLockInterface();
 
