@@ -11,8 +11,8 @@
 #include "Fonts.hpp"
 #include "Themes.hpp"
 
-class ImVec2;
-class ImFont;
+struct ImVec2;
+struct ImFont;
 
 class Context;
 class Scene;

@@ -3,7 +3,7 @@
 
 #include "Entity.hpp"
 
-class ResetToSpawnSignal;
+struct ResetToSpawnSignal;
 
 class Idol : public Entity {
   public:

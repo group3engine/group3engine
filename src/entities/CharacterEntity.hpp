@@ -13,7 +13,7 @@
 #include "ImGuiRenderer.hpp"
 #include "InputMapping.hpp"
 
-class WinSignal;
+struct WinSignal;
 
 enum class InternalEvent {
     eDeath,
