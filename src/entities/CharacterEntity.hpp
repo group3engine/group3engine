@@ -126,6 +126,8 @@ class CharacterEntity : public Entity {
     double mDeathTimer = 0.0;
     const double mDeathTime = 1.0;
 
+    bool mHasWon = false;
+
     float mWinVisibleTimer = 0.0f;
 
     gui::DeathCounterData mGuiDeathCounterData{};
