@@ -627,7 +627,7 @@ void CharacterEntity::RegisterControls()
 #ifndef PLATINUM
     mInputMapping.AddBinding("PAUSE", KEY::eP);
 #else
-    mInputMapping.AddBinding("PAUSE", KEY::eESCAPE, 0);
+    mInputMapping.AddBinding("PAUSE", KEY::eESCAPE);
 #endif
 
     // TODO: Interact gamepad binding?
