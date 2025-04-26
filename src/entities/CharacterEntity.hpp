@@ -103,6 +103,12 @@ class CharacterEntity : public Entity {
 
     size_t GetPlayerId() const { return mPlayerId; }
 
+    void SetPosition(glm::vec3 position) {
+        mSampleJoltCharacter->SetCharacterPosition(RVec3(position.x, position.y, position.z));
+        // set the velocity to zero
+        mSampleJoltCharacter->SetCharacterVelocity(Vec3(0.f, 0.f, 0.f));
+    }
+
   private:
     void Save();
     void Load();
