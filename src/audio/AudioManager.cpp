@@ -1,22 +1,38 @@
 #include "AudioManager.hpp"
 
 #include "Utils.hpp"
+#include <json.hpp>
+#include <fstream>
 
-void AudioManager::StartUp() {
+void AudioManager::StartUp()
+{
     soloud.init(); // Initialize SoLoud
 
     // Set up sound sources
-    std::filesystem::path soundPath = assetsPath / "audio" / "jump/Post Jump 3.wav";
-    AddAudioSource("land", soundPath);
-    std::filesystem::path jumpPath = assetsPath / "audio" / "jump/Pre Jump 3.wav";
-    AddAudioSource("jump", jumpPath);
-
-    std::filesystem::path musicPath = assetsPath / "audio" / "music/Sketchbook 2024-11-20.ogg";
-    AddAudioSource("main_menu_music", musicPath);
-    std::filesystem::path arrowPath = assetsPath / "audio" / "arrow/Arrow.wav";
-    AddAudioSource("arrow", arrowPath);
+    std::filesystem::path manifestPath = assetsPath / "audiomanifest.json";
+    LoadAudioManifest(manifestPath);
 }
 
 void AudioManager::ShutDown() {
     soloud.deinit();
+}
+
+void AudioManager::LoadAudioManifest(const std::filesystem::path &manifestPath)
+{
+    std::ifstream file(manifestPath);
+    if (file.is_open())
+    {
+        nlohmann::json manifest;
+        file >> manifest;
+        file.close();
+
+        for (const auto &entry : manifest) {
+            std::string name = entry["name"];
+            std::filesystem::path path = assetsPath / entry["path"];
+            AddAudioSource(name, path);
+        }
+    } else {
+        SPDLOG_ERROR("AudioManager: Failed to open manifest file {}", manifestPath.string());
+        std::exit(EXIT_FAILURE);
+    }
 }

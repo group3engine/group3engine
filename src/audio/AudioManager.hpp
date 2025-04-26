@@ -50,6 +50,12 @@ class AudioManager {
 
     void ShutDown();
 
+    /// @brief Add many audio sources via a manifest file.
+    /// The manifest file should be a JSON file with the following format:
+    /// A list of objects, each with a "name" and "path" field.
+    /// The path should be relative to the base of the assets folder.
+    void LoadAudioManifest(const std::filesystem::path &manifestPath);
+
     /// @brief Add an audio source to the manager.
     void AddAudioSource(const std::string &name, const std::filesystem::path &path) {
         // if the sound already exists, error
