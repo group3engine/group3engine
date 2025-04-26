@@ -30,6 +30,7 @@
 #endif
 
 /// @brief AudioManager is a singleton class that manages audio playback using SoLoud.
+/// functions that return an int are soloud handles to the sound that can be used to stop the sound, or use further soloud functions directly.
 class AudioManager {
   private:
     AudioManager() = default;
