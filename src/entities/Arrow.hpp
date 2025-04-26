@@ -24,7 +24,7 @@ private:
     float timeToBeInvisible = 5.f;
     float timeElapsed = 0.f;
     float randomOffset = 0.f;
-    const float offsetVariation = 0.5f;
+    const float offsetVariation = 2.0f;
 
 };
 

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
 
-project(group3engine CXX)
+project(group3engine CXX C)
 
 
 # set the output directory for built objects.
@@ -102,6 +102,10 @@ elseif(WIN32)
   target_compile_definitions(src PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
 endif()
 
+# Turn off unwanted SDL options
+set(SDL_OPENGL OFF CACHE BOOL "" FORCE)
+set(SDL_OPENGLES OFF CACHE BOOL "" FORCE)
+
 add_subdirectory(extern/glfw)
 add_subdirectory(extern/glm)
 add_subdirectory(extern/spdlog)
@@ -109,6 +113,23 @@ add_subdirectory(extern/imgui)
 add_subdirectory(extern/Vulkan-Headers)
 add_subdirectory(extern/volk)
 add_subdirectory(extern/SDL EXCLUDE_FROM_ALL)
+
+# SoLoud
+file(GLOB SOLOUD_CPP_SOURCE_FILES
+    "extern/soloud/src/audiosource/wav/*.cpp"
+    "extern/soloud/src/audiosource/wav/*.c"
+    "extern/soloud/src/backend/miniaudio/*.cpp"
+    "extern/soloud/src/core/*.cpp"
+    "extern/soloud/src/filter/*.cpp"
+)
+target_sources(src PRIVATE ${SOLOUD_CPP_SOURCE_FILES})
+# Include directories for IDEs - can just use target_sources with header files
+target_include_directories(src PRIVATE
+    extern/soloud/include
+    extern/soloud/src/audiosource/wav
+    extern/soloud/src/backend/miniaudio
+)
+target_compile_definitions(src PRIVATE WITH_MINIAUDIO)
 
 option(TRACY_ENABLE "" ON)
 option(TRACY_ON_DEMAND "" ON)

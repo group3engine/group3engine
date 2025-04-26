@@ -18,7 +18,7 @@
 #include "Input.hpp"
 #include "glm/fwd.hpp"
 #include "SDL.hpp"
-
+#include "AudioManager.hpp"
 Camera::Camera(const glm::vec3 position, glm::vec3 direction, glm::vec3 up)
     :
     m_position{position}, m_direction{direction}, m_up{up} {
@@ -98,6 +98,10 @@ void Camera::UpdateCameraMovement(const Transform &character_transform) {
             }
         }
     }
+    // update the audio listener position
+    AudioManager::get().SetListenerPosition(m_position.x, m_position.y, m_position.z,
+                                            m_direction.x, m_direction.y, m_direction.z,
+                                            m_up.x, m_up.y, m_up.z);
 }
 
 void Camera::UpdateCameraRotation(double deltaTime) {

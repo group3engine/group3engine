@@ -42,6 +42,7 @@ class CharacterEntity : public Entity {
 
     virtual void ProcessInput();
 
+
     virtual Vec3 GetCharacterPosition() const {
         return mSampleJoltCharacter->GetCharacterPosition();
     }

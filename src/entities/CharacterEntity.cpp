@@ -8,6 +8,7 @@
 #include <fstream>
 #include <cstdlib>
 
+#include "AudioManager.hpp"
 #include "Camera.hpp"
 #include "Engine.hpp"
 #include "imgui.h"
@@ -121,7 +122,10 @@ void CharacterEntity::ProcessInput(){
             controlInput = rotation * controlInput;
 
             // Check actions
-            jump = mInputMapping.GetActionPressed("JUMP") > 0;
+            if (mInputMapping.GetActionPressed("JUMP") > 0) {
+                jump = true;
+            }
+
             if ((mInputMapping.GetActionPressed("EMOTE") > 0) && !mInClimb) {
                 mIsEmoting = true;
             }
@@ -182,11 +186,8 @@ void CharacterEntity::Update(double deltaTime) {
     auto characterPhysicsPos = mSampleJoltCharacter->GetCharacterPosition();
     SetCharacterPositionOffset(characterPhysicsPos.GetX(), characterPhysicsPos.GetY(), characterPhysicsPos.GetZ());
 
-#ifdef PLATINUM
-    if (IsKeyPressed(KEY::eESCAPE))
-#else
-    if (IsKeyPressed(KEY::eP))
-#endif
+
+    if(mInputMapping.GetActionPressed("PAUSE") > 0)
     {
         // Engine::get().Quit();
         Engine::get().SetTimeScale(0.f);
@@ -325,16 +326,11 @@ void CharacterEntity::Update(double deltaTime) {
     mCamera->UpdateCameraMovement(GetWorldTransformComponents());
 }
 
-
 void CharacterEntity::UnscaledUpdate(double deltaTime)
 {
     if (Engine::get().GetTimeScale() == 0.f)
     {
-#ifdef PLATINUM
-        if (IsKeyPressed(KEY::eESCAPE))
-#else
-        if (IsKeyPressed(KEY::eP))
-#endif
+        if(mInputMapping.GetActionPressed("PAUSE") > 0)
         {
             Engine::get().SetTimeScale(1.f);
         }
@@ -626,6 +622,14 @@ void CharacterEntity::RegisterControls()
     mInputMapping.AddBinding("EMOTE", KEY::eF);
     mInputMapping.AddBinding("EMOTE", SDL_INPUT::GamepadButton::GAMEPAD_BUTTON_LEFT_FACE_DOWN, 0);
     mInputMapping.AddBinding("INTERACT", KEY::eE);
+    mInputMapping.AddBinding("INTERACT", SDL_INPUT::GamepadButton::GAMEPAD_BUTTON_X, 0);
+    mInputMapping.AddBinding("PAUSE", SDL_INPUT::GamepadButton::GAMEPAD_BUTTON_MIDDLE_RIGHT, 0);
+#ifndef PLATINUM
+    mInputMapping.AddBinding("PAUSE", KEY::eP);
+#else
+    mInputMapping.AddBinding("PAUSE", KEY::eESCAPE, 0);
+#endif
+
     // TODO: Interact gamepad binding?
 
 
@@ -633,10 +637,26 @@ void CharacterEntity::RegisterControls()
 
 void CharacterEntity::LateUpdate(double deltaTime)
 {
-    // if we are beginning a jump, we are not in climb
+
+    // if we are beginning a jump
     if(mSampleJoltCharacter->GetJumpState() == EJumpState::Start)
     {
+        // we are not in climb
         mInClimb = false;
+        // we should vibrate the controller
+        SDL_INPUT::SetGamepadVibration(0, 0.5f, 0.5f, 0.1f);
+        // play the jump sound
+        glm::vec3 pos = GetWorldTransformComponents().translation;
+        AudioManager::get().Play3D("jump", pos.x, pos.y, pos.z);
+    }
+    // if we have just landed
+    if(mSampleJoltCharacter->GetJumpState() == EJumpState::End)
+    {
+        // we should vibrate the controller
+        SDL_INPUT::SetGamepadVibration(0, 0.1f, 0.1f, 0.1f);
+        // play the land sound
+        glm::vec3 pos = GetWorldTransformComponents().translation;
+        AudioManager::get().Play3D("land", pos.x, pos.y, pos.z);
     }
 
     // Clear the interactables after every update, their conditions need to be checked next frame
@@ -644,4 +664,5 @@ void CharacterEntity::LateUpdate(double deltaTime)
     // and OnCollision given additional conditions, such as an interactable having been used and no
     // longer being interactable
     mInteractables.clear();
+
 }

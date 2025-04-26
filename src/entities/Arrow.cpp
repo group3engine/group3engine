@@ -3,6 +3,7 @@
 //
 
 #include "Arrow.hpp"
+#include "AudioManager.hpp"
 
 void Arrow::Awake()
 {
@@ -27,6 +28,9 @@ void Arrow::Update(double deltaTime)
             velocity = startVelocity;
             GetRigidBody().SetLinearVelocity(velocity);
             SetAsVisible();
+            // play the arrow sound
+            glm::vec3 pos = start_position;
+            AudioManager::get().Play3D("arrow", pos.x, pos.y, pos.z);
         }
     }
     if(timeElapsed > timeToMove + timeToBeInvisible)

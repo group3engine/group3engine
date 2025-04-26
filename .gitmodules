@@ -25,3 +25,6 @@
 [submodule "extern/SDL"]
 	path = extern/SDL
 	url = https://github.com/libsdl-org/SDL.git
+[submodule "extern/soloud"]
+	path = extern/soloud
+	url = https://github.com/jarikomppa/soloud.git
