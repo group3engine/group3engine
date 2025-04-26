@@ -68,6 +68,8 @@ class RigidBody {
     // internal
     void PrePhysicsUpdate(double deltaTime);
 
+    void SetActive(bool active);
+
   public:
 
     JPH::BodyCreationSettings mJoltCreationSettings{};
@@ -86,5 +88,8 @@ private:
     Vec3 mImpulse{};
 
     bool hasInitialised = false;
+
+    bool mShouldBeActivated = true;
+    bool mIsActive = false;
 };
 #endif // PHYSICS_RIGIDBODY_HPP
