@@ -329,16 +329,6 @@ void CharacterEntity::Update(double deltaTime) {
     mCamera->UpdateCameraMovement(GetWorldTransformComponents());
 }
 
-void CharacterEntity::HandleAudio() {
-    switch (mSampleJoltCharacter->GetJumpState()) {
-    case EJumpState::Start:
-        AudioManager::get().PlaySound();
-        break;
-    default:
-        break;
-    }
-}
-
 void CharacterEntity::UnscaledUpdate(double deltaTime)
 {
     if (Engine::get().GetTimeScale() == 0.f)
@@ -646,10 +636,26 @@ void CharacterEntity::RegisterControls()
 
 void CharacterEntity::LateUpdate(double deltaTime)
 {
-    // if we are beginning a jump, we are not in climb
+
+    // if we are beginning a jump
     if(mSampleJoltCharacter->GetJumpState() == EJumpState::Start)
     {
+        // we are not in climb
         mInClimb = false;
+        // we should vibrate the controller
+        SDL_INPUT::SetGamepadVibration(0, 0.5f, 0.5f, 0.1f);
+        // play the jump sound
+        glm::vec3 pos = GetWorldTransformComponents().translation;
+        AudioManager::get().Play3D("jump", pos.x, pos.y, pos.z);
+    }
+    // if we have just landed
+    if(mSampleJoltCharacter->GetJumpState() == EJumpState::End)
+    {
+        // we should vibrate the controller
+        SDL_INPUT::SetGamepadVibration(0, 0.1f, 0.1f, 0.1f);
+        // play the land sound
+        glm::vec3 pos = GetWorldTransformComponents().translation;
+        AudioManager::get().Play3D("land", pos.x, pos.y, pos.z);
     }
 
     // Clear the interactables after every update, their conditions need to be checked next frame
@@ -658,5 +664,4 @@ void CharacterEntity::LateUpdate(double deltaTime)
     // longer being interactable
     mInteractables.clear();
 
-    HandleAudio();
 }

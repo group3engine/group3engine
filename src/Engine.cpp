@@ -176,7 +176,7 @@ bool Engine::Initialize() {
 
     AudioManager::get().StartUp();
 
-    AudioManager::get().PlayMainMenuMusic();
+    AudioManager::get().SetBackgroundMusic("main_menu_music");
 
     return m_isRunning;
 }
@@ -317,9 +317,9 @@ void Engine::ChangeSceneFR(const std::filesystem::path &scenePath, size_t player
     mIsMainMenu = mScene->GetSceneFilename() == "main_menu";
 
     if (mIsMainMenu) {
-        AudioManager::get().PlayMainMenuMusic();
+        AudioManager::get().SetBackgroundMusic("main_menu_music");
     } else {
-        AudioManager::get().TryStopMainMenuMusic();
+        AudioManager::get().StopBackgroundMusic();
     }
 }
 
