@@ -65,6 +65,7 @@ namespace {
         &Sample::LeverSample,
         &Sample::BoulderSample,
         &Sample::SpikeTrapSample,
+        &Sample::DisappearingPlatformSample,
 
 
     };

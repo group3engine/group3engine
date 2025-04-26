@@ -790,6 +790,7 @@ void ImGuiRenderer::Update(Scene *scene)
         ImVec4(0.76, 0.5, 0.0, 1.0), "FPS: (%.1f FPS), %.3f ms/frame",
         ImGui::GetIO().Framerate, 1000.0f / ImGui::GetIO().Framerate);
 
+    assert(LightManager::getInstance().GetLights().size() > 0);
    auto dir = glm::normalize(LightManager::getInstance().GetLights()[0]->position);
 
    ImGui::Text("Directional Light: (%.2f, %.2f, %.2f)", dir.x, dir.y, dir.z);
