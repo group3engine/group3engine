@@ -45,7 +45,7 @@ void AudioManager::AddAudioSource(const std::string &name, const std::filesystem
         std::exit(EXIT_FAILURE);
     }
     SoLoud::Wav &wav = mSoundMap[name];
-    wav.load(path.c_str());
+    wav.load(path.string().c_str());
 }
 
 void AudioManager::SetVolume(const std::string &name, float volume)
