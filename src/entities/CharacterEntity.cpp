@@ -186,11 +186,8 @@ void CharacterEntity::Update(double deltaTime) {
     auto characterPhysicsPos = mSampleJoltCharacter->GetCharacterPosition();
     SetCharacterPositionOffset(characterPhysicsPos.GetX(), characterPhysicsPos.GetY(), characterPhysicsPos.GetZ());
 
-#ifdef PLATINUM
-    if (IsKeyPressed(KEY::eESCAPE))
-#else
-    if (IsKeyPressed(KEY::eP))
-#endif
+
+    if(mInputMapping.GetActionPressed("PAUSE") > 0)
     {
         // Engine::get().Quit();
         Engine::get().SetTimeScale(0.f);
@@ -333,11 +330,7 @@ void CharacterEntity::UnscaledUpdate(double deltaTime)
 {
     if (Engine::get().GetTimeScale() == 0.f)
     {
-#ifdef PLATINUM
-        if (IsKeyPressed(KEY::eESCAPE))
-#else
-        if (IsKeyPressed(KEY::eP))
-#endif
+        if(mInputMapping.GetActionPressed("PAUSE") > 0)
         {
             Engine::get().SetTimeScale(1.f);
         }
@@ -629,6 +622,14 @@ void CharacterEntity::RegisterControls()
     mInputMapping.AddBinding("EMOTE", KEY::eF);
     mInputMapping.AddBinding("EMOTE", SDL_INPUT::GamepadButton::GAMEPAD_BUTTON_LEFT_FACE_DOWN, 0);
     mInputMapping.AddBinding("INTERACT", KEY::eE);
+    mInputMapping.AddBinding("INTERACT", SDL_INPUT::GamepadButton::GAMEPAD_BUTTON_X, 0);
+    mInputMapping.AddBinding("PAUSE", SDL_INPUT::GamepadButton::GAMEPAD_BUTTON_MIDDLE_RIGHT, 0);
+#ifndef PLATINUM
+    mInputMapping.AddBinding("PAUSE", KEY::eP);
+#else
+    mInputMapping.AddBinding("PAUSE", KEY::eESCAPE, 0);
+#endif
+
     // TODO: Interact gamepad binding?
 
 
