@@ -41,7 +41,9 @@ public:
     Networking();
     ~Networking() {
         running = false;
-        listen_thread.join();
+        if (listen_thread.joinable()) {
+            listen_thread.join();
+        }
 
         Close();
     }
