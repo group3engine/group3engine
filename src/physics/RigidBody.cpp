@@ -5,6 +5,8 @@
 #include "PhysicsManager.hpp"
 
 RigidBody::~RigidBody() {
+    // enable the body to be removed
+    SetActive(true);
     // Remove body-entity mapping
     PhysicsManager::get().UnregisterBody(mBodyId);
 

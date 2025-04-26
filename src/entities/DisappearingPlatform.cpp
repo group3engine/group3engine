@@ -6,10 +6,25 @@
 
 void DisappearingPlatform::Awake()
 {
+    // get the time to step
     if (auto it = mFloatProperties.find("timeToStep"); it != mFloatProperties.end()) {
         timeToStep = it->second;
     } else {
         SPDLOG_ERROR("Disappearing platform does not have a timeToStep property.");
+        exit(EXIT_FAILURE);
+    }
+    // get the time to reset
+    if (auto it = mFloatProperties.find("timeToReset"); it != mFloatProperties.end()) {
+        timeToReset = it->second;
+    } else {
+        SPDLOG_ERROR("Disappearing platform does not have a timeToReset property.");
+        exit(EXIT_FAILURE);
+    }
+    // get the time to shrink
+    if (auto it = mFloatProperties.find("timeToShrink"); it != mFloatProperties.end()) {
+        timeToShrink = it->second;
+    } else {
+        SPDLOG_ERROR("Disappearing platform does not have a timeToShrink property.");
         exit(EXIT_FAILURE);
     }
     // get the start scale

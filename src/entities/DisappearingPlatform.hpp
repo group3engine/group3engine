@@ -25,10 +25,10 @@ public:
 
 private:
     float timeToStep{};
-    float timeToReset = 2.f;
+    float timeToReset{};
     DisappearingPlatformState mState = DisappearingPlatformState::IDLE;
     glm::vec3 startScale{};
-    float timeToShrink = 0.5f;
+    float timeToShrink{};
     float timer = 0.f;
 
 
