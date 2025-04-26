@@ -57,93 +57,31 @@ class AudioManager {
     void LoadAudioManifest(const std::filesystem::path &manifestPath);
 
     /// @brief Add an audio source to the manager.
-    void AddAudioSource(const std::string &name, const std::filesystem::path &path) {
-        // if the sound already exists, error
-        if (mSoundMap.find(name) != mSoundMap.end()) {
-            SPDLOG_ERROR("AudioManager: Sound {} already exists", name);
-            std::exit(EXIT_FAILURE);
-        }
-        SoLoud::Wav &wav = mSoundMap[name];
-        wav.load(path.c_str());
-    }
+    void AddAudioSource(const std::string &name, const std::filesystem::path &path);
     /// @brief Set the global volume for all sounds.
-    void SetGlobalVolume(float volume) {
-        soloud.setGlobalVolume(volume);
-    }
+    void SetGlobalVolume(float volume) { soloud.setGlobalVolume(volume); }
     /// @brief Set the volume for a specific sound.
-    void SetVolume(const std::string &name, float volume) {
-        auto it = mSoundMap.find(name);
-        if (it != mSoundMap.end()) {
-            it->second.setVolume(volume);
-        }
-    }
+    void SetVolume(const std::string &name, float volume);
     /// @brief Set the looping state for a specific sound.
-    void SetLooping(const std::string &name, bool looping) {
-        auto it = mSoundMap.find(name);
-        if (it != mSoundMap.end()) {
-            it->second.setLooping(looping);
-        }
-    }
+    void SetLooping(const std::string &name, bool looping);
     /// @brief Set the 3D parameters for a specific sound.
-    int Play(const std::string &name) {
-        int ret = -1;
-        auto it = mSoundMap.find(name);
-        if (it != mSoundMap.end()) {
-            soloud.play(it->second);
-        }
-        return ret;
-    }
+    int Play(const std::string &name);
     /// @brief Play a sound in 3D space.
-    int Play3D(const std::string &name, float posX, float posY, float posZ) {
-        int ret = -1;
-        auto it = mSoundMap.find(name);
-        if (it != mSoundMap.end()) {
-            ret = soloud.play3d(it->second, posX, posY, posZ);
-        }
-        return ret;
-    }
+    int Play3D(const std::string &name, float posX, float posY, float posZ);
 
     /// @brief Play a sound in the background.
-    int PlayBackground(const std::string &name) {
-        int ret = -1;
-        auto it = mSoundMap.find(name);
-        if (it != mSoundMap.end()) {
-            ret = soloud.playBackground(it->second);
-        }
-        return ret;
-    }
-
+    int PlayBackground(const std::string &name);
 
     /// @brief Set the background music. This will stop any currently playing
-    int SetBackgroundMusic(const std::string &name) {
-        // Stop any currently playing background music
-        if (backgroundMusicHandle != -1) {
-            soloud.stop(backgroundMusicHandle);
-        }
-        auto it = mSoundMap.find(name);
-        if (it != mSoundMap.end()) {
-            backgroundMusicHandle = soloud.playBackground(it->second);
-            soloud.setLooping(backgroundMusicHandle, true);
-        }
-        else
-        {
-            backgroundMusicHandle = -1; // Reset handle if not found
-        }
-        return backgroundMusicHandle;
-    }
-
+    int SetBackgroundMusic(const std::string &name);
     /// @brief Stop the currently playing background music.
-    void StopBackgroundMusic() {
-        if (backgroundMusicHandle != -1) {
-            soloud.stop(backgroundMusicHandle);
-            backgroundMusicHandle = -1;
-        }
-    }
+    void StopBackgroundMusic();
 
     /// @brief set the position of the listener (camera/player)
-    void SetListenerPosition(float posX, float posY, float posZ, float dirX, float dirY, float dirZ, float upX, float upY, float upZ) {
-        soloud.set3dListenerParameters(posX, posY, posZ, dirX, dirY, dirZ, upX, upY, upZ, 0, 0, 0);
-    }
+    void SetListenerPosition(float posX, float posY, float posZ, float dirX, float dirY, float dirZ, float upX, float upY, float upZ) { soloud.set3dListenerParameters(posX, posY, posZ, dirX, dirY, dirZ, upX, upY, upZ, 0, 0, 0); }
+
+    /// @brief stop a playing sound
+    void StopSound(int handle) { soloud.stop(handle); }
 
   private:
     SoLoud::Soloud soloud; // SoLoud engine
