@@ -72,10 +72,10 @@
 		{
 			"extras":{
 				"dropdown_items":"trapdoor, spawn_portal, idol, default, character, lever, arrow, networkmanager, networkedlocal, networkedremote",
-				"entity_dropdown":7,
+				"entity_dropdown":8,
 				"physics_dropdown":0,
 				"sensor_checkbox":0,
-				"solid_checkbox":1,
+				"solid_checkbox":0,
 				"invisible_checkbox":0,
 				"new_dropdown_item":"",
 				"new_tag":"",
@@ -2389,7 +2389,7 @@
 				"collider_type":"fallback_shape",
 				"physics_type":"static",
 				"is_sensor":false,
-				"is_solid":true,
+				"is_solid":false,
 				"is_invisible":false
 			},
 			"mesh":34,
@@ -2402,7 +2402,7 @@
 				"collider_type":"fallback_shape",
 				"physics_type":"static",
 				"is_sensor":false,
-				"is_solid":true,
+				"is_solid":false,
 				"is_invisible":false
 			},
 			"mesh":35,
@@ -2415,7 +2415,7 @@
 				"collider_type":"fallback_shape",
 				"physics_type":"static",
 				"is_sensor":false,
-				"is_solid":true,
+				"is_solid":false,
 				"is_invisible":false
 			},
 			"mesh":36,
@@ -2434,7 +2434,7 @@
 				"collider_type":"fallback_shape",
 				"physics_type":"static",
 				"is_sensor":false,
-				"is_solid":true,
+				"is_solid":false,
 				"is_invisible":false
 			},
 			"name":"Character",
@@ -3703,7 +3703,7 @@
 				"collider_type":"fallback_shape",
 				"physics_type":"static",
 				"is_sensor":false,
-				"is_solid":true,
+				"is_solid":false,
 				"is_invisible":false
 			},
 			"mesh":37,
@@ -3716,7 +3716,7 @@
 				"collider_type":"fallback_shape",
 				"physics_type":"static",
 				"is_sensor":false,
-				"is_solid":true,
+				"is_solid":false,
 				"is_invisible":false
 			},
 			"mesh":38,
@@ -3729,7 +3729,7 @@
 				"collider_type":"fallback_shape",
 				"physics_type":"static",
 				"is_sensor":false,
-				"is_solid":true,
+				"is_solid":false,
 				"is_invisible":false
 			},
 			"mesh":39,
@@ -3744,11 +3744,11 @@
 				176
 			],
 			"extras":{
-				"entity_type":"networkedlocal",
+				"entity_type":"networkedremote",
 				"collider_type":"fallback_shape",
 				"physics_type":"static",
 				"is_sensor":false,
-				"is_solid":true,
+				"is_solid":false,
 				"is_invisible":false
 			},
 			"name":"Fourth",
@@ -5017,7 +5017,7 @@
 				"collider_type":"fallback_shape",
 				"physics_type":"static",
 				"is_sensor":false,
-				"is_solid":true,
+				"is_solid":false,
 				"is_invisible":false
 			},
 			"mesh":40,
@@ -5030,7 +5030,7 @@
 				"collider_type":"fallback_shape",
 				"physics_type":"static",
 				"is_sensor":false,
-				"is_solid":true,
+				"is_solid":false,
 				"is_invisible":false
 			},
 			"mesh":41,
@@ -5043,7 +5043,7 @@
 				"collider_type":"fallback_shape",
 				"physics_type":"static",
 				"is_sensor":false,
-				"is_solid":true,
+				"is_solid":false,
 				"is_invisible":false
 			},
 			"mesh":42,
@@ -5058,11 +5058,11 @@
 				246
 			],
 			"extras":{
-				"entity_type":"networkedlocal",
+				"entity_type":"networkedremote",
 				"collider_type":"fallback_shape",
 				"physics_type":"static",
 				"is_sensor":false,
-				"is_solid":true,
+				"is_solid":false,
 				"is_invisible":false
 			},
 			"name":"Second",
@@ -6331,7 +6331,7 @@
 				"collider_type":"fallback_shape",
 				"physics_type":"static",
 				"is_sensor":false,
-				"is_solid":true,
+				"is_solid":false,
 				"is_invisible":false
 			},
 			"mesh":43,
@@ -6344,7 +6344,7 @@
 				"collider_type":"fallback_shape",
 				"physics_type":"static",
 				"is_sensor":false,
-				"is_solid":true,
+				"is_solid":false,
 				"is_invisible":false
 			},
 			"mesh":44,
@@ -6357,7 +6357,7 @@
 				"collider_type":"fallback_shape",
 				"physics_type":"static",
 				"is_sensor":false,
-				"is_solid":true,
+				"is_solid":false,
 				"is_invisible":false
 			},
 			"mesh":45,
@@ -6372,11 +6372,11 @@
 				316
 			],
 			"extras":{
-				"entity_type":"networkedlocal",
+				"entity_type":"networkedremote",
 				"collider_type":"fallback_shape",
 				"physics_type":"static",
 				"is_sensor":false,
-				"is_solid":true,
+				"is_solid":false,
 				"is_invisible":false
 			},
 			"name":"Third",
