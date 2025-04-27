@@ -5,9 +5,10 @@
 #include "NetworkEntitiesManager.hpp"
 #include "Input.hpp"
 #include "Scene.hpp"
-#include <json.hpp>
 
-
+#include "Debugging.hpp"
+#include "NetworkSignals.hpp"
+#include "SignalSystem.hpp"
 
 void NetworkEntitiesManager::Update(double deltaTime)
 {
@@ -48,6 +49,33 @@ void NetworkEntitiesManager::Update(double deltaTime)
             state.isCrouching = jsonData["isCrouching"];
             state.isEmoting = jsonData["isEmoting"];
             state.isInClimb = jsonData["isInClimb"];
+
+            // TODO: Add code to respond to this
+            // nlohmann::json idols = jsonData["idols"];
+            // DEBUG_ASSERT(idols.is_array());
+            // for (const auto& idolData : idols) {
+            //     DEBUG_ASSERT(idolData.is_object());
+            //     // wasCollected will always be true for now but other data could be added
+            //     NetworkIdolSignal networkIdolSignal{};
+            //     networkIdolSignal.entityID = idolData["entityID"];
+            //     networkIdolSignal.wasCollected = idolData["wasCollected"];
+            //     GetScene()->mSignalSystem.EmitSignal(&networkIdolSignal);
+            // }
+
+            // For most entities there are multiple of them so we should have a
+            // json array and check to see if the json array is empty or not.
+            // Emitting one signal per element in the array
+            // Even for the idol where there should be one, do the same thing for simplicity
+            nlohmann::json levers = jsonData["levers"];
+            DEBUG_ASSERT(levers.is_array());
+            for (const auto& leverData : levers) {
+                DEBUG_ASSERT(leverData.is_object());
+                // wasPulled will always be true for now but other data could be added
+                NetworkLeverSignal networkLeverSignal{};
+                networkLeverSignal.entityID = leverData["entityID"];
+                networkLeverSignal.wasPulled = leverData["wasPulled"];
+                GetScene()->mSignalSystem.EmitSignal(&networkLeverSignal);
+            }
         }
         catch(const nlohmann::json::parse_error &e)
         {
@@ -88,6 +116,25 @@ void NetworkEntitiesManager::Update(double deltaTime)
         // update the state
         child->UpdateState(state);
     }
+}
+
+void NetworkEntitiesManager::LateUpdate(double deltaTime) {
+    std::string mapName = Scene::get().GetActiveScene()->GetSceneFilename().string();
+    // TODO: Is this redundant and is this in a different location? Would that be problematic?
+    mLocalJson["mapName"] = mapName;
+
+    std::string jsonToSend = mLocalJson.dump();
+
+    // add the map name to the start for quick parsing
+    std::array<char, BUFFER_SIZE> buffer;
+    std::copy(mapName.begin(), mapName.end(), buffer.data());
+    buffer[mapName.size()] = '\0';
+    // add the json to the end
+    std::copy(jsonToSend.begin(), jsonToSend.end(), buffer.data() + mapName.size() + 1);
+    static_cast<NetworkEntitiesManager*>(GetParent())->SendMessage(buffer, mapName.size() + 1 + jsonToSend.size());
+
+    // Clear local json after sending
+    mLocalJson.clear();
 }
 
 void NetworkEntitiesManager::SendChatMessage(std::string playerName, std::string message)
@@ -158,22 +205,4 @@ void NetworkEntitiesManager::ReceiveMessages()
         // sleep for 1 second
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
-}
-
-std::tuple<std::string, std::string>  JSONPARSE::GetPairFromString(const std::string &aString)
-{
-    // split the string by :
-    size_t colonPos = aString.find(':');
-    std::string key = aString.substr(0, colonPos);
-    std::string value = aString.substr(colonPos + 1);
-    // take the string between the first " and the last "
-    size_t firstQuote = value.find_first_of('"');
-    size_t lastQuote = value.find_last_of('"');
-    value = value.substr(firstQuote + 1, lastQuote - firstQuote - 1);
-    // same for the key
-    firstQuote = key.find_first_of('"');
-    lastQuote = key.find_last_of('"');
-    key = key.substr(firstQuote + 1, lastQuote - firstQuote - 1);
-
-    return std::make_tuple(key, value);
 }

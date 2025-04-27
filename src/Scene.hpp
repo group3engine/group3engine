@@ -24,6 +24,8 @@
 
 #include "SignalSystem.hpp"
 
+class NetworkEntitiesManager;
+
 struct CameraTransform {
     alignas(16) glm::mat4 view;
     alignas(16) glm::mat4 projection;
@@ -166,6 +168,11 @@ class Scene {
         // CSM requires player camera transforms to compute splits
     const std::array<CameraTransform, GlobalConfig::maxPlayers> &GetPlayerCameraTransforms() const { return mPlayerCameraTransforms; }
 
+    NetworkEntitiesManager *GetNetworkEntitiesManager() const {
+        assert(mNetworkEntitiesManager);
+        return mNetworkEntitiesManager;
+    }
+
 public:
     SignalSystem mSignalSystem;
 
@@ -201,5 +208,7 @@ private:
     gui::Settings::ActivePlayerCountOverride mGuiActivePlayerCountOverride = {};
 
     std::filesystem::path mSceneFilename;
+
+    NetworkEntitiesManager *mNetworkEntitiesManager;
 };
 

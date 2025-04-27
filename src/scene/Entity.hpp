@@ -276,6 +276,8 @@ class Entity {
 
     std::unordered_map<std::string, float> mFloatProperties;
 
+    uint32_t mEntityID = kEntityCount++;
+
     private:
 
     std::string mName{};
@@ -309,8 +311,6 @@ class Entity {
     glm::mat4 mAnimationTransform = glm::mat4(1.0f);
 
     bool mHasRigidBody = false;
-
-    uint32_t mEntityID = kEntityCount++;
 
     bool mIsSensor = false;
 

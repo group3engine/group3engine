@@ -2,6 +2,9 @@
 
 #include <stack>
 
+#include "Scene.hpp"
+#include "NetworkEntitiesManager.hpp"
+
 Lever::Lever() {
     mType = "lever";
 }
@@ -102,6 +105,14 @@ void Lever::OnInteract(Entity *other) {
 
         for (auto *trapdoor : mTrapdoors) {
             trapdoor->Activate();
+        }
+
+        // TODO: Use the network signal struct so we don't have multiple definitions
+        // Each network signal can then use the to_json and from_json functionality
+        if (GetScene()->GetNetworkEntitiesManager()) {
+            nlohmann::json &localJson = GetScene()->GetNetworkEntitiesManager()->GetLocalJson();
+            nlohmann::json json = {{"entityID", mEntityID}, {"wasPulled", true}};
+            localJson["levers"].emplace_back(json);
         }
     }
 }
