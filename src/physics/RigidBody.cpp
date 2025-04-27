@@ -96,6 +96,10 @@ glm::mat4 RigidBody::GetWorldTransform() const {
     return returnWorldTransform;
 }
 
+RMat44 RigidBody::GetWorldTransformJolt() const {
+    return PhysicsManager::get().mPhysicsSystem.GetBodyInterface().GetWorldTransform(mBodyId);
+}
+
 void RigidBody::PrePhysicsUpdate(double deltaTime)
 {
     if(updateVelocity)
