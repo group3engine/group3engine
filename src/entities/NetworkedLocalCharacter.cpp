@@ -3,7 +3,7 @@
 //
 
 #include "NetworkedLocalCharacter.hpp"
-#include "NetworkCharacterManager.hpp"
+#include "NetworkEntitiesManager.hpp"
 #include "Scene.hpp"
 #include <json.hpp>
 
@@ -35,7 +35,7 @@ void NetworkedLocalCharacter::Update(double deltaTime)
     buffer[mapName.size()] = '\0';
     // add the json to the end
     std::copy(jsonToSend.begin(), jsonToSend.end(), buffer.data() + mapName.size() + 1);
-    static_cast<NetworkCharacterManager*>(GetParent())->SendMessage(buffer, mapName.size() + 1 + jsonToSend.size());
+    static_cast<NetworkEntitiesManager*>(GetParent())->SendMessage(buffer, mapName.size() + 1 + jsonToSend.size());
 
     CharacterEntity::Update(deltaTime);
 }

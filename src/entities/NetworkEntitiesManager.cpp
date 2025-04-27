@@ -2,14 +2,14 @@
 // Created by thomas on 02/04/25.
 //
 
-#include "NetworkCharacterManager.hpp"
+#include "NetworkEntitiesManager.hpp"
 #include "Input.hpp"
 #include "Scene.hpp"
 #include <json.hpp>
 
 
 
-void NetworkCharacterManager::Update(double deltaTime)
+void NetworkEntitiesManager::Update(double deltaTime)
 {
     // get the messages
     auto messages = mNetworking.GetMessages();
@@ -90,7 +90,7 @@ void NetworkCharacterManager::Update(double deltaTime)
     }
 }
 
-void NetworkCharacterManager::SendChatMessage(std::string playerName, std::string message)
+void NetworkEntitiesManager::SendChatMessage(std::string playerName, std::string message)
 {
     // generate the json of the message
     // we need to include the player name, message, timestamp, and map name
@@ -104,14 +104,14 @@ void NetworkCharacterManager::SendChatMessage(std::string playerName, std::strin
     chatSendThread.detach();
 }
 
-NetworkCharacterManager::NetworkCharacterManager()
+NetworkEntitiesManager::NetworkEntitiesManager()
 {
-    mType = "NetworkCharacterManager";
+    mType = "NetworkEntitiesManager";
     // start off the receive thread
-    chatGetThread = std::thread(&NetworkCharacterManager::ReceiveMessages, this);
+    chatGetThread = std::thread(&NetworkEntitiesManager::ReceiveMessages, this);
 }
 
-NetworkCharacterManager::~NetworkCharacterManager()
+NetworkEntitiesManager::~NetworkEntitiesManager()
 {
     chatting = false;
     if (chatGetThread.joinable())
@@ -121,7 +121,7 @@ NetworkCharacterManager::~NetworkCharacterManager()
 
 }
 
-void NetworkCharacterManager::ReceiveMessages()
+void NetworkEntitiesManager::ReceiveMessages()
 {
     while(chatting)
     {
