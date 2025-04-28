@@ -120,10 +120,10 @@ void NetworkEntitiesManager::Update(double deltaTime)
 
 void NetworkEntitiesManager::LateUpdate(double deltaTime) {
     std::string mapName = Scene::get().GetActiveScene()->GetSceneFilename().string();
-    // TODO: Is this redundant and is this in a different location? Would that be problematic?
-    mLocalJson["mapName"] = mapName;
 
     std::string jsonToSend = mLocalJson.dump();
+
+    SPDLOG_INFO("{}", jsonToSend);
 
     // add the map name to the start for quick parsing
     std::array<char, BUFFER_SIZE> buffer;
@@ -131,7 +131,7 @@ void NetworkEntitiesManager::LateUpdate(double deltaTime) {
     buffer[mapName.size()] = '\0';
     // add the json to the end
     std::copy(jsonToSend.begin(), jsonToSend.end(), buffer.data() + mapName.size() + 1);
-    static_cast<NetworkEntitiesManager*>(GetParent())->SendMessage(buffer, mapName.size() + 1 + jsonToSend.size());
+    SendMessage(buffer, mapName.size() + 1 + jsonToSend.size());
 
     // Clear local json after sending
     mLocalJson.clear();

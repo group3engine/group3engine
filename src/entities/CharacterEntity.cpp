@@ -452,7 +452,7 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
         }
     }
 
-    SPDLOG_INFO("I am {} and I collided with {}", GetName(), aOther->GetName());
+    // SPDLOG_INFO("I am {} and I collided with {}", GetName(), aOther->GetName());
 
 }
 void CharacterEntity::Save() {

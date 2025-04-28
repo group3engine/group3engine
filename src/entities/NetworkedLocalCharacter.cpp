@@ -25,6 +25,8 @@ void NetworkedLocalCharacter::Update(double deltaTime)
             {"scale", {transform.scale.x, transform.scale.y, transform.scale.z}}
     };
     jsonData["velocity"] = {velocity.x, velocity.y, velocity.z};
+    // TODO: Is this redundant and is this in a different location? Would that be problematic?
+    jsonData["mapName"] = mapName;
     jsonData["isCrouching"] = mIsCrouching;
     jsonData["isEmoting"] = mIsEmoting;
     jsonData["isInClimb"] = mInClimb;

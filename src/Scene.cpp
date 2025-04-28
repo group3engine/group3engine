@@ -414,8 +414,8 @@ void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
             entity->AddRigidBody(bodyCreationSettings);
         }
 
-        SPDLOG_INFO("total vertices {}", totalVertices);
-        SPDLOG_INFO("total triangles {}", totalTriangles);
+        // SPDLOG_INFO("total vertices {}", totalVertices);
+        // SPDLOG_INFO("total triangles {}", totalTriangles);
     }
 
 }
