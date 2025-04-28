@@ -67,7 +67,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
     cgltf_result result =
         cgltf_parse_file(&options, aFilepath.string().c_str(), &data);
     if (result != cgltf_result_success) {
-        std::cout << "Failed to parse file.\n";
+        SPDLOG_INFO("Failed to parse file. {}", aFilepath.string());
         std::exit(EXIT_FAILURE);
     }
     if (aIsDebug) {
