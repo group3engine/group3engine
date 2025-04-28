@@ -10,7 +10,7 @@ layout (set = 0, binding = 1, rgba32f) writeonly uniform image2D images[];
 
 
 #define PI 3.141592653589
-#define IRRADIANCE_MAP_SIZE 32
+#define IRRADIANCE_MAP_SIZE 32.0
 void main() {
 
     uvec3 gid = gl_GlobalInvocationID;
@@ -30,7 +30,7 @@ void main() {
 
     vec3 N = normalize(dir);
     vec3 irradiance = vec3(0.0);
-    vec3 up = vec3(0.0, 1.0, 0.0);
+    vec3 up = abs(N.y) > 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(0.0, 1.0, 0.0);
     vec3 right = normalize(cross(up, N));
     up = normalize(cross(N, right));
 
@@ -46,7 +46,7 @@ void main() {
             // in brightness than the rest which results in a banding/dotting effect in the prefiltered map.
             // To avoid this we can clamp the brightness when sampling the cubemap but I am unsure if this is
             // something we should be doing or just use better HDR cubemaps.
-            irradiance += clamp(texture(skybox, sampleVec).rgb, 0, 100) * cos(theta) * sin(theta);
+            irradiance += clamp(texture(skybox, sampleVec).rgb, 0.0, 100.0) * cos(theta) * sin(theta);
             nrSamples++;
         }
     }
