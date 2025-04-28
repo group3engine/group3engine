@@ -13,7 +13,6 @@ void MovingEntity::Update(double deltaTime) {
 
     if (mCurrentTime > mTime) {
         mVelocity = -mVelocity;
-        // std::swap(mInitialPosition, mFinalPosition);
         mCurrentTime = 0.0f;
     }
 
