@@ -66,15 +66,16 @@ void NetworkEntitiesManager::Update(double deltaTime)
             // json array and check to see if the json array is empty or not.
             // Emitting one signal per element in the array
             // Even for the idol where there should be one, do the same thing for simplicity
-            nlohmann::json levers = jsonData["levers"];
-            DEBUG_ASSERT(levers.is_array());
-            for (const auto& leverData : levers) {
-                DEBUG_ASSERT(leverData.is_object());
-                // wasPulled will always be true for now but other data could be added
-                NetworkLeverSignal networkLeverSignal{};
-                networkLeverSignal.entityID = leverData["entityID"];
-                networkLeverSignal.wasPulled = leverData["wasPulled"];
-                GetScene()->mSignalSystem.EmitSignal(&networkLeverSignal);
+            if (auto levers = jsonData.find("levers"); levers != jsonData.end()) {
+                DEBUG_ASSERT(levers->is_array());
+                for (const auto& leverData : *levers) {
+                    DEBUG_ASSERT(leverData.is_object());
+                    // wasPulled will always be true for now but other data could be added
+                    NetworkLeverSignal networkLeverSignal{};
+                    networkLeverSignal.entityID = leverData["entityID"];
+                    networkLeverSignal.wasPulled = leverData["wasPulled"];
+                    GetScene()->mSignalSystem.EmitSignal(&networkLeverSignal);
+                }
             }
         }
         catch(const nlohmann::json::parse_error &e)
