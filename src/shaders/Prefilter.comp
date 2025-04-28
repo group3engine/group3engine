@@ -92,7 +92,7 @@ void main() {
         {
             // Clamp to 100 to fix bug with extremely bright pixel on autumn field skybox
             // The rest of the sun pixels are comfortably around 100, will fix aliasing
-            prefilteredColour += clamp(texture(skybox, L).rgb, 0, 100) * NdotL;
+            prefilteredColour += clamp(texture(skybox, L).rgb, 0.0, 100.0) * NdotL;
             totalWeight += NdotL;
         }
     }
