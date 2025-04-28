@@ -34,6 +34,11 @@ enum class EInteractable {
     NotInteractable
 };
 
+enum class ENetworkLocality {
+    Local,
+    Remote
+};
+
 #define MIN_ANIMATOR_UPDATE_DISTANCE 50.f
 #define MAX_ANIMATOR_UPDATE_DISTANCE 500.f
 #define LOWEST_ANIMATOR_UPDATE_RATE 1000.f
@@ -176,7 +181,7 @@ class Entity {
 
     // NOTE: There is no parameter passing with this function
     /// called when an entity wants to interact with another entity
-    virtual void OnInteract(Entity *other) {}
+    virtual void OnInteract(Entity *other, ENetworkLocality networkLocality) {}
 
     // the following functions are overridable by the user
     /// called on the first frame of a collision
@@ -188,7 +193,7 @@ class Entity {
     /// called after the last frame of a collision
     virtual void OnCollisionEnd(Entity *aOther)
     {
-        SPDLOG_INFO("I am {} and I am no longer colliding with {}", GetName(), aOther->GetName());
+        // SPDLOG_INFO("I am {} and I am no longer colliding with {}", GetName(), aOther->GetName());
     }
 
     /// called for each entity just before update has been called per entity
@@ -276,6 +281,8 @@ class Entity {
 
     std::unordered_map<std::string, float> mFloatProperties;
 
+    uint32_t mEntityID = kEntityCount++;
+
     private:
 
     std::string mName{};
@@ -309,8 +316,6 @@ class Entity {
     glm::mat4 mAnimationTransform = glm::mat4(1.0f);
 
     bool mHasRigidBody = false;
-
-    uint32_t mEntityID = kEntityCount++;
 
     bool mIsSensor = false;
 

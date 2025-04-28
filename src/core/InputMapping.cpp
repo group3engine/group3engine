@@ -3,6 +3,9 @@
 //
 
 #include "InputMapping.hpp"
+
+#include <algorithm>
+
 #include "InputData.hpp"
 #include "Input.hpp"
 

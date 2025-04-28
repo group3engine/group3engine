@@ -12,7 +12,7 @@
 #include "RotateOnX.hpp"
 #include "SampleSecondaryEntity.hpp"
 #include "ParticleCube.hpp"
-#include "NetworkCharacterManager.hpp"
+#include "NetworkEntitiesManager.hpp"
 #include "NetworkedLocalCharacter.hpp"
 #include "NetworkedCharacterRemote.hpp"
 #include "Arrow.hpp"
@@ -28,6 +28,7 @@
 #include "Idol.hpp"
 #include "SpawnPortal.hpp"
 #include "ZipLine.hpp"
+#include "DisappearingPlatform.hpp"
 // Add more includes here
 
 // an enum of all the different entity types
@@ -43,7 +44,7 @@ enum class EntityType {
     BOUNCEPAD,
     NETWORKEDLOCALCHARACTER,
     NETWORKEDCHARACTERREMOTE,
-    NETWORKCHARACTERMANAGER,
+    NETWORKENTITIESMANAGER,
     ARROW,
     TILEBOX,
     TILEMANAGER,
@@ -57,13 +58,14 @@ enum class EntityType {
     IDOL,
     SPAWNPORTAL,
     ZIPLINE,
+    DISAPPEARINGPLATFORM
     // Add more entity types here
 };
 // a map of strings to entity types
 static const std::unordered_map<std::string, EntityType> entityTypeMap = {
     {"default", EntityType::DEFAULT},
     {"character", EntityType::CHARACTER},
-    {"movingTest", EntityType::MOVING},
+    {"moving_platform", EntityType::MOVING},
     {"rotatingPlatform", EntityType::ROTATING},
     {"SpinningOnX", EntityType::SPINNINGONX},
     {"second", EntityType::SECONDCHARACTER},
@@ -72,7 +74,7 @@ static const std::unordered_map<std::string, EntityType> entityTypeMap = {
     {"particles", EntityType::PARTICLES},
     {"networkedlocal", EntityType::NETWORKEDLOCALCHARACTER},
     {"networkedremote", EntityType::NETWORKEDCHARACTERREMOTE},
-    {"networkmanager", EntityType::NETWORKCHARACTERMANAGER},
+    {"networkmanager", EntityType::NETWORKENTITIESMANAGER},
     {"arrow",  EntityType::ARROW},
     {"tileBox", EntityType::TILEBOX},
     {"tileManager", EntityType::TILEMANAGER},
@@ -86,6 +88,7 @@ static const std::unordered_map<std::string, EntityType> entityTypeMap = {
     {"idol", EntityType::IDOL},
     {"spawn_portal", EntityType::SPAWNPORTAL},
     {"zipline", EntityType::ZIPLINE},
+    {"disappearing platform", EntityType::DISAPPEARINGPLATFORM}
 };
 // a function to convert a string to an entity type
 inline EntityType GetEntityTypeFromString(const std::string& aTypeName) {
@@ -125,8 +128,8 @@ inline Entity* CreateNewEntity(const std::string& aEntityType)
         return new NetworkedLocalCharacter();
     case EntityType::NETWORKEDCHARACTERREMOTE:
         return new NetworkedCharacterRemote();
-    case EntityType::NETWORKCHARACTERMANAGER:
-        return new NetworkCharacterManager();
+    case EntityType::NETWORKENTITIESMANAGER:
+        return new NetworkEntitiesManager();
     case EntityType::ARROW:
         return new Arrow();
     case EntityType::TILEBOX:
@@ -153,6 +156,8 @@ inline Entity* CreateNewEntity(const std::string& aEntityType)
         return new SpawnPortal();
     case EntityType::ZIPLINE:
         return new ZipLine();
+    case EntityType::DISAPPEARINGPLATFORM:
+        return new DisappearingPlatform();
     // Add more cases here
     default:
         assert(false);

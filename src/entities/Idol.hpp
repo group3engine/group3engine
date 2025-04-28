@@ -15,7 +15,7 @@ class Idol : public Entity {
         return mIsCollected ? EInteractable::NotInteractable : EInteractable::Interactable;
     }
 
-    void OnInteract(Entity *other) override;
+    void OnInteract(Entity *other, ENetworkLocality networkLocality) override;
 
     void OnResetToSpawn([[maybe_unused]] ResetToSpawnSignal *signal);
 

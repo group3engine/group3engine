@@ -137,7 +137,7 @@ void CharacterEntity::ProcessInput(){
                 // NOTE: Having more than one interactable in an area will allow the user to
                 // interact with them all at once
                 for (auto &interactable : mInteractables) {
-                    interactable->OnInteract(this);
+                    interactable->OnInteract(this, ENetworkLocality::Local);
                 }
             }
         }
@@ -442,23 +442,8 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
     if(aOther->CompareTag("climbable"))
     {
         mEnterClimb = true;
-        // if the climbable object doesn't have a child, use the distance from us to them
-        if(aOther->GetChildren().empty())
-        {
-            mClimbDirection = aOther->GetWorldTransformComponents().translation - GetCharacterPositionOffset();
-            mClimbDirection.y = 0;
-            mClimbDirection = glm::normalize(mClimbDirection);
-        }
-            // otherwise, the local transform of the child is the direction
-        else
-        {
-            // get the first child
-            auto child = aOther->GetChildren()[0];
-            // get the local transform of the child
-            mClimbDirection = child->GetLocalTransform().translation;
-            mClimbDirection.y = 0;
-            mClimbDirection = glm::normalize(mClimbDirection);
-        }
+
+        mClimbDirection = CalcClimbDirection(aOther);
     }
 
     if (aOther->CompareType("spawn_portal")) {
@@ -467,7 +452,7 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
         }
     }
 
-    SPDLOG_INFO("I am {} and I collided with {}", GetName(), aOther->GetName());
+    // SPDLOG_INFO("I am {} and I collided with {}", GetName(), aOther->GetName());
 
 }
 void CharacterEntity::Save() {
@@ -579,29 +564,26 @@ void CharacterEntity::OnCollisionStay(Entity *aOther)
     if (aOther->CompareTag("climbable"))
     {
         mEnterClimb = true;
-        // if the climbable object doesn't have a child, use the distance from us to them
-        if(aOther->GetChildren().empty())
-        {
-            mClimbDirection = aOther->GetWorldTransformComponents().translation - GetCharacterPositionOffset();
-            mClimbDirection.y = 0;
-            mClimbDirection = glm::normalize(mClimbDirection);
-        }
-        // otherwise, the local transform of the child is the direction
-        else
-        {
-            // get the first child
-            auto child = aOther->GetChildren()[0];
-            // get the local transform of the child
-            mClimbDirection = child->GetLocalTransform().translation;
-            mClimbDirection.y = 0;
-            mClimbDirection = glm::normalize(mClimbDirection);
-        }
+
+        mClimbDirection = CalcClimbDirection(aOther);
     }
 
     if (aOther->CompareTag("proximity_prompt") &&
         aOther->IsInteractable() == EInteractable::Interactable) {
         mInteractables.push_back(aOther);
     }
+}
+
+glm::vec3 CharacterEntity::CalcClimbDirection(Entity *climbEntity) {
+    // Get the z axis of the climbable entity (assume its a flat wall/plane)
+    // Make sure the origin/transform of the object in the editor is correct.
+    // If it is then the z axis should be parallel to the plane normal
+    glm::vec4 worldTransform = climbEntity->GetWorldTransform()[2];
+    worldTransform.y = 0;
+    worldTransform = glm::normalize(worldTransform);
+    // Negate the z axis to make the character's velocity go into the wall and look at it
+    worldTransform = -worldTransform;
+    return glm::vec3(worldTransform);
 }
 
 void CharacterEntity::RegisterControls()

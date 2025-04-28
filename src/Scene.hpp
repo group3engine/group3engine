@@ -24,6 +24,13 @@
 
 #include "SignalSystem.hpp"
 
+#ifdef JPH_DEBUG_RENDERER
+#include <Jolt/Renderer/DebugRendererSimple.h>
+#include "DebugRendererImp.h"
+#endif // JPH_DEBUG_RENDERER
+
+class NetworkEntitiesManager;
+
 struct CameraTransform {
     alignas(16) glm::mat4 view;
     alignas(16) glm::mat4 projection;
@@ -166,7 +173,18 @@ class Scene {
         // CSM requires player camera transforms to compute splits
     const std::array<CameraTransform, GlobalConfig::maxPlayers> &GetPlayerCameraTransforms() const { return mPlayerCameraTransforms; }
 
-public:
+    NetworkEntitiesManager *GetNetworkEntitiesManager() const {
+        assert(mNetworkEntitiesManager);
+        return mNetworkEntitiesManager;
+    }
+
+#ifdef JPH_DEBUG_RENDERER
+    DebugRendererSimple *GetDebugRenderer() const { return mDebugRenderer; }
+
+    void SetDebugRenderer(DebugRendererSimple *debugRenderer) { mDebugRenderer = debugRenderer; }
+#endif // JPH_DEBUG_RENDERER
+
+  public:
     SignalSystem mSignalSystem;
 
 private:
@@ -201,5 +219,11 @@ private:
     gui::Settings::ActivePlayerCountOverride mGuiActivePlayerCountOverride = {};
 
     std::filesystem::path mSceneFilename;
+
+    NetworkEntitiesManager *mNetworkEntitiesManager;
+
+#ifdef JPH_DEBUG_RENDERER
+    DebugRendererSimple *mDebugRenderer = nullptr;
+#endif // JPH_DEBUG_RENDERER
 };
 

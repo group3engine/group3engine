@@ -82,7 +82,6 @@ void NetworkedCharacterRemote::LateUpdate(double deltaTime) {
     // if we aren't idling, then we can't be crouching or emoting
     if(activeAnimation != "idle")
     {
-        mIsCrouching = false;
         mIsEmoting = false;
     }
     // if we are emoting, set the animation to emote

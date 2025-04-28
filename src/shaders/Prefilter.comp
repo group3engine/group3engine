@@ -6,7 +6,7 @@
 layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
 layout (set = 0, binding = 0) uniform samplerCube skybox;
-layout (set = 0, binding = 1, rgba16f) writeonly uniform image2DArray images[];
+layout (set = 0, binding = 1, rgba32f) writeonly uniform image2DArray images[];
 
 layout(push_constant) uniform Push
 {
@@ -90,7 +90,9 @@ void main() {
         float NdotL = max(dot(N, L), 0.0);
         if(NdotL > 0.0)
         {
-            prefilteredColour += texture(skybox, L).rgb * NdotL;
+            // Clamp to 100 to fix bug with extremely bright pixel on autumn field skybox
+            // The rest of the sun pixels are comfortably around 100, will fix aliasing
+            prefilteredColour += clamp(texture(skybox, L).rgb, 0.0, 100.0) * NdotL;
             totalWeight += NdotL;
         }
     }
@@ -98,5 +100,6 @@ void main() {
     prefilteredColour /= totalWeight;
 
     vec4 color = vec4(prefilteredColour, 1.0);
+    //vec4 color = vec4(texture(skybox, dir).rgb, 1.0);
     imageStore(images[nonuniformEXT(pc.mipLevel)], ivec3(texCoord, faceIndex), color);
 }

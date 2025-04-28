@@ -10,10 +10,8 @@ class Entity;
 
 using SignalTypeId = uint64_t;
 
-namespace {
-    // Signal type count so we can increment unique signal type ids
-    inline SignalTypeId signalTypeCount = 0;
-}
+// Signal type count so we can increment unique signal type ids
+extern SignalTypeId signalTypeCount;
 
 // Signal
 struct Signal {
@@ -29,12 +27,12 @@ struct SignalBase : public Signal {
     virtual SignalTypeId GetTypeId() const override { return signalTypeId; }
 
     // Unique signal type id incremented with exterior template
-    const static SignalTypeId signalTypeId;
+    static const SignalTypeId signalTypeId;
 };
 
 // Unique signal type id for each signal type
 template<typename T>
-inline const SignalTypeId SignalBase<T>::signalTypeId = signalTypeCount++;
+const SignalTypeId SignalBase<T>::signalTypeId = signalTypeCount++;
 
 // Callable
 using Callable = std::function<void(Signal *)>;

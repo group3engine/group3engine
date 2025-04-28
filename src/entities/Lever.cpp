@@ -2,6 +2,9 @@
 
 #include <stack>
 
+#include "Scene.hpp"
+#include "NetworkEntitiesManager.hpp"
+
 Lever::Lever() {
     mType = "lever";
 }
@@ -88,9 +91,11 @@ void Lever::Awake() {
     mSensor->Init(PhysicsManager::get(), false);
 
     PhysicsManager::get().RegisterEntity(this, mSensor->mBodyId);
+
+    GetScene()->mSignalSystem.AddReceiver<Lever, NetworkLeverSignal>(this, &Lever::OnNetworkInteract);
 }
 
-void Lever::OnInteract(Entity *other) {
+void Lever::OnInteract(Entity *other, ENetworkLocality networkLocality) {
     // TODO: Refactor trapdoor so that the class finds and stores its two children doors
     // automatically. And make it so that calling IsActivated checks the activated status of the
     // trapdoor children
@@ -103,6 +108,20 @@ void Lever::OnInteract(Entity *other) {
         for (auto *trapdoor : mTrapdoors) {
             trapdoor->Activate();
         }
+
+        if (networkLocality == ENetworkLocality::Local && GetScene()->GetNetworkEntitiesManager()) {
+            // TODO: Use the network signal struct so we don't have multiple definitions
+            // Each network signal can then use the to_json and from_json functionality
+            nlohmann::json &localJson = GetScene()->GetNetworkEntitiesManager()->GetLocalJson();
+            nlohmann::json json = {{"entityID", mEntityID}, {"wasPulled", true}};
+            localJson["levers"].emplace_back(json);
+        }
+    }
+}
+
+void Lever::OnNetworkInteract(NetworkLeverSignal *signal) {
+    if (signal->entityID == mEntityID && signal->wasPulled) {
+        OnInteract(nullptr, ENetworkLocality::Remote);
     }
 }
 

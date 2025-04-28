@@ -67,6 +67,7 @@ namespace {
         &Sample::LeverSample,
         &Sample::BoulderSample,
         &Sample::SpikeTrapSample,
+        &Sample::DisappearingPlatformSample,
 
 
     };
@@ -167,6 +168,8 @@ bool Engine::Initialize() {
 
 #ifdef JPH_DEBUG_RENDERER
     mDebugRenderer = std::make_unique<DebugRendererImp>(mRenderer.get(), mScene);
+
+    mScene->SetDebugRenderer(mDebugRenderer.get());
 #endif // JPH_DEBUG_RENDERER
 
     SPDLOG_DEBUG("Engine initialised.");

@@ -113,6 +113,8 @@ class CharacterEntity : public Entity {
     void Save();
     void Load();
 
+    glm::vec3 CalcClimbDirection(Entity *climbEntity);
+
     void RegisterControls();
 
   protected:

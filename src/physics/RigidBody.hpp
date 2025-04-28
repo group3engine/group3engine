@@ -47,6 +47,9 @@ class RigidBody {
     /// Get the world transform of the rigid body
     glm::mat4 GetWorldTransform() const;
 
+    // Get world transform of the rigid body using RMat44 instead of glm
+    RMat44 GetWorldTransformJolt() const;
+
     /// Set the linear velocity of the rigid body
     void SetLinearVelocity(glm::vec3 glm_velocity) {
         mNewVelocity = Vec3(glm_velocity.x, glm_velocity.y, glm_velocity.z);
@@ -68,6 +71,8 @@ class RigidBody {
     // internal
     void PrePhysicsUpdate(double deltaTime);
 
+    void SetActive(bool active);
+
   public:
 
     JPH::BodyCreationSettings mJoltCreationSettings{};
@@ -86,5 +91,8 @@ private:
     Vec3 mImpulse{};
 
     bool hasInitialised = false;
+
+    bool mShouldBeActivated = true;
+    bool mIsActive = false;
 };
 #endif // PHYSICS_RIGIDBODY_HPP
