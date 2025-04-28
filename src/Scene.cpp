@@ -19,6 +19,8 @@
 
 #include "Debugging.hpp"
 
+#include "NetworkEntitiesManager.hpp"
+
 namespace {
 JPH::Shape::ShapeResult CreateMeshShapeResult(VertexList inVertices,
                                               IndexedTriangleList inTriangles) {
@@ -163,6 +165,8 @@ void Scene::Unload()
     mGuiActivePlayerCountOverride = {};
 
     mSignalSystem.Clear();
+
+    mNetworkEntitiesManager = nullptr;
 }
 
 void Scene::LoadGLTF(const std::filesystem::path &aFilepath, size_t playerCount) {
@@ -410,14 +414,27 @@ void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
             entity->AddRigidBody(bodyCreationSettings);
         }
 
-        SPDLOG_INFO("total vertices {}", totalVertices);
-        SPDLOG_INFO("total triangles {}", totalTriangles);
+        // SPDLOG_INFO("total vertices {}", totalVertices);
+        // SPDLOG_INFO("total triangles {}", totalTriangles);
     }
 
 }
 
 void Scene::Awake()
 {
+    // Find the network entities manager
+    for (auto &entity : m_Entities) {
+        if (entity->CompareType("NetworkEntitiesManager")) {
+            assert(!mNetworkEntitiesManager);
+            mNetworkEntitiesManager = static_cast<NetworkEntitiesManager *>(entity);
+        }
+    }
+    if (mNetworkEntitiesManager) {
+        SPDLOG_INFO("Scene found network entities manager, this is a networked game.");
+    } else {
+        SPDLOG_INFO("Scene did not find a network entities manager, this is a local game.");
+    }
+
     // Set the scene and call init physics on all entities
     for (auto &entity : m_Entities) {
         entity->SetScene(this);

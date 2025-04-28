@@ -13,6 +13,8 @@
 #include "LightManager.hpp"
 #include <imgui.h>
 
+#include "Debugging.hpp"
+
 namespace {
 // This should be placed elsewhere. Put here for simplicity while testing
 // Don't really need to define these, can pass the pos, dir, up directly to camera constructor
@@ -392,6 +394,7 @@ void Renderer::Submit() {
     VkResult result = vkQueueSubmit(context.graphicsQueue, 1, &subtmitInfo, m_Fences[vkutil::currentFrame]);
 
     if (result != VK_SUCCESS) {
+        DEBUG_BREAK();
         throw std::runtime_error("Failed to submit command buffers");
     }
 

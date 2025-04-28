@@ -3,7 +3,7 @@
 //
 
 #include "NetworkedLocalCharacter.hpp"
-#include "NetworkCharacterManager.hpp"
+#include "NetworkEntitiesManager.hpp"
 #include "Scene.hpp"
 #include <json.hpp>
 
@@ -16,26 +16,20 @@ void NetworkedLocalCharacter::Update(double deltaTime)
     glm::vec3 velocity = glm::vec3(jvelocity.GetX(), jvelocity.GetY(), jvelocity.GetZ());
     // get the file name
     std::string mapName = Scene::get().GetActiveScene()->GetSceneFilename().string();
-    // jsonify
-    nlohmann::json jsonData;
+
+    nlohmann::json &jsonData = GetScene()->GetNetworkEntitiesManager()->GetLocalJson();
+
     jsonData["transform"] = {
             {"position", {position.GetX(), position.GetY(), position.GetZ()}},
             {"rotation", {transform.rotation.x, transform.rotation.y, transform.rotation.z, transform.rotation.w}},
             {"scale", {transform.scale.x, transform.scale.y, transform.scale.z}}
     };
     jsonData["velocity"] = {velocity.x, velocity.y, velocity.z};
+    // TODO: Is this redundant and is this in a different location? Would that be problematic?
     jsonData["mapName"] = mapName;
     jsonData["isCrouching"] = mIsCrouching;
     jsonData["isEmoting"] = mIsEmoting;
     jsonData["isInClimb"] = mInClimb;
-    std::string jsonToSend = jsonData.dump();
-    // add the map name to the start for quick parsing
-    std::array<char, BUFFER_SIZE> buffer;
-    std::copy(mapName.begin(), mapName.end(), buffer.data());
-    buffer[mapName.size()] = '\0';
-    // add the json to the end
-    std::copy(jsonToSend.begin(), jsonToSend.end(), buffer.data() + mapName.size() + 1);
-    static_cast<NetworkCharacterManager*>(GetParent())->SendMessage(buffer, mapName.size() + 1 + jsonToSend.size());
 
     CharacterEntity::Update(deltaTime);
 }

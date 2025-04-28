@@ -12,7 +12,7 @@
 #include "RotateOnX.hpp"
 #include "SampleSecondaryEntity.hpp"
 #include "ParticleCube.hpp"
-#include "NetworkCharacterManager.hpp"
+#include "NetworkEntitiesManager.hpp"
 #include "NetworkedLocalCharacter.hpp"
 #include "NetworkedCharacterRemote.hpp"
 #include "Arrow.hpp"
@@ -43,7 +43,7 @@ enum class EntityType {
     BOUNCEPAD,
     NETWORKEDLOCALCHARACTER,
     NETWORKEDCHARACTERREMOTE,
-    NETWORKCHARACTERMANAGER,
+    NETWORKENTITIESMANAGER,
     ARROW,
     TILEBOX,
     TILEMANAGER,
@@ -63,7 +63,7 @@ enum class EntityType {
 static const std::unordered_map<std::string, EntityType> entityTypeMap = {
     {"default", EntityType::DEFAULT},
     {"character", EntityType::CHARACTER},
-    {"movingTest", EntityType::MOVING},
+    {"moving_platform", EntityType::MOVING},
     {"rotatingPlatform", EntityType::ROTATING},
     {"SpinningOnX", EntityType::SPINNINGONX},
     {"second", EntityType::SECONDCHARACTER},
@@ -72,7 +72,7 @@ static const std::unordered_map<std::string, EntityType> entityTypeMap = {
     {"particles", EntityType::PARTICLES},
     {"networkedlocal", EntityType::NETWORKEDLOCALCHARACTER},
     {"networkedremote", EntityType::NETWORKEDCHARACTERREMOTE},
-    {"networkmanager", EntityType::NETWORKCHARACTERMANAGER},
+    {"networkmanager", EntityType::NETWORKENTITIESMANAGER},
     {"arrow",  EntityType::ARROW},
     {"tileBox", EntityType::TILEBOX},
     {"tileManager", EntityType::TILEMANAGER},
@@ -125,8 +125,8 @@ inline Entity* CreateNewEntity(const std::string& aEntityType)
         return new NetworkedLocalCharacter();
     case EntityType::NETWORKEDCHARACTERREMOTE:
         return new NetworkedCharacterRemote();
-    case EntityType::NETWORKCHARACTERMANAGER:
-        return new NetworkCharacterManager();
+    case EntityType::NETWORKENTITIESMANAGER:
+        return new NetworkEntitiesManager();
     case EntityType::ARROW:
         return new Arrow();
     case EntityType::TILEBOX:

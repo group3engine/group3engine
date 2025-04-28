@@ -2,23 +2,25 @@
 // Created by thomas on 02/04/25.
 //
 
-#ifndef GROUP3ENGINE_NETWORKCHARACTERMANAGER_HPP
-#define GROUP3ENGINE_NETWORKCHARACTERMANAGER_HPP
+#ifndef GROUP3ENGINE_NETWORKENTITIESMANAGER_HPP
+#define GROUP3ENGINE_NETWORKENTITIESMANAGER_HPP
+
+#include <json.hpp>
+
 #include "Entity.hpp"
 #include "Networking.hpp"
 #include "NetworkedCharacterRemote.hpp"
 #include "ImGuiRenderer.hpp"
-namespace JSONPARSE
-{
-    std::tuple<std::string, std::string> GetPairFromString(const std::string &aString);
-}
 
-class NetworkCharacterManager : public Entity {
+class NetworkEntitiesManager : public Entity {
 public:
-    NetworkCharacterManager();
-    ~NetworkCharacterManager() override;
+    NetworkEntitiesManager();
+    ~NetworkEntitiesManager() override;
 
     void Update(double deltaTime) override;
+
+    void LateUpdate(double deltaTime) override;
+
     void SendMessage(const std::array<char, BUFFER_SIZE> &message, size_t size) {
         mNetworking.SendMessage(message, size);
     }
@@ -34,6 +36,7 @@ public:
         });
     }
 
+    nlohmann::json &GetLocalJson() { return mLocalJson; }
 
 private:
     Networking mNetworking;
@@ -46,9 +49,8 @@ private:
     std::mutex messages_mutex;
     bool chatting = true;
 
-
-
+    nlohmann::json mLocalJson;
 };
 
 
-#endif //GROUP3ENGINE_NETWORKCHARACTERMANAGER_HPP
+#endif //GROUP3ENGINE_NETWORKENTITIESMANAGER_HPP
