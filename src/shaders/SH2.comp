@@ -23,6 +23,11 @@ vec3 spherical_fibonacci(float i, float n) {
     return vec3(cos(phi) * sin_theta, sin(phi) * sin_theta, cos_theta);
 }
 
+mat3 sh_project(in vec3 n, in float l)
+{
+	return mat3(n, n.xyz * n.yzx, vec3(n.z * n.z - 1.0 / 3.0, n.x * n.x - n.y * n.y, 1.0)) * l;
+}
+
 void main() {
     uint idx = gl_GlobalInvocationID.x;
 
@@ -37,21 +42,17 @@ void main() {
         for (float i = 0.0; i < float(N); ++i) {
             vec3 dir = spherical_fibonacci(i, float(N));
             vec3 color = textureLod(skybox, dir, 0).rgb;
+            mat3 p = sh_project(dir, 4.0 * PI / float(N));
 
-            sh.shCoefficients[0] += color * SH00();
-            sh.shCoefficients[1] += color * SH1m1(dir);
-            sh.shCoefficients[2] += color * SH10(dir);
-            sh.shCoefficients[3] += color * SH11(dir);
-            sh.shCoefficients[4] += color * SH2m2(dir);
-            sh.shCoefficients[5] += color * SH2m1(dir);
-            sh.shCoefficients[6] += color * SH20(dir);
-            sh.shCoefficients[7] += color * SH21(dir);
-            sh.shCoefficients[8] += color * SH22(dir);
-        }
-
-        float weight = (4.0 * PI) / float(N);
-        for (int i = 0; i < 9; ++i) {
-            sh.shCoefficients[i] *= weight;
+            sh.shCoefficients[0] += color * p[2].z;
+            sh.shCoefficients[1] += color * p[0].x;
+            sh.shCoefficients[2] += color * p[0].y;
+            sh.shCoefficients[3] += color * p[0].z;
+            sh.shCoefficients[4] += color * p[1].x;
+            sh.shCoefficients[5] += color * p[1].y;
+            sh.shCoefficients[6] += color * p[2].x;
+            sh.shCoefficients[7] += color * p[1].z;
+            sh.shCoefficients[8] += color * p[2].y;
         }
     }
 }
