@@ -90,7 +90,9 @@ void main() {
         float NdotL = max(dot(N, L), 0.0);
         if(NdotL > 0.0)
         {
-            prefilteredColour += texture(skybox, L).rgb * NdotL;
+            // Clamp to 100 to fix bug with extremely bright pixel on autumn field skybox
+            // The rest of the sun pixels are comfortably around 100, will fix aliasing
+            prefilteredColour += clamp(texture(skybox, L).rgb, 0, 100) * NdotL;
             totalWeight += NdotL;
         }
     }
