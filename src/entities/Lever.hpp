@@ -3,6 +3,7 @@
 
 #include "Entity.hpp"
 
+#include "NetworkSignals.hpp"
 #include "Trapdoor.hpp"
 
 class Lever : public Entity {
@@ -11,7 +12,9 @@ class Lever : public Entity {
 
     void Awake() override;
 
-    void OnInteract(Entity *other) override;
+    void OnInteract(Entity *other, ENetworkLocality networkLocality) override;
+
+    void OnNetworkInteract(NetworkLeverSignal *signal);
 
     void Update(double deltaTime) override;
 

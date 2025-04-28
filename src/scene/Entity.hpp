@@ -34,6 +34,11 @@ enum class EInteractable {
     NotInteractable
 };
 
+enum class ENetworkLocality {
+    Local,
+    Remote
+};
+
 #define MIN_ANIMATOR_UPDATE_DISTANCE 50.f
 #define MAX_ANIMATOR_UPDATE_DISTANCE 500.f
 #define LOWEST_ANIMATOR_UPDATE_RATE 1000.f
@@ -176,7 +181,7 @@ class Entity {
 
     // NOTE: There is no parameter passing with this function
     /// called when an entity wants to interact with another entity
-    virtual void OnInteract(Entity *other) {}
+    virtual void OnInteract(Entity *other, ENetworkLocality networkLocality) {}
 
     // the following functions are overridable by the user
     /// called on the first frame of a collision

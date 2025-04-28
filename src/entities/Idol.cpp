@@ -36,7 +36,7 @@ void Idol::Awake() {
     GetScene()->mSignalSystem.AddReceiver<Idol, ResetToSpawnSignal>(this, &Idol::OnResetToSpawn);
 }
 
-void Idol::OnInteract(Entity *other) {
+void Idol::OnInteract(Entity *other, ENetworkLocality networkLocality) {
     if (!mIsCollected) {
         mIsCollected = true;
 

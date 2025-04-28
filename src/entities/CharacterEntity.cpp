@@ -137,7 +137,7 @@ void CharacterEntity::ProcessInput(){
                 // NOTE: Having more than one interactable in an area will allow the user to
                 // interact with them all at once
                 for (auto &interactable : mInteractables) {
-                    interactable->OnInteract(this);
+                    interactable->OnInteract(this, ENetworkLocality::Local);
                 }
             }
         }
