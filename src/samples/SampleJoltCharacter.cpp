@@ -76,14 +76,13 @@ void SampleJoltCharacter::PrePhysicsUpdate(const PreUpdateParams &inParams)
 void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime, bool inClimb)
 {
 
-
-
     float inMovementY = inMovementDirection.GetY();
-	bool player_controls_horizontal_velocity = sControlMovementDuringJump || mCharacter->IsSupported();
+	bool player_controls_horizontal_velocity = mCharacter->IsSupported() || sControlMovementDuringJump;
 	if (player_controls_horizontal_velocity)
 	{
+		float jumpMultiplier = mCharacter->IsSupported() ? 0.25f : 0.05f;
 		// Smooth the player input
-		mDesiredVelocity = sEnableCharacterInertia? 0.25f * inMovementDirection * sCharacterSpeed + 0.75f * mDesiredVelocity : inMovementDirection * sCharacterSpeed;
+		mDesiredVelocity = sEnableCharacterInertia? jumpMultiplier * inMovementDirection * sCharacterSpeed + (1.f - jumpMultiplier) * mDesiredVelocity : inMovementDirection * sCharacterSpeed;
         mDesiredVelocity.SetY(0); // We don't want to move up/down when moving sideways
         if(inClimb && !IsGrounded())
         {
@@ -161,7 +160,13 @@ void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, 
         }
 
 	// Gravity
-	new_velocity += (character_up_rotation * mPhysicsSystem->GetGravity()) * inDeltaTime;
+	// if we have reached the peak of our jump (new_velocity.y is already negative), then multiply gravity by 2
+	float gravityMultiplier = sGravityUpModifier;
+	if(new_velocity.GetY() < 0.2f)
+	{
+		gravityMultiplier = sGravityDownModifier;
+	}
+	new_velocity += (character_up_rotation * mPhysicsSystem->GetGravity()) * inDeltaTime * gravityMultiplier;
 
 	if (player_controls_horizontal_velocity)
 	{
@@ -193,6 +198,7 @@ void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, 
     {
         // Update character velocity
         mCharacter->SetLinearVelocity(new_velocity);
+		mIntendedVelocity = new_velocity;
     }
 
     // set the shape based on the crouching and falling state

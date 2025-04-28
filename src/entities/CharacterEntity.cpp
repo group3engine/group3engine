@@ -229,7 +229,7 @@ void CharacterEntity::Update(double deltaTime) {
 
     // get the character state
     // calculate the delta velocity
-    Vec3 characterVelocityJolt = mSampleJoltCharacter->GetCharacterVelocity();
+    Vec3 characterVelocityJolt = mSampleJoltCharacter->GetIntendedVelocity();
     glm::vec3 characterVelocity = glm::vec3(characterVelocityJolt.GetX(), characterVelocityJolt.GetY(), characterVelocityJolt.GetZ());
     // set the character to face the direction of the velocity without the y component
     float characterYSpeed = characterVelocity.y;

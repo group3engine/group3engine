@@ -6,6 +6,7 @@
 
 void Sinking::Update(double deltaTime)
 {
+    SPDLOG_INFO("stood on {}", mIsStoodOn);
     if(mIsStoodOn && GetRigidBody().GetPosition().y > mMinHeight)
     {
         GetRigidBody().SetLinearVelocity({0, -mSinkingSpeed, 0});
@@ -22,6 +23,6 @@ void Sinking::Update(double deltaTime)
     if(!mIsStoodOn && GetRigidBody().GetPosition().y > mInitialHeight)
     {
         GetRigidBody().SetLinearVelocity({0, 0, 0});
-        GetRigidBody().SetPosition({GetRigidBody().GetPosition().x, mInitialHeight, GetRigidBody().GetPosition().z});
+        GetRigidBody().SetPosition(mInitialPosition);
     }
 }

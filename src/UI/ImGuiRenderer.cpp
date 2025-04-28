@@ -24,6 +24,10 @@
 #include "Config.hpp"
 #include "Engine.hpp"
 #include "Fonts.hpp"
+
+#include "SampleJoltCharacter.h"
+#include "CharacterBaseTest.h"
+
 namespace {
     auto PushBackStyleVar = [](size_t i, std::function<void()> f) {
         f();
@@ -841,6 +845,12 @@ void ImGuiRenderer::Update(Scene *scene)
             }
         }
     }
+
+    ImGui::SliderFloat("GravityUpModifier: ", &SampleJoltCharacter::sGravityUpModifier, 0.1f, 10.0f);
+    ImGui::SliderFloat("GravityDownModifier: ", &SampleJoltCharacter::sGravityDownModifier, 0.1f, 10.0f);
+    ImGui::SliderFloat("sJumpSpeed: ", &CharacterBaseTest::sJumpSpeed, 0.1f, 20.0f);
+    ImGui::SliderFloat("sCharacterSpeed: ", &CharacterBaseTest::sCharacterSpeed, 0.1f, 20.0f);
+
 
     static bool showGraphics = false;
     ImGui::Checkbox("Graphics Settings", &showGraphics);

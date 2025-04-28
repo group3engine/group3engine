@@ -48,6 +48,8 @@ public:
     // add an impulse to the character
     void AddImpulse(Vec3Arg impulse) { mAdditionalImpulse += impulse; mHasAdditionalImpulse = true; }
 
+	[[nodiscard]] Vec3 		GetIntendedVelocity() 					{ return mIntendedVelocity; }
+
     // Set the character velocity
     void SetCharacterVelocity(Vec3Arg velocity) { mCharacter->SetLinearVelocity(velocity); }
 
@@ -70,6 +72,10 @@ protected:
 	// Handle user input to the character
 	virtual void			HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime, bool inClimb) override;
 
+public:
+static inline float     sGravityUpModifier = 1.7f;
+static inline float     sGravityDownModifier = 2.5f;
+
 private:
 	// Character movement settings
 	static inline bool		sEnableCharacterInertia = true;
@@ -87,6 +93,7 @@ private:
 	static inline bool		sEnableStickToFloor = true;
 	static inline bool		sEnhancedInternalEdgeRemoval = true;
 
+
 	// The 'player' character
 	Ref<CharacterVirtual>	mCharacter;
 
@@ -99,6 +106,8 @@ private:
 
 	// True when the player is pressing movement controls
 	bool					mAllowSliding = false;
+
+	Vec3 					mIntendedVelocity {};
 
 	// Track active contacts for debugging purposes
 	using ContactSet = Array<CharacterVirtual::ContactKey>;

@@ -87,15 +87,15 @@ public:
 	virtual void			HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime, bool inClimb) = 0;
 
 	// Character size
-	static constexpr float	cCharacterHeightStanding = 0.5f;
-	static constexpr float	cCharacterRadiusStanding = 0.3f;
-    static constexpr float  cCharacterHeightCrouching = 0.3f;
-    static constexpr float  cCharacterHeightFalling = 0.3f;
+	static constexpr float	cCharacterHeightStanding = 1.0f;
+	static constexpr float	cCharacterRadiusStanding = 0.5f;
+    static constexpr float  cCharacterHeightCrouching = 0.6f;
+    static constexpr float  cCharacterHeightFalling = 0.6f;
 
 	// Character movement properties
 	inline static bool		sControlMovementDuringJump = true;							///< If false the character cannot change movement direction in mid air
-	inline static float		sCharacterSpeed = 6.0f;
-	inline static float		sJumpSpeed = 4.0f;
+	inline static float		sCharacterSpeed = 8.0f;
+	inline static float		sJumpSpeed = 7.8f;
     inline static float     sClimbSpeed = 2.0f;
 
 	// The different stances for the character

@@ -10,7 +10,7 @@ class Sinking : public Entity {
 public:
     Sinking() = default;
     ~Sinking() override = default;
-    void Awake() override{mInitialHeight = GetRigidBody().GetPosition().y; mMinHeight = mInitialHeight - 5.f;}
+    void Awake() override{mInitialHeight = GetRigidBody().GetPosition().y; mMinHeight = mInitialHeight - 5.f; mInitialPosition = GetRigidBody().GetPosition();}
     void Update(double deltaTime) override;
 
     void SetStoodOn(bool stoodOn) {
@@ -23,6 +23,7 @@ private:
     float mInitialHeight = 0.f;
     float mMinHeight = 0.f;
     float mSinkingSpeed = 0.5f;
+    glm::vec3 mInitialPosition {};
 
 };
 
