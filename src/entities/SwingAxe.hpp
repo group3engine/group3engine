@@ -15,6 +15,7 @@ class SwingAxe : public Entity {
     const JPH::BodyLockInterface &mLockInterface = mPhysicsSystem.GetBodyLockInterface();
 
     float mPendulumLength = 0.0f;
+    float mAngle = 0.0f;
 
     Vec3 mAxisX;
     Vec3 mAxisY;

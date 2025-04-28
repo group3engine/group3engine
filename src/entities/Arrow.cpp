@@ -8,6 +8,7 @@
 void Arrow::Awake()
 {
     start_position = GetLocalTransform().translation;
+    startVelocity = GetWorldTransformComponents().rotation * glm::vec3(0.f, 0.f, -10.f);
 }
 
 void Arrow::Update(double deltaTime)
