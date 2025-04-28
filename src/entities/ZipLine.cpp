@@ -56,7 +56,7 @@ void ZipLine::Awake()
     PhysicsManager::get().RegisterEntity(this, mSensor->mBodyId);
 }
 
-void ZipLine::OnInteract(Entity *other)
+void ZipLine::OnInteract(Entity *other, ENetworkLocality networkLocality)
 {
     // if the other entity is a character, start zipping
     if (other->CompareType("character")) {
