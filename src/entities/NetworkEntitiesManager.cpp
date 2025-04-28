@@ -124,7 +124,7 @@ void NetworkEntitiesManager::LateUpdate(double deltaTime) {
 
     std::string jsonToSend = mLocalJson.dump();
 
-    SPDLOG_INFO("{}", jsonToSend);
+    // SPDLOG_INFO("{}", jsonToSend);
 
     // add the map name to the start for quick parsing
     std::array<char, BUFFER_SIZE> buffer;
