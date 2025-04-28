@@ -46,7 +46,7 @@ void main() {
             // in brightness than the rest which results in a banding/dotting effect in the prefiltered map.
             // To avoid this we can clamp the brightness when sampling the cubemap but I am unsure if this is
             // something we should be doing or just use better HDR cubemaps.
-            irradiance += texture(skybox, sampleVec).rgb * cos(theta) * sin(theta);
+            irradiance += clamp(texture(skybox, sampleVec).rgb, 0, 100) * cos(theta) * sin(theta);
             nrSamples++;
         }
     }

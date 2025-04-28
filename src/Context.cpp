@@ -400,6 +400,17 @@ void Context::TeardownSwapchain() {
 void Context::RecreateSwapchain() {
     TeardownSwapchain();
 
+    // If the width and height of the window framebuffer is 0,
+    // The window is minimized. Wait for a valid size before re-creating the swapchain
+    int width = 0, height = 0;
+    glfwGetFramebufferSize(mWindow, &width, &height);
+    while (width == 0 || height == 0) {
+        glfwGetFramebufferSize(mWindow, &width, &height);
+        glfwWaitEvents();
+    }
+
+    vkDeviceWaitIdle(device);
+
     try {
         CreateSwapchain();
     } catch (...) {
