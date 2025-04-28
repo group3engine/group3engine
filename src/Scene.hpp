@@ -24,6 +24,11 @@
 
 #include "SignalSystem.hpp"
 
+#ifdef JPH_DEBUG_RENDERER
+#include <Jolt/Renderer/DebugRendererSimple.h>
+#include "DebugRendererImp.h"
+#endif // JPH_DEBUG_RENDERER
+
 class NetworkEntitiesManager;
 
 struct CameraTransform {
@@ -173,7 +178,13 @@ class Scene {
         return mNetworkEntitiesManager;
     }
 
-public:
+#ifdef JPH_DEBUG_RENDERER
+    DebugRendererSimple *GetDebugRenderer() const { return mDebugRenderer; }
+
+    void SetDebugRenderer(DebugRendererSimple *debugRenderer) { mDebugRenderer = debugRenderer; }
+#endif // JPH_DEBUG_RENDERER
+
+  public:
     SignalSystem mSignalSystem;
 
 private:
@@ -210,5 +221,9 @@ private:
     std::filesystem::path mSceneFilename;
 
     NetworkEntitiesManager *mNetworkEntitiesManager;
+
+#ifdef JPH_DEBUG_RENDERER
+    DebugRendererSimple *mDebugRenderer = nullptr;
+#endif // JPH_DEBUG_RENDERER
 };
 

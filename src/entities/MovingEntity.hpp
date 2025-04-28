@@ -15,12 +15,22 @@ class MovingEntity : public Entity{
 
     void Update(double deltaTime) override;
 
-  private:
-    glm::vec3 start_position {};
-    glm::vec3 velocity = glm::vec3(-1.f, 0, 0.f);
-    float timeToMove = 22.f;
-    float timeElapsed = 0.f;
+    PhysicsSystem &mPhysicsSystem = PhysicsManager::get().mPhysicsSystem;
+    const JPH::BodyLockInterface &mLockInterface = mPhysicsSystem.GetBodyLockInterface();
 
+  private:
+    float mTime = 0.0f;
+    Vec3 mDisplacement;
+    Vec3 mVelocity;
+
+    JPH::Vec3 mAxisX;
+    JPH::Vec3 mAxisY;
+    JPH::Vec3 mAxisZ;
+
+    Vec3 mInitialPosition;
+    Vec3 mFinalPosition;
+
+    float mCurrentTime = 0.0f;
 };
 
 #endif // GROUP3ENGINE_MOVINGENTITY_HPP

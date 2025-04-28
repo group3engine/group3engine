@@ -9,7 +9,7 @@ Idol::Idol() {
 }
 
 void Idol::Awake() {
-    // Find lever base properties
+    // Find float properties
     auto proximityPrompt = mFloatProperties.find("proximity_prompt");
     if (proximityPrompt != mFloatProperties.end()) {
         mProximityPromptRadius = proximityPrompt->second;

@@ -61,7 +61,7 @@ enum class EntityType {
 static const std::unordered_map<std::string, EntityType> entityTypeMap = {
     {"default", EntityType::DEFAULT},
     {"character", EntityType::CHARACTER},
-    {"movingTest", EntityType::MOVING},
+    {"moving_platform", EntityType::MOVING},
     {"rotatingPlatform", EntityType::ROTATING},
     {"SpinningOnX", EntityType::SPINNINGONX},
     {"second", EntityType::SECONDCHARACTER},
