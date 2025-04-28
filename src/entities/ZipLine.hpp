@@ -14,7 +14,7 @@ public:
     void Awake() override;
     void LateUpdate(double deltaTime) override;
 
-    void OnInteract(Entity *other) override;
+    void OnInteract(Entity *other, ENetworkLocality networkLocality) override;
     EInteractable IsInteractable() const override { return EInteractable::Interactable; }
 
 private:
