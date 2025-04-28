@@ -5,15 +5,6 @@
 
 class Entity;
 
-enum class ENetworkSignalActive {
-    Active,
-    NotActive
-};
-
-// struct NetworkSignalBase : public SignalBase<NetworkSignalBase> {
-//     // ENetworkSignalActive networkSignalActive = ENetworkSignalActive::NotActive;
-// };
-
 // Define network state to read in and send as well as the signal in one
 struct NetworkIdolSignal : public SignalBase<NetworkIdolSignal> {
     // Want to have multiple levers / entities in the scene
