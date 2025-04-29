@@ -152,10 +152,12 @@ void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, 
                 {
                     mJumpState = EJumpState::Start;
                 }
-                else
-                {
-                    mJumpState = EJumpState::Falling;
-                }
+                // else
+                // {
+                //     mJumpState = EJumpState::Falling;
+                // }
+            } else if (new_velocity.GetY() < 0.2f) {
+                mJumpState = EJumpState::Falling;
             }
         }
 
