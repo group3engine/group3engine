@@ -103,6 +103,8 @@ class CharacterEntity : public Entity {
 
     size_t GetPlayerId() const { return mPlayerId; }
 
+    void SetHanging(bool isHanging) { mHangingAbout = isHanging; }
+
     void SetPosition(glm::vec3 position) {
         mSampleJoltCharacter->SetCharacterPosition(RVec3(position.x, position.y, position.z));
         // set the velocity to zero
@@ -116,6 +118,13 @@ class CharacterEntity : public Entity {
     glm::vec3 CalcClimbDirection(Entity *climbEntity);
 
     void RegisterControls();
+
+  public:
+    inline static float sJumpTimeScale = 0.1f;
+    inline static float sFallTimeScale = 0.3f;
+
+    inline static float sFallBlend = 1.0f;
+    inline static float sHangingBlend = 0.25f;
 
   protected:
     Camera *mCamera = nullptr;
@@ -160,6 +169,7 @@ class CharacterEntity : public Entity {
 
     bool mLeftClimb = false;
     bool mEnterClimb = false;
+    bool mHangingAbout = false;
 
     glm::vec3 mClimbDirection = glm::vec3(0.f, 0.f, 0.f);
 

@@ -246,6 +246,9 @@ void CharacterEntity::Update(double deltaTime) {
         newTransform.rotation = glm::quatLookAt(glm::normalize(characterVelocity * -1.f), glm::vec3(0, 1, 0)) * mInitialTransform.rotation;
         SetTransform(newTransform);
     }
+
+    bool isLooping = true;
+
     // work out the active animation, and the time scale
     float timeScale = 1.0f;
     std::string activeAnimation = "idle";
@@ -259,13 +262,14 @@ void CharacterEntity::Update(double deltaTime) {
     switch (mSampleJoltCharacter->GetJumpState()) {
     case EJumpState::Start:
         activeAnimation = "jump up";
+        timeScale = sJumpTimeScale;
         playWholeAnimation = false;
-        timeScale = 1.0f;
+        isLooping = false;
         break;
     case EJumpState::Falling:
         activeAnimation = "falling";
-        timeScale = 1.0f;
-        blend = 0.5f;
+        timeScale = sFallTimeScale;
+        blend = sFallBlend;
         playWholeAnimation = false;
         break;
     case EJumpState::End:
@@ -279,6 +283,7 @@ void CharacterEntity::Update(double deltaTime) {
         timeScale = 1.0f;
         blend = 0.5f;
         playWholeAnimation = false;
+        isLooping = false;
     }
     // if the character is climbing, set the animation to climb
     if(mInClimb)
@@ -313,11 +318,20 @@ void CharacterEntity::Update(double deltaTime) {
             timeScale = 10.0f * timeScale;
         }
     }
+    // if we are hanging, set the animation to hanging
+    if(mHangingAbout)
+    {
+        activeAnimation = "hanging";
+        timeScale = 1.f;
+        blend = sHangingBlend;
+        playWholeAnimation = false;
+        isLooping = true;
+    }
 
     // for each child, if there is an animator, call set animation
     for (auto &child : GetChildren()) {
             if (child->HasAnimator()) {
-                child->GetAnimator().SetActiveAnimation(activeAnimation, blend, playWholeAnimation);
+                child->GetAnimator().SetActiveAnimation(activeAnimation, blend, playWholeAnimation, isLooping);
                 child->GetAnimator().SetTimeScale(timeScale);
             }
     }

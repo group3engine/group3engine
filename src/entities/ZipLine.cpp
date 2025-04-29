@@ -63,6 +63,7 @@ void ZipLine::OnInteract(Entity *other, ENetworkLocality networkLocality)
         mCharacter = static_cast<CharacterEntity *>(other);
         mIsZipping = true;
         mCharacter->SetPosition(mStartPosition);
+        mCharacter->SetHanging(true);
         mCurrentPosition = mStartPosition;
     }
 }
@@ -84,6 +85,7 @@ void ZipLine::LateUpdate(double deltaTime)
         // if we are at the end of the zipline, stop zipping
         if (glm::distance(mCurrentPosition, mStartPosition) > mDistance) {
             mIsZipping = false;
+            mCharacter->SetHanging(false);
             mCurrentSpeed = 0.f;
             mCharacter->SetPosition(mEndPosition);
         }
