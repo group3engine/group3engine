@@ -846,11 +846,17 @@ void ImGuiRenderer::Update(Scene *scene)
         }
     }
 
-    ImGui::SliderFloat("GravityUpModifier: ", &SampleJoltCharacter::sGravityUpModifier, 0.1f, 10.0f);
-    ImGui::SliderFloat("GravityDownModifier: ", &SampleJoltCharacter::sGravityDownModifier, 0.1f, 10.0f);
-    ImGui::SliderFloat("sJumpSpeed: ", &CharacterBaseTest::sJumpSpeed, 0.1f, 20.0f);
-    ImGui::SliderFloat("sCharacterSpeed: ", &CharacterBaseTest::sCharacterSpeed, 0.1f, 20.0f);
+    float step = 0.1f;
+    float stepFine = 0.01f;
+    float stepFast = 0.5f;
+    ImGui::InputFloat("sJumpHeight", &CharacterBaseTest::sJumpHeight, step, stepFast, nullptr, 0);
+    ImGui::InputFloat("sCharacterSpeed: ", &CharacterBaseTest::sCharacterSpeed, step, stepFast, nullptr, 0);
+    ImGui::InputFloat("sJumpTime", &CharacterBaseTest::sJumpTime, stepFine, step, nullptr, 0);
+    ImGui::InputFloat("sFallTime", &CharacterBaseTest::sFallTime, stepFine, step, nullptr, 0);
 
+    CharacterBaseTest::sJumpSpeed = 2.0f * CharacterBaseTest::sJumpHeight / CharacterBaseTest::sJumpTime;
+	CharacterBaseTest::sJumpGravity = -2.0f * CharacterBaseTest::sJumpHeight / Square(CharacterBaseTest::sJumpTime);
+	CharacterBaseTest::sFallGravity = -2.0f * CharacterBaseTest::sJumpHeight / Square(CharacterBaseTest::sFallTime);
 
     static bool showGraphics = false;
     ImGui::Checkbox("Graphics Settings", &showGraphics);

@@ -90,12 +90,20 @@ public:
 	static constexpr float	cCharacterHeightStanding = 1.0f;
 	static constexpr float	cCharacterRadiusStanding = 0.5f;
     static constexpr float  cCharacterHeightCrouching = 0.6f;
-    static constexpr float  cCharacterHeightFalling = 0.6f;
+    static constexpr float  cCharacterHeightFalling = 0.7f;
+
+	inline static float sJumpHeight = 2.5f;
+
+	inline static float sCharacterSpeed = 8.0f;
+
+	inline static float sJumpTime = 0.4f;
+	inline static float sFallTime = 0.15f;
 
 	// Character movement properties
 	inline static bool		sControlMovementDuringJump = true;							///< If false the character cannot change movement direction in mid air
-	inline static float		sCharacterSpeed = 8.0f;
-	inline static float		sJumpSpeed = 7.8f;
+	inline static float		sJumpSpeed = 2.0f * sJumpHeight / sJumpTime;
+	inline static float		sJumpGravity = -2.0f * sJumpHeight / Square(sJumpTime);
+	inline static float		sFallGravity = -2.0f * sJumpHeight / Square(sFallTime);
     inline static float     sClimbSpeed = 2.0f;
 
 	// The different stances for the character
