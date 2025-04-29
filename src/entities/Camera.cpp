@@ -73,23 +73,25 @@ void Camera::UpdateCameraMovement(const Transform &character_transform) {
         glm::vec3 forward = glm::normalize(m_direction);
         glm::vec3 rightVector = glm::normalize(glm::cross(m_direction, m_up));
 
+        float camSpeed = m_cameraSpeed * (inputMap[std::size_t(EInputState::FAST)] ? 5.0f : 1.0f);
+
         if (inputMap[std::size_t(EInputState::FORWARD)]) {
-            m_position += m_cameraSpeed * GlobalUtil::deltaTime * forward;
+            m_position += camSpeed * GlobalUtil::deltaTime * forward;
         }
         if (inputMap[std::size_t(EInputState::BACKWARD)]) {
-            m_position -= m_cameraSpeed * GlobalUtil::deltaTime * forward;
+            m_position -= camSpeed * GlobalUtil::deltaTime * forward;
         }
         if (inputMap[std::size_t(EInputState::LEFT)]) {
-            m_position -= m_cameraSpeed * GlobalUtil::deltaTime * rightVector;
+            m_position -= camSpeed * GlobalUtil::deltaTime * rightVector;
         }
         if (inputMap[std::size_t(EInputState::RIGHT)]) {
-            m_position += m_cameraSpeed * GlobalUtil::deltaTime * rightVector;
+            m_position += camSpeed * GlobalUtil::deltaTime * rightVector;
         }
         if (inputMap[std::size_t(EInputState::UP)]) {
-            m_position += m_cameraSpeed * GlobalUtil::deltaTime * m_up;
+            m_position += camSpeed * GlobalUtil::deltaTime * m_up;
         }
         if (inputMap[std::size_t(EInputState::DOWN)]) {
-            m_position -= m_cameraSpeed * GlobalUtil::deltaTime * m_up;
+            m_position -= camSpeed * GlobalUtil::deltaTime * m_up;
         }
         if (inputMap[std::size_t(EInputState::TELEPORT)]) {
             // call the teleport callback
