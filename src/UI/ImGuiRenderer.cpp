@@ -27,6 +27,8 @@
 
 #include "SampleJoltCharacter.h"
 #include "CharacterBaseTest.h"
+#include "CharacterEntity.hpp"
+#include "Sinking.hpp"
 
 namespace {
     auto PushBackStyleVar = [](size_t i, std::function<void()> f) {
@@ -846,11 +848,21 @@ void ImGuiRenderer::Update(Scene *scene)
         }
     }
 
+    float sinkingStep = 0.1f;
+    float sinkingStepFast = 0.5f;
+    ImGui::InputFloat("mSinkingSpeed", &Sinking::mSinkingSpeed, sinkingStep, sinkingStepFast, nullptr, 0);
+
     ImGui::SliderFloat("GravityUpModifier: ", &SampleJoltCharacter::sGravityUpModifier, 0.1f, 10.0f);
     ImGui::SliderFloat("GravityDownModifier: ", &SampleJoltCharacter::sGravityDownModifier, 0.1f, 10.0f);
     ImGui::SliderFloat("sJumpSpeed: ", &CharacterBaseTest::sJumpSpeed, 0.1f, 20.0f);
     ImGui::SliderFloat("sCharacterSpeed: ", &CharacterBaseTest::sCharacterSpeed, 0.1f, 20.0f);
 
+    float step = 0.01f;
+    float stepFast = 0.1f;
+    ImGui::InputFloat("sJumpTimeScale", &CharacterEntity::sJumpTimeScale, step, stepFast, nullptr, 0);
+    ImGui::InputFloat("sFallTimeScale", &CharacterEntity::sFallTimeScale, step, stepFast, nullptr, 0);
+    ImGui::InputFloat("sFallBlend", &CharacterEntity::sFallBlend, step, stepFast, nullptr, 0);
+    ImGui::InputFloat("sHangingBlend", &CharacterEntity::sHangingBlend, step, stepFast, nullptr, 0);
 
     static bool showGraphics = false;
     ImGui::Checkbox("Graphics Settings", &showGraphics);

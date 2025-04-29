@@ -17,12 +17,14 @@ public:
         mIsStoodOn = stoodOn;
     }
 
+  public:
+    inline static float mSinkingSpeed = 2.5f;
+
 private:
     bool mIsStoodOn = false;
 
     float mInitialHeight = 0.f;
     float mMinHeight = 0.f;
-    float mSinkingSpeed = 0.5f;
     glm::vec3 mInitialPosition {};
 
 };
