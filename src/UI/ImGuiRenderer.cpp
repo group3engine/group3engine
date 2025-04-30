@@ -424,7 +424,7 @@ void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data,
     ImGui::Begin(fmt::format("Death Counter Window##{}", playerId).c_str(), nullptr, flags);
 
     // Text
-    ImGui::Text("%s", str.c_str());
+    ImGui::Text(str.c_str());
 
     // Heart
     ImVec2 offset = {pos.x - textSize.x, pos.y};
@@ -485,7 +485,7 @@ void ImGuiRenderer::NewDeathPopup(const gui::DeathPopupData &data,
     ImGui::Begin(fmt::format("Death Popup Window##{}", playerId).c_str(), nullptr, flags);
 
     // Text
-    ImGui::Text("%s", str.c_str());
+    ImGui::Text(str.c_str());
 
     ImGui::PopStyleVar(sv);
 
@@ -542,7 +542,7 @@ void ImGuiRenderer::NewFinishPopup(const gui::FinishPopupData &data,
     ImGui::Begin(fmt::format("Finish Popup Window##{}", playerId).c_str(), nullptr, flags);
 
     // Text
-    ImGui::Text("%s", str.c_str());
+    ImGui::Text(str.c_str());
 
     ImGui::PopStyleVar(sv);
 
@@ -592,7 +592,7 @@ void ImGuiRenderer::NewTimer(const gui::TimerData &data,
     ImGui::Begin(fmt::format("Timer Window##{}", playerId).c_str(), nullptr, flags);
 
     // Text
-    ImGui::Text("%s", str.c_str());
+    ImGui::Text(str.c_str());
 
     ImGui::PopStyleVar(sv);
 
@@ -768,7 +768,7 @@ void ImGuiRenderer::Text(std::string const &text, ImVec2 position, ImFont *font,
     ImGui::Begin(fmt::format("text rendering##PlayerId{}TextId{}", playerId, textId).c_str(), nullptr, flags);
     textId++;
 
-    ImGui::Text("%s", text.c_str());
+    ImGui::Text(text.c_str());
 
     ImGui::PopStyleVar(sv);
 
@@ -1017,17 +1017,17 @@ void ImGuiRenderer::ChatWindow(const std::vector<Message> &messages, std::functi
         ImGui::BeginChild("ChatMessages", ImVec2(availableWidth, chatHeight), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
         for (const auto &msg : messages)
         {
-            ImGui::Text("%s", msg.playerName.c_str());
+            ImGui::Text(msg.playerName.c_str());
             ImGui::PushFont(Fonts::TextFontSubtle);
             float textSpace = ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(msg.timestamp.c_str()).x - 20.0f;
             ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + textSpace);
-            ImGui::Text("%s", msg.text.c_str());
+            ImGui::Text(msg.text.c_str());
             ImGui::PopTextWrapPos();
             ImGui::PopFont();
             ImGui::PushFont(Fonts::TextFontSmall);
             float tsWidth = ImGui::CalcTextSize(msg.timestamp.c_str()).x;
             ImGui::SameLine(ImGui::GetWindowWidth() - tsWidth - 10.0f);
-            ImGui::Text("%s", msg.timestamp.c_str());
+            ImGui::Text(msg.timestamp.c_str());
             ImGui::PopFont();
         }
         ImGui::PopStyleVar();
