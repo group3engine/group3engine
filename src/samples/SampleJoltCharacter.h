@@ -120,7 +120,6 @@ private:
         // if we are in manual velocity mode
         bool                    mManualVelocityMode = false;
 
-
-
+    float mDisplacementVertical = 0.0f;
 
 };
