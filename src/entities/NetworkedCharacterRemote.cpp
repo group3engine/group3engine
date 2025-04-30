@@ -109,6 +109,14 @@ void NetworkedCharacterRemote::LateUpdate(double deltaTime) {
             child->GetAnimator().SetTimeScale(timeScale);
         }
     }
+    // update the transform
+    Vec3 positionJ = mSampleJoltCharacter->GetCharacterPosition();
+    glm::vec3 position = {positionJ.GetX(), positionJ.GetY(), positionJ.GetZ()};
+    Transform newTransform = GetLocalTransform();
+    newTransform.translation = position;
+    SetTransform(newTransform);
+
+
 
 }
 void NetworkedCharacterRemote::CreateJoltCharacter()
@@ -134,6 +142,12 @@ void NetworkedCharacterRemote::Awake() {
     // create the jolt character
     CreateJoltCharacter();
     mSampleJoltCharacter->SetCharacterPosition({0, -10000, 0});
+    // update the transform
+    Vec3 positionJ = mSampleJoltCharacter->GetCharacterPosition();
+    glm::vec3 position = {positionJ.GetX(), positionJ.GetY(), positionJ.GetZ()};
+    Transform newTransform = GetLocalTransform();
+    newTransform.translation = position;
+    SetTransform(newTransform);
 }
 
 void NetworkedCharacterRemote::UpdateState(State state)

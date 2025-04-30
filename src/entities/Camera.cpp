@@ -55,7 +55,7 @@ void Camera::UpdateCameraMovement(const Transform &character_transform) {
             ((-2.f * forward) + (1.0f * m_up) + (0.25f * rightVector)) * sZoomLevel;
 
         RRayCast ray;
-        ray.mOrigin = Vec3(character_position.x, character_position.y, character_position.z);
+        ray.mOrigin = Vec3(character_position.x, character_position.y + 2.f, character_position.z);
         ray.mDirection = Vec3(third_person_camera_offset.x, third_person_camera_offset.y,
                               third_person_camera_offset.z);
 

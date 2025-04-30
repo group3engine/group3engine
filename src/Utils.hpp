@@ -106,7 +106,7 @@ namespace vkutil {
     inline PostProcessing postProcessSettings = {};
     inline SSAOSettings ssaoSettings = {6, 6, 1.4f, 0.003f, 1.5f};
     inline SSRSettings ssrSettings = {3.0f, 0.001f};
-    inline FogSettings fogSettings = { 1.0f, 0.1f, 0.1f, 1 };
+    inline FogSettings fogSettings = { 100.0f, 0.01f, 0.1f, 1 };
     inline FXAASettings fxaaSettings = {true};
     inline PostProcessingSettings postProcessingSettings = {0.0f, 1.0f, 1.0f, 3};
     inline RendererDebug rendererDebug = {0};
