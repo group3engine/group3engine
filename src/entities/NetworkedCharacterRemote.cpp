@@ -149,7 +149,7 @@ void NetworkedCharacterRemote::LateUpdate(double deltaTime) {
     {
         activeAnimation = "hanging";
         timeScale = 1.f;
-        blend = sHangingBlend;
+        blend = CharacterEntity::sHangingBlend;
         playWholeAnimation = false;
         isLooping = true;
     }
