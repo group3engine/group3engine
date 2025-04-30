@@ -72,10 +72,6 @@ protected:
     // Handle user input to the character
     virtual void			HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime, bool inClimb) override;
 
-public:
-static inline float     sGravityUpModifier = 1.7f;
-static inline float     sGravityDownModifier = 2.5f;
-
 private:
     // Character movement settings
     static inline bool		sEnableCharacterInertia = true;
