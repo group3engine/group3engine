@@ -155,12 +155,12 @@ void NetworkedCharacterRemote::LateUpdate(double deltaTime) {
     }
 
     // for each child, if there is an animator, call set animation
-    for (auto &child : GetChildren()) {
+    for (auto *child : GetChildren()) {
             if (child->HasAnimator()) {
                 child->GetAnimator().SetActiveAnimation(activeAnimation, blend, playWholeAnimation, isLooping);
                 child->GetAnimator().SetTimeScale(timeScale);
                 if(resetAnimation)
-                {   
+                {
                     child->GetAnimator().ResetActiveAnimation(resetAnimationName);
                 }
             }

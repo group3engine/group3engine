@@ -346,7 +346,7 @@ void Entity::BaseUpdate(double deltaTime) {
 
 }
 void Entity::UpdateChildrenTransform() {
-    for (auto &child : mChildren) {
+    for (auto *child : mChildren) {
         child->SetParentTransform(GetWorldTransform());
     }
 }

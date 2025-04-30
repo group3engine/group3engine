@@ -30,7 +30,7 @@ void ZipLine::Awake()
 
     // get the start and end positions
     // find the child with the tag "zipline_start"
-    for (auto &child : GetChildren()) {
+    for (auto *child : GetChildren()) {
         if (child->CompareTag("zipline_start")) {
             mStartPosition = child->GetWorldTransformComponents().translation;
         } else if (child->CompareTag("zipline_end")) {

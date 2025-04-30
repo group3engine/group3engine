@@ -230,7 +230,6 @@ void CharacterEntity::Update(double deltaTime) {
         }
     }
 
-    Entity::Update(deltaTime);
 
 
     // get the character state
@@ -346,7 +345,7 @@ void CharacterEntity::Update(double deltaTime) {
     }
 
     // for each child, if there is an animator, call set animation
-    for (auto &child : GetChildren()) {
+    for (auto *child : GetChildren()) {
             if (child->HasAnimator()) {
                 child->GetAnimator().SetActiveAnimation(activeAnimation, blend, playWholeAnimation, isLooping);
                 child->GetAnimator().SetTimeScale(timeScale);
@@ -359,6 +358,19 @@ void CharacterEntity::Update(double deltaTime) {
 
     mCamera->UpdateCameraRotation(deltaTime);
     mCamera->UpdateCameraMovement(GetWorldTransformComponents());
+    // if the camera is too close to us, set invisible
+    SPDLOG_INFO("cam dist {}", glm::distance(mCamera->GetPosition(), GetCharacterPositionOffset()));
+    if(glm::distance(mCamera->GetPosition(), GetCharacterPositionOffset()) < 1.5f)
+    {
+        for (auto *child : GetChildren()) {
+            child->SetAsInvisible();
+        }
+    }
+    else {
+        for (auto *child : GetChildren()) {
+            child->SetAsVisible();
+        }
+    }
 }
 
 void CharacterEntity::UnscaledUpdate(double deltaTime)
@@ -655,6 +667,7 @@ void CharacterEntity::RegisterControls()
 
 void CharacterEntity::LateUpdate(double deltaTime)
 {
+
 
     // if we are beginning a jump
     if(mSampleJoltCharacter->GetJumpState() == EJumpState::Start)
