@@ -50,6 +50,7 @@ void NetworkEntitiesManager::Update(double deltaTime)
             state.isEmoting = jsonData["isEmoting"];
             state.isInClimb = jsonData["isInClimb"];
             state.deathState = static_cast<DeathState>(jsonData["deathState"]);
+            state.isHanging = jsonData["isHanging"];
 
 
             // TODO: Add code to respond to this

@@ -16,6 +16,7 @@ struct State
     bool isCrouching = false;
     bool isEmoting = false;
     bool isInClimb = false;
+    bool isHanging = false;
     DeathState deathState = DeathState::eLiving;
 };
 
@@ -61,6 +62,7 @@ private:
     bool mIsEmoting = false;
     bool mInClimb = false;
     bool mHasEverBeenGivenState = false;
+    bool mHangingAbout = false;
     DeathState mDeathState = DeathState::eLiving;
 
 };

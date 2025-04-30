@@ -31,6 +31,7 @@ void NetworkedLocalCharacter::Update(double deltaTime)
     jsonData["isEmoting"] = mIsEmoting;
     jsonData["isInClimb"] = mInClimb;
     jsonData["deathState"] = mDeathState;
+    jsonData["isHanging"] = mHangingAbout;
 
     CharacterEntity::Update(deltaTime);
 }

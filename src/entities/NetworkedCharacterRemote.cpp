@@ -144,16 +144,15 @@ void NetworkedCharacterRemote::LateUpdate(double deltaTime) {
             timeScale = 10.0f * timeScale;
         }
     }
-    //TODO: network hanging
-    // // if we are hanging, set the animation to hanging
-    // if(mHangingAbout)
-    // {
-    //     activeAnimation = "hanging";
-    //     timeScale = 1.f;
-    //     blend = sHangingBlend;
-    //     playWholeAnimation = false;
-    //     isLooping = true;
-    // }
+    // if we are hanging, set the animation to hanging
+    if(mHangingAbout)
+    {
+        activeAnimation = "hanging";
+        timeScale = 1.f;
+        blend = sHangingBlend;
+        playWholeAnimation = false;
+        isLooping = true;
+    }
 
     // for each child, if there is an animator, call set animation
     for (auto &child : GetChildren()) {
@@ -212,6 +211,7 @@ void NetworkedCharacterRemote::UpdateState(State state)
     mIsEmoting = state.isEmoting;
     mInClimb = state.isInClimb;
     mDeathState = state.deathState;
+    mHangingAbout = state.isHanging;
     mHasEverBeenGivenState = true;
 }
 

@@ -161,6 +161,7 @@ class CharacterEntity : public Entity {
     bool mInClimb = false;
     bool mIsCrouching = false;
     bool mIsEmoting = false;
+    bool mHangingAbout = false;
 
     InputMapping mInputMapping{};
 
@@ -169,7 +170,6 @@ class CharacterEntity : public Entity {
 
     bool mLeftClimb = false;
     bool mEnterClimb = false;
-    bool mHangingAbout = false;
 
     glm::vec3 mClimbDirection = glm::vec3(0.f, 0.f, 0.f);
 
