@@ -122,7 +122,13 @@ void CharacterEntity::ProcessInput(){
             controlInput = rotation * controlInput;
 
             // Check actions
-            if (mInputMapping.GetActionDown("JUMP") > 0) {
+            if(mInClimb)
+            {
+                if (mInputMapping.GetActionPressed("JUMP") > 0) {
+                    jump = true;
+                }
+            }
+            else if (mInputMapping.GetActionDown("JUMP") > 0) {
                 jump = true;
             }
 
@@ -300,7 +306,7 @@ void CharacterEntity::Update(double deltaTime) {
     if(mInClimb)
     {
         activeAnimation = "climb";
-        timeScale = characterYSpeed;
+        timeScale = characterYSpeed * sClimbTimeScale;
         blend = 0.1f;
         playWholeAnimation = false;
         // we can't crouch if we are climbing
@@ -580,6 +586,7 @@ void CharacterEntity::OnCollisionEnd(Entity *aOther)
 {
     if (aOther->CompareTag("climbablezone"))
     {
+        SPDLOG_INFO("Left climb");
         mLeftClimb = true;
     }
 
