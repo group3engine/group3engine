@@ -64,6 +64,7 @@ public:
 
     // get the jump state
     [[nodiscard]] EJumpState GetJumpState() { return mJumpState; }
+    void SetJumpState(EJumpState state) {mJumpState = state;}
 
 protected:
     // Common function to be called when contacts are added/persisted

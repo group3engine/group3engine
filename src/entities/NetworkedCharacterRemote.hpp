@@ -6,6 +6,7 @@
 #define GROUP3ENGINE_NETWORKEDCHARACTERREMOTE_HPP
 #include "Entity.hpp"
 #include "SampleJoltCharacter.h"
+#include "CharacterEntity.hpp"
 
 struct State
 {
@@ -15,6 +16,7 @@ struct State
     bool isCrouching = false;
     bool isEmoting = false;
     bool isInClimb = false;
+    DeathState deathState = DeathState::eLiving;
 };
 
 class NetworkedCharacterRemote : public Entity {

@@ -49,6 +49,8 @@ void NetworkEntitiesManager::Update(double deltaTime)
             state.isCrouching = jsonData["isCrouching"];
             state.isEmoting = jsonData["isEmoting"];
             state.isInClimb = jsonData["isInClimb"];
+            
+
 
             // TODO: Add code to respond to this
             // nlohmann::json idols = jsonData["idols"];
