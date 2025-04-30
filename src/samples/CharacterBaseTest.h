@@ -70,6 +70,8 @@ public:
 	// Override to specify a camera pivot point and orientation (world space)
 	virtual RMat44			GetCameraPivot(float inCameraHeading, float inCameraPitch) const;
 
+    virtual float			GetJumpHeight() const { return sJumpHeight; }
+
 	// Set the physics system
 	virtual void	SetPhysicsSystem(PhysicsSystem *inPhysicsSystem)			{ mPhysicsSystem = inPhysicsSystem; mBodyInterface = &inPhysicsSystem->GetBodyInterface(); }
 
@@ -94,10 +96,10 @@ public:
 
 	inline static float sJumpHeight = 2.5f;
 
-	inline static float sCharacterSpeed = 8.0f;
+	inline static float sCharacterSpeed = 9.0f;
 
-	inline static float sJumpTime = 0.4f;
-	inline static float sFallTime = 0.15f;
+	inline static float sJumpTime = 0.46f;
+	inline static float sFallTime = 0.41f;
 
 	// Character movement properties
 	inline static bool		sControlMovementDuringJump = true;							///< If false the character cannot change movement direction in mid air

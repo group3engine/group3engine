@@ -229,7 +229,7 @@ void CharacterEntity::Update(double deltaTime) {
 
     // get the character state
     // calculate the delta velocity
-    Vec3 characterVelocityJolt = mSampleJoltCharacter->GetIntendedVelocity();
+    Vec3 characterVelocityJolt = mSampleJoltCharacter->GetCharacterVelocity();
     glm::vec3 characterVelocity = glm::vec3(characterVelocityJolt.GetX(), characterVelocityJolt.GetY(), characterVelocityJolt.GetZ());
     // set the character to face the direction of the velocity without the y component
     float characterYSpeed = characterVelocity.y;
@@ -243,7 +243,9 @@ void CharacterEntity::Update(double deltaTime) {
     if (glm::length(characterVelocity) > 0.1f) {
         // set the transform rotation to the direction of the velocity, on top of the initial transform rotation
         Transform newTransform = GetLocalTransform();
-        newTransform.rotation = glm::quatLookAt(glm::normalize(characterVelocity * -1.f), glm::vec3(0, 1, 0)) * mInitialTransform.rotation;
+        Vec3 intendedVelocity = mSampleJoltCharacter->GetIntendedVelocity();
+        glm::vec3 intendedVelocityGlm = {intendedVelocity.GetX(), 0, intendedVelocity.GetZ()};
+        newTransform.rotation = glm::quatLookAt(glm::normalize(intendedVelocityGlm * -1.f), glm::vec3(0, 1, 0)) * mInitialTransform.rotation;
         SetTransform(newTransform);
     }
 
@@ -261,18 +263,21 @@ void CharacterEntity::Update(double deltaTime) {
     // spdlog the current jump state
     switch (mSampleJoltCharacter->GetJumpState()) {
     case EJumpState::Start:
+        SPDLOG_INFO("EJumpState::Start");
         activeAnimation = "jump up";
         timeScale = sJumpTimeScale;
         playWholeAnimation = false;
         isLooping = false;
         break;
     case EJumpState::Falling:
+        SPDLOG_INFO("EJumpState::Falling");
         activeAnimation = "falling";
         timeScale = sFallTimeScale;
         blend = sFallBlend;
         playWholeAnimation = false;
         break;
     case EJumpState::End:
+        SPDLOG_INFO("EJumpState::End");
         break;
     case EJumpState::None:
         break;

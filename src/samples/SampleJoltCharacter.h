@@ -117,5 +117,5 @@ private:
     bool                    mManualVelocityMode = false;
 
     float mDisplacementVertical = 0.0f;
-
+    Vec3 mPreviousPosition;
 };

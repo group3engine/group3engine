@@ -30,7 +30,10 @@ void SampleJoltCharacter::Initialize()
     settings->mEnhancedInternalEdgeRemoval = sEnhancedInternalEdgeRemoval;
     settings->mInnerBodyShape = mStandingShape;
     settings->mInnerBodyLayer = Layers::MOVING;
-    mCharacter = new CharacterVirtual(settings, RVec3::sZero(), Quat::sIdentity(), 0, mPhysicsSystem);
+    Vec3 initialPosition = Vec3::sZero();
+    mCharacter = new CharacterVirtual(settings, initialPosition, Quat::sIdentity(), 0, mPhysicsSystem);
+
+    mPreviousPosition = initialPosition;
 
     mCharacter->SetListener(this);
 }
@@ -107,6 +110,10 @@ void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, 
     // the platforms that the character is standing on may have changed velocity
     mCharacter->UpdateGroundVelocity();
 
+    Vec3 currentPosition = mCharacter->GetPosition();
+
+    mDisplacementVertical += abs(currentPosition.GetY() - mPreviousPosition.GetY());
+
     // Determine new basic velocity
     Vec3 current_vertical_velocity = mCharacter->GetLinearVelocity().Dot(mCharacter->GetUp()) * mCharacter->GetUp();
     Vec3 ground_velocity = mCharacter->GetGroundVelocity();
@@ -120,42 +127,49 @@ void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, 
         // Assume velocity of ground when on ground
         new_velocity = ground_velocity;
 
+        // Reset vertical displacement when grounded
+        mDisplacementVertical = 0.0f;
+
         // Jump
-          if (inJump && moving_towards_ground) {
-                    new_velocity += sJumpSpeed * mCharacter->GetUp();
-                        mJumpState = EJumpState::Start;
-                    // if we are in climb, we want to jump away from the wall, so add negative of the direction without y
-                    if(inClimb)
-                    {
-                        Vec3 jumpBack = inMovementDirection;
-                        jumpBack.SetY(0);
-                        new_velocity += jumpBack * sJumpSpeed;
-                        mJumpState = EJumpState::Start;
-                        inClimb = false;
-                    }
-                }
-                else if (mJumpState != EJumpState::None && mJumpState != EJumpState::End) {
-                    mJumpState = EJumpState::End;
-                }
-                else
-                {
-                        mJumpState = EJumpState::None;
-                }
+        if (inJump && moving_towards_ground)
+        {
+            new_velocity += sJumpSpeed * mCharacter->GetUp();
+            mJumpState = EJumpState::Start;
+            // if we are in climb, we want to jump away from the wall, so add
+            // negative of the direction without y
+            if (inClimb)
+            {
+                Vec3 jumpBack = inMovementDirection;
+                jumpBack.SetY(0);
+                new_velocity += jumpBack * sJumpSpeed;
+                mJumpState = EJumpState::Start;
+                inClimb = false;
+            }
+        }
+        // If we have just landed then set the jump state to the end state
+        else if (mJumpState != EJumpState::None && mJumpState != EJumpState::End)
+        {
+            mJumpState = EJumpState::End;
+        }
+        // If we have already landed and are still grounded then set the jump state to none
+        else
+        {
+            mJumpState = EJumpState::None;
+        }
     }
     // If Character is not grounded
-    else {
+    else
+    {
         new_velocity = current_vertical_velocity;
-        if (new_velocity.GetY() > 0.2f) {
-            if (mJumpState == EJumpState::None) {
-                mJumpState = EJumpState::Start;
-            }
-        } else if (new_velocity.GetY() - ground_velocity.GetY() < 0.2f) {
+
+        // Since the jump is a parabola if we have started a jump measure the total vertical displacement
+        // If we have gone past the peak of the parabola then we should start falling
+        if (mJumpState == EJumpState::Start && mDisplacementVertical >= GetJumpHeight()) {
             mJumpState = EJumpState::Falling;
         }
     }
 
 	// Gravity
-	// if we have reached the peak of our jump (new_velocity.y is already negative), then multiply gravity by 2
 	if (new_velocity.GetY() < 0)
 	{
 		new_velocity += (character_up_rotation * Vec3(0, sFallGravity, 0)) * inDeltaTime;
@@ -213,7 +227,7 @@ void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, 
         mCharacter->SetInnerBodyShape(mStandingShape);
     }
 
-
+    mPreviousPosition = currentPosition;
 }
 
 void SampleJoltCharacter::OnContactCommon(const CharacterVirtual *inCharacter, const BodyID &inBodyID2, const SubShapeID &inSubShapeID2, RVec3Arg inContactPosition, Vec3Arg inContactNormal, CharacterContactSettings &ioSettings)
