@@ -263,7 +263,6 @@ void CharacterEntity::Update(double deltaTime) {
     // spdlog the current jump state
     switch (mSampleJoltCharacter->GetJumpState()) {
     case EJumpState::Start:
-        SPDLOG_INFO("EJumpState::Start");
         activeAnimation = "jump up";
         timeScale = sJumpTimeScale;
         playWholeAnimation = false;
