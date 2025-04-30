@@ -35,7 +35,7 @@
 				"collider_dropdown":0,
 				"physics_dropdown":1,
 				"sensor_checkbox":0,
-				"solid_checkbox":0,
+				"solid_checkbox":1,
 				"invisible_checkbox":0,
 				"new_tag":"",
 				"tags":[],
@@ -21156,7 +21156,7 @@
 				971
 			],
 			"extras":{
-				"is_solid":false,
+				"is_solid":true,
 				"entity_type":"moving_platform",
 				"physics_type":"kinematic",
 				"is_sensor":false,
