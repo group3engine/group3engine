@@ -880,6 +880,7 @@ void ImGuiRenderer::Update(Scene *scene)
             ImGui::InputFloat("sFallTimeScale", &CharacterEntity::sFallTimeScale, step, stepFast, nullptr, 0);
             ImGui::InputFloat("sFallBlend", &CharacterEntity::sFallBlend, step, stepFast, nullptr, 0);
             ImGui::InputFloat("sHangingBlend", &CharacterEntity::sHangingBlend, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sClimbTimeScale", &CharacterEntity::sClimbTimeScale, step, stepFast, nullptr, 0);
         }
     }
 

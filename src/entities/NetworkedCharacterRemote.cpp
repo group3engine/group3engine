@@ -115,7 +115,7 @@ void NetworkedCharacterRemote::LateUpdate(double deltaTime) {
     if(mInClimb)
     {
         activeAnimation = "climb";
-        timeScale = characterYSpeed;
+        timeScale = characterYSpeed * CharacterEntity::sClimbTimeScale;
         blend = 0.1f;
         playWholeAnimation = false;
         // we can't crouch if we are climbing
