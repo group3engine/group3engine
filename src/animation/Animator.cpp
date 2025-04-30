@@ -188,6 +188,16 @@ void Animator::SetActiveAnimation(const std::string &aName) {
     }
 }
 
+void Animator::ResetActiveAnimation(const std::string &aName)
+{
+    // verify that the active animation matches the name
+    if(aName != mCurrentAnimationName)
+    {
+        return;
+    }
+    mAnimationSamples[mActiveAnimation].time = 0;
+}
+
 void Animator::SetActiveAnimation(const std::string &aName, float blendTime, bool lockForFirstLoop, bool isLooping) {
     // if the lock timer is still active, then don't change the animation
     if (mAnimationLockTimer > 0.0f) {

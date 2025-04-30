@@ -122,7 +122,7 @@ void CharacterEntity::ProcessInput(){
             controlInput = rotation * controlInput;
 
             // Check actions
-            if (mInputMapping.GetActionPressed("JUMP") > 0) {
+            if (mInputMapping.GetActionDown("JUMP") > 0) {
                 jump = true;
             }
 
@@ -250,6 +250,8 @@ void CharacterEntity::Update(double deltaTime) {
     }
 
     bool isLooping = true;
+    bool resetAnimation = false;
+    std::string resetAnimationName{};
 
     // work out the active animation, and the time scale
     float timeScale = 1.0f;
@@ -267,6 +269,8 @@ void CharacterEntity::Update(double deltaTime) {
         timeScale = sJumpTimeScale;
         playWholeAnimation = false;
         isLooping = false;
+        resetAnimation = true;
+        resetAnimationName = "jump up";
         break;
     case EJumpState::Falling:
         SPDLOG_INFO("EJumpState::Falling");
@@ -337,6 +341,10 @@ void CharacterEntity::Update(double deltaTime) {
             if (child->HasAnimator()) {
                 child->GetAnimator().SetActiveAnimation(activeAnimation, blend, playWholeAnimation, isLooping);
                 child->GetAnimator().SetTimeScale(timeScale);
+                if(resetAnimation)
+                {   
+                    child->GetAnimator().ResetActiveAnimation(resetAnimationName);
+                }
             }
     }
 
