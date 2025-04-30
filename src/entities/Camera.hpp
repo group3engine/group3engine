@@ -93,7 +93,8 @@ class Camera : public Entity {
     [[nodiscard]] bool isInFreeCameraMode() const { return m_inputType == InputType::FreeCamera; }
     [[nodiscard]] bool isInFollowCharacterMode() const { return m_inputType == InputType::FollowCharacter; }
 
-
+  public:
+    inline static float sZoomLevel = 1.8f;
 
   private:
     glm::vec3 m_position;
@@ -106,7 +107,6 @@ class Camera : public Entity {
     float m_controllerSensitivity;
     double yaw = 90.0f;
     double pitch = 0.0f;
-    float zoom_level = 1.f;
     function<void(glm::vec3)> m_teleportCallback = nullptr;
 
     const PhysicsManager* m_physics_reference;

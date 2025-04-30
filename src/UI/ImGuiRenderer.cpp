@@ -26,6 +26,7 @@
 #include "Fonts.hpp"
 
 #include "SampleJoltCharacter.h"
+#include "Camera.hpp"
 #include "CharacterBaseTest.h"
 #include "CharacterEntity.hpp"
 #include "Sinking.hpp"
@@ -854,25 +855,32 @@ void ImGuiRenderer::Update(Scene *scene)
 
     {
         float step = 0.1f;
-        float stepFine = 0.01f;
         float stepFast = 0.5f;
-        ImGui::InputFloat("sJumpHeight", &CharacterBaseTest::sJumpHeight, step, stepFast, nullptr, 0);
-        ImGui::InputFloat("sCharacterSpeed: ", &CharacterBaseTest::sCharacterSpeed, step, stepFast, nullptr, 0);
-        ImGui::InputFloat("sJumpTime", &CharacterBaseTest::sJumpTime, stepFine, step, nullptr, 0);
-        ImGui::InputFloat("sFallTime", &CharacterBaseTest::sFallTime, stepFine, step, nullptr, 0);
+        ImGui::InputFloat("Camera::sZoomLevel", &Camera::sZoomLevel, step, stepFast, nullptr, 0);
     }
 
-    {
-        float step = 0.01f;
-        float stepFast = 0.1f;
-        ImGui::InputFloat("sJumpHeight", &CharacterBaseTest::sJumpHeight, step, stepFast, nullptr, 0);
-        CharacterBaseTest::sJumpSpeed = 2.0f * CharacterBaseTest::sJumpHeight / CharacterBaseTest::sJumpTime;
-        CharacterBaseTest::sJumpGravity = -2.0f * CharacterBaseTest::sJumpHeight / Square(CharacterBaseTest::sJumpTime);
-        CharacterBaseTest::sFallGravity = -2.0f * CharacterBaseTest::sJumpHeight / Square(CharacterBaseTest::sFallTime);
-        ImGui::InputFloat("sJumpTimeScale", &CharacterEntity::sJumpTimeScale, step, stepFast, nullptr, 0);
-        ImGui::InputFloat("sFallTimeScale", &CharacterEntity::sFallTimeScale, step, stepFast, nullptr, 0);
-        ImGui::InputFloat("sFallBlend", &CharacterEntity::sFallBlend, step, stepFast, nullptr, 0);
-        ImGui::InputFloat("sHangingBlend", &CharacterEntity::sHangingBlend, step, stepFast, nullptr, 0);
+    if (ImGui::CollapsingHeader("CharacterSettings")) {
+        {
+            float step = 0.1f;
+            float stepFine = 0.01f;
+            float stepFast = 0.5f;
+            ImGui::InputFloat("sCharacterSpeed: ", &CharacterBaseTest::sCharacterSpeed, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sJumpTime", &CharacterBaseTest::sJumpTime, stepFine, step, nullptr, 0);
+            ImGui::InputFloat("sFallTime", &CharacterBaseTest::sFallTime, stepFine, step, nullptr, 0);
+        }
+
+        {
+            float step = 0.01f;
+            float stepFast = 0.1f;
+            ImGui::InputFloat("sJumpHeight", &CharacterBaseTest::sJumpHeight, step, stepFast, nullptr, 0);
+            CharacterBaseTest::sJumpSpeed = 2.0f * CharacterBaseTest::sJumpHeight / CharacterBaseTest::sJumpTime;
+            CharacterBaseTest::sJumpGravity = -2.0f * CharacterBaseTest::sJumpHeight / Square(CharacterBaseTest::sJumpTime);
+            CharacterBaseTest::sFallGravity = -2.0f * CharacterBaseTest::sJumpHeight / Square(CharacterBaseTest::sFallTime);
+            ImGui::InputFloat("sJumpTimeScale", &CharacterEntity::sJumpTimeScale, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sFallTimeScale", &CharacterEntity::sFallTimeScale, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sFallBlend", &CharacterEntity::sFallBlend, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sHangingBlend", &CharacterEntity::sHangingBlend, step, stepFast, nullptr, 0);
+        }
     }
 
     static bool showGraphics = false;
