@@ -73,16 +73,7 @@ Animator::Animator(Context *aContext, Skin *aSkin)
 }
 void Animator::UpdateJointBuffer(Entity *aMesh) {
     // get the joints from the skin
-    mJoints = mSkin->GetJointMatrices(aMesh);
-    // for each joint matrix, decompose it into its components
-    for (auto &joint : mJoints) {
-        // get the translation, rotation and scale
-        glm::vec3 translation, scale;
-        glm::quat rotation;
-        glm::vec3 skew;
-        glm::vec4 perspective;
-        glm::decompose(joint, scale, rotation, translation, skew, perspective);
-    }
+    mSkin->GetJointMatrices(aMesh, mJoints);
 }
 
 void Animator::UploadJointBuffer(VkCommandBuffer cmdBuff) {

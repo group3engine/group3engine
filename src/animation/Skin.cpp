@@ -6,13 +6,11 @@
 #include <glm/gtx/io.hpp>
 #include <iostream>
 
-std::vector<glm::mat4> Skin::GetJointMatrices(Entity *aMesh) const {
-    std::vector<glm::mat4> jointMatrices;
-    jointMatrices.reserve(mJoints.size());
+void Skin::GetJointMatrices(Entity *aMesh, std::vector<glm::mat4> &aJointMatrices) const {
+    aJointMatrices.clear();
     for (const auto &joint : mJoints) {
-        jointMatrices.push_back(joint.entity->GetWorldTransform() * joint.inverseBindMatrix);
+        aJointMatrices.push_back(joint.entity->GetWorldTransform() * joint.inverseBindMatrix);
     }
-    return jointMatrices;
 }
 void Skin::AddJoint(Joint aJoint) {
     mJoints.push_back(aJoint);
