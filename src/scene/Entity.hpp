@@ -36,7 +36,8 @@ enum class EInteractable {
 
 enum class ENetworkLocality {
     Local,
-    Remote
+    Remote,
+    None
 };
 
 #define MIN_ANIMATOR_UPDATE_DISTANCE 50.f
@@ -45,9 +46,6 @@ enum class ENetworkLocality {
 
 /// The base class for all entities in the scene. Custom entities all have this as their base class
 class Entity {
-  private:
-    static std::atomic<uint32_t> kEntityCount;
-
   public:
     // functions the user can call
 
@@ -257,6 +255,8 @@ class Entity {
     // TODO: Make friend class with Scene
     void SetScene(Scene *scene) { mScene = scene; }
 
+    void InitID(uint32_t id);
+
     const std::unordered_map<std::string, float> &GetFloatProperties() { return mFloatProperties; }
 
     void SetFloatProperties(std::unordered_map<std::string, float> &floatProperties) {
@@ -281,7 +281,7 @@ class Entity {
 
     std::unordered_map<std::string, float> mFloatProperties;
 
-    uint32_t mEntityID = kEntityCount++;
+    uint32_t mEntityID = 0;
 
     private:
 
