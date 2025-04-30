@@ -49,7 +49,7 @@ void NetworkEntitiesManager::Update(double deltaTime)
             state.isCrouching = jsonData["isCrouching"];
             state.isEmoting = jsonData["isEmoting"];
             state.isInClimb = jsonData["isInClimb"];
-            
+            state.deathState = static_cast<DeathState>(jsonData["deathState"]);
 
 
             // TODO: Add code to respond to this

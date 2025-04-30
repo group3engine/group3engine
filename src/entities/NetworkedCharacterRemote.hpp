@@ -61,6 +61,7 @@ private:
     bool mIsEmoting = false;
     bool mInClimb = false;
     bool mHasEverBeenGivenState = false;
+    DeathState mDeathState = DeathState::eLiving;
 
 };
 

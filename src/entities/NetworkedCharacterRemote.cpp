@@ -103,15 +103,14 @@ void NetworkedCharacterRemote::LateUpdate(double deltaTime) {
     case EJumpState::None:
         break;
     }
-    //TODO: network deathstate
-    // // if the character is dying, set the animation to dying
-    // if(mDeathState == DeathState::eDying) {
-    //     activeAnimation = "death";
-    //     timeScale = 1.0f;
-    //     blend = 0.5f;
-    //     playWholeAnimation = false;
-    //     isLooping = false;
-    // }
+    // if the character is dying, set the animation to dying
+    if(mDeathState == DeathState::eDying) {
+        activeAnimation = "death";
+        timeScale = 1.0f;
+        blend = 0.5f;
+        playWholeAnimation = false;
+        isLooping = false;
+    }
     // if the character is climbing, set the animation to climb
     if(mInClimb)
     {
@@ -212,6 +211,7 @@ void NetworkedCharacterRemote::UpdateState(State state)
     mIsCrouching = state.isCrouching;
     mIsEmoting = state.isEmoting;
     mInClimb = state.isInClimb;
+    mDeathState = state.deathState;
     mHasEverBeenGivenState = true;
 }
 
