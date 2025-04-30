@@ -235,16 +235,19 @@ void CharacterEntity::Update(double deltaTime) {
     float characterYSpeed = characterVelocity.y;
     characterVelocity.y = 0;
 
+    Vec3 intendedVelocity = mSampleJoltCharacter->GetIntendedVelocity();
+    glm::vec3 intendedVelocityGlm = {intendedVelocity.GetX(), 0, intendedVelocity.GetZ()};
+
     // if we are in climb, we want to fce
     if(mInClimb)
     {
         characterVelocity = mClimbDirection;
+        intendedVelocityGlm = mClimbDirection;
     }
-    if (glm::length(characterVelocity) > 0.1f) {
+
+    if (glm::length(intendedVelocityGlm) > 0.1f) {
         // set the transform rotation to the direction of the velocity, on top of the initial transform rotation
         Transform newTransform = GetLocalTransform();
-        Vec3 intendedVelocity = mSampleJoltCharacter->GetIntendedVelocity();
-        glm::vec3 intendedVelocityGlm = {intendedVelocity.GetX(), 0, intendedVelocity.GetZ()};
         newTransform.rotation = glm::quatLookAt(glm::normalize(intendedVelocityGlm * -1.f), glm::vec3(0, 1, 0)) * mInitialTransform.rotation;
         SetTransform(newTransform);
     }
