@@ -852,17 +852,28 @@ void ImGuiRenderer::Update(Scene *scene)
     float sinkingStepFast = 0.5f;
     ImGui::InputFloat("mSinkingSpeed", &Sinking::mSinkingSpeed, sinkingStep, sinkingStepFast, nullptr, 0);
 
-    ImGui::SliderFloat("GravityUpModifier: ", &SampleJoltCharacter::sGravityUpModifier, 0.1f, 10.0f);
-    ImGui::SliderFloat("GravityDownModifier: ", &SampleJoltCharacter::sGravityDownModifier, 0.1f, 10.0f);
-    ImGui::SliderFloat("sJumpSpeed: ", &CharacterBaseTest::sJumpSpeed, 0.1f, 20.0f);
-    ImGui::SliderFloat("sCharacterSpeed: ", &CharacterBaseTest::sCharacterSpeed, 0.1f, 20.0f);
+    {
+        float step = 0.1f;
+        float stepFine = 0.01f;
+        float stepFast = 0.5f;
+        ImGui::InputFloat("sJumpHeight", &CharacterBaseTest::sJumpHeight, step, stepFast, nullptr, 0);
+        ImGui::InputFloat("sCharacterSpeed: ", &CharacterBaseTest::sCharacterSpeed, step, stepFast, nullptr, 0);
+        ImGui::InputFloat("sJumpTime", &CharacterBaseTest::sJumpTime, stepFine, step, nullptr, 0);
+        ImGui::InputFloat("sFallTime", &CharacterBaseTest::sFallTime, stepFine, step, nullptr, 0);
+    }
 
-    float step = 0.01f;
-    float stepFast = 0.1f;
-    ImGui::InputFloat("sJumpTimeScale", &CharacterEntity::sJumpTimeScale, step, stepFast, nullptr, 0);
-    ImGui::InputFloat("sFallTimeScale", &CharacterEntity::sFallTimeScale, step, stepFast, nullptr, 0);
-    ImGui::InputFloat("sFallBlend", &CharacterEntity::sFallBlend, step, stepFast, nullptr, 0);
-    ImGui::InputFloat("sHangingBlend", &CharacterEntity::sHangingBlend, step, stepFast, nullptr, 0);
+    {
+        float step = 0.01f;
+        float stepFast = 0.1f;
+        ImGui::InputFloat("sJumpHeight", &CharacterBaseTest::sJumpHeight, step, stepFast, nullptr, 0);
+        CharacterBaseTest::sJumpSpeed = 2.0f * CharacterBaseTest::sJumpHeight / CharacterBaseTest::sJumpTime;
+        CharacterBaseTest::sJumpGravity = -2.0f * CharacterBaseTest::sJumpHeight / Square(CharacterBaseTest::sJumpTime);
+        CharacterBaseTest::sFallGravity = -2.0f * CharacterBaseTest::sJumpHeight / Square(CharacterBaseTest::sFallTime);
+        ImGui::InputFloat("sJumpTimeScale", &CharacterEntity::sJumpTimeScale, step, stepFast, nullptr, 0);
+        ImGui::InputFloat("sFallTimeScale", &CharacterEntity::sFallTimeScale, step, stepFast, nullptr, 0);
+        ImGui::InputFloat("sFallBlend", &CharacterEntity::sFallBlend, step, stepFast, nullptr, 0);
+        ImGui::InputFloat("sHangingBlend", &CharacterEntity::sHangingBlend, step, stepFast, nullptr, 0);
+    }
 
     static bool showGraphics = false;
     ImGui::Checkbox("Graphics Settings", &showGraphics);

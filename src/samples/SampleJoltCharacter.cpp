@@ -154,14 +154,14 @@ void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, 
         }
     }
 
-    // Gravity
-    // if we have reached the peak of our jump (new_velocity.y is already negative), then multiply gravity by 2
-    float gravityMultiplier = sGravityUpModifier;
-    if(new_velocity.GetY() < 0.2f)
-    {
-        gravityMultiplier = sGravityDownModifier;
-    }
-    new_velocity += (character_up_rotation * mPhysicsSystem->GetGravity()) * inDeltaTime * gravityMultiplier;
+	// Gravity
+	// if we have reached the peak of our jump (new_velocity.y is already negative), then multiply gravity by 2
+	if (new_velocity.GetY() < 0)
+	{
+		new_velocity += (character_up_rotation * Vec3(0, sFallGravity, 0)) * inDeltaTime;
+	} else {
+		new_velocity += (character_up_rotation * Vec3(0, sJumpGravity, 0)) * inDeltaTime;
+	}
 
     if (player_controls_horizontal_velocity)
     {

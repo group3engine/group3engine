@@ -130,6 +130,7 @@ static std::filesystem::path SinkingSample{"GameSamples/SinkingPillars/sinking.g
 static std::filesystem::path BoulderSample{"GameSamples/RollingBoulder/boulder.gltf"};
 static std::filesystem::path SpikeTrapSample{"GameSamples/SpikeTrap/spiketrap.gltf"};
 static std::filesystem::path DisappearingPlatformSample{"GameSamples/DisappearingPlatform/platform.gltf"};
+static std::filesystem::path JumpTest{"Test/jump.gltf"};
 
 } // namespace Sample
 
