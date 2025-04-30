@@ -174,6 +174,10 @@ target_link_libraries(src PRIVATE cgltf glfw glm::glm-header-only Jolt spdlog::s
 if ((CMAKE_CXX_COMPILER_ID STREQUAL "Clang") OR (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
   # Disable rtti with -fno-rtti to be compatible with Jolt
   target_compile_options(src PRIVATE -fno-rtti -Wall -Wextra -Wnon-virtual-dtor -pedantic -Wno-missing-field-initializers)
+
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_options(src PRIVATE -fsignaling-nans)
+  endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   # Disable rtti with /GR- to be compatible with Jolt
   target_compile_options(src PRIVATE /GR- /permissive- /W4 /w14640)
