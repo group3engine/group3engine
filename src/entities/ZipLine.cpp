@@ -59,7 +59,7 @@ void ZipLine::Awake()
 void ZipLine::OnInteract(Entity *other, ENetworkLocality networkLocality)
 {
     // if the other entity is a character, start zipping
-    if (other->CompareType("character")) {
+    if (other->CompareType("character") || other->CompareType("NetworkedLocalCharacter")) {
         mCharacter = static_cast<CharacterEntity *>(other);
         mIsZipping = true;
         mCharacter->SetPosition(mStartPosition);
