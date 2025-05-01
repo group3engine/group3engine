@@ -12,6 +12,7 @@
 #include "PhysicsHelpers.hpp"
 
 #include "Entity.hpp"
+#include "Debugging.hpp"
 
 void SampleJoltCharacter::Initialize()
 {
@@ -114,6 +115,11 @@ void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, 
 
     mDisplacementVertical += abs(currentPosition.GetY() - mPreviousPosition.GetY());
 
+    // Reset vertical displacement if in climb
+    if (inClimb) {
+        mDisplacementVertical = 0.0f;
+    }
+
     // Determine new basic velocity
     Vec3 current_vertical_velocity = mCharacter->GetLinearVelocity().Dot(mCharacter->GetUp()) * mCharacter->GetUp();
     Vec3 ground_velocity = mCharacter->GetGroundVelocity();
@@ -167,6 +173,10 @@ void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, 
         if (mJumpState == EJumpState::Start && mDisplacementVertical >= GetJumpHeight()) {
             mJumpState = EJumpState::Falling;
         }
+    }
+
+    if (inClimb) {
+        mJumpState = EJumpState::None;
     }
 
 	// Gravity

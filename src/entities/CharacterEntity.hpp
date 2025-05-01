@@ -130,6 +130,7 @@ class CharacterEntity : public Entity {
     inline static float sFallBlend = 1.0f;
     inline static float sHangingBlend = 0.25f;
     inline static float sClimbTimeScale = 0.45f;
+    inline static float sRunningCrouchTimeScale = 1.0f;
 
   protected:
     Camera *mCamera = nullptr;

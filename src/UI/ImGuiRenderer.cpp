@@ -864,6 +864,7 @@ void ImGuiRenderer::Update(Scene *scene)
             float step = 0.01f;
             float stepFast = 0.1f;
             ImGui::InputFloat("sCameraUpOffset: ", &Camera::sCameraUpOffset, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sCameraCrouchingUpOffset: ", &Camera::sCameraCrouchingUpOffset, step, stepFast, nullptr, 0);
             ImGui::InputFloat("sCameraRightOffset: ", &Camera::sCameraRightOffset, step, stepFast, nullptr, 0);
         }
 
@@ -888,6 +889,7 @@ void ImGuiRenderer::Update(Scene *scene)
             ImGui::InputFloat("sFallBlend", &CharacterEntity::sFallBlend, step, stepFast, nullptr, 0);
             ImGui::InputFloat("sHangingBlend", &CharacterEntity::sHangingBlend, step, stepFast, nullptr, 0);
             ImGui::InputFloat("sClimbTimeScale", &CharacterEntity::sClimbTimeScale, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sRunningCrouchTimeScale", &CharacterEntity::sRunningCrouchTimeScale, step, stepFast, nullptr, 0);
         }
     }
 

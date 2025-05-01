@@ -19,6 +19,8 @@
 #include "glm/fwd.hpp"
 #include "SDL.hpp"
 #include "AudioManager.hpp"
+#include "SampleJoltCharacter.h"
+
 Camera::Camera(const glm::vec3 position, glm::vec3 direction, glm::vec3 up)
     :
     m_position{position}, m_direction{direction}, m_up{up} {
@@ -28,7 +30,9 @@ Camera::Camera(const glm::vec3 position, glm::vec3 direction, glm::vec3 up)
     m_cameraSpeed = defaultSpeed;
 }
 
-void Camera::UpdateCameraMovement(const RVec3 &characterCOM) {
+void Camera::UpdateCameraMovement(const RVec3 &characterCOM, ECrouchState crouchState) {
+    float cameraUpOffset = crouchState == ECrouchState::Crouching ? sCameraCrouchingUpOffset : sCameraUpOffset;
+
     glm::vec3 character_position = {characterCOM.GetX(), characterCOM.GetY(), characterCOM.GetZ()};
 
     if(inputMap[std::size_t(EInputState::SWITCHVIEW)] == true)
@@ -52,7 +56,7 @@ void Camera::UpdateCameraMovement(const RVec3 &characterCOM) {
         }
 
         glm::vec3 third_person_camera_offset =
-            ((-2.f * forward) * sZoomLevel + (sCameraUpOffset * m_up) + (sCameraRightOffset * rightVector));
+            ((-2.f * forward) * sZoomLevel + (cameraUpOffset * m_up) + (sCameraRightOffset * rightVector));
 
         RRayCast ray;
         ray.mOrigin = Vec3(character_position.x, character_position.y, character_position.z);

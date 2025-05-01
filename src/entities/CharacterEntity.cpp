@@ -447,7 +447,7 @@ void CharacterEntity::Update(double deltaTime) {
             activeAnimation = activeAnimation + "_crouch";
         if(activeAnimation == "running_crouch")
         {
-            timeScale = 10.0f * timeScale;
+            timeScale = sRunningCrouchTimeScale;
         }
     }
     // if we are hanging, set the animation to hanging
@@ -473,7 +473,8 @@ void CharacterEntity::Update(double deltaTime) {
     }
 
     mCamera->UpdateCameraRotation(deltaTime);
-    mCamera->UpdateCameraMovement(mSampleJoltCharacter->GetCharacterCenterOfMassPosition());
+    ECrouchState crouchState = mIsCrouching ? ECrouchState::Crouching : ECrouchState::Standing;
+    mCamera->UpdateCameraMovement(mSampleJoltCharacter->GetCharacterCenterOfMassPosition(), crouchState);
     // if the camera is too close to us, set invisible
     SPDLOG_INFO("cam dist {}", glm::distance(mCamera->GetPosition(), GetCharacterPositionOffset()));
     if(glm::distance(mCamera->GetPosition(), GetCharacterPositionOffset()) < 1.5f)
