@@ -70,7 +70,10 @@ class CharacterEntity : public Entity {
     void OnWin(WinSignal *signal);
 
     // set the checkpoint
-    void SetCheckpoint(glm::vec3 checkpoint) { mLastCheckpoint = checkpoint; Save();}
+    void SetCheckpoint(glm::vec3 checkpoint) {
+        mLastCheckpoint = checkpoint;
+        Save();
+    }
 
     void Die();
     // reset the character to the last checkpoint
@@ -161,6 +164,7 @@ class CharacterEntity : public Entity {
     Transform mInitialTransform = {};
 
     glm::vec3 mLastCheckpoint = glm::vec3(0, 10.0f, 0);
+    int mLastCheckpointID = -1;
 
     std::stack<InternalEvent> mInternalEvents;
     std::stack<InternalUiEvent> mInternalUiEvents;

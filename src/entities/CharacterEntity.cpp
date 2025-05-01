@@ -590,11 +590,19 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
 
     // if its a checkpoint, set the checkpoint
     if(aOther->CompareTag("checkpoint")) {
-        // set the checkpoint to the position of the checkpoint, plus a bit in the y direction
-        glm::vec3 checkpointPosition =
-            aOther->GetWorldTransformComponents().translation + glm::vec3(0, 2.5f, 0);
-        SetCheckpoint(checkpointPosition);
+        std::string entityName = aOther->GetName();
+        assert(entityName.find("Checkpoint") != std::string::npos);
 
+        int checkpointID = std::stoi(entityName.substr(10));
+
+        if (checkpointID > mLastCheckpointID) {
+            // set the checkpoint to the position of the checkpoint, plus a bit in the y direction
+            glm::vec3 checkpointPosition =
+                aOther->GetWorldTransformComponents().translation + glm::vec3(0, 2.5f, 0);
+            SetCheckpoint(checkpointPosition);
+
+            mLastCheckpointID = checkpointID;
+        }
     }
 
     if(aOther->CompareTag("finishzone"))
