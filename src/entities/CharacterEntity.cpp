@@ -240,7 +240,7 @@ void CharacterEntity::Update(double deltaTime) {
         // set animation to hit
         for (auto &child : GetChildren()) {
             if (child->HasAnimator()) {
-                child->GetAnimator().SetActiveAnimation("hit", 0.1f, false);
+                child->GetAnimator().SetActiveAnimation("death", 0.1f, false);
             }
         }
         return;

@@ -485,7 +485,7 @@ vec3 CookTorranceBRDF(vec3 normal, vec3 halfVector, vec3 viewDir, vec3 lightDir,
     vec3 iblKD = (1.0 - FR) * (1.0 - metallic);
     vec3 irradiance = texture(irradianceMap, normal).rgb; // EvaluateSHForDiffuseIBL(normal);
     vec3 diffuseIBL = irradiance * baseColor * iblKD;
-    vec3 indirectLight = diffuseIBL + specularIBLFinal;
+    vec3 indirectLight = diffuseIBL;
 
     float shadowTerm = 1.0 - myPCF(WorldPos.xyz);
     directLight = directLight * shadowTerm;
