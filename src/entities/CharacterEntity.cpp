@@ -299,6 +299,11 @@ void CharacterEntity::Update(double deltaTime) {
         mInClimb = true;
         mEnterClimb = false;
     }
+    if(mInClimb)
+    {
+        mLastClimbTime = GetTotalTime();
+    }
+    bool recentlyClimbing = GetTotalTime() - mLastClimbTime < 0.1;
     // update the character position offset
     auto characterPhysicsPos = mSampleJoltCharacter->GetCharacterPosition();
     SetCharacterPositionOffset(characterPhysicsPos.GetX(), characterPhysicsPos.GetY(), characterPhysicsPos.GetZ());
@@ -355,7 +360,7 @@ void CharacterEntity::Update(double deltaTime) {
     glm::vec3 intendedVelocityGlm = {intendedVelocity.GetX(), 0, intendedVelocity.GetZ()};
 
     // if we are in climb, we want to fce
-    if(mInClimb)
+    if(recentlyClimbing)
     {
         characterVelocity = mClimbDirection;
         intendedVelocityGlm = mClimbDirection;
@@ -413,7 +418,7 @@ void CharacterEntity::Update(double deltaTime) {
         isLooping = false;
     }
     // if the character is climbing, set the animation to climb
-    if(mInClimb)
+    if(recentlyClimbing)
     {
         activeAnimation = "climb";
         timeScale = characterYSpeed * sClimbTimeScale;
