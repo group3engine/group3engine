@@ -17,7 +17,8 @@
 
 #include "Input.hpp"
 #include "glm/fwd.hpp"
-
+#include "SDL.hpp"
+#include "AudioManager.hpp"
 Camera::Camera(const glm::vec3 position, glm::vec3 direction, glm::vec3 up)
     :
     m_position{position}, m_direction{direction}, m_up{up} {
@@ -44,17 +45,17 @@ void Camera::UpdateCameraMovement(const Transform &character_transform) {
         glm::vec3 rightVector = glm::normalize(glm::cross(m_direction, m_up));
 
         if (inputMap[std::size_t(EInputState::ZOOM_IN)]) {
-            zoom_level -= 0.1f;
+            sZoomLevel -= 0.1f;
         }
         if (inputMap[std::size_t(EInputState::ZOOM_OUT)]) {
-            zoom_level += 0.1f;
+            sZoomLevel += 0.1f;
         }
 
         glm::vec3 third_person_camera_offset =
-            ((-2.f * forward) + (1.0f * m_up) + (0.25f * rightVector)) * zoom_level;
+            ((-2.f * forward) + (1.0f * m_up) + (0.25f * rightVector)) * sZoomLevel;
 
         RRayCast ray;
-        ray.mOrigin = Vec3(character_position.x, character_position.y, character_position.z);
+        ray.mOrigin = Vec3(character_position.x, character_position.y + 2.f, character_position.z);
         ray.mDirection = Vec3(third_person_camera_offset.x, third_person_camera_offset.y,
                               third_person_camera_offset.z);
 
@@ -72,23 +73,25 @@ void Camera::UpdateCameraMovement(const Transform &character_transform) {
         glm::vec3 forward = glm::normalize(m_direction);
         glm::vec3 rightVector = glm::normalize(glm::cross(m_direction, m_up));
 
+        float camSpeed = m_cameraSpeed * (inputMap[std::size_t(EInputState::FAST)] ? 5.0f : 1.0f);
+
         if (inputMap[std::size_t(EInputState::FORWARD)]) {
-            m_position += m_cameraSpeed * forward;
+            m_position += camSpeed * GlobalUtil::deltaTime * forward;
         }
         if (inputMap[std::size_t(EInputState::BACKWARD)]) {
-            m_position -= m_cameraSpeed * forward;
+            m_position -= camSpeed * GlobalUtil::deltaTime * forward;
         }
         if (inputMap[std::size_t(EInputState::LEFT)]) {
-            m_position -= m_cameraSpeed * rightVector;
+            m_position -= camSpeed * GlobalUtil::deltaTime * rightVector;
         }
         if (inputMap[std::size_t(EInputState::RIGHT)]) {
-            m_position += m_cameraSpeed * rightVector;
+            m_position += camSpeed * GlobalUtil::deltaTime * rightVector;
         }
         if (inputMap[std::size_t(EInputState::UP)]) {
-            m_position += m_cameraSpeed * m_up;
+            m_position += camSpeed * GlobalUtil::deltaTime * m_up;
         }
         if (inputMap[std::size_t(EInputState::DOWN)]) {
-            m_position -= m_cameraSpeed * m_up;
+            m_position -= camSpeed * GlobalUtil::deltaTime * m_up;
         }
         if (inputMap[std::size_t(EInputState::TELEPORT)]) {
             // call the teleport callback
@@ -97,6 +100,10 @@ void Camera::UpdateCameraMovement(const Transform &character_transform) {
             }
         }
     }
+    // update the audio listener position
+    AudioManager::get().SetListenerPosition(m_position.x, m_position.y, m_position.z,
+                                            m_direction.x, m_direction.y, m_direction.z,
+                                            m_up.x, m_up.y, m_up.z);
 }
 
 void Camera::UpdateCameraRotation(double deltaTime) {
@@ -109,8 +116,8 @@ void Camera::UpdateCameraRotation(double deltaTime) {
             delta.y = -delta.y; // Prevent inverted y
         }
         // Get the right joystick input
-        delta.x += GetGamepadAxis(GAMEPAD_AXIS::eRIGHT_X) * m_controllerSensitivity * deltaTime;
-        delta.y -= GetGamepadAxis(GAMEPAD_AXIS::eRIGHT_Y) * m_controllerSensitivity * deltaTime;
+        delta.x += GetGamepadAxis(SDL_INPUT::GamepadAxis::GAMEPAD_AXIS_RIGHT_X, 0) * m_controllerSensitivity * deltaTime;
+        delta.y -= GetGamepadAxis(SDL_INPUT::GamepadAxis::GAMEPAD_AXIS_RIGHT_Y, 0) * m_controllerSensitivity * deltaTime;
 
         // Update the camera angles based on the mouse and controller movement
         UpdateCameraAngles(delta);

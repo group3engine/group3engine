@@ -24,11 +24,13 @@
 **********************************************************************************************/
 
 #include "GLFW.hpp"
+#include "controllers.h"
 
 #include <cstdlib>
 
 #include <GLFW/glfw3.h>
 #include <spdlog/spdlog.h>
+#include "SDL.hpp"
 
 // Using system from https://github.com/raysan5/raylib/blob/master/src/platforms/rcore_desktop_glfw.c
 static void KeyCallback([[maybe_unused]] GLFWwindow *window,
@@ -62,58 +64,14 @@ static void MouseCursorPosCallback([[maybe_unused]] GLFWwindow *window, double x
     gInputData.mouse.currentPosition = {x, y};
 }
 
-static void PollGamepadJoysticks()
-{
-    // Register previous gamepad button and axis states
-    for (uint8_t i = 0; i < static_cast<uint8_t>(GAMEPAD_BUTTON::eLAST); ++i) {
-        gInputData.gamepadButtons.previousButtonState[i] =
-            gInputData.gamepadButtons.currentButtonState[i];
-    }
-
-    for (uint8_t i = 0; i < static_cast<uint8_t>(GAMEPAD_AXIS::eLAST); ++i) {
-        gInputData.gamepadAxis.previousAxisState[i] =
-            gInputData.gamepadAxis.currentAxisState[i];
-    }
-
-    // Check all possible gamepad connections (GLFW supports up to 16 gamepads)
-    for (int gamepad = GLFW_JOYSTICK_1; gamepad <= GLFW_JOYSTICK_LAST; gamepad++) {
-        if (glfwJoystickPresent(gamepad)) {
-            // Poll button states
-            int buttonCount;
-            const unsigned char* buttons = glfwGetJoystickButtons(gamepad, &buttonCount);
-
-            int count = (buttonCount < static_cast<int>(GAMEPAD_BUTTON::eLAST)) ?
-                         buttonCount : static_cast<int>(GAMEPAD_BUTTON::eLAST);
-
-            for (int i = 0; i < count; i++) {
-                gInputData.gamepadButtons.currentButtonState[i] = buttons[i];
-            }
-
-            // Poll axes (focused on analog sticks)
-            int axisCount;
-            const float* axes = glfwGetJoystickAxes(gamepad, &axisCount);
-
-            int axesCount = (axisCount < static_cast<int>(GAMEPAD_AXIS::eLAST)) ?
-                             axisCount : static_cast<int>(GAMEPAD_AXIS::eLAST);
-
-            for (int i = 0; i < axesCount; i++) {
-                gInputData.gamepadAxis.currentAxisState[i] = axes[i];
-            }
-
-            // Only process the first connected gamepad
-            break;
-        }
-    }
-    // print the right stick
-    //SPDLOG_INFO("Right stick: ({}, {})", gInputData.gamepadAxis.currentAxisState[2], gInputData.gamepadAxis.currentAxisState[3]);
-    //SPDLOG_INFO("All gamepad axis values: ({}, {}, {}, {}, {}, {})", gInputData.gamepadAxis.currentAxisState[0], gInputData.gamepadAxis.currentAxisState[1], gInputData.gamepadAxis.currentAxisState[2], gInputData.gamepadAxis.currentAxisState[3], gInputData.gamepadAxis.currentAxisState[4], gInputData.gamepadAxis.currentAxisState[5]);
-}
 
 
 
 void Platform::StartUp(int windowWidth, int windowHeight) {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    SDL_INPUT::InitPlatform();
+
 
     GLFWmonitor *monitor = glfwGetPrimaryMonitor();
 
@@ -147,6 +105,7 @@ void Platform::StartUp(int windowWidth, int windowHeight) {
 void Platform::ShutDown() {
     glfwDestroyWindow(Platform::get().window);
     glfwTerminate();
+    SDL_INPUT::ClosePlatform();
 }
 
 
@@ -171,7 +130,7 @@ void PollInputEvents() {
 
     glfwPollEvents();
 
-    // Poll gamepad joysticks
-    PollGamepadJoysticks();
+    SDL_INPUT::PollInputEvents();
+
 }
 

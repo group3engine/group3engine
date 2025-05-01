@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
 
-project(group3engine CXX)
+project(group3engine CXX C)
+
+
+# set the output directory for built objects.
+# This makes sure that the dynamic library goes into the build directory automatically.
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
 
 if(NOT WIN32)
   string(ASCII 27 Esc)
@@ -20,6 +26,23 @@ if(NOT WIN32)
   set(BoldMagenta "${Esc}[1;35m")
   set(BoldCyan    "${Esc}[1;36m")
   set(BoldWhite   "${Esc}[1;37m")
+endif()
+
+# Check git submodules
+# https://cliutils.gitlab.io/modern-cmake/chapters/projects/submodule.html
+find_package(Git QUIET)
+if(GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
+# Update submodules as needed
+    option(GIT_SUBMODULE "Check submodules during build" ON)
+    if(GIT_SUBMODULE)
+        message(STATUS "Submodule update")
+        execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                        RESULT_VARIABLE GIT_SUBMOD_RESULT)
+        if(NOT GIT_SUBMOD_RESULT EQUAL "0")
+            message(FATAL_ERROR "git submodule update --init --recursive failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
+        endif()
+    endif()
 endif()
 
 # Set a default build type if none was specified
@@ -79,11 +102,34 @@ elseif(WIN32)
   target_compile_definitions(src PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
 endif()
 
+# Turn off unwanted SDL options
+set(SDL_OPENGL OFF CACHE BOOL "" FORCE)
+set(SDL_OPENGLES OFF CACHE BOOL "" FORCE)
+
 add_subdirectory(extern/glfw)
 add_subdirectory(extern/glm)
 add_subdirectory(extern/spdlog)
 add_subdirectory(extern/imgui)
+add_subdirectory(extern/Vulkan-Headers)
 add_subdirectory(extern/volk)
+add_subdirectory(extern/SDL EXCLUDE_FROM_ALL)
+
+# SoLoud
+file(GLOB SOLOUD_CPP_SOURCE_FILES
+    "extern/soloud/src/audiosource/wav/*.cpp"
+    "extern/soloud/src/audiosource/wav/*.c"
+    "extern/soloud/src/backend/miniaudio/*.cpp"
+    "extern/soloud/src/core/*.cpp"
+    "extern/soloud/src/filter/*.cpp"
+)
+target_sources(src PRIVATE ${SOLOUD_CPP_SOURCE_FILES})
+# Include directories for IDEs - can just use target_sources with header files
+target_include_directories(src PRIVATE
+    extern/soloud/include
+    extern/soloud/src/audiosource/wav
+    extern/soloud/src/backend/miniaudio
+)
+target_compile_definitions(src PRIVATE WITH_MINIAUDIO)
 
 option(TRACY_ENABLE "" ON)
 option(TRACY_ON_DEMAND "" ON)
@@ -114,18 +160,24 @@ target_include_directories(vma INTERFACE extern/vma)
 add_library(stb_image INTERFACE)
 target_include_directories(stb_image INTERFACE extern/stb_image)
 
+target_link_libraries(volk PUBLIC Vulkan::Headers)
+
 # The GLFW_INCLUDE_NONE macro will explicitly prevent the GLFW header from including the OpenGL header
 # GLM_ENABLE_EXPERIMENTAL is necessary for #include <glm/gtx/transform.hpp>
 target_compile_definitions(src PRIVATE GLFW_INCLUDE_NONE GLM_ENABLE_EXPERIMENTAL GLM_FORCE_XYZW_ONLY GLM_FORCE_QUAT_DATA_XYZW GLM_FORCE_QUAT_CTOR_XYZW GLM_FORCE_RADIANS GLM_FORCE_SIZE_T_LENGTH)
 
 target_compile_definitions(src PRIVATE CMAKE_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 
-target_link_libraries(src PRIVATE cgltf glfw glm::glm-header-only Jolt spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32> stb_image Tracy::TracyClient volk_headers vma json)
+target_link_libraries(src PRIVATE cgltf glfw glm::glm-header-only Jolt spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32> stb_image Tracy::TracyClient volk vma json SDL3::SDL3)
 
 # Compiler warnings
 if ((CMAKE_CXX_COMPILER_ID STREQUAL "Clang") OR (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
   # Disable rtti with -fno-rtti to be compatible with Jolt
   target_compile_options(src PRIVATE -fno-rtti -Wall -Wextra -Wnon-virtual-dtor -pedantic -Wno-missing-field-initializers)
+
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_options(src PRIVATE -fsignaling-nans)
+  endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   # Disable rtti with /GR- to be compatible with Jolt
   target_compile_options(src PRIVATE /GR- /permissive- /W4 /w14640)
@@ -158,23 +210,6 @@ foreach(GLSL ${GLSL_SOURCE_FILES})
 endforeach()
 add_custom_target(compile_shaders DEPENDS ${SPIRV_BINARY_FILES})
 add_dependencies(src compile_shaders)
-
-# Check git submodules
-# https://cliutils.gitlab.io/modern-cmake/chapters/projects/submodule.html
-find_package(Git QUIET)
-if(GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
-# Update submodules as needed
-    option(GIT_SUBMODULE "Check submodules during build" ON)
-    if(GIT_SUBMODULE)
-        message(STATUS "Submodule update")
-        execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
-                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                        RESULT_VARIABLE GIT_SUBMOD_RESULT)
-        if(NOT GIT_SUBMOD_RESULT EQUAL "0")
-            message(FATAL_ERROR "git submodule update --init --recursive failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
-        endif()
-    endif()
-endif()
 
 # Copy asset files to the binary directory in Platinum build to replicate install
 if(CMAKE_BUILD_TYPE STREQUAL "Platinum")

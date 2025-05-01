@@ -3,10 +3,19 @@
 //
 
 #include "Arrow.hpp"
+#include "AudioManager.hpp"
 
 void Arrow::Awake()
 {
+    if (auto it = mFloatProperties.find("speed"); it != mFloatProperties.end()) {
+        mSpeed = it->second;
+    } else {
+        SPDLOG_ERROR("Arrow does not have a speed property.");
+        exit(EXIT_FAILURE);
+    }
+
     start_position = GetLocalTransform().translation;
+    startVelocity = GetWorldTransformComponents().rotation * glm::vec3(0.f, 0.f, -mSpeed);
 }
 
 void Arrow::Update(double deltaTime)
@@ -27,6 +36,9 @@ void Arrow::Update(double deltaTime)
             velocity = startVelocity;
             GetRigidBody().SetLinearVelocity(velocity);
             SetAsVisible();
+            // play the arrow sound
+            glm::vec3 pos = start_position;
+            AudioManager::get().Play3D("arrow", pos.x, pos.y, pos.z);
         }
     }
     if(timeElapsed > timeToMove + timeToBeInvisible)

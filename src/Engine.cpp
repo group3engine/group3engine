@@ -50,12 +50,15 @@
 #endif
 #define TEMP_DISABLE_PHYSICS 0
 
+#include "AudioManager.hpp"
+
 namespace {
     // TODO: Improve this temporary scene switching mechanism
     std::filesystem::path mainMenuPath{"MainMenu/main_menu.gltf"};
 
     const std::vector<std::filesystem::path *> scenePaths = {
         &Sample::FallGuys,
+        &Sample::Game,
 
     };
 
@@ -145,6 +148,8 @@ bool Engine::Initialize() {
     mScene->Load(mainMenuPath, mainMenuPlayerCount);
     m_scenePath = mScene->GetSceneFilename();
 
+    mIsMainMenu = true;
+
     mRenderer->CreateRenderPasses();
     // call the scene awake function
     mScene->Awake();
@@ -153,6 +158,8 @@ bool Engine::Initialize() {
 
 #ifdef JPH_DEBUG_RENDERER
     mDebugRenderer = std::make_unique<DebugRendererImp>(mRenderer.get(), mScene);
+
+    mScene->SetDebugRenderer(mDebugRenderer.get());
 #endif // JPH_DEBUG_RENDERER
 
     SPDLOG_DEBUG("Engine initialised.");
@@ -160,8 +167,9 @@ bool Engine::Initialize() {
     ImGuiRenderer::themes.applyTheme("Catpuccin Mocha");
     Fonts::LoadFonts();
 
+    AudioManager::get().StartUp();
 
-
+    AudioManager::get().SetBackgroundMusic("main_menu_music");
 
     return m_isRunning;
 }
@@ -183,6 +191,8 @@ void Engine::Shutdown() {
     m_context.Destroy(); // Free vulkan device, allocator, window
     Platform::get().ShutDown();
     PhysicsManager::get().ShutDown();
+
+    AudioManager::get().ShutDown();
 }
 
 void Engine::ChangeScene(const std::filesystem::path &pendingScenePath, size_t pendingPlayerCount) {
@@ -200,8 +210,6 @@ void Engine::Run() {
     m_lastFrameTime = glfwGetTime();
 
     while (m_isRunning && !glfwWindowShouldClose(m_context.mWindow)) {
-        mIsMainMenu = mScene->GetSceneFilename() == "main_menu";
-
         double currentFrameTime = glfwGetTime();
         GlobalUtil::unscaledDeltaTime = currentFrameTime - m_lastFrameTime;
         GlobalUtil::deltaTime = GlobalUtil::unscaledDeltaTime * m_timeScale;
@@ -209,7 +217,10 @@ void Engine::Run() {
 
         // See imgui.cpp
         // "(So you want to try calling NewFrame() as early as you can in your main loop to be able to use Dear ImGui everywhere)"
-        ImGuiRenderer::NewFrame();
+        {
+            std::lock_guard<std::mutex> lock(m_context.graphicsQueueMutex);
+            ImGuiRenderer::NewFrame();
+        }
 
         PollInputEvents();
 
@@ -233,9 +244,10 @@ void Engine::Run() {
         {
             ChangeSceneFR(mPendingScenePath, mPendingScenePlayerCount);
             m_sceneNeedsChanging = false;
+            // reset the last frame time to avoid a large delta time
+            m_lastFrameTime = glfwGetTime();
+            m_timeScale = 1.f;
         }
-
-
 
         FrameMark;
     }
@@ -283,38 +295,25 @@ void Engine::ChangeSceneFR(const std::filesystem::path &scenePath, size_t player
     ImGuiRenderer::AddTextures(mTextureManager.get(), loadingPath, "load");
 
 
+
     m_isLoading = true;
     m_progress = 0.f;
-    // std::thread loadingScreen(&Engine::RenderLoadingScreen, this);
+    mSceneLoadingThread = std::thread(&Engine::LoadRestOfStuff, this, scenePath, playerCount);
 
+    RenderLoadingScreen();
 
-
-#ifndef NDEBUG
-    // Check there are no physics bodies left after scene destruction
-    BodyIDVector bodyIds;
-    PhysicsManager::get().mPhysicsSystem.GetBodies(bodyIds);
-    assert(bodyIds.empty());
-#endif // #ifndef NDEBUG
-    m_progress = 25.f;
-
-    mScene->Load(scenePath, playerCount);
-    m_scenePath = mScene->GetSceneFilename();
-
-    m_progress = 75.f;
-
-    // Add back UI textures
-    std::filesystem::path path = assetsPath/ "heart.png";
-    ImGuiRenderer::AddTextures(mTextureManager.get(), path, "heart");
-
-    mScene->Awake();
-    m_progress = 100.f;
-    // sleep for 1 second
-    // std::this_thread::sleep_for(std::chrono::seconds(1));
-    // end the loading screen
-    m_isLoading = false;
     // wait for loading screen thread to finish
-    // while (!loadingScreen.joinable()) {}
-    // loadingScreen.join();
+     while (!mSceneLoadingThread.joinable()) {}
+    mSceneLoadingThread.join();
+    vkQueueWaitIdle(m_context.presentQueue);
+
+    mIsMainMenu = mScene->GetSceneFilename() == "main_menu";
+
+    if (mIsMainMenu) {
+        AudioManager::get().SetBackgroundMusic("main_menu_music");
+    } else {
+        AudioManager::get().StopBackgroundMusic();
+    }
 }
 
 void Engine::Update(double deltaTime) {
@@ -356,9 +355,33 @@ void Engine::Update(double deltaTime) {
 void Engine::DrawPhysics() {
     ZoneScopedN("DrawPhysics");
 
-    JPH::BodyManager::DrawSettings bodyDrawSettings;
-    bodyDrawSettings.mDrawShape = true;
+    JPH::BodyManager::DrawSettings bodyDrawSettings = {
+        .mDrawGetSupportFunction = false,                                        ///< Draw the GetSupport() function, used for convex collision detection
+        .mDrawSupportDirection = false,                                          ///< When drawing the support function, also draw which direction mapped to a specific support point
+        .mDrawGetSupportingFace = false,                                         ///< Draw the faces that were found colliding during collision detection
+        .mDrawShape = true,                                                      ///< Draw the shapes of all bodies
+        .mDrawShapeWireframe = false,                                            ///< When mDrawShape is true and this is true, the shapes will be drawn in wireframe instead of solid.
+        .mDrawShapeColor = BodyManager::EShapeColor::MotionTypeColor,            ///< Coloring scheme to use for shapes
+        .mDrawBoundingBox = false,                                               ///< Draw a bounding box per body
+        .mDrawCenterOfMassTransform = true,                                      ///< Draw the center of mass for each body
+        .mDrawWorldTransform = true,                                             ///< Draw the world transform (which can be different than the center of mass) for each body
+        .mDrawVelocity = false,                                                  ///< Draw the velocity vector for each body
+        .mDrawMassAndInertia = false,                                            ///< Draw the mass and inertia (as the box equivalent) for each body
+        .mDrawSleepStats = false,                                                ///< Draw stats regarding the sleeping algorithm of each body
+        .mDrawSoftBodyVertices = false,                                          ///< Draw the vertices of soft bodies
+        .mDrawSoftBodyVertexVelocities = false,                                  ///< Draw the velocities of the vertices of soft bodies
+        .mDrawSoftBodyEdgeConstraints = false,                                   ///< Draw the edge constraints of soft bodies
+        .mDrawSoftBodyBendConstraints = false,                                   ///< Draw the bend constraints of soft bodies
+        .mDrawSoftBodyVolumeConstraints = false,                                 ///< Draw the volume constraints of soft bodies
+        .mDrawSoftBodySkinConstraints = false,                                   ///< Draw the skin constraints of soft bodies
+        .mDrawSoftBodyLRAConstraints = false,                                    ///< Draw the LRA constraints of soft bodies
+        .mDrawSoftBodyPredictedBounds = false,                                   ///< Draw the predicted bounds of soft bodies
+        .mDrawSoftBodyConstraintColor = ESoftBodyConstraintColor::ConstraintType ///< Coloring scheme to use for soft body constraints
+    };
     PhysicsManager::get().mPhysicsSystem.DrawBodies(bodyDrawSettings, mDebugRenderer.get());
+    // TODO: Draw constraints
+    //       - Which needs DrawLine to be implemented
+    PhysicsManager::get().mPhysicsSystem.DrawConstraints(mDebugRenderer.get());
 }
 #endif // JPH_DEBUG_RENDERER
 
@@ -390,6 +413,7 @@ void Engine::Render() {
         mRenderer->GetBloomPass()->Execute(mRenderer->GetCommandBuffer());
         mRenderer->GetOutlinePass()->Execute(mRenderer->GetCommandBuffer());
         mRenderer->GetCompositePass()->Execute(mRenderer->GetCommandBuffer());
+        mRenderer->GetFXAAPass()->Execute(mRenderer->GetCommandBuffer());
         mRenderer->GetPresentPass()->Execute(mRenderer->GetCommandBuffer(), mRenderer->GetImageIndex());
 
         mRenderer->EndFrame(mRenderer->GetCommandBuffer());
@@ -404,15 +428,63 @@ void Engine::RenderLoadingScreen()
     {
         while (m_isLoading)
         {
-            // ImGuiRenderer::NewFrame();
-            // ImGuiRenderer::Image("load", ImVec2{0,0}, ImVec2{1,1});
-            // ImGuiRenderer::LoadingBar(m_progress, ImVec2(500, 500));
-            // ImGuiRenderer::EndFrame();
-            // // render some text with imgui
-            // mRenderer->RenderUIOnly();
+
+
+            float mTotalTime = glfwGetTime() - m_lastFrameTime;
+            float mProgress = m_progress;
+            mProgress += mTotalTime * 10.f;
+            if (m_progress < 25) {
+                mProgress = std::min(mProgress, 25.f);
+            } else if (m_progress < 85) {
+                mProgress = std::min(mProgress, 85.f);
+            }
+            mProgress = std::min(mProgress, 99.f);
+            {
+                std::lock_guard<std::mutex> lock2(m_context.presentQueueMutex);
+                std::lock_guard<std::mutex> lock(m_context.graphicsQueueMutex);
+                ImGuiRenderer::NewFrame();
+            }
+            ImGuiRenderer::Image("load", ImVec2{0, 0}, ImVec2{1, 1});
+            ImGuiRenderer::LoadingBar(mProgress, ImVec2(500, 500));
+            ImGuiRenderer::EndFrame();
+            {
+                // render some text with imgui
+                std::lock_guard<std::mutex> lock3(m_context.presentQueueMutex);
+                mRenderer->RenderUIOnly();
+            }
+             // sleep for 50ms
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
         }
     }catch (const std::exception& e) {
         // Handle the exception
         SPDLOG_ERROR(e.what());
     }
+}
+
+void Engine::LoadRestOfStuff(const filesystem::path &scenePath, size_t playerCount)
+{
+
+
+#ifndef NDEBUG
+    // Check there are no physics bodies left after scene destruction
+    BodyIDVector bodyIds;
+    PhysicsManager::get().mPhysicsSystem.GetBodies(bodyIds);
+    assert(bodyIds.empty());
+#endif // #ifndef NDEBUG
+    m_progress = 25.f;
+
+    mScene->Load(scenePath, playerCount);
+    m_scenePath = mScene->GetSceneFilename();
+
+    m_progress = 85.f;
+
+    // Add back UI textures
+    std::filesystem::path path = assetsPath/ "heart.png";
+    ImGuiRenderer::AddTextures(mTextureManager.get(), path, "heart");
+
+    mScene->Awake();
+    m_progress = 100.f;
+    // end the loading screen
+    m_isLoading = false;
 }

@@ -62,7 +62,6 @@ SSR::~SSR()
 
 void SSR::Update()
 {
-    vkutil::ssrSettings.time = glfwGetTime();
     m_SSRUniform[vkutil::currentFrame].WriteToBuffer(vkutil::ssrSettings, sizeof(vkutil::SSRSettings));
 }
 

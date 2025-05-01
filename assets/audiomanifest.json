@@ -1,0 +1,18 @@
+[
+  {
+    "name": "jump",
+    "path": "audio/jump/Pre Jump 3.wav"
+  },
+  {
+    "name": "land",
+    "path": "audio/jump/Post Jump 3.wav"
+  },
+  {
+    "name": "main_menu_music",
+    "path": "audio/music/Sketchbook 2024-11-20.ogg"
+  },
+  {
+    "name": "arrow",
+    "path": "audio/arrow/Arrow.wav"
+  }
+]

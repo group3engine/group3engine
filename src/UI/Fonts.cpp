@@ -12,7 +12,7 @@ namespace Fonts
         ImGuiIO &io = ImGui::GetIO();
         std::filesystem::path fontPath1 = FONT_PATH / "ubuntu-title/Ubuntu-Title.ttf";
         std::filesystem::path fontPath2 = FONT_PATH / "junegull/junegull.ttf";
-        
+        std::filesystem::path fontPath3 = FONT_PATH / "segment16c/Segment16C Bold.ttf";
         // Load heading font
         HeadingFont = io.Fonts->AddFontFromFileTTF(fontPath2.string().c_str(), 32.0f);
         if (!HeadingFont) {
@@ -44,6 +44,18 @@ namespace Fonts
         TextFontSmall = io.Fonts->AddFontFromFileTTF(fontPath1.string().c_str(), 10.0f);
         if (!TextFontSmall) {
             std::cerr << "Failed to load text font" << std::endl;
+            return false;
+        }
+        // load the loading font
+        LoadingFont = io.Fonts->AddFontFromFileTTF(fontPath3.string().c_str(), 32.0f);
+        if (!LoadingFont) {
+            std::cerr << "Failed to load loading font" << std::endl;
+            return false;
+        }
+        // load the loading font small
+        LoadingFontSmall = io.Fonts->AddFontFromFileTTF(fontPath3.string().c_str(), 16.0f);
+        if (!LoadingFontSmall) {
+            std::cerr << "Failed to load loading font" << std::endl;
             return false;
         }
         return true;

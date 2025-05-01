@@ -31,12 +31,24 @@ class RigidBody {
     glm::vec4 GetPosition() const;
     /// Set the position of the rigid body
     void SetPosition(glm::vec3 glm_position);
+
+    // Get center of mass position of the rigid body using JPH::RVec3 instead of glm
+    JPH::RVec3 GetCenterOfMassPosition() const;
+
+    // Get rotation of the rigid body using JPH::Quat instead of glm
+    JPH::Quat GetRotationJolt() const;
+    // Set rotation of the rigid body using JPH::Quat instead of glm
+    void SetRotationJolt(const JPH::QuatArg rotation);
+
     /// set the rotation of the rigid body
     void SetRotation(glm::quat glm_position);
     /// Get the velocity of the rigid body
     glm::vec4 GetVelocity() const;
     /// Get the world transform of the rigid body
     glm::mat4 GetWorldTransform() const;
+
+    // Get world transform of the rigid body using RMat44 instead of glm
+    RMat44 GetWorldTransformJolt() const;
 
     /// Set the linear velocity of the rigid body
     void SetLinearVelocity(glm::vec3 glm_velocity) {
@@ -59,6 +71,8 @@ class RigidBody {
     // internal
     void PrePhysicsUpdate(double deltaTime);
 
+    void SetActive(bool active);
+
   public:
 
     JPH::BodyCreationSettings mJoltCreationSettings{};
@@ -75,5 +89,10 @@ private:
     Vec3 mNewAngularVelocity{};
     bool addImpulse = false;
     Vec3 mImpulse{};
+
+    bool hasInitialised = false;
+
+    bool mShouldBeActivated = true;
+    bool mIsActive = false;
 };
 #endif // PHYSICS_RIGIDBODY_HPP

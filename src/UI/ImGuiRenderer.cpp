@@ -1,7 +1,6 @@
 #include "Context.hpp"
 #include "Scene.hpp"
 #include "Camera.hpp"
-#include "CharacterEntity.hpp"
 #include "RenderPass.hpp"
 #include "RenderPassCommon.hpp"
 #include "ImGuiRenderer.hpp"
@@ -25,6 +24,13 @@
 #include "Config.hpp"
 #include "Engine.hpp"
 #include "Fonts.hpp"
+
+#include "SampleJoltCharacter.h"
+#include "Camera.hpp"
+#include "CharacterBaseTest.h"
+#include "CharacterEntity.hpp"
+#include "Sinking.hpp"
+
 namespace {
     auto PushBackStyleVar = [](size_t i, std::function<void()> f) {
         f();
@@ -46,6 +52,8 @@ namespace {
         VkViewport vkViewport = CalcViewport(extent, activePlayerCount, playerId);
         viewport.WorkPos = {vkViewport.x, vkViewport.y};
         viewport.WorkSize = {vkViewport.width, vkViewport.height};
+        viewport.Pos = {vkViewport.x, vkViewport.y};
+        viewport.Size = {vkViewport.width, vkViewport.height};
 
         return viewport;
     }
@@ -416,7 +424,7 @@ void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data,
     ImGui::Begin(fmt::format("Death Counter Window##{}", playerId).c_str(), nullptr, flags);
 
     // Text
-    ImGui::Text("%s", str.c_str());
+    ImGui::Text(str.c_str());
 
     // Heart
     ImVec2 offset = {pos.x - textSize.x, pos.y};
@@ -477,7 +485,7 @@ void ImGuiRenderer::NewDeathPopup(const gui::DeathPopupData &data,
     ImGui::Begin(fmt::format("Death Popup Window##{}", playerId).c_str(), nullptr, flags);
 
     // Text
-    ImGui::Text("%s", str.c_str());
+    ImGui::Text(str.c_str());
 
     ImGui::PopStyleVar(sv);
 
@@ -534,7 +542,7 @@ void ImGuiRenderer::NewFinishPopup(const gui::FinishPopupData &data,
     ImGui::Begin(fmt::format("Finish Popup Window##{}", playerId).c_str(), nullptr, flags);
 
     // Text
-    ImGui::Text("%s", str.c_str());
+    ImGui::Text(str.c_str());
 
     ImGui::PopStyleVar(sv);
 
@@ -584,7 +592,7 @@ void ImGuiRenderer::NewTimer(const gui::TimerData &data,
     ImGui::Begin(fmt::format("Timer Window##{}", playerId).c_str(), nullptr, flags);
 
     // Text
-    ImGui::Text("%s", str.c_str());
+    ImGui::Text(str.c_str());
 
     ImGui::PopStyleVar(sv);
 
@@ -593,6 +601,8 @@ void ImGuiRenderer::NewTimer(const gui::TimerData &data,
 
 void ImGuiRenderer::LoadingBar(float progress, ImVec2 position)
 {
+    // set the font to be the subtle font
+    ImGui::PushFont(Fonts::LoadingFont);
     // Get the main viewport to determine screen dimensions
     const ImGuiViewport* viewport = ImGui::GetMainViewport();
 
@@ -611,9 +621,13 @@ void ImGuiRenderer::LoadingBar(float progress, ImVec2 position)
     ImGui::SetNextWindowSize(windowSize);
     ImGui::Begin("Loading", nullptr, flags);
     // Display a progress bar; progress value should be in the range [0.0f, 1.0f]
+    ImGui::PushFont(Fonts::LoadingFontSmall);
     ImGui::ProgressBar(progress / 100.f, progressBarSize);
-    ImGui::Text("Loading... %.0f%%", progress);
+    ImGui::PopFont();
+    ImGui::Text("Loading... %.0f%\%", progress);
     ImGui::End();
+    // Pop the font
+    ImGui::PopFont();
 }
 
 void ImGuiRenderer::Image(std::string const &imageName, ImVec2 position, ImVec2 size)
@@ -697,30 +711,30 @@ void ImGuiRenderer::NewActivePlayerCountOverride(
 #endif
 }
 
-void ImGuiRenderer::NewCharacterInfo(const CharacterEntity *character) {
+void ImGuiRenderer::NewCharacterInfo(std::string const &characterName,
+                                    float x, float y, float z) {
 #ifndef PLATINUM
-    if (ImGui::CollapsingHeader(character->GetName().c_str())) {
+    if (ImGui::CollapsingHeader(characterName.c_str())) {
         // Add camera position
-        ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)",
-                    character->GetCamera()->GetPosition().x,
-                    character->GetCamera()->GetPosition().y,
-                    character->GetCamera()->GetPosition().z);
+        ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)",x,y,z);
     }
 #endif
 }
 
-void ImGuiRenderer::Text(std::string const &text, ImVec2 position)
-{
+void ImGuiRenderer::Text(std::string const &text, ImVec2 position, ImFont *font,
+                         size_t activePlayerCount, size_t playerId) {
+    ImGuiViewport viewport = CalcPlayerViewport(Context::get().extent, activePlayerCount, playerId);
+
     // flip position 0-1 to 1-0
     position = ImVec2{1.f - position.x, 1.f - position.y};
     size_t sv = 0;
-    // convert the position and size from relative (0-1) coordinates, to pixel coordinates
-    // get the window size
-    // Get the main viewport to determine screen dimensions
-    const ImGuiViewport* viewport = ImGui::GetMainViewport();
 
+    // Make sure to push font before text size calculation
+    ImGui::PushFont(Fonts::TextFont);
+
+    // convert the position and size from relative (0-1) coordinates, to pixel coordinates
     // Calculate position at the bottom of the screen (ignoring the passed position parameter)
-    ImVec2 windowSize = ImVec2(viewport->Size.x, viewport->Size.y);
+    ImVec2 windowSize = ImVec2(viewport.Size.x, viewport.Size.y);
     position = ImVec2(position.x * windowSize.x, position.y * windowSize.y);
     ImVec2 textSize = ImGui::CalcTextSize(text.c_str(), nullptr, true);
     // offset the position by half the text size
@@ -750,14 +764,18 @@ void ImGuiRenderer::Text(std::string const &text, ImVec2 position)
                              ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
                              ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
 
-    ImGui::Begin("text rendering", nullptr, flags);
+    static uint64_t textId = 0;
+    ImGui::Begin(fmt::format("text rendering##PlayerId{}TextId{}", playerId, textId).c_str(), nullptr, flags);
+    textId++;
+
     ImGui::Text(text.c_str());
 
     ImGui::PopStyleVar(sv);
 
+    ImGui::PopFont();
+
     ImGui::End();
 }
-
 
 void ImGuiRenderer::NewFrame() {
     ImGui_ImplVulkan_NewFrame();
@@ -779,6 +797,7 @@ void ImGuiRenderer::Update(Scene *scene)
         ImVec4(0.76, 0.5, 0.0, 1.0), "FPS: (%.1f FPS), %.3f ms/frame",
         ImGui::GetIO().Framerate, 1000.0f / ImGui::GetIO().Framerate);
 
+    assert(LightManager::getInstance().GetLights().size() > 0);
    auto dir = glm::normalize(LightManager::getInstance().GetLights()[0]->position);
 
    ImGui::Text("Directional Light: (%.2f, %.2f, %.2f)", dir.x, dir.y, dir.z);
@@ -830,43 +849,103 @@ void ImGuiRenderer::Update(Scene *scene)
         }
     }
 
-    // SSAO settings
-    if (ImGui::CollapsingHeader("SSAO"))
+    float sinkingStep = 0.1f;
+    float sinkingStepFast = 0.5f;
+    ImGui::InputFloat("mSinkingSpeed", &Sinking::mSinkingSpeed, sinkingStep, sinkingStepFast, nullptr, 0);
+
     {
-        ImGui::SliderInt("Directions: ", &vkutil::ssaoSettings.NumDirections, 1, 64);
-        ImGui::SliderInt("Steps: ", &vkutil::ssaoSettings.NumSteps, 1, 64);
-        ImGui::SliderFloat("Radius: ", &vkutil::ssaoSettings.Radius, 0.1f, 10.0f);
-        ImGui::SliderFloat("StepSize: ", &vkutil::ssaoSettings.StepSize, 0.0f, 0.1f);
-        ImGui::SliderFloat("Intensity: ", &vkutil::ssaoSettings.intensity, 0.0f, 10.0f);
+        float step = 0.1f;
+        float stepFast = 0.5f;
+        ImGui::InputFloat("Camera::sZoomLevel", &Camera::sZoomLevel, step, stepFast, nullptr, 0);
     }
 
-    // SSR settings
-    //int MaxSteps;
-    //int BinarySearchIterations;
-    //float MaxDistance;
-    //float thickness;
-    if (ImGui::CollapsingHeader("SSR"))
-    {
-        ImGui::SliderInt("MaxSteps: ", &vkutil::ssrSettings.MaxSteps, 1, 500);
-        ImGui::SliderFloat("MaxDistance: ", &vkutil::ssrSettings.MaxDistance, 0.0f, 1.0f);
-        ImGui::SliderInt("BSIterations: ", &vkutil::ssrSettings.BinarySearchIterations, 0, 100);
-        ImGui::SliderFloat("Thickness: ", &vkutil::ssrSettings.thickness, 0, 1.0f);
-        ImGui::SliderFloat("StepSize: ", &vkutil::ssrSettings.StepSize, 0.0f, 1.5f);
+    if (ImGui::CollapsingHeader("CharacterSettings")) {
+        {
+            float step = 0.1f;
+            float stepFine = 0.01f;
+            float stepFast = 0.5f;
+            ImGui::InputFloat("sCharacterSpeed: ", &CharacterBaseTest::sCharacterSpeed, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sJumpTime", &CharacterBaseTest::sJumpTime, stepFine, step, nullptr, 0);
+            ImGui::InputFloat("sFallTime", &CharacterBaseTest::sFallTime, stepFine, step, nullptr, 0);
+        }
+
+        {
+            float step = 0.01f;
+            float stepFast = 0.1f;
+            ImGui::InputFloat("sJumpHeight", &CharacterBaseTest::sJumpHeight, step, stepFast, nullptr, 0);
+            CharacterBaseTest::sJumpSpeed = 2.0f * CharacterBaseTest::sJumpHeight / CharacterBaseTest::sJumpTime;
+            CharacterBaseTest::sJumpGravity = -2.0f * CharacterBaseTest::sJumpHeight / Square(CharacterBaseTest::sJumpTime);
+            CharacterBaseTest::sFallGravity = -2.0f * CharacterBaseTest::sJumpHeight / Square(CharacterBaseTest::sFallTime);
+            ImGui::InputFloat("sJumpTimeScale", &CharacterEntity::sJumpTimeScale, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sFallTimeScale", &CharacterEntity::sFallTimeScale, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sFallBlend", &CharacterEntity::sFallBlend, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sHangingBlend", &CharacterEntity::sHangingBlend, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sClimbTimeScale", &CharacterEntity::sClimbTimeScale, step, stepFast, nullptr, 0);
+        }
     }
 
-    if (ImGui::CollapsingHeader("Fog"))
-    {
-        ImGui::SliderFloat("Distance: ", &vkutil::fogSettings.MaxDistance, 1.0f, 100.0f);
-        ImGui::SliderFloat("Density: ", &vkutil::fogSettings.Density, 0.001f, 0.3f);
-        ImGui::SliderFloat("SteppingSize: ", &vkutil::fogSettings.StepSize, 0.1f, 1.5f);
-        ImGui::SliderInt("Steps: ", &vkutil::fogSettings.MaxSteps, 1, 10);
-    }
+    static bool showGraphics = false;
+    ImGui::Checkbox("Graphics Settings", &showGraphics);
+    if (showGraphics) {
 
-    if (ImGui::CollapsingHeader("Outlin"))
+        ImGui::Begin("Graphics");
+        ImGui::SetWindowSize(ImVec2(400, 600));
+        if (ImGui::CollapsingHeader("SSAO"))
+        {
+            ImGui::SliderInt("Directions: ", &vkutil::ssaoSettings.NumDirections, 1, 64);
+            ImGui::SliderInt("Steps: ", &vkutil::ssaoSettings.NumSteps, 1, 64);
+            ImGui::SliderFloat("Radius: ", &vkutil::ssaoSettings.Radius, 0.1f, 10.0f);
+            ImGui::SliderFloat("StepSize: ", &vkutil::ssaoSettings.StepSize, 0.0f, 0.1f);
+            ImGui::SliderFloat("Intensity: ", &vkutil::ssaoSettings.intensity, 0.0f, 10.0f);
+        }
+
+        if (ImGui::CollapsingHeader("SSR"))
+        {
+            ImGui::SliderFloat("MaxDistance: ", &vkutil::ssrSettings.MaxDistance, 0.0f, 100.0f);
+            ImGui::SliderFloat("Thickness: ", &vkutil::ssrSettings.thickness, 0, 1.0f);
+        }
+
+        if (ImGui::CollapsingHeader("Fog"))
+        {
+            ImGui::SliderFloat("Distance: ", &vkutil::fogSettings.MaxDistance, 1.0f, 100.0f);
+            ImGui::SliderFloat("Density: ", &vkutil::fogSettings.Density, 0.1f, 0.3f);
+            ImGui::SliderFloat("SteppingSize: ", &vkutil::fogSettings.StepSize, 0.1f, 1.5f);
+            ImGui::SliderInt("Steps: ", &vkutil::fogSettings.MaxSteps, 1, 10);
+        }
+
+    if (ImGui::CollapsingHeader("Outline"))
     {
         ImGui::SliderFloat("Outline threshold: ", &vkutil::outlineSettings.sobelThreshold, 0.0f, 10.0f);
 
     }
+
+        if (ImGui::CollapsingHeader("FXAA"))
+        {
+            ImGui::Checkbox("Enable FXAA: ", &vkutil::fxaaSettings.EnableFXAA);
+        }
+
+        if (ImGui::CollapsingHeader("Post Processing"))
+        {
+            ImGui::SliderFloat("Brightness: ", &vkutil::postProcessingSettings.brightness, 0.0f, 1.0f);
+            ImGui::SliderFloat("Contrast: ", &vkutil::postProcessingSettings.contrast, 0.0f, 5.0f);
+            ImGui::SliderFloat("Saturation: ", &vkutil::postProcessingSettings.saturation, 0.0f, 2.0f);
+
+            const char *toneMapOptions[] = {"OFF", "Reinhard", "Uncharted2", "ACES"};
+            ImGui::Combo("Tone Map", &vkutil::postProcessingSettings.toneMap, toneMapOptions, IM_ARRAYSIZE(toneMapOptions));
+        }
+
+        // NOTE: Add more to this if anyone wants to add more debug visuals
+        // Just make sure you use the right index in the shader
+        if (ImGui::CollapsingHeader("Renderer Debug"))
+        {
+            const char *types[12] = {"Final", "Normal", "World Position", "Albedo", "Roughness", "Metallic", "Shadows", "Mip visual", "Cascades", "SSAO", "SSR", "Wireframe"};
+            ImGui::ListBox("Renderer Debug", &vkutil::rendererDebug.debugMode, types, 12);
+        }
+
+        ImGui::End();
+    }
+
+
 
     static bool enableTextureDebug = false;
     ImGui::Checkbox("Debug Textures", &enableTextureDebug);
@@ -944,17 +1023,17 @@ void ImGuiRenderer::ChatWindow(const std::vector<Message> &messages, std::functi
         ImGui::BeginChild("ChatMessages", ImVec2(availableWidth, chatHeight), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
         for (const auto &msg : messages)
         {
-            ImGui::Text("%s", msg.playerName.c_str());
+            ImGui::Text(msg.playerName.c_str());
             ImGui::PushFont(Fonts::TextFontSubtle);
             float textSpace = ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(msg.timestamp.c_str()).x - 20.0f;
             ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + textSpace);
-            ImGui::Text("%s", msg.text.c_str());
+            ImGui::Text(msg.text.c_str());
             ImGui::PopTextWrapPos();
             ImGui::PopFont();
             ImGui::PushFont(Fonts::TextFontSmall);
             float tsWidth = ImGui::CalcTextSize(msg.timestamp.c_str()).x;
             ImGui::SameLine(ImGui::GetWindowWidth() - tsWidth - 10.0f);
-            ImGui::Text("%s", msg.timestamp.c_str());
+            ImGui::Text(msg.timestamp.c_str());
             ImGui::PopFont();
         }
         ImGui::PopStyleVar();

@@ -8,9 +8,11 @@
 #include <memory>
 
 #include "Context.hpp"
+#include "Fonts.hpp"
 #include "Themes.hpp"
 
-class ImVec2;
+struct ImVec2;
+struct ImFont;
 
 class Context;
 class Scene;
@@ -128,14 +130,14 @@ namespace ImGuiRenderer
 
     void Image(std::string const &imageName, ImVec2 position, ImVec2 size);
 
-    void Text(std::string const &text, ImVec2 position);
+    void Text(std::string const &text, ImVec2 position, ImFont *font, size_t activePlayerCount, size_t playerId);
 
     void ChatWindow(const std::vector<Message> &messages, std::function<void(std::string, std::string)> callback);
 
 
     void NewActivePlayerCountOverride(Scene *scene, gui::Settings::ActivePlayerCountOverride &settings);
 
-    void NewCharacterInfo(const CharacterEntity *character);
+    void NewCharacterInfo(std::string const &characterName, float x, float y, float z);
 
     void Initialize(const Context &context);
     void Shutdown(const Context &context);

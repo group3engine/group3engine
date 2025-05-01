@@ -27,7 +27,8 @@
 
 #include <cmath>
 
-InputData gInputData;
+InputData gInputData{};
+SDL_INPUT::InputData SDL_INPUT::INPUT{};
 
 // Using system from https://github.com/raysan5/raylib/blob/master/src/rcore.c
 
@@ -48,22 +49,18 @@ bool IsKeyReleased(KEY key) {
 }
 
 // get an axis value from the gamepad
-float GetGamepadAxis(GAMEPAD_AXIS axis) {
-    // only return the axis value if it isn't almost zero
-    if (std::abs(gInputData.gamepadAxis.currentAxisState[static_cast<uint8_t>(axis)]) < 0.1f) {
-        return 0.0f;
-    }
-    return gInputData.gamepadAxis.currentAxisState[static_cast<uint8_t>(axis)];
+float GetGamepadAxis(SDL_INPUT::GamepadAxis axis, int gamepad) {
+    return SDL_INPUT::INPUT.Gamepad.axisState[gamepad][static_cast<uint8_t>(axis)];
 }
 
 // Check if a gamepad button has been pressed once
-bool IsGamepadButtonPressed(GAMEPAD_BUTTON button) {
-    return gInputData.gamepadButtons.currentButtonState[static_cast<uint8_t>(button)] == 1 &&
-           gInputData.gamepadButtons.previousButtonState[static_cast<uint8_t>(button)] == 0;
+bool IsGamepadButtonPressed(SDL_INPUT::GamepadButton button, int gamepad) {
+    return SDL_INPUT::INPUT.Gamepad.currentButtonState[gamepad][static_cast<uint8_t>(button)] == 1 &&
+              SDL_INPUT::INPUT.Gamepad.previousButtonState[gamepad][static_cast<uint8_t>(button)] == 0;
 }
 
-bool IsGamepadButtonDown(GAMEPAD_BUTTON button) {
-    return gInputData.gamepadButtons.currentButtonState[static_cast<uint8_t>(button)] == 1;
+bool IsGamepadButtonDown(SDL_INPUT::GamepadButton button, int gamepad) {
+    return SDL_INPUT::INPUT.Gamepad.currentButtonState[gamepad][static_cast<uint8_t>(button)] == 1;
 }
 
 
@@ -101,3 +98,14 @@ glm::vec2 GetMousePosition() {
 glm::vec2 GetMouseDelta() {
     return gInputData.mouse.currentPosition - gInputData.mouse.previousPosition;
 }
+
+void NormaliseDPad(float& x, float& y)
+{
+    // if there is only 0 or one axis pressed, return the value. Otherwise, we want to normalize it
+    if(x != 0.f && y != 0.f)
+    {
+        x = x > 0.f ? 1.f / sqrt(2.f) : -1.f / sqrt(2.f);
+        y = y > 0.f ? 1.f / sqrt(2.f) : -1.f / sqrt(2.f);
+    }
+}
+

@@ -15,13 +15,14 @@ Skybox::Skybox(Context& context, Scene *scene, VkRenderPass renderpass) :
 {
     // When transitioning this image, the subresource in subresourceRange needs to be set to 6
     // to transition all layers of the imag, otherwise you transition only the first
+
     m_Skybox = CreateImageTexture2D(
         "Skybox",
         context,
         2048,
         2048,
-        VK_FORMAT_R8G8B8A8_SRGB,
-        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+        VK_FORMAT_R32G32B32A32_SFLOAT,
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
         VK_IMAGE_ASPECT_COLOR_BIT,
         1,
         VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT,
@@ -31,17 +32,17 @@ Skybox::Skybox(Context& context, Scene *scene, VkRenderPass renderpass) :
     // TODO: The skybox path should be user provided earlier during engine init
     // This pass will then use that provided path to load skybox
     // This will prevent users from having to navigate into renderer code to change paths
-    char* faceTextureData[6]; // Stores the pixel data from stb
-    LoadCubemapFace(assetsPath / "Skybox/px.png",   &faceTextureData[0]);
-    LoadCubemapFace(assetsPath / "Skybox/nx.png",   &faceTextureData[1]);
-    LoadCubemapFace(assetsPath  / "Skybox/py.png",   &faceTextureData[2]);
-    LoadCubemapFace(assetsPath / "Skybox/ny.png",   &faceTextureData[3]);
-    LoadCubemapFace(assetsPath / "Skybox/pz.png",   &faceTextureData[4]);
-    LoadCubemapFace(assetsPath / "Skybox/nz.png",   &faceTextureData[5]);
+    float* faceTextureData[6]; // Stores the pixel data from stb
+    LoadCubemapFace(assetsPath / "Skybox/HDR/px.hdr",   &faceTextureData[0]);
+    LoadCubemapFace(assetsPath / "Skybox/HDR/nx.hdr",   &faceTextureData[1]);
+    LoadCubemapFace(assetsPath / "Skybox/HDR/py.hdr",   &faceTextureData[2]);
+    LoadCubemapFace(assetsPath / "Skybox/HDR/ny.hdr",   &faceTextureData[3]);
+    LoadCubemapFace(assetsPath / "Skybox/HDR/pz.hdr",   &faceTextureData[4]);
+    LoadCubemapFace(assetsPath / "Skybox/HDR/nz.hdr",   &faceTextureData[5]);
 
     constexpr uint32_t width = 2048;
     constexpr uint32_t height = 2048;
-    VkDeviceSize imageSize = width * height * 4; // Size of a single face
+    VkDeviceSize imageSize = width * height * (4 * sizeof(float)); // Size of a single face
     VkDeviceSize totalSize = imageSize * 6; // Size of total num of faces
 
     // Copy the pixel data to the staging buffer to store all face images data
@@ -56,6 +57,7 @@ Skybox::Skybox(Context& context, Scene *scene, VkRenderPass renderpass) :
             assert(faceTextureData[i] != nullptr);
             std::memcpy(bufferData + (imageSize * i), faceTextureData[i], imageSize);
         }
+
     }
     vmaUnmapMemory(context.allocator, stagingBuffer.allocation);
 
@@ -100,18 +102,31 @@ Skybox::Skybox(Context& context, Scene *scene, VkRenderPass renderpass) :
             vkutil::ImageBarrier(
                 cmd,
                 m_Skybox.image,
+                VK_ACCESS_TRANSFER_WRITE_BIT,
                 VK_ACCESS_TRANSFER_READ_BIT,
-                VK_ACCESS_SHADER_READ_BIT,
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                 VK_PIPELINE_STAGE_TRANSFER_BIT,
-                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                VK_PIPELINE_STAGE_TRANSFER_BIT,
                 VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 6 }
             );
     });
 
 
+    vkutil::ExecuteSingleTimeCommands(context, [&](VkCommandBuffer cmd) {
 
+         vkutil::ImageBarrier(
+            cmd,
+            m_Skybox.image,
+            VK_ACCESS_TRANSFER_READ_BIT,
+            VK_ACCESS_SHADER_READ_BIT,
+            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+            VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 6 }
+         );
+    });
 
     // Create the vertex buffer for the cube map
     VkDeviceSize vertexSize = sizeof(cubeVertices[0]) * cubeVertices.size();
@@ -159,9 +174,7 @@ void Skybox::Execute(VkCommandBuffer cmd, size_t playerCount, size_t playerId)
 
     vkutil::MeshPushConstants pc = {};
     pc.ModelMatrix = glm::mat4(1.0f);
-    vkCmdPushConstants(cmd, m_PipelineLayout,
-                        VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-                        0, sizeof(vkutil::MeshPushConstants), &pc);
+    vkCmdPushConstants(cmd, m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(vkutil::MeshPushConstants), &pc);
 
     // Set up push constants
     VkDeviceSize offset[] = {0};
@@ -259,20 +272,21 @@ void Skybox::BuildDescriptors()
     }
 }
 
-void Skybox::LoadCubemapFace(std::filesystem::path facePath, char** pixelData)
+void Skybox::LoadCubemapFace(std::filesystem::path facePath, float** pixelData)
 {
     int w, h, texChannels;
     stbi_set_flip_vertically_on_load(0);
-    stbi_uc* pixels = stbi_load(facePath.string().c_str(), &w, &h, &texChannels, 4);
+    //stbi_uc* pixels = stbi_load(facePath.string().c_str(), &w, &h, &texChannels, 4);
+    float *data = stbi_loadf(facePath.string().c_str(), &w, &h, &texChannels, STBI_rgb_alpha);
 
     const uint32_t width = static_cast<uint32_t>(w);
     const uint32_t height = static_cast<uint32_t>(h);
 
-    if (!pixels)
+    if (!data)
     {
         // TODO: change this to the engine logging library instead but idk how to use it yet
         throw std::runtime_error("Failed to load skybox face: " + facePath.string());
     }
 
-    *pixelData = reinterpret_cast<char*>(pixels);
+    *pixelData = (data);
 }

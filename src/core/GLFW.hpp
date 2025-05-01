@@ -1,32 +1,35 @@
-#ifndef GROUP3ENGINE_GLFW_HPP
-#define GROUP3ENGINE_GLFW_HPP
+    #ifndef GROUP3ENGINE_GLFW_HPP
+    #define GROUP3ENGINE_GLFW_HPP
 
-#include <GLFW/glfw3.h>
+    #include <GLFW/glfw3.h>
 
-#include "InputData.hpp"
+    #include "InputData.hpp"
 
-extern InputData gInputData;
+    #include "SDL.hpp"
 
-void PollInputEvents();
+    extern InputData gInputData;
+    extern SDL_INPUT::InputData gSDLInputData;
 
-class Platform {
-  private:
-    Platform() = default;
-    ~Platform() = default;
+    void PollInputEvents();
 
-  public:
-    Platform(const Platform &) = delete;
-    Platform &operator=(const Platform &) = delete;
+    class Platform {
+      private:
+        Platform() = default;
+        ~Platform() = default;
 
-    static Platform &get() {
-        static Platform instance;
-        return instance;
-    }
+      public:
+        Platform(const Platform &) = delete;
+        Platform &operator=(const Platform &) = delete;
 
-    void StartUp(int windowWidth, int windowHeight);
-    void ShutDown();
+        static Platform &get() {
+            static Platform instance;
+            return instance;
+        }
 
-  public:
-    GLFWwindow *window;
-};
-#endif // GROUP3ENGINE_GLFW_HPP
+        void StartUp(int windowWidth, int windowHeight);
+        void ShutDown();
+
+      public:
+        GLFWwindow *window;
+    };
+    #endif // GROUP3ENGINE_GLFW_HPP

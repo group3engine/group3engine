@@ -4,7 +4,8 @@
 namespace vkutil {
 RenderType renderType = RenderType::FORWARD;
 
-void ExecuteSingleTimeCommands(Context const &context, std::function<void(VkCommandBuffer)> recordCommands) {
+void ExecuteSingleTimeCommands(Context &context, std::function<void(VkCommandBuffer)> recordCommands) {
+    std::lock_guard<std::mutex> idk(context.presentQueueMutex);
     VkCommandBufferAllocateInfo allocateCmd = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
         .commandPool = context.transientCommandPool,
@@ -37,9 +38,11 @@ void ExecuteSingleTimeCommands(Context const &context, std::function<void(VkComm
         .commandBufferCount = 1,
         .pCommandBuffers = &cmd};
 
-    vkQueueSubmit(context.graphicsQueue, 1, &submitInfo, fence);
-    vkQueueWaitIdle(context.graphicsQueue);
-
+    {
+        std::lock_guard<std::mutex> lock(context.graphicsQueueMutex);
+        vkQueueSubmit(context.graphicsQueue, 1, &submitInfo, fence);
+    }
+    vkWaitForFences(context.device, 1, &fence, VK_TRUE, UINT64_MAX);
     vkFreeCommandBuffers(context.device, context.transientCommandPool, 1, &cmd);
     vkDestroyFence(context.device, fence, nullptr);
 

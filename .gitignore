@@ -369,9 +369,12 @@ FodyWeavers.xsd
 Makefile
 
 build/
+install/
 assets/shaders/
 assets/
 !assets/Skybox
 !/assets/GameSamples/
 
 imgui.ini
+/assets/Sample obby/newscene/aztec/aztec
+/assets/Sample obby/test

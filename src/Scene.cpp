@@ -15,6 +15,44 @@
 #include "SampleGLTFFilePaths.hpp"
 
 #include "RenderPassCommon.hpp"
+#include "Saving.hpp"
+
+#include "Debugging.hpp"
+
+#include "NetworkEntitiesManager.hpp"
+
+namespace {
+JPH::Shape::ShapeResult CreateMeshShapeResult(VertexList inVertices,
+                                              IndexedTriangleList inTriangles) {
+    // Create the settings object for a mesh shape
+    JPH::MeshShapeSettings settings(inVertices, inTriangles);
+
+    // Create shape
+    JPH::Shape::ShapeResult result = settings.Create();
+    if (!result.IsValid()) // if the shape is valid
+    {
+        // give an error statement
+        SPDLOG_ERROR("Shape result is invalid. {}", result.GetError());
+    }
+
+    return result;
+}
+
+JPH::Shape::ShapeResult CreateConvexHullShapeResult(const Vec3 *inPoints, int inNumPoints) {
+    // Create the settings object for a mesh shape
+    JPH::ConvexHullShapeSettings consettings(inPoints, inNumPoints);
+
+    // Create shape
+    JPH::Shape::ShapeResult result = consettings.Create();
+    if (!result.IsValid()) // if the shape is valid
+    {
+        // give an error statement
+        SPDLOG_ERROR("Shape result is invalid. {}", result.GetError());
+    }
+
+    return result;
+}
+} // namespace
 
 void Scene::Update(double aDeltaTime) {
     ZoneScopedN("Scene::Update");
@@ -125,13 +163,19 @@ void Scene::Unload()
     mSceneFilename = "";
 
     mGuiActivePlayerCountOverride = {};
+
+    mSignalSystem.Clear();
+
+    mNetworkEntitiesManager = nullptr;
+
+    kEntityCount = 0;
 }
 
 void Scene::LoadGLTF(const std::filesystem::path &aFilepath, size_t playerCount) {
     // Load the GLTF file
     ResourceLoader::LoadGLTF(aFilepath, *mMeshManager, *mMaterialManager,
                              *mTextureManager, m_Entities, false, m_Animations,
-                             m_Skins, mCharacterEntities);
+                             m_Skins, mCharacterEntities, this);
 
     size_t playersAddedCount = 0;
     // Add each character entity and its children until the player count is reached
@@ -163,6 +207,10 @@ void Scene::LoadGLTF(const std::filesystem::path &aFilepath, size_t playerCount)
 void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
 {
     mSceneFilename = filePath.stem();
+    std::filesystem::path saveFilename = "save_";
+    saveFilename += Scene::get().GetActiveScene()->GetSceneFilename();
+    saveFilename += ".json";
+    Saving::get().UpdateSceneName(saveFilename);
 
     // Current path is the current working directory, i.e., where the root CMakeLists.txt is
     std::filesystem::path basePath = assetsPath;
@@ -187,249 +235,222 @@ void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
         {
             // we skip it and handle it later
             SPDLOG_INFO("Skipping character");
+            continue;
         }
-        else // if the entity isnt the character (NPCs, Obstacles, Moving platforms etc)
+
+        // if the entity isnt the character (NPCs, Obstacles, Moving platforms etc)
+        // if the entity has an animator
+        if (entity->HasAnimator())
         {
-            // if the entity has an animator
-            if (entity->HasAnimator())
-            {
-                // also skip it
-                SPDLOG_INFO("Skipping entity {}, as it has an animator", entity->GetName());
-                continue;
-            }
-
-            // (try to) get the entity's mesh
-            const auto *mesh = entity->GetMesh();
-
-            // if it doesnt have a mesh
-            if (!mesh)
-            {
-                // skip the entity
-                continue;
-            }
-
-
-            size_t totalVertices = 0;
-            size_t totalTriangles = 0;
-            // if the entity has physics (either as it is solid or is a sensor and needs collision response)
-            if(entity->IsSensor() || entity->IsSolid())
-            {
-                // calculate the transforms for the rigid body
-                glm::mat4 entityWorldTransform = entity->GetWorldTransform();
-
-                // decompose the world transform
-                glm::vec3 position, scale;
-                glm::quat rotation;
-                glm::vec3 skew;
-                glm::vec4 perspective;
-                glm::decompose(entityWorldTransform, scale, rotation, position, skew, perspective);
-
-                // create a scaling matrix
-                glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f), scale);
-
-                // for all primatives in the mesh
-                for (const auto &primitive : mesh->meshPrimitives)
-                {
-                    // Create an array of vertices (and a copy in the points format) and the list of indexed faces
-                    VertexList vertices;
-                    vector<JPH::Vec3> list_of_points;
-                    IndexedTriangleList indexedTriangles;
-
-                    // for all vertices
-                    for (const auto &vertex : primitive.vertices)
-                    {
-                        // calculate the position of the vertex in world space
-                        auto worldPos = scalingMatrix * glm::vec4(vertex.pos, 1.0f);
-
-                        // add it to the list
-                        vertices.emplace_back(worldPos.x, worldPos.y, worldPos.z);
-                        list_of_points.emplace_back(Vec3(worldPos.x, worldPos.y, worldPos.z));
-
-                        ++totalVertices;
-                    }
-
-                    // for all indexed faces
-                    for (size_t i = 0; i < primitive.indices.size(); i += 3)
-                    {
-                        // add the indexed face to the list
-                        indexedTriangles.push_back(IndexedTriangle(primitive.indices[i],
-                                                                   primitive.indices[i + 1],
-                                                                   primitive.indices[i + 2]));
-                        ++totalTriangles;
-                    }
-
-                    // make sure the lists contain something
-                    assert(!vertices.empty());
-                    assert(!indexedTriangles.empty());
-
-                    if(entity->GetPhysicsType() == PhysicsType::STATIC)
-                    {
-                        // Create the settings object for a mesh shape
-                        JPH::MeshShapeSettings settings(vertices, indexedTriangles);
-
-                        // Create shape
-                        JPH::Shape::ShapeResult result = settings.Create();
-                        if(result.IsValid()) // if the shape is valid
-                        {
-                            shape = result.Get(); // set the shape as the result
-                        }
-                        else // if it isnt valid
-                        {
-                            // give an error statement
-                            SPDLOG_ERROR("Shape result is invalid. {}", result.GetError());
-                        }
-
-                        // get the transform for the entity's physics rigid body
-                        Transform entity_transform = entity->GetWorldTransformComponents();
-
-                        // set the motion type as static
-                        EMotionType motionType = EMotionType::Static;
-
-                        // if its a sensor set the layer to SENSOR, otherwise set it to NON_MOVING
-                        ObjectLayer layer = entity->IsSensor() ? Layers::SENSORS : Layers::NON_MOVING;
-
-                        // Set the body creation settings as static and not moving
-                        BodyCreationSettings bodyCreationSettings = {
-                        result.Get(), RVec3(entity_transform.translation.x, entity_transform.translation.y, entity_transform.translation.z), Quat(entity_transform.rotation.x, entity_transform.rotation.y, entity_transform.rotation.z, entity_transform.rotation.w),
-                        motionType, layer};
-
-                        // set if it is a sensor
-                        bodyCreationSettings.mIsSensor = entity->IsSensor();
-
-                        // make the rigid body with the settings
-                        auto entity_rigid_body = std::make_unique<RigidBody>(bodyCreationSettings);
-
-                        // initialise the body in the physics manager and do not activate it
-                        entity_rigid_body->Init(PhysicsManager::get(), false);
-
-
-                        // only do this part if its supposed to DO something when collided with (i.e. sensors)
-                        PhysicsManager::get().RegisterEntity(entity, entity_rigid_body->mBodyId);
-
-
-                        PhysicsManager::get().mPhysicsSystem.OptimizeBroadPhase();
-                        entity->AddRigidBody(std::move(entity_rigid_body));
-                    }
-                    else if(entity->GetPhysicsType() == PhysicsType::KINEMATIC)
-                    {
-                        // Create the settings object for a mesh shape
-                        JPH::MeshShapeSettings settings(vertices, indexedTriangles);
-
-                        // Create shape
-                        JPH::Shape::ShapeResult result = settings.Create();
-                        if(result.IsValid()) // if the shape is valid
-                        {
-                            shape = result.Get(); // set the shape as the result
-                        }
-                        else // if it isnt valid
-                        {
-                            // give an error statement
-                            SPDLOG_ERROR("Shape result is invalid. {}", result.GetError());
-                        }
-
-                        // get the transform for the entity's physics rigid body
-                        Transform entity_transform = entity->GetWorldTransformComponents();
-
-                        // set the motion type as kinematic
-                        EMotionType motionType = EMotionType::Kinematic;
-
-                        // Set the body creation settings as kinematic and moving
-                        BodyCreationSettings bodyCreationSettings = {
-                        result.Get(), RVec3(entity_transform.translation.x, entity_transform.translation.y, entity_transform.translation.z), Quat(entity_transform.rotation.x, entity_transform.rotation.y, entity_transform.rotation.z, entity_transform.rotation.w),
-                        motionType, Layers::MOVING};
-
-                        // set information about the body's physical properties
-                        bodyCreationSettings.mMassPropertiesOverride.mMass = 1.0f;
-                        bodyCreationSettings.mMassPropertiesOverride.mInertia =
-                            JPH::Mat44::sIdentity();
-                        bodyCreationSettings.mOverrideMassProperties =
-                            EOverrideMassProperties::MassAndInertiaProvided;
-
-                        // set if it is a sensor
-                        bodyCreationSettings.mIsSensor = entity->IsSensor();
-
-                        // make the rigid body with the settings
-                        auto entity_rigid_body = std::make_unique<RigidBody>(bodyCreationSettings);
-
-                        // initialise the body in the physics manager and activate it
-                        entity_rigid_body->Init(PhysicsManager::get(), true);
-
-
-                        // only do this part if its supposed to DO something when collided with (i.e. sensors)
-                        PhysicsManager::get().RegisterEntity(entity, entity_rigid_body->mBodyId);
-
-                        PhysicsManager::get().mPhysicsSystem.OptimizeBroadPhase();
-                        entity->AddRigidBody(std::move(entity_rigid_body));
-                    }
-                    else if(entity->GetPhysicsType() == PhysicsType::DYNAMIC)
-                    {
-                        // Create the settings object for a mesh shape
-                        JPH::ConvexHullShapeSettings consettings(list_of_points.data(), list_of_points.size());
-
-                        // Create shape
-                        JPH::Shape::ShapeResult result = consettings.Create();
-                        if(result.IsValid()) // if the shape is valid
-                        {
-                            shape = result.Get(); // set the shape as the result
-                        }
-                        else // if it isnt valid
-                        {
-                            // give an error statement
-                            SPDLOG_ERROR("Shape result is invalid. {}", result.GetError());
-                        }
-
-                        // get the transform for the entity's physics rigid body
-                        Transform entity_transform = entity->GetWorldTransformComponents();
-
-                        // set the motion type as dynamic
-                        EMotionType motionType = EMotionType::Dynamic;
-
-                        // Set the body creation settings as dynamic and moving
-                        BodyCreationSettings bodyCreationSettings = {
-                        result.Get(), RVec3(entity_transform.translation.x, entity_transform.translation.y, entity_transform.translation.z), Quat(entity_transform.rotation.x, entity_transform.rotation.y, entity_transform.rotation.z, entity_transform.rotation.w),
-                        motionType, Layers::MOVING};
-
-                        // set information about the body's physical properties
-                        bodyCreationSettings.mMassPropertiesOverride.mMass = 1.0f;
-                        bodyCreationSettings.mMassPropertiesOverride.mInertia =
-                            JPH::Mat44::sIdentity();
-                        bodyCreationSettings.mOverrideMassProperties =
-                            EOverrideMassProperties::MassAndInertiaProvided;
-
-                        // set if it is a sensor
-                        bodyCreationSettings.mIsSensor = entity->IsSensor();
-
-                        // make the rigid body with the settings
-                        auto entity_rigid_body = std::make_unique<RigidBody>(bodyCreationSettings);
-
-                        // initialise the body in the physics manager and activate it
-                        entity_rigid_body->Init(PhysicsManager::get(), true);
-
-
-                        // only do this part if its supposed to DO something when collided with (i.e. sensors)
-                        PhysicsManager::get().RegisterEntity(entity, entity_rigid_body->mBodyId);
-
-                        PhysicsManager::get().mPhysicsSystem.OptimizeBroadPhase();
-                        entity->AddRigidBody(std::move(entity_rigid_body));
-                    }
-
-                }
-            }
-
-            SPDLOG_INFO("total vertices {}", totalVertices);
-            SPDLOG_INFO("total triangles {}", totalTriangles);
+            // also skip it
+            SPDLOG_INFO("Skipping entity {}, as it has an animator", entity->GetName());
+            continue;
         }
+
+        // (try to) get the entity's mesh
+        const auto *mesh = entity->GetMesh();
+
+        // if it doesnt have a mesh
+        if (!mesh)
+        {
+            // skip the entity
+            continue;
+        }
+
+        // if the entity has physics (either as it is solid or is a sensor and needs collision response)
+        bool hasPhysics = entity->IsSensor() || entity->IsSolid();
+        // Skip if the entity does not have physics
+        if (!hasPhysics) {
+            continue;
+        }
+
+        size_t totalVertices = 0;
+        size_t totalTriangles = 0;
+        // calculate the transforms for the rigid body
+        glm::mat4 entityWorldTransform = entity->GetWorldTransform();
+
+        // decompose the world transform
+        glm::vec3 position, scale;
+        glm::quat rotation;
+        glm::vec3 skew;
+        glm::vec4 perspective;
+        glm::decompose(entityWorldTransform, scale, rotation, position, skew, perspective);
+
+        // create a scaling matrix
+        glm::mat4 scalingMatrix = glm::scale(glm::mat4(1.0f), scale);
+
+        // Create an array of vertices (and a copy in the points format) and the list of indexed faces
+        VertexList vertices;
+        vector<JPH::Vec3> list_of_points;
+        IndexedTriangleList indexedTriangles;
+
+        size_t indexOffset = 0;
+        // Construct a unified list of vertices and indices from each mesh primitive
+        for (const auto &primitive : mesh->meshPrimitives)
+        {
+            // for all vertices
+            for (const auto &vertex : primitive.vertices)
+            {
+                // calculate the position of the vertex in world space
+                auto worldPos = scalingMatrix * glm::vec4(vertex.pos, 1.0f);
+
+                // add it to the list
+                vertices.emplace_back(worldPos.x, worldPos.y, worldPos.z);
+                list_of_points.emplace_back(Vec3(worldPos.x, worldPos.y, worldPos.z));
+
+                ++totalVertices;
+            }
+
+            // for all indexed faces
+            for (size_t i = 0; i < primitive.indices.size(); i += 3)
+            {
+                // Offset the index to make sure the vertices we are indexing are from this mesh primitive
+                indexedTriangles.push_back(IndexedTriangle(primitive.indices[i] + indexOffset,
+                                                            primitive.indices[i + 1] + indexOffset,
+                                                            primitive.indices[i + 2] + indexOffset));
+                ++totalTriangles;
+            }
+
+            // Once we have read all the vertices for a mesh primitive then
+            // offset by this many vertices when calculating the indices of the
+            // next mesh primitive's vertices
+            indexOffset += primitive.vertices.size();
+        }
+
+        // make sure the lists contain something
+        assert(!vertices.empty());
+        assert(!indexedTriangles.empty());
+
+        if(entity->GetPhysicsType() == PhysicsType::STATIC)
+        {
+            Shape::ShapeResult result;
+            if (entity->GetColliderType() == ColliderType::MeshShape ||
+                entity->GetColliderType() == ColliderType::Fallback) {
+                result = CreateMeshShapeResult(vertices, indexedTriangles);
+            } else if (entity->GetColliderType() == ColliderType::ConvexHullShape) {
+                result = CreateConvexHullShapeResult(list_of_points.data(), list_of_points.size());
+            }
+
+            // get the transform for the entity's physics rigid body
+            Transform entity_transform = entity->GetWorldTransformComponents();
+
+            // set the motion type as static
+            EMotionType motionType = EMotionType::Static;
+
+            // if its a sensor set the layer to SENSOR, otherwise set it to NON_MOVING
+            ObjectLayer layer = entity->IsSensor() ? Layers::SENSORS : Layers::NON_MOVING;
+
+            // Set the body creation settings as static and not moving
+            BodyCreationSettings bodyCreationSettings = {
+            result.Get(), RVec3(entity_transform.translation.x, entity_transform.translation.y, entity_transform.translation.z), Quat(entity_transform.rotation.x, entity_transform.rotation.y, entity_transform.rotation.z, entity_transform.rotation.w),
+            motionType, layer};
+
+            // set if it is a sensor
+            bodyCreationSettings.mIsSensor = entity->IsSensor();
+
+            // make the rigid body with the settings
+            entity->AddRigidBody(bodyCreationSettings);
+        }
+        else if(entity->GetPhysicsType() == PhysicsType::KINEMATIC)
+        {
+            DEBUG_ASSERT(entity->GetColliderType() == ColliderType::Fallback ||
+                         entity->GetColliderType() == ColliderType::ConvexHullShape);
+
+            Shape::ShapeResult result =
+                CreateConvexHullShapeResult(list_of_points.data(), list_of_points.size());
+
+            // get the transform for the entity's physics rigid body
+            Transform entity_transform = entity->GetWorldTransformComponents();
+
+            // set the motion type as kinematic
+            EMotionType motionType = EMotionType::Kinematic;
+
+            // Set the body creation settings as kinematic and moving
+            BodyCreationSettings bodyCreationSettings = {
+            result.Get(), RVec3(entity_transform.translation.x, entity_transform.translation.y, entity_transform.translation.z), Quat(entity_transform.rotation.x, entity_transform.rotation.y, entity_transform.rotation.z, entity_transform.rotation.w),
+            motionType, Layers::MOVING};
+
+            // set information about the body's physical properties
+            bodyCreationSettings.mMassPropertiesOverride.mMass = 1.0f;
+            bodyCreationSettings.mMassPropertiesOverride.mInertia =
+                JPH::Mat44::sIdentity();
+            bodyCreationSettings.mOverrideMassProperties =
+                EOverrideMassProperties::MassAndInertiaProvided;
+
+            // set if it is a sensor
+            bodyCreationSettings.mIsSensor = entity->IsSensor();
+
+            // make the rigid body with the settings
+            entity->AddRigidBody(bodyCreationSettings);
+        }
+        else if(entity->GetPhysicsType() == PhysicsType::DYNAMIC)
+        {
+            DEBUG_ASSERT(entity->GetColliderType() == ColliderType::Fallback ||
+                         entity->GetColliderType() == ColliderType::ConvexHullShape);
+
+            Shape::ShapeResult result =
+                CreateConvexHullShapeResult(list_of_points.data(), list_of_points.size());
+
+            // get the transform for the entity's physics rigid body
+            Transform entity_transform = entity->GetWorldTransformComponents();
+
+            // set the motion type as dynamic
+            EMotionType motionType = EMotionType::Dynamic;
+
+            // Set the body creation settings as dynamic and moving
+            BodyCreationSettings bodyCreationSettings = {
+            result.Get(), RVec3(entity_transform.translation.x, entity_transform.translation.y, entity_transform.translation.z), Quat(entity_transform.rotation.x, entity_transform.rotation.y, entity_transform.rotation.z, entity_transform.rotation.w),
+            motionType, Layers::MOVING};
+
+            // set information about the body's physical properties
+            bodyCreationSettings.mMassPropertiesOverride.mMass = 1.0f;
+            bodyCreationSettings.mMassPropertiesOverride.mInertia =
+                JPH::Mat44::sIdentity();
+            bodyCreationSettings.mOverrideMassProperties =
+                EOverrideMassProperties::MassAndInertiaProvided;
+
+            // set if it is a sensor
+            bodyCreationSettings.mIsSensor = entity->IsSensor();
+
+            // make the rigid body with the settings
+            entity->AddRigidBody(bodyCreationSettings);
+        }
+
+        // SPDLOG_INFO("total vertices {}", totalVertices);
+        // SPDLOG_INFO("total triangles {}", totalTriangles);
     }
 
 }
 
 void Scene::Awake()
 {
-    // call the awake function on all entities
+    // Find the network entities manager
+    for (auto &entity : m_Entities) {
+        if (entity->CompareType("NetworkEntitiesManager")) {
+            assert(!mNetworkEntitiesManager);
+            mNetworkEntitiesManager = static_cast<NetworkEntitiesManager *>(entity);
+        }
+    }
+    if (mNetworkEntitiesManager) {
+        SPDLOG_INFO("Scene found network entities manager, this is a networked game.");
+    } else {
+        SPDLOG_INFO("Scene did not find a network entities manager, this is a local game.");
+    }
+
+    // Set the scene and call init physics on all entities
     for (auto &entity : m_Entities) {
         entity->SetScene(this);
+        entity->InitPhysics();
+    }
+
+    // Call the awake function on all entities
+    // Make sure all entities have had their physics intialised before this
+    for (auto &entity : m_Entities) {
         entity->Awake();
     }
+
+    // Optimize broad phase now all rigid bodies have been added
+    PhysicsManager::get().mPhysicsSystem.OptimizeBroadPhase();
 
     for (auto &playerCameraTransform : mPlayerCameraTransforms) {
         playerCameraTransform.nearPlane = 0.1f;

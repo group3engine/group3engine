@@ -72,6 +72,11 @@ void LightManager::Update()
             m_LightBuffer.lights[lightCount].LightSpaceMatrix = mDirectionalLights[i].LightSpaceMatrix;
             lightCount++;
         }
+        else
+        {
+            // set the colour to 0
+            m_LightBuffer.lights[lightCount].LightColour = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+        }
     }
     // for each point light
     for (size_t i = 0; i < NUM_POINT_LIGHTS; i++) {
@@ -81,6 +86,11 @@ void LightManager::Update()
             m_LightBuffer.lights[lightCount].LightColour = mPointLights[i].colour;
             m_LightBuffer.lights[lightCount].LightSpaceMatrix = mPointLights[i].LightSpaceMatrix;
             lightCount++;
+        }
+        else
+        {
+            // set the colour to 0
+            m_LightBuffer.lights[lightCount].LightColour = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
         }
     }
 

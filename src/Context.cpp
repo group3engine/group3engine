@@ -400,6 +400,17 @@ void Context::TeardownSwapchain() {
 void Context::RecreateSwapchain() {
     TeardownSwapchain();
 
+    // If the width and height of the window framebuffer is 0,
+    // The window is minimized. Wait for a valid size before re-creating the swapchain
+    int width = 0, height = 0;
+    glfwGetFramebufferSize(mWindow, &width, &height);
+    while (width == 0 || height == 0) {
+        glfwGetFramebufferSize(mWindow, &width, &height);
+        glfwWaitEvents();
+    }
+
+    vkDeviceWaitIdle(device);
+
     try {
         CreateSwapchain();
     } catch (...) {
@@ -427,29 +438,46 @@ void Context::CreateLogicalDevice() {
     queueInfo.pQueuePriorities = queuePriorities;
     queueInfo.queueCount = 1;
 
-    VkPhysicalDeviceFeatures features = {};
-    features.samplerAnisotropy = VK_TRUE;
-    features.geometryShader = VK_TRUE;
-    features.fragmentStoresAndAtomics = VK_TRUE;
+    VkPhysicalDeviceVulkan12Features features12 = {};
+    features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+    features12.runtimeDescriptorArray = VK_TRUE;
+    features12.descriptorIndexing = VK_TRUE;
+    features12.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+    features12.shaderStorageImageArrayNonUniformIndexing = VK_TRUE;
+
 
     VkPhysicalDeviceScalarBlockLayoutFeaturesEXT scalarBlockFeatures{
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES_EXT,
-        .scalarBlockLayout = VK_TRUE};
+        .pNext = &features12,
+        .scalarBlockLayout = VK_TRUE
+    };
+
+    VkPhysicalDeviceFeatures2 features = {};
+    features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    features.features.fillModeNonSolid = VK_TRUE;
+    features.features.samplerAnisotropy = VK_TRUE;
+    features.features.geometryShader = VK_TRUE;
+    features.features.fragmentStoresAndAtomics = VK_TRUE;
+    features.features.fillModeNonSolid = VK_TRUE;
+    features.features.shaderUniformBufferArrayDynamicIndexing = VK_TRUE;
+    features.features.shaderSampledImageArrayDynamicIndexing = VK_TRUE;
+    features.pNext = &features12;
 
     std::vector<const char *> extensions{
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
         // In order to maintain synchronization between CPU and GPU time domain (Tracy)
-        VK_EXT_CALIBRATED_TIMESTAMPS_EXTENSION_NAME
+        VK_EXT_CALIBRATED_TIMESTAMPS_EXTENSION_NAME,
+        VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME
     };
 
     VkDeviceCreateInfo deviceInfo = {};
     deviceInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     deviceInfo.queueCreateInfoCount = 1;
     deviceInfo.pQueueCreateInfos = &queueInfo;
-    deviceInfo.pEnabledFeatures = &features;
+    //deviceInfo.pEnabledFeatures = &features;
     deviceInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
     deviceInfo.ppEnabledExtensionNames = extensions.data();
-    deviceInfo.pNext = &scalarBlockFeatures;
+    deviceInfo.pNext = &features;
 
     VK_CHECK(vkCreateDevice(pDevice, &deviceInfo, nullptr, &device), "Failed to create logical device.");
 }
@@ -668,6 +696,7 @@ bool Context::MakeContext(GLFWwindow *window) {
     vkGetDeviceQueue(device, graphicsFamilyIndex, 0, &graphicsQueue);
     vkGetDeviceQueue(device, presentFamilyIndex, 0, &presentQueue);
 
+
     CreateAllocator();
     CreateTransientCommandPool();
     CreateDescriptorPool();
@@ -676,6 +705,12 @@ bool Context::MakeContext(GLFWwindow *window) {
     assert(presentQueue != VK_NULL_HANDLE);
 
     vkSetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)vkGetInstanceProcAddr(instance, "vkSetDebugUtilsObjectNameEXT");
+    #ifndef NDEBUG
+    vkCreateDebugUtilsMessengerEXT(instance, &debugInfo, nullptr, &debugMessenger);
+    #endif
+    // name the queues
+    SetObjectName(device, (uint64_t)(graphicsQueue), VK_OBJECT_TYPE_QUEUE, "GraphicsQueue");
+    SetObjectName(device, (uint64_t)(presentQueue), VK_OBJECT_TYPE_QUEUE, "PresentQueue");
 
     CreateSwapchain();
 

@@ -11,6 +11,9 @@
 #include "SampleJoltCharacter.h"
 
 #include "ImGuiRenderer.hpp"
+#include "InputMapping.hpp"
+
+struct WinSignal;
 
 enum class InternalEvent {
     eDeath,
@@ -26,6 +29,7 @@ enum class DeathState{
 enum class InternalUiEvent {
     eDeathPopup,
     eFinishPopup,
+    eWinPopup,
     eCount
 };
 
@@ -38,6 +42,7 @@ class CharacterEntity : public Entity {
 
     virtual void ProcessInput();
 
+
     virtual Vec3 GetCharacterPosition() const {
         return mSampleJoltCharacter->GetCharacterPosition();
     }
@@ -49,6 +54,8 @@ class CharacterEntity : public Entity {
     // update override
     void Update(double deltaTime) override;
 
+    void LateUpdate(double deltaTime) override;
+
     void UpdateUi(double deltaTime) override;
 
     void Awake() override;
@@ -59,6 +66,8 @@ class CharacterEntity : public Entity {
     void OnCollisionStay(Entity *aOther) override;
 
     void OnCollisionEnd(Entity *aOther) override;
+
+    void OnWin(WinSignal *signal);
 
     // set the checkpoint
     void SetCheckpoint(glm::vec3 checkpoint) { mLastCheckpoint = checkpoint; Save();}
@@ -94,9 +103,29 @@ class CharacterEntity : public Entity {
 
     size_t GetPlayerId() const { return mPlayerId; }
 
+    void SetHanging(bool isHanging) { mHangingAbout = isHanging; }
+
+    void SetPosition(glm::vec3 position) {
+        mSampleJoltCharacter->SetCharacterPosition(RVec3(position.x, position.y, position.z));
+        // set the velocity to zero
+        mSampleJoltCharacter->SetCharacterVelocity(Vec3(0.f, 0.f, 0.f));
+    }
+
   private:
     void Save();
     void Load();
+
+    glm::vec3 CalcClimbDirection(Entity *climbEntity);
+
+    void RegisterControls();
+
+  public:
+    inline static float sJumpTimeScale = 0.1f;
+    inline static float sFallTimeScale = 0.3f;
+
+    inline static float sFallBlend = 1.0f;
+    inline static float sHangingBlend = 0.25f;
+    inline static float sClimbTimeScale = 0.45f;
 
   protected:
     Camera *mCamera = nullptr;
@@ -105,6 +134,7 @@ class CharacterEntity : public Entity {
 
     size_t mPlayerId = 0;
 
+    bool mIsTiming = false;
     gui::TimerData mGuiTimerData{};
     glm::vec3 mLastCheckpoint = glm::vec3(0, 10.0f, 0);
     float ragdollTime = -10000.0f;
@@ -118,6 +148,10 @@ class CharacterEntity : public Entity {
     double mDeathTimer = 0.0;
     const double mDeathTime = 1.0;
 
+    bool mHasWon = false;
+
+    float mWinVisibleTimer = 0.0f;
+
     gui::DeathCounterData mGuiDeathCounterData{};
     gui::DeathPopupData mGuiDeathPopupData{};
     gui::FinishPopupData mGuiFinishPopupData{};
@@ -127,15 +161,22 @@ class CharacterEntity : public Entity {
 
     std::stack<InternalEvent> mInternalEvents;
     std::stack<InternalUiEvent> mInternalUiEvents;
+    bool mInClimb = false;
+    bool mIsCrouching = false;
+    bool mIsEmoting = false;
+    bool mHangingAbout = false;
+
+    InputMapping mInputMapping{};
 
   private:
     bool m_has_save = false;
 
-    bool mInClimb = false;
     bool mLeftClimb = false;
     bool mEnterClimb = false;
 
     glm::vec3 mClimbDirection = glm::vec3(0.f, 0.f, 0.f);
+
+    std::vector<Entity *> mInteractables;
 };
 
 

@@ -17,20 +17,35 @@
 
 class Scene;
 
+enum class ColliderType {
+    ConvexHullShape,
+    MeshShape,
+    Fallback
+};
+
 enum class PhysicsType {
     STATIC,
     KINEMATIC,
     DYNAMIC
 };
+
+enum class EInteractable {
+    Interactable,
+    NotInteractable
+};
+
+enum class ENetworkLocality {
+    Local,
+    Remote,
+    None
+};
+
 #define MIN_ANIMATOR_UPDATE_DISTANCE 50.f
 #define MAX_ANIMATOR_UPDATE_DISTANCE 500.f
 #define LOWEST_ANIMATOR_UPDATE_RATE 1000.f
 
 /// The base class for all entities in the scene. Custom entities all have this as their base class
 class Entity {
-  private:
-    static std::atomic<uint32_t> kEntityCount;
-
   public:
     // functions the user can call
 
@@ -115,13 +130,20 @@ class Entity {
     [[nodiscard]] Animator &GetAnimator(){return *mAnimator;}
 
     /// Get a reference to the rigidbody
-    [[nodiscard]] RigidBody &GetRigidBody(){ return *mRigidBody; }
+    [[nodiscard]] RigidBody &GetRigidBody(){
+      assert(mRigidBody != nullptr);
+      return *mRigidBody;
+    }
 
 
     /// Add a tag to the entity. Tags are also added from the GLTF file.
     void AddTag(const std::string& aTag) { mTags.emplace_back(aTag); }
     /// Query if the entity has a tag
     [[nodiscard]] bool CompareTag (const std::string& aTag) const;
+
+    void AddFloatProperty(const std::string &name, float value) {
+        mFloatProperties[name] = value;
+    }
 
     /// Query if the entity is a sensor (has physics but does not collide with other entities)
     [[nodiscard]] bool IsSensor() const { return mIsSensor; }
@@ -140,6 +162,9 @@ class Entity {
 
     PhysicsType GetPhysicsType() const { return mPhysicsType; }
 
+    void SetColliderType(ColliderType colliderType) { mColliderType = colliderType; }
+    ColliderType GetColliderType() const { return mColliderType; }
+
     /// Get the number of frames that have passed since the entity was created
     [[nodiscard]] size_t GetFrameNumber() const {return mFrameNumber;}
 
@@ -150,6 +175,12 @@ class Entity {
     [[nodiscard]] bool CompareType(std::string const& aCompareType) {return aCompareType == mType;}
 
   public:
+    virtual EInteractable IsInteractable() const { return EInteractable::NotInteractable; }
+
+    // NOTE: There is no parameter passing with this function
+    /// called when an entity wants to interact with another entity
+    virtual void OnInteract(Entity *other, ENetworkLocality networkLocality) {}
+
     // the following functions are overridable by the user
     /// called on the first frame of a collision
     virtual void OnCollisionStart(Entity *aOther) {}
@@ -160,7 +191,7 @@ class Entity {
     /// called after the last frame of a collision
     virtual void OnCollisionEnd(Entity *aOther)
     {
-        SPDLOG_INFO("I am {} and I am no longer colliding with {}", GetName(), aOther->GetName());
+        // SPDLOG_INFO("I am {} and I am no longer colliding with {}", GetName(), aOther->GetName());
     }
 
     /// called for each entity just before update has been called per entity
@@ -169,7 +200,8 @@ class Entity {
     /// called for each entity after update has been called on all entities
     virtual void LateUpdate(double deltaTime) {}
 
-
+    /// called after the entire scene has been loaded, once only
+    virtual void InitPhysics();
 
     /// called after the entire scene has been loaded, once only
     virtual void Awake() {}
@@ -206,9 +238,8 @@ class Entity {
         mHasMesh = true;
     }
 
-    void AddRigidBody(std::unique_ptr<RigidBody> rigidBody) {
-        mRigidBody = std::move(rigidBody);
-        PhysicsManager::get().RegisterEntity(this, mRigidBody->mBodyId);
+    void AddRigidBody(JPH::BodyCreationSettings bodyCreationSettings) {
+        mRigidBody = std::make_unique<RigidBody>(bodyCreationSettings);
         mHasRigidBody = true;
     }
 
@@ -223,6 +254,14 @@ class Entity {
 
     // TODO: Make friend class with Scene
     void SetScene(Scene *scene) { mScene = scene; }
+
+    void InitID(uint32_t id);
+
+    const std::unordered_map<std::string, float> &GetFloatProperties() { return mFloatProperties; }
+
+    void SetFloatProperties(std::unordered_map<std::string, float> &floatProperties) {
+        mFloatProperties = std::move(floatProperties);
+    }
 
   protected:
     Scene *GetScene() const { return mScene; }
@@ -239,7 +278,12 @@ class Entity {
 
     /// the Type of entity this is, overwrite in inherited classes
     std::string mType = "default";
-  private:
+
+    std::unordered_map<std::string, float> mFloatProperties;
+
+    uint32_t mEntityID = 0;
+
+    private:
 
     std::string mName{};
 
@@ -255,11 +299,12 @@ class Entity {
 
     std::vector<Entity *> mChildren;
 
-    std::unique_ptr<RigidBody> mRigidBody;
+    std::unique_ptr<RigidBody> mRigidBody = nullptr;
 
     vector<std::string> mTags;
 
     PhysicsType mPhysicsType = PhysicsType::STATIC;
+    ColliderType mColliderType = ColliderType::Fallback;
 
 
     bool mHasMesh = false;
@@ -271,8 +316,6 @@ class Entity {
     glm::mat4 mAnimationTransform = glm::mat4(1.0f);
 
     bool mHasRigidBody = false;
-
-    uint32_t mEntityID = kEntityCount++;
 
     bool mIsSensor = false;
 

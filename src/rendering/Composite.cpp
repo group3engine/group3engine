@@ -8,7 +8,7 @@
 #include "Utils.hpp"
 #include "Buffer.hpp"
 
-Composite::Composite(Context &context, Scene *scene, Image &LightingPass, Image &BloomPass, Image &SSAO, Image &SSRImage, Image &Fog, Image &Outline)
+Composite::Composite(Context &context, Scene *scene, Image &LightingPass, Image &BloomPass, Image &SSAO, Image &SSRImage, Image &Fog, Image &Outline, const std::vector<Buffer>& debugUniform)
     : context{context},
       m_Scene{scene},
       LightingPass{LightingPass},
@@ -17,6 +17,7 @@ Composite::Composite(Context &context, Scene *scene, Image &LightingPass, Image 
       SSRImage{SSRImage},
       Fog {Fog},
       Outline{Outline},
+      DebugUniform{debugUniform},
       m_Pipeline{VK_NULL_HANDLE},
       m_PipelineLayout{VK_NULL_HANDLE},
       m_descriptorSetLayout{VK_NULL_HANDLE},
@@ -38,6 +39,12 @@ Composite::Composite(Context &context, Scene *scene, Image &LightingPass, Image 
         VK_IMAGE_ASPECT_COLOR_BIT,
         1);
 
+    m_PostProcessUniform.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
+    for (auto &buffer : m_PostProcessUniform)
+    {
+        buffer = CreateBuffer("PostProcessUniformUBO", context, sizeof(vkutil::PostProcessingSettings), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+    }
+
     BuildDescriptors();
     CreateRenderPass();
     CreateFramebuffer();
@@ -45,6 +52,10 @@ Composite::Composite(Context &context, Scene *scene, Image &LightingPass, Image 
 }
 
 Composite::~Composite() {
+
+    for (auto &buffer : m_PostProcessUniform) {
+        buffer.Destroy();
+    }
     m_RenderTarget.Destroy(context.device);
 
     vkDestroyPipeline(context.device, m_Pipeline, nullptr);
@@ -185,7 +196,9 @@ void Composite::Execute(VkCommandBuffer cmd) const {
 #endif // !DEBUG
 }
 
-void Composite::Update() {
+void Composite::Update()
+{
+    m_PostProcessUniform[vkutil::currentFrame].WriteToBuffer(vkutil::postProcessingSettings, sizeof(vkutil::PostProcessingSettings));
 }
 
 void Composite::CreatePipeline() {
@@ -248,7 +261,9 @@ void Composite::BuildDescriptors() {
             vkutil::CreateDescriptorBinding(2, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
             vkutil::CreateDescriptorBinding(3, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
             vkutil::CreateDescriptorBinding(4, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
-            vkutil::CreateDescriptorBinding(5, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+            vkutil::CreateDescriptorBinding(5, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
+            vkutil::CreateDescriptorBinding(6, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT),
+            vkutil::CreateDescriptorBinding(7, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT), // Debug UBO
         };
 
         m_descriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, bindings);
@@ -318,5 +333,21 @@ void Composite::BuildDescriptors() {
         };
 
         vkutil::UpdateDescriptorSet(context, 5, imageInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    }
+
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+        VkDescriptorBufferInfo bufferInfo{};
+        bufferInfo.buffer = m_PostProcessUniform[i].buffer;
+        bufferInfo.offset = 0;
+        bufferInfo.range = sizeof(vkutil::PostProcessingSettings);
+        vkutil::UpdateDescriptorSet(context, 6, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+    }
+
+    for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+        VkDescriptorBufferInfo bufferInfo{};
+        bufferInfo.buffer = DebugUniform[i].buffer;
+        bufferInfo.offset = 0;
+        bufferInfo.range = sizeof(vkutil::RendererDebug);
+        vkutil::UpdateDescriptorSet(context, 7, bufferInfo, m_descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
     }
 }

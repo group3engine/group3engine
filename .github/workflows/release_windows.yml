@@ -1,0 +1,49 @@
+name: Build and Release windows
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build_windows:
+    name: Build Windows
+    runs-on: windows-latest
+
+    steps:
+      - uses: ilammy/msvc-dev-cmd@v1
+
+      - uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+
+      - uses: seanmiddleditch/gha-setup-ninja@master
+
+      - name: Build
+        env:
+          TARGET_PLATFORM: windows
+        run: |
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Platinum -S . -B build
+          cmake --build build -j
+          cmake --install build --prefix install
+
+      - name: Zip
+        run: |
+          Compress-Archive -Path install -DestinationPath release_windows.zip
+
+      - name: Datetime
+        id: datetime
+        run: |
+          $NOW=& Get-Date -format yyyy-MM-dd-hh-mm-ss
+          echo "NOW=$NOW" >> $env:GITHUB_ENV
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          prerelease: true
+          name: "AUTO RELEASE Windows: ${{ env.NOW }}"
+          tag_name: "release-windows-${{ env.NOW }}"
+          files: release_windows.zip

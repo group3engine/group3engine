@@ -11,9 +11,6 @@
 #include "Utils.hpp"
 #include "Scene.hpp"
 
-std::atomic<uint32_t> Entity::kEntityCount{0};
-
-
 Entity::Entity(std::string aName, Entity *aParent, Mesh *aMesh, glm::mat4 aLocalTransform)
     : mName(std::move(aName)), mParent(aParent), mMesh(aMesh), mHasMesh(true) {
     // convert the transformation matrix to a translation, rotation
@@ -131,6 +128,12 @@ void Entity::RecordDrawOpaque(VkCommandBuffer aCmdBuff,
             vkCmdBindIndexBuffer(aCmdBuff, meshPrimitive.meshGPU->mIndices.buffer, 0,
                                  VK_INDEX_TYPE_UINT32);
 
+            if (meshPrimitive.material->doubleSided) {
+                vkCmdSetCullMode(aCmdBuff, VK_CULL_MODE_NONE);
+            } else {
+                vkCmdSetCullMode(aCmdBuff, VK_CULL_MODE_BACK_BIT);
+            }
+
             // draw the mesh
             vkCmdDrawIndexed(aCmdBuff, meshPrimitive.meshGPU->mIndexCount, 1, 0, 0, 0);
         }
@@ -160,6 +163,12 @@ void Entity::RecordDrawShadow(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipeli
             // bind the index buffer
             vkCmdBindIndexBuffer(aCmdBuff, meshPrimitive.meshGPU->mIndices.buffer, 0,
                                  VK_INDEX_TYPE_UINT32);
+
+            if (meshPrimitive.material->doubleSided) {
+                vkCmdSetCullMode(aCmdBuff, VK_CULL_MODE_NONE);
+            } else {
+                vkCmdSetCullMode(aCmdBuff, VK_CULL_MODE_BACK_BIT);
+            }
 
             // draw the mesh
             vkCmdDrawIndexed(aCmdBuff, meshPrimitive.meshGPU->mIndexCount, 1, 0, 0, 0);
@@ -196,6 +205,12 @@ void Entity::RecordDrawCutout(VkCommandBuffer aCmdBuff,
             // bind the index buffer
             vkCmdBindIndexBuffer(aCmdBuff, meshPrimitive.meshGPU->mIndices.buffer, 0,
                                  VK_INDEX_TYPE_UINT32);
+
+            if (meshPrimitive.material->doubleSided) {
+                vkCmdSetCullMode(aCmdBuff, VK_CULL_MODE_NONE);
+            } else {
+                vkCmdSetCullMode(aCmdBuff, VK_CULL_MODE_BACK_BIT);
+            }
 
             // draw the mesh
             vkCmdDrawIndexed(aCmdBuff, meshPrimitive.meshGPU->mIndexCount, 1, 0, 0, 0);
@@ -236,6 +251,12 @@ void Entity::RecordDrawSkinned(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipeL
             vkCmdBindIndexBuffer(aCmdBuff,
                                  meshPrimitive.meshGPU->mIndices.buffer, 0,
                                  VK_INDEX_TYPE_UINT32);
+
+            if (meshPrimitive.material->doubleSided) {
+                vkCmdSetCullMode(aCmdBuff, VK_CULL_MODE_NONE);
+            } else {
+                vkCmdSetCullMode(aCmdBuff, VK_CULL_MODE_BACK_BIT);
+            }
 
             // draw the mesh
             vkCmdDrawIndexed(aCmdBuff, meshPrimitive.meshGPU->mIndexCount, 1, 0,
@@ -319,12 +340,13 @@ void Entity::BaseUpdate(double deltaTime) {
     if(GetPhysicsType() == PhysicsType::KINEMATIC || GetPhysicsType() == PhysicsType::DYNAMIC || mHasCharacter || mHasOffset)
     {
         UpdateWorldTransform();
-        UpdateChildrenTransform();
+        if(mHasCharacter)
+            UpdateChildrenTransform();
     }
 
 }
 void Entity::UpdateChildrenTransform() {
-    for (auto &child : mChildren) {
+    for (auto *child : mChildren) {
         child->SetParentTransform(GetWorldTransform());
     }
 }
@@ -340,4 +362,27 @@ void Entity::SetParentTransform(glm::mat4 aParentTransform)  {
     mParentTransform = aParentTransform;
     UpdateWorldTransform();
     UpdateChildrenTransform();
+    SetPhysicsTransform();
+}
+
+void Entity::InitPhysics() {
+    if (mRigidBody.get()) {
+        if (GetPhysicsType() == PhysicsType::STATIC) {
+            // initialise the body in the physics manager and do not activate it
+            mRigidBody->Init(PhysicsManager::get(), false);
+        } else if (GetPhysicsType() == PhysicsType::DYNAMIC) {
+            // initialise the body in the physics manager and activate it
+            mRigidBody->Init(PhysicsManager::get(), true);
+        } else if (GetPhysicsType() == PhysicsType::KINEMATIC) {
+            // initialise the body in the physics manager and activate it
+            mRigidBody->Init(PhysicsManager::get(), true);
+        }
+
+        // TODO: Only do this if the entity is supposed to DO something when collided with (i.e. sensors)
+        PhysicsManager::get().RegisterEntity(this, mRigidBody->mBodyId);
+    }
+}
+
+void Entity::InitID(uint32_t id) {
+    mEntityID = id;
 }

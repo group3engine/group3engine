@@ -6,12 +6,18 @@
 #define GROUP3ENGINE_NETWORKEDCHARACTERREMOTE_HPP
 #include "Entity.hpp"
 #include "SampleJoltCharacter.h"
+#include "CharacterEntity.hpp"
 
 struct State
 {
     glm::vec3 position;
     glm::vec3 velocity;
     glm::quat rotation;
+    bool isCrouching = false;
+    bool isEmoting = false;
+    bool isInClimb = false;
+    bool isHanging = false;
+    DeathState deathState = DeathState::eLiving;
 };
 
 class NetworkedCharacterRemote : public Entity {
@@ -50,6 +56,14 @@ public:
 
 
     std::unique_ptr<SampleJoltCharacter> mSampleJoltCharacter;
+
+private:
+    bool mIsCrouching = false;
+    bool mIsEmoting = false;
+    bool mInClimb = false;
+    bool mHasEverBeenGivenState = false;
+    bool mHangingAbout = false;
+    DeathState mDeathState = DeathState::eLiving;
 
 };
 

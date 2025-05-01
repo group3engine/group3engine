@@ -30,8 +30,10 @@ void CharacterBaseTest::Initialize()
 	// Create capsule shapes for all stances
 	switch (sShapeType)
 	{
-	case EType::Box:
+	case EType::Capsule:
 		mStandingShape = RotatedTranslatedShapeSettings(Vec3(0, cCharacterHeightStanding, 0), Quat::sIdentity(), new CapsuleShape(cCharacterHeightStanding, cCharacterRadiusStanding)).Create().Get();
+        mCrouchingShape = RotatedTranslatedShapeSettings(Vec3(0, cCharacterHeightCrouching, 0), Quat::sIdentity(), new CapsuleShape(cCharacterHeightCrouching, cCharacterRadiusStanding)).Create().Get();
+        mFallingShape = RotatedTranslatedShapeSettings(Vec3(0, cCharacterHeightFalling, 0), Quat::sIdentity(), new CapsuleShape(cCharacterHeightFalling, cCharacterRadiusStanding)).Create().Get();
 		break;
         default:
             assert(false);
@@ -46,12 +48,13 @@ void CharacterBaseTest::Initialize()
 	}
 }
 
-void CharacterBaseTest::ProcessInput(glm::vec3 controlInput, bool jump, bool inClimb)
+void CharacterBaseTest::ProcessInput(glm::vec3 controlInput, bool jump, bool inClimb, bool isCrouching)
 
 {
         mJump = jump;
         mInClimb = inClimb;
         mControlInput = Vec3(controlInput.x, controlInput.y, controlInput.z);
+        mIsCrouching = isCrouching;
 }
 
 void CharacterBaseTest::PrePhysicsUpdate(const PreUpdateParams &inParams)
@@ -85,6 +88,8 @@ void CharacterBaseTest::PrePhysicsUpdate(const PreUpdateParams &inParams)
 			{ },
 			*mTempAllocator);
 	}
+
+
 
 	// Call handle input after new velocities have been set to avoid frame delay
 	HandleInput(mControlInput, mJump, inParams.mDeltaTime, mInClimb);

@@ -17,6 +17,8 @@ public:
     void Update(double deltaTime) override;
 
 private:
+    float mSpeed = 0.0f;
+
     glm::vec3 start_position {};
     glm::vec3 startVelocity = glm::vec3(0.f, 0, 10.f);
     glm::vec3 velocity = startVelocity;
@@ -24,7 +26,7 @@ private:
     float timeToBeInvisible = 5.f;
     float timeElapsed = 0.f;
     float randomOffset = 0.f;
-    const float offsetVariation = 0.5f;
+    const float offsetVariation = 2.0f;
 
 };
 

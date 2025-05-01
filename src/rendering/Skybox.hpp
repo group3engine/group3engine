@@ -17,16 +17,16 @@ class Skybox {
 
     Image& GetSkyBoxImage() { return m_Skybox; }
 
+    const Buffer &GetVertexBuffer() const { return m_vertexBuffer; }
   private:
     void CreatePipeline();
     void BuildDescriptorSetLayouts();
     void BuildDescriptors();
-    void LoadCubemapFace(std::filesystem::path facePath, char **pixelData);
+    void LoadCubemapFace(std::filesystem::path facePath, float **pixelData);
 
     Context &context;
     Scene *m_Scene;
     Image m_Skybox;
-
     Image m_RenderTarget;
 
     VkPipeline m_Pipeline;

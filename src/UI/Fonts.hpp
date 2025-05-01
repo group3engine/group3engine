@@ -6,6 +6,7 @@
 #define GROUP3ENGINE_FONTS_HPP
 
 // C++
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui.h>
 #include <iostream>
 
@@ -15,6 +16,8 @@ namespace Fonts {
     inline ImFont* TextFont = nullptr;
     inline ImFont* TextFontSubtle = nullptr;
     inline ImFont* TextFontSmall = nullptr;
+    inline ImFont* LoadingFont = nullptr;
+    inline ImFont* LoadingFontSmall = nullptr;
 
     bool LoadFonts() ;
 }

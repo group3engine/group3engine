@@ -3,8 +3,9 @@
 //
 
 #include "NetworkedLocalCharacter.hpp"
-#include "NetworkCharacterManager.hpp"
+#include "NetworkEntitiesManager.hpp"
 #include "Scene.hpp"
+#include <json.hpp>
 
 void NetworkedLocalCharacter::Update(double deltaTime)
 {
@@ -15,11 +16,22 @@ void NetworkedLocalCharacter::Update(double deltaTime)
     glm::vec3 velocity = glm::vec3(jvelocity.GetX(), jvelocity.GetY(), jvelocity.GetZ());
     // get the file name
     std::string mapName = Scene::get().GetActiveScene()->GetSceneFilename().string();
-    // jsonify
-    std::string jsonToSend = "{ \"transform\": { \"position\": [" + to_string(position.GetX()) + "," + to_string(position.GetY()) + "," + to_string(position.GetZ()) + "], \"rotation\": [" + to_string(transform.rotation.x) + "," + to_string(transform.rotation.y) + "," + to_string(transform.rotation.z) + "," + to_string(transform.rotation.w) + "," + "], \"scale\": [" + to_string(transform.scale.x) + "," + to_string(transform.scale.y) + "," + to_string(transform.scale.z) + "] }, \"velocity\": [" + to_string(velocity.x) + "," + to_string(velocity.y) + "," + to_string(velocity.z) + "], \"mapName\": \"" + mapName + "\" }";
-    // add the map name to the start for quick parsing
-    jsonToSend = mapName + "\\" + jsonToSend;
-    static_cast<NetworkCharacterManager*>(GetParent())->SendMessage(jsonToSend);
+
+    nlohmann::json &jsonData = GetScene()->GetNetworkEntitiesManager()->GetLocalJson();
+
+    jsonData["transform"] = {
+            {"position", {position.GetX(), position.GetY(), position.GetZ()}},
+            {"rotation", {transform.rotation.x, transform.rotation.y, transform.rotation.z, transform.rotation.w}},
+            {"scale", {transform.scale.x, transform.scale.y, transform.scale.z}}
+    };
+    jsonData["velocity"] = {velocity.x, velocity.y, velocity.z};
+    // TODO: Is this redundant and is this in a different location? Would that be problematic?
+    jsonData["mapName"] = mapName;
+    jsonData["isCrouching"] = mIsCrouching;
+    jsonData["isEmoting"] = mIsEmoting;
+    jsonData["isInClimb"] = mInClimb;
+    jsonData["deathState"] = mDeathState;
+    jsonData["isHanging"] = mHangingAbout;
 
     CharacterEntity::Update(deltaTime);
 }

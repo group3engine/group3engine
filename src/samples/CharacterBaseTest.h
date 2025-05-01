@@ -59,7 +59,7 @@ public:
 	virtual void 			Initialize();
 
 	// Process input
-	void					ProcessInput(glm::vec3 controlInput, bool jump, bool inClimb);
+	void					ProcessInput(glm::vec3 controlInput, bool jump, bool inClimb, bool isCrouching);
 
 	// Update the test, called before the physics update
 	virtual void			PrePhysicsUpdate(const PreUpdateParams &inParams);
@@ -69,6 +69,8 @@ public:
 
 	// Override to specify a camera pivot point and orientation (world space)
 	virtual RMat44			GetCameraPivot(float inCameraHeading, float inCameraPitch) const;
+
+    virtual float			GetJumpHeight() const { return sJumpHeight; }
 
 	// Set the physics system
 	virtual void	SetPhysicsSystem(PhysicsSystem *inPhysicsSystem)			{ mPhysicsSystem = inPhysicsSystem; mBodyInterface = &inPhysicsSystem->GetBodyInterface(); }
@@ -87,17 +89,29 @@ public:
 	virtual void			HandleInput(Vec3Arg inMovementDirection, bool inJump, float inDeltaTime, bool inClimb) = 0;
 
 	// Character size
-	static constexpr float	cCharacterHeightStanding = 0.8f;
-	static constexpr float	cCharacterRadiusStanding = 0.3f;
+	static constexpr float	cCharacterHeightStanding = 1.0f;
+	static constexpr float	cCharacterRadiusStanding = 0.5f;
+    static constexpr float  cCharacterHeightCrouching = 0.6f;
+    static constexpr float  cCharacterHeightFalling = 0.7f;
+
+	inline static float sJumpHeight = 2.5f;
+
+	inline static float sCharacterSpeed = 9.0f;
+
+	inline static float sJumpTime = 0.46f;
+	inline static float sFallTime = 0.41f;
 
 	// Character movement properties
 	inline static bool		sControlMovementDuringJump = true;							///< If false the character cannot change movement direction in mid air
-	inline static float		sCharacterSpeed = 6.0f;
-	inline static float		sJumpSpeed = 4.0f;
+	inline static float		sJumpSpeed = 2.0f * sJumpHeight / sJumpTime;
+	inline static float		sJumpGravity = -2.0f * sJumpHeight / Square(sJumpTime);
+	inline static float		sFallGravity = -2.0f * sJumpHeight / Square(sFallTime);
     inline static float     sClimbSpeed = 2.0f;
 
 	// The different stances for the character
 	RefConst<Shape>			mStandingShape;
+    RefConst<Shape>         mCrouchingShape;
+    RefConst<Shape>         mFallingShape;
 
 	JobSystem *		mJobSystem = nullptr;
 	PhysicsSystem *	mPhysicsSystem = nullptr;
@@ -114,7 +128,7 @@ private:
 	};
 
 	// Character shape type
-	static inline EType		sShapeType = EType::Box;
+	static inline EType		sShapeType = EType::Capsule;
 
 	// Scene time (for moving bodies)
 	float					mTime = 0.0f;
@@ -129,5 +143,6 @@ private:
 	Vec3					mControlInput = Vec3::sZero();
 	bool					mJump = false;
     bool                    mInClimb = false;
-	bool					mWasJump = false;
+protected:
+    bool					mIsCrouching = false;
 };

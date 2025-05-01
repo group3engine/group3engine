@@ -60,19 +60,68 @@ layout (set = 1, binding = 0) uniform sampler2D uTextureColour;
 layout (set = 1, binding = 1) uniform sampler2D uTextureMetallicRoughness;
 // normal map
 layout (set = 1, binding = 2) uniform sampler2D uTextureNormal;
+// emissive texture
+layout (set = 1, binding = 3) uniform sampler2D uTextureEmissive;
 // material numbers
-layout (set = 1, binding = 3) uniform UNumbers
+layout (set = 1, binding = 4) uniform UNumbers
 {
 	vec4 baseColour;
 	float metallness;
 	float roughness;
 	float alphaCutoff;
-
+    vec4 emissiveFactor;
 } uNumbers;
+
+layout (set = 0, binding = 5) uniform samplerCube prefilteredSkybox;
+layout (set = 0, binding = 6) uniform sampler2D BRDFLUT;
+layout (set = 0, binding = 7) uniform samplerCube irradianceMap;
+
+layout (set = 0, binding = 8) uniform RendererDebug
+{
+    int debugMode;
+}debugRenderer;
 
 #define PI 3.14159265359
 
 uint cascadeIndex = 0;
+
+// colors for each mip level
+const vec4 colors[10] = {
+    vec4(1.0, 0.0, 0.0, 1.0),
+    vec4(0.0, 1.0, 0.0, 1.0),
+    vec4(0.0, 0.0, 1.0, 1.0),
+    vec4(1.0, 1.0, 0.0, 1.0),
+    vec4(0.0, 1.0, 1.0, 1.0),
+    vec4(1.0, 0.0, 1.0, 1.0),
+    vec4(1.0, 0.5, 0.0, 1.0),
+    vec4(0.5, 0.0, 1.0, 1.0),
+    vec4(0.5, 0.5, 0.5, 1.0),
+    vec4(1.0, 1.0, 1.0, 1.0)
+};
+
+vec3 DebugMipColour()
+{
+    vec2 lodInfo = textureQueryLod(uTextureColour, uv);
+    int numMips = textureQueryLevels(uTextureColour);
+
+    float lod = max(lodInfo.y, 0.0); // clamping this because of texture has no mips as is the case with our 1x1 default it'll return garbage .y value
+    int index = int(floor(lod));
+    float blendFactor = fract(lod);
+
+    int clampedIndex = clamp(index + 1, 0, numMips - 1);
+    vec4 baseColor = colors[index];
+    vec4 nextColor = colors[clampedIndex];
+
+    vec4 blendedColor = mix(baseColor, nextColor, blendFactor);
+
+    return blendedColor.rgb;
+}
+
+vec3 FresnelSchlickWithRoughness(float cosTheta, vec3 F0, float roughness)
+{
+    vec3 fresnel = F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+    return fresnel;
+}
 
 vec3 Fresnel(vec3 halfVector, vec3 viewDir, vec3 baseColor, float metallic)
 {
@@ -83,21 +132,28 @@ vec3 Fresnel(vec3 halfVector, vec3 viewDir, vec3 baseColor, float metallic)
     return schlick_approx;
 }
 
+vec3 FresnelSchlick(float HdotV, vec3 F0)
+{
+    return F0 + (1.0 - F0) * pow(clamp(1.0 - HdotV, 0.0, 1.0), 5.0);
+}
+
 struct SHCoefficients {
     vec3 l00, l1m1, l10, l11, l2m2, l2m1, l20, l21, l22;
 };
 
-//const SHCoefficients grace = SHCoefficients(
-//    vec3( 0.7953949,  0.4405923,  0.5459412 ),
-//    vec3( 0.3981450,  0.3526911,  0.6097158 ),
-//    vec3(-0.3424573, -0.1838151, -0.2715583 ),
-//    vec3(-0.2944621, -0.0560606,  0.0095193 ),
-//    vec3(-0.1123051, -0.0513088, -0.1232869 ),
-//    vec3(-0.2645007, -0.2257996, -0.4785847 ),
-//    vec3(-0.1569444, -0.0954703, -0.1485053 ),
-//    vec3( 0.5646247,  0.2161586,  0.1402643 ),
-//    vec3( 0.2137442, -0.0547578, -0.3061700 )
-//);
+vec3 EvaluateSHForDiffuseIBL(vec3 normal) {
+    vec3 result = vec3(0.0);
+    result += sh.shCoefficients[0] * SH00();
+    result += sh.shCoefficients[1] * SH1m1(normal);
+    result += sh.shCoefficients[2] * SH10(normal);
+    result += sh.shCoefficients[3] * SH11(normal);
+    result += sh.shCoefficients[4] * SH2m2(normal);
+    result += sh.shCoefficients[5] * SH2m1(normal);
+    result += sh.shCoefficients[6] * SH20(normal);
+    result += sh.shCoefficients[7] * SH21(normal);
+    result += sh.shCoefficients[8] * SH22(normal);
+    return result;
+}
 
 SHCoefficients grace = SHCoefficients(
     sh.shCoefficients[0],
@@ -111,18 +167,58 @@ SHCoefficients grace = SHCoefficients(
     sh.shCoefficients[8]
 );
 
-vec3 evaluateSH(vec3 normal) {
-    vec3 result = vec3(0.0);
-    result += sh.shCoefficients[0] * SH00();
-    result += sh.shCoefficients[1] * SH1m1(normal);
-    result += sh.shCoefficients[2] * SH10(normal);
-    result += sh.shCoefficients[3] * SH11(normal);
-    result += sh.shCoefficients[4] * SH2m2(normal);
-    result += sh.shCoefficients[5] * SH2m1(normal);
-    result += sh.shCoefficients[6] * SH20(normal);
-    result += sh.shCoefficients[7] * SH21(normal);
-    result += sh.shCoefficients[8] * SH22(normal);
-    return result;
+
+vec3 calcIrradiance(vec3 nor) {
+    const SHCoefficients c = grace;
+    const float c1 = 0.429043;
+    const float c2 = 0.511664;
+    const float c3 = 0.743125;
+    const float c4 = 0.886227;
+    const float c5 = 0.247708;
+    return (
+        c1 * c.l22 * (nor.x * nor.x - nor.y * nor.y) +
+        c3 * c.l20 * nor.z * nor.z +
+        c4 * c.l00 -
+        c5 * c.l20 +
+        2.0 * c1 * c.l2m2 * nor.x * nor.y +
+        2.0 * c1 * c.l21  * nor.x * nor.z +
+        2.0 * c1 * c.l2m1 * nor.y * nor.z +
+        2.0 * c2 * c.l11  * nor.x +
+        2.0 * c2 * c.l1m1 * nor.y +
+        2.0 * c2 * c.l10  * nor.z
+    );
+}
+
+// https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing
+float PCF(vec3 WorldPos)
+{
+	vec3 texSize = 1.0 / textureSize(shadowMap, 0);
+    // compute the cascade index
+    vec4 viewPos = ubo.view * vec4(WorldPos, 1.0);
+    for(uint i = 0; i < NUM_SHADOW_CASCADES - 1; ++i)
+    {
+        cascadeIndex = viewPos.z < csmMatrices.cascadeSplits[i] ? cascadeIndex = i + 1: cascadeIndex;
+    }
+
+    vec4 fragPositionInLightSpace = csmMatrices.cascadeViewProjection[cascadeIndex] * vec4(WorldPos, 1.0);
+	fragPositionInLightSpace.xyz /= fragPositionInLightSpace.w;
+	fragPositionInLightSpace.xy = fragPositionInLightSpace.xy * 0.5 + 0.5;
+
+	int range = 2; // 4x4
+	int samples = 0;
+	float sum = 0.0;
+	for(int x = -range; x < range; x++)
+	{
+		for(int y = -range; y < range; y++)
+		{
+			vec2 offset = vec2(x,y) * texSize.xy;
+			vec4 sampleCoord = vec4(fragPositionInLightSpace.xy + offset, fragPositionInLightSpace.z, fragPositionInLightSpace.w);
+			sum += texture(shadowMap, vec4(sampleCoord.xy, float(cascadeIndex), sampleCoord.z)); // I don't think textureProj works with sampler2DArrayShadow
+            samples++;
+		}
+	}
+
+	return sum / float(samples);
 }
 
 
@@ -168,21 +264,68 @@ float GGXGeometrySmith(vec3 normal, vec3 lightDir, vec3 viewDir, float roughness
 	return ggx1 * ggx2;
 }
 
-// Compute BRDF
-vec3 CookTorranceBRDF(vec3 normal, vec3 halfVector, vec3 viewDir, vec3 lightDir, float metallic, float roughness, vec3 baseColor, vec3 LightColour)
+//
+// https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing
+float myPCF(vec3 WorldPos)
 {
-    vec3 F = Fresnel(halfVector, viewDir, baseColor, metallic);
+    // Use direct lighting only. Point light shadows are handleded differently (cube depth)
+    //	vec4 fragPositionInLightSpace = lightData.lights[0].LightSpaceMatrix * vec4(WorldPos, 1.0);
+    //	fragPositionInLightSpace.xyz /= fragPositionInLightSpace.w;
+    //	fragPositionInLightSpace.xy = fragPositionInLightSpace.xy * 0.5 + 0.5;
+
+    vec3 texSize = 1.0 / textureSize(shadowMap, 0);
+
+
+    // compute the cascade index
+    vec4 viewPos = ubo.view * vec4(WorldPos, 1.0);
+    for(uint i = 0; i < NUM_SHADOW_CASCADES - 1; ++i)
+    {
+        cascadeIndex = viewPos.z < csmMatrices.cascadeSplits[i] ? cascadeIndex = i + 1: cascadeIndex;
+    }
+
+    vec4 fragPositionInLightSpace = csmMatrices.cascadeViewProjection[cascadeIndex] * vec4(WorldPos, 1.0);
+    fragPositionInLightSpace.xyz /= fragPositionInLightSpace.w;
+    fragPositionInLightSpace.xy = fragPositionInLightSpace.xy * 0.5 + 0.5;
+
+    int range = 2; // 4x4
+    int samples = 0;
+    float sum = 0.0;
+    for(int x = -range; x < range; x++)
+    {
+        for(int y = -range; y < range; y++)
+        {
+            vec2 offset = vec2(x,y) * texSize.xy;
+            vec4 sampleCoord = vec4(fragPositionInLightSpace.xy + offset, fragPositionInLightSpace.z, fragPositionInLightSpace.w);
+            sum += texture(shadowMap, vec4(sampleCoord.xy, float(cascadeIndex), sampleCoord.z)); // I don't think textureProj works with sampler2DArrayShadow
+            samples++;
+        }
+    }
+    float shadowValue = sum / float(samples);
+    // band the shadow map by threshold 0.5
+    float shadow = step(0.5, shadowValue);
+
+    return shadow;
+}
+
+
+// Compute BRDF
+vec3 CookTorranceBRDF(vec3 normal, vec3 halfVector, vec3 viewDir, vec3 lightDir, float metallic, float roughness, vec3 baseColor, vec3 LightColour, vec3 WorldPos)
+{
+    vec3 F0 = vec3(0.04);
+    F0 = mix(F0, baseColor, metallic);
+
+    vec3 F = FresnelSchlick(max(dot(halfVector, viewDir), 0.0), F0);
     float D = GGXNormalDistributionFunction(normal, halfVector, roughness);
 	float G = GGXGeometrySmith(normal, lightDir, viewDir, roughness);
 
-    vec3 L_Diffuse = (baseColor / PI) * (vec3(1.0) - F) * (1.0 - metallic) * evaluateSH(normal);
+    vec3 kd = (1.0 - F) * (1.0 - metallic);
+    vec3 L_Diffuse = kd * (baseColor / PI);
 
     float NdotV = max(dot(normal, viewDir), 0.001);
 	float NdotL = max(dot(normal, lightDir), 0.001);
 
 	vec3 numerator = D * G * F;
 	float denominator = (4 * NdotV * NdotL) + 0.001;
-
 	vec3 specular = numerator / denominator;
     specular = specular * LightColour.xyz * NdotL;
 
@@ -257,49 +400,97 @@ vec3 CookTorranceBRDF(vec3 normal, vec3 halfVector, vec3 viewDir, vec3 lightDir,
     {
         newBlue = 1.0;
     }
-
     vec3 specularFinal = vec3(newRed, newGreen, newBlue);
+    vec3 directLight = (kd * baseColor / PI + specularFinal) * LightColour.xyz * NdotL;
 
-    vec3 outLight = (L_Diffuse) * LightColour.xyz * NdotL;
-    outLight += specularFinal;
+    vec3 FR = FresnelSchlickWithRoughness(NdotV, F0, roughness);
+    vec3 R = reflect(-viewDir, normal);
+    const float max_specular_mip_levels = 7.0;
 
-    return vec3(outLight);
+    vec3 prefilteredColour = textureLod(prefilteredSkybox, R, roughness * max_specular_mip_levels).rgb;
+    vec2 envBRDF = texture(BRDFLUT, vec2(NdotV, roughness)).rg;
+    vec3 specularIBL = prefilteredColour * (FR * envBRDF.x + envBRDF.y);
+    // band it to 0, 0.25, 0.5, 0.75, 1.0
+    specularLength = length(specularIBL);
+    specularColour = normalize(specularIBL);
+    specularRed = specularColour.r / 2;
+    specularGreen = specularColour.g / 2;
+    specularBlue = specularColour.b / 2;
+    newRed = 0.0;
+    newGreen = 0.0;
+    newBlue = 0.0;
+    if(specularRed < 0.05)
+    {
+        newRed = 0.0;
+    }
+    else if(specularRed < 0.25)
+    {
+        newRed = 0.1;
+    }
+    else if(specularRed < 0.6)
+    {
+        newRed = 0.3;
+    }
+    else if(specularRed < 0.8)
+    {
+        newRed = 0.5;
+    }
+    else if (specularRed > 0.8)
+    {
+        newRed = 1.0;
+    }
+
+    if(specularGreen < 0.05)
+    {
+        newGreen = 0.0;
+    }
+    else if(specularGreen < 0.25)
+    {
+        newGreen = 0.1;
+    }
+    else if(specularGreen < 0.6)
+    {
+        newGreen = 0.3;
+    }
+    else if(specularGreen < 0.8)
+    {
+        newGreen = 0.5;
+    }
+    else if (specularGreen > 0.8)
+    {
+        newGreen = 1.0;
+    }
+
+    if(specularBlue < 0.05)
+    {
+        newBlue = 0.0;
+    }
+    else if(specularBlue < 0.25)
+    {
+        newBlue = 0.1;
+    }
+    else if(specularBlue < 0.6)
+    {
+        newBlue = 0.3;
+    }
+    else if(specularBlue < 0.8)
+    {
+        newBlue = 0.5;
+    }
+    else if (specularBlue > 0.8)
+    {
+        newBlue = 1.0;
+    }
+    vec3 specularIBLFinal = vec3(newRed, newGreen, newBlue);
+    vec3 iblKD = (1.0 - FR) * (1.0 - metallic);
+    vec3 irradiance = texture(irradianceMap, normal).rgb; // EvaluateSHForDiffuseIBL(normal);
+    vec3 diffuseIBL = irradiance * baseColor * iblKD;
+    vec3 indirectLight = diffuseIBL + specularIBLFinal;
+
+    float shadowTerm = 1.0 - myPCF(WorldPos.xyz);
+    directLight = directLight * shadowTerm;
+    return vec3(directLight + indirectLight);
 }
-
-
-const vec2 PCFFilter4x4[16] = vec2[](
-vec2(-1.5, 1.5), vec2(-0.5, 1.5), vec2(0.5, 1.5), vec2(1.5, 1.5),
-vec2(-1.5, 0.5), vec2(-0.5, 0.5), vec2(0.5, 0.5), vec2(1.5, 0.5),
-vec2(-1.5, -0.5), vec2(-0.5, -0.5), vec2(0.5, -0.5), vec2(1.5, -0.5),
-vec2(-1.5, -1.5), vec2(-0.5, -1.5), vec2(0.5, -1.5), vec2(1.5, -1.5)
-);
-
-
-//float PCF(vec4 shadowMapPosition)
-//{
-//	vec2 offset = vec2(shadowMapPosition.w / 1024.0f);
-//	float shadow = 0.0;
-//	for (int i = 0; i < 16; i++)
-//	{
-//        vec4 pcfShadowMapPosition = shadowMapPosition + vec4(PCFFilter4x4[i] * offset, 0.0, 0.0);
-//        shadow += textureProj(shadowMap, shadowMapPosition);
-//	}
-//
-//	return shadow / 16.0;
-//}
-
-// https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing
-//float Shadows(vec3 WorldPos)
-//{
-//	// Use direct lighting only. Point light shadows are handleded differently (cube depth)
-//	vec4 fragPositionInLightSpace = lightData.lights[0].LightSpaceMatrix * vec4(WorldPos, 1.0);
-//	fragPositionInLightSpace.xyz /= fragPositionInLightSpace.w;
-//	fragPositionInLightSpace.xy = fragPositionInLightSpace.xy * 0.5 + 0.5;
-//	fragPositionInLightSpace.z = fragPositionInLightSpace.z - 0.005;
-//	float shadow = PCF(fragPositionInLightSpace);
-//
-//	return shadow;
-//}
 
 float Shadow(vec3 WorldPos)
 {
@@ -311,49 +502,6 @@ float Shadow(vec3 WorldPos)
 	float shadow = texture(shadowMap, fragPositionInLightSpace);
 	return shadow;
 }
-//
-// https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing
-float myPCF(vec3 WorldPos)
-{
-	// Use direct lighting only. Point light shadows are handleded differently (cube depth)
-//	vec4 fragPositionInLightSpace = lightData.lights[0].LightSpaceMatrix * vec4(WorldPos, 1.0);
-//	fragPositionInLightSpace.xyz /= fragPositionInLightSpace.w;
-//	fragPositionInLightSpace.xy = fragPositionInLightSpace.xy * 0.5 + 0.5;
-
-	vec3 texSize = 1.0 / textureSize(shadowMap, 0);
-
-
-    // compute the cascade index
-    vec4 viewPos = ubo.view * vec4(WorldPos, 1.0);
-    for(uint i = 0; i < NUM_SHADOW_CASCADES - 1; ++i)
-    {
-        cascadeIndex = viewPos.z < csmMatrices.cascadeSplits[i] ? cascadeIndex = i + 1: cascadeIndex;
-    }
-
-    vec4 fragPositionInLightSpace = csmMatrices.cascadeViewProjection[cascadeIndex] * vec4(WorldPos, 1.0);
-	fragPositionInLightSpace.xyz /= fragPositionInLightSpace.w;
-	fragPositionInLightSpace.xy = fragPositionInLightSpace.xy * 0.5 + 0.5;
-
-	int range = 2; // 4x4
-	int samples = 0;
-	float sum = 0.0;
-	for(int x = -range; x < range; x++)
-	{
-		for(int y = -range; y < range; y++)
-		{
-			vec2 offset = vec2(x,y) * texSize.xy;
-			vec4 sampleCoord = vec4(fragPositionInLightSpace.xy + offset, fragPositionInLightSpace.z, fragPositionInLightSpace.w);
-			sum += texture(shadowMap, vec4(sampleCoord.xy, float(cascadeIndex), sampleCoord.z)); // I don't think textureProj works with sampler2DArrayShadow
-            samples++;
-		}
-	}
-    float shadowValue = sum / float(samples);
-    // band the shadow map by threshold 0.5
-    float shadow = step(0.5, shadowValue);
-
-    return shadow;
-}
-
 void main()
 {
     #ifdef ALPHA
@@ -361,69 +509,87 @@ void main()
         discard;
     #endif
     vec3 color = texture(uTextureColour, uv).rgb * uNumbers.baseColour.rgb;
-    vec3 emissive = vec3(0.0);
+    vec3 emissive = uNumbers.emissiveFactor.rgb * texture(uTextureEmissive, uv).rgb;
 
     // == Metal and Roughness ==
     float roughness = texture(uTextureMetallicRoughness, uv).g * uNumbers.roughness;
     float metallic = texture(uTextureMetallicRoughness, uv).b * uNumbers.metallness;
-
-    // What if there is no normal map?
     vec3 pixelNormal = normalize(TBNFrame * (texture(uTextureNormal, uv).xyz * 2.f - 1.f));
 
     vec3 outLight = vec3(0.0);
 
-    {
-        int i = 0;
+    vec3 lightDir = normalize(lightData.lights[0].LightPosition.xyz);
+    vec3 viewDir = normalize(ubo.cameraPosition.xyz - WorldPos.xyz);
+    vec3 halfVector = normalize(viewDir + lightDir);
 
-        vec3 lightDir = normalize(lightData.lights[i].LightPosition.xyz);
+    vec3 LightColour = lightData.lights[0].LightColour.rgb;
+    vec3 brdf = CookTorranceBRDF(pixelNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour, WorldPos.xyz);
+    outLight += brdf;
+
+
+    for (int i = 1; i < NUM_LIGHTS; i++)
+    {
+        vec3 lightDir = normalize(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
         vec3 viewDir = normalize(ubo.cameraPosition.xyz - WorldPos.xyz);
         vec3 halfVector = normalize(viewDir + lightDir);
 
-        vec3 LightColour = lightData.lights[i].LightColour.rgb;
+        float dist = length(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
+        float att = 1.0 / (dist * dist);
+        vec3 LightColour = lightData.lights[i].LightColour.xyz * att;
 
-        float shadowTerm = 1.0 - myPCF(WorldPos.xyz);
-        vec3 brdf = CookTorranceBRDF(pixelNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour);
+        float shadowTerm = 1.0;
+        vec3 brdf = CookTorranceBRDF(pixelNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour, WorldPos.xyz);
         outLight += brdf * LightColour.xyz * shadowTerm;
     }
+    // add the emissive light
+    outLight += emissive;
 
-//    for (int i = 1; i < NUM_LIGHTS; i++)
-//    {
-//        vec3 lightDir = normalize(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
-//        vec3 viewDir = normalize(ubo.cameraPosition.xyz - WorldPos.xyz);
-//        vec3 halfVector = normalize(viewDir + lightDir);
-//
-//        float dist = length(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
-//        float att = 1.0 / (dist * dist);
-//        vec3 LightColour = lightData.lights[i].LightColour.xyz * att;
-//
-//        float shadowTerm = 1.0;
-//        vec3 brdf = CookTorranceBRDF(pixelNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour);
-//        outLight += brdf * LightColour.xyz * shadowTerm;
-//    }
+    // This is no longer needed since we now have IBL which is the "indirect"
+    // Keeping this here for reference
+    // vec3 ambient = vec3(0.02) * color;
 
-    vec3 ambient = vec3(0.02) * color;
-
-    outLight = ambient + outLight + emissive;
-    float dist = length(ubo.cameraPosition - WorldPos);
-    float heightFalloff = exp(-max(0.0, WorldPos.y) * 0.05);
-    float fogDensity = 0.01 * heightFalloff;
-    float fogFactor = exp(-pow(dist * fogDensity, 2.0));
-    fogFactor = clamp(fogFactor, 0.0, 1.0);
-
-    vec3 sunColor = evaluateSH(pixelNormal.rgb); // use Spherical harmonics to get diffuse IBL in this dir
-    vec3 sunDirection = normalize(lightData.lights[0].LightPosition.xyz);
-    float scattering = max(0.0, dot(normalize(ubo.cameraPosition.xyz - WorldPos.xyz), sunDirection));
-    vec3 fogColor = mix(vec3(0.3, 0.3, 0.4), sunColor, scattering * 0.3);
-
-    //fragColor.rgb = mix(fogColor, outLight, fogFactor);
-    //fragColor.rgb = evaluateSH(((pixelNormal.xyz)));
-
-    fragColor.rgb = outLight;
-    //fragColor = vec4(vec3(ambient + outLight + emissive), 1.0);
+    fragColor = vec4(outLight, 1.0);
     NormalMetallic = vec4(pixelNormal.xyz * 0.5 + 0.5, roughness);
 
 
-
+    switch(debugRenderer.debugMode) {
+        case 1:
+            fragColor = vec4(pixelNormal.xyz * 0.5 + 0.5, 1.0);
+            break;
+        case 2:
+            fragColor = vec4(WorldPos.xyz, 1.0);
+            break;
+        case 3:
+            fragColor = vec4(color.rgb, 1.0);
+            break;
+        case 4:
+            fragColor = vec4(vec3(roughness), 1.0);
+            break;
+        case 5:
+            fragColor = vec4(vec3(metallic), 1.0);
+            break;
+        case 6:
+            fragColor = vec4(vec3(1.0 - PCF(WorldPos.xyz)), 1.0);
+            break;
+        case 7:
+            fragColor = vec4(DebugMipColour(), 1.0);
+            break;
+        case 8:
+            switch(cascadeIndex) {
+    		case 0 :
+    			fragColor.rgb *= vec3(1.0f, 0.25f, 0.25f);
+    			break;
+    		case 1 :
+    			fragColor.rgb *= vec3(0.25f, 1.0f, 0.25f);
+    			break;
+    		case 2 :
+    			fragColor.rgb *= vec3(0.25f, 0.25f, 1.0f);
+    			break;
+    		case 3 :
+    			fragColor.rgb *= vec3(1.0f, 1.0f, 0.25f);
+    			break;
+    	    }
+    }
 
 //    switch(cascadeIndex) {
 //		case 0 :
@@ -441,6 +607,6 @@ void main()
 //	}
 
     float brightness = dot(fragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
-    float threshold = step(1.0, brightness); // check if brightness is less than 1.0
+    float threshold = step(1.0, brightness); // check if brightness is greater than 1.0
     brightColours = vec4(fragColor.rgb * threshold, 1.0);
 }

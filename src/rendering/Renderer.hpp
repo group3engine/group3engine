@@ -19,6 +19,7 @@
 #include "SH2.hpp"
 #include "Fog.hpp"
 #include "Outline.hpp"
+#include "FXAA.hpp"
 
 class Context;
 
@@ -61,6 +62,7 @@ class Renderer {
     Composite *GetCompositePass() const { return m_CompositePass.get(); }
     PresentPass *GetPresentPass() const { return m_PresentPass.get(); }
     Fog *GetFogPass() const { return m_Fog.get();}
+    FXAA *GetFXAAPass() const { return m_FXAA.get(); }
 
     void AddCameras();
 
@@ -96,9 +98,11 @@ class Renderer {
     std::unique_ptr<Bloom> m_BloomPass;
     std::unique_ptr<Outline> m_OutlinePass;
     std::unique_ptr<Composite> m_CompositePass;
+    std::unique_ptr<FXAA> m_FXAA;
     std::unique_ptr<PresentPass> m_PresentPass;
 
     std::vector<Camera *> m_cameras;
 
     uint32_t mImageIndex = 0;
+    std::vector<Buffer> m_DebugUniform;
 };

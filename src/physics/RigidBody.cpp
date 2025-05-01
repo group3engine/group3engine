@@ -5,6 +5,8 @@
 #include "PhysicsManager.hpp"
 
 RigidBody::~RigidBody() {
+    // enable the body to be removed
+    SetActive(true);
     // Remove body-entity mapping
     PhysicsManager::get().UnregisterBody(mBodyId);
 
@@ -24,6 +26,7 @@ void RigidBody::Init(PhysicsManager &physicsManager, bool activate) {
         mBodyId = physicsManager.mPhysicsSystem.GetBodyInterface().CreateAndAddBody(
         mJoltCreationSettings, EActivation::DontActivate);
     }
+    mIsActive = true;
 
     // Check that the physics system has not run out of bodies
     if (mBodyId.IsInvalid()) {
@@ -33,6 +36,10 @@ void RigidBody::Init(PhysicsManager &physicsManager, bool activate) {
     }
 
     physicsManager.mBodyIds.push_back(mBodyId);
+
+    assert(!hasInitialised);
+    hasInitialised = true;
+    mShouldBeActivated = activate;
 }
 
 glm::vec4 RigidBody::GetPosition() const {
@@ -48,6 +55,19 @@ glm::vec4 RigidBody::GetPosition() const {
 void RigidBody::SetPosition(glm::vec3 glm_position) {
     mNewPosition = RVec3(glm_position.x, glm_position.y, glm_position.z);
     updatePosition = true;
+}
+
+JPH::RVec3 RigidBody::GetCenterOfMassPosition() const {
+    return PhysicsManager::get().mPhysicsSystem.GetBodyInterface().GetCenterOfMassPosition(mBodyId);
+}
+
+JPH::Quat RigidBody::GetRotationJolt() const {
+    return PhysicsManager::get().mPhysicsSystem.GetBodyInterface().GetRotation(mBodyId);
+}
+
+void RigidBody::SetRotationJolt(const JPH::QuatArg rotation) {
+    mNewRotation = rotation;
+    updateRotation = true;
 }
 
 void RigidBody::SetRotation(glm::quat glm_rotation) {
@@ -80,8 +100,15 @@ glm::mat4 RigidBody::GetWorldTransform() const {
     return returnWorldTransform;
 }
 
+RMat44 RigidBody::GetWorldTransformJolt() const {
+    return PhysicsManager::get().mPhysicsSystem.GetBodyInterface().GetWorldTransform(mBodyId);
+}
+
 void RigidBody::PrePhysicsUpdate(double deltaTime)
 {
+    // if the body is not active, we don't need to do anything
+    if(!mIsActive)
+        return;
     if(updateVelocity)
     {
         updateVelocity = false;
@@ -109,4 +136,21 @@ void RigidBody::PrePhysicsUpdate(double deltaTime)
     }
 
 
+}
+
+void RigidBody::SetActive(bool active)
+{
+    if (active && !mIsActive)
+    {
+        if(mShouldBeActivated)
+            PhysicsManager::get().mPhysicsSystem.GetBodyInterface().AddBody(mBodyId, JPH::EActivation::Activate);
+        else
+            PhysicsManager::get().mPhysicsSystem.GetBodyInterface().AddBody(mBodyId, JPH::EActivation::DontActivate);
+        mIsActive = true;
+    }
+    else if (!active && mIsActive)
+    {
+        PhysicsManager::get().mPhysicsSystem.GetBodyInterface().RemoveBody(mBodyId);
+        mIsActive = false;
+    }
 }
