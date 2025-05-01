@@ -51,7 +51,7 @@ class Camera : public Entity {
     void SetPhysics(PhysicsManager* input_physics_reference) {m_physics_reference = input_physics_reference; }
     void SetScene(Scene* input_scene_pointer) {m_scene_pointer = input_scene_pointer; }
 
-    void UpdateCameraMovement(const Transform &character_transform);
+    void UpdateCameraMovement(const RVec3 &characterCOM);
     void UpdateCameraRotation(double deltaTime);
     void UpdateCameraAngles(const glm::vec2 &offset);
 
@@ -95,6 +95,9 @@ class Camera : public Entity {
 
   public:
     inline static float sZoomLevel = 1.8f;
+
+    inline static float sCameraUpOffset = 0.75f;
+    inline static float sCameraRightOffset = 0.0f;
 
   private:
     glm::vec3 m_position;

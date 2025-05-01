@@ -8,6 +8,12 @@
 #include <fstream>
 #include <cstdlib>
 
+#include <Jolt/Math/Vec3.h>
+#include <Jolt/Physics/Collision/CastResult.h>
+#include <Jolt/Physics/Collision/NarrowPhaseQuery.h>
+#include <Jolt/Physics/Collision/RayCast.h>
+#include <Jolt/Physics/Collision/ObjectLayer.h>
+
 #include "AudioManager.hpp"
 #include "Camera.hpp"
 #include "Engine.hpp"
@@ -34,7 +40,103 @@ namespace {
 CharacterEntity::~CharacterEntity() {
 }
 
+bool CharacterEntity::WouldUncrouchHitCeiling() const {
+    // Get feet position by offseting COM with half cylinder height
+    // Offset to head by adding cylinder height + capsule height + some offset
+    Ref<CharacterVirtual> characterVirtual = mSampleJoltCharacter->GetCharacter();
+    RVec3 characterCOM = mSampleJoltCharacter->GetCharacterCenterOfMassPosition();
+
+    float crouchingHalfCapsuleHeight =
+        mSampleJoltCharacter->GetCapsuleHalfHeight(ECrouchState::Crouching);
+
+    RVec3 capsuleBottomPosition = characterCOM - Vec3(0, crouchingHalfCapsuleHeight, 0);
+
+    float standingHalfCapsuleHeight =
+        mSampleJoltCharacter->GetCapsuleHalfHeight(ECrouchState::Standing);
+    RVec3 standingCapsuleTopPosition =
+        capsuleBottomPosition + 2.0f * RVec3(0, standingHalfCapsuleHeight, 0);
+
+    float characterPadding = characterVirtual->GetCharacterPadding();
+
+    // Add some padding for some breathing room
+    RVec3 ceilingPosition = standingCapsuleTopPosition + 2.0f * RVec3(0, characterPadding, 0);
+
+#ifdef JPH_DEBUG_RENDERER
+    GetScene()->GetDebugRenderer()->DrawSphere(ceilingPosition, 0.1f, Color::sPurple);
+#endif // JPH_DEBUG_RENDERER
+
+    RRayCast ray;
+    ray.mOrigin = characterCOM;
+    ray.mDirection = ceilingPosition - characterCOM;
+
+    JPH::RayCastResult result;
+    JPH::SpecifiedObjectLayerFilter objectLayerFilter{Layers::NON_MOVING};
+    bool hit = PhysicsManager::get().mPhysicsSystem.GetNarrowPhaseQuery().CastRay(
+        ray, result, {}, objectLayerFilter, {});
+
+    bool hitCeiling = hit && result.mFraction >= 0 && result.mFraction < 1.0f;
+
+    return hitCeiling;
+}
+
+bool CharacterEntity::WouldJumpHitCeiling(ECrouchState crouchState) const {
+    // Get feet position by offseting COM with half cylinder height
+    // Offset to head by adding cylinder height + capsule height + some offset
+    Ref<CharacterVirtual> characterVirtual = mSampleJoltCharacter->GetCharacter();
+    RVec3 characterCOM = mSampleJoltCharacter->GetCharacterCenterOfMassPosition();
+
+    RVec3 jumpPeakPosition;
+    if (crouchState == ECrouchState::Crouching) {
+        float crouchingHalfCapsuleHeight =
+            mSampleJoltCharacter->GetCapsuleHalfHeight(ECrouchState::Crouching);
+
+        RVec3 capsuleTopPosition = characterCOM + Vec3(0, crouchingHalfCapsuleHeight, 0);
+
+        float characterPadding = characterVirtual->GetCharacterPadding();
+
+        // Add some padding for some breathing room
+        RVec3 jumpHeight = RVec3(0, mSampleJoltCharacter->GetJumpHeight(), 0);
+        jumpPeakPosition = capsuleTopPosition + jumpHeight + 2.0f * RVec3(0, characterPadding, 0);
+    } else {
+        float standingHalfCapsuleHeight =
+            mSampleJoltCharacter->GetCapsuleHalfHeight(ECrouchState::Standing);
+
+        RVec3 capsuleTopPosition = characterCOM + Vec3(0, standingHalfCapsuleHeight, 0);
+
+        float characterPadding = characterVirtual->GetCharacterPadding();
+
+        // Add some padding for some breathing room
+        RVec3 jumpHeight = RVec3(0, mSampleJoltCharacter->GetJumpHeight(), 0);
+        jumpPeakPosition = capsuleTopPosition + jumpHeight + 2.0f * RVec3(0, characterPadding, 0);
+    }
+
+#ifdef JPH_DEBUG_RENDERER
+    GetScene()->GetDebugRenderer()->DrawSphere(jumpPeakPosition, 0.1f, Color::sOrange);
+#endif // JPH_DEBUG_RENDERER
+
+    RRayCast ray;
+    ray.mOrigin = characterCOM;
+    ray.mDirection = jumpPeakPosition - characterCOM;
+
+    JPH::RayCastResult result;
+    JPH::SpecifiedObjectLayerFilter objectLayerFilter{Layers::NON_MOVING};
+    bool hit = PhysicsManager::get().mPhysicsSystem.GetNarrowPhaseQuery().CastRay(
+        ray, result, {}, objectLayerFilter, {});
+
+    bool hitCeiling = hit && result.mFraction >= 0 && result.mFraction < 1.0f;
+
+    return hitCeiling;
+}
+
 void CharacterEntity::ProcessInput(){
+#ifdef JPH_DEBUG_RENDERER
+    // Extra unneeded call to debug render the test position for the raycasts in these functions
+    if (mIsCrouching) {
+        WouldUncrouchHitCeiling();
+    }
+    WouldJumpHitCeiling(mIsCrouching ? ECrouchState::Crouching : ECrouchState::Standing);
+#endif // JPH_DEBUG_RENDERER
+
     if (IsKeyDown(KEY::eLEFT_SHIFT) && IsMouseButtonPressed(MOUSE_BUTTON::eLEFT)) {
         auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
         flag = !flag;
@@ -129,14 +231,23 @@ void CharacterEntity::ProcessInput(){
                 }
             }
             else if (mInputMapping.GetActionDown("JUMP") > 0) {
-                jump = true;
+                jump = !WouldJumpHitCeiling(mIsCrouching ? ECrouchState::Crouching
+                                                         : ECrouchState::Standing);
             }
 
             if ((mInputMapping.GetActionPressed("EMOTE") > 0) && !mInClimb) {
                 mIsEmoting = true;
             }
             if ((mInputMapping.GetActionPressed("CROUCH") > 0) && !mInClimb) {
-                mIsCrouching = !mIsCrouching;
+                // If we are crouching but we are somewhere we cannot uncrouch (a tunnel)
+                // then do not uncrouch
+                if (mIsCrouching) {
+                    if (!WouldUncrouchHitCeiling()) {
+                        mIsCrouching = !mIsCrouching;
+                    }
+                } else {
+                    mIsCrouching = !mIsCrouching;
+                }
             }
 
             if (mInputMapping.GetActionPressed("INTERACT") > 0) {
@@ -357,7 +468,7 @@ void CharacterEntity::Update(double deltaTime) {
     }
 
     mCamera->UpdateCameraRotation(deltaTime);
-    mCamera->UpdateCameraMovement(GetWorldTransformComponents());
+    mCamera->UpdateCameraMovement(mSampleJoltCharacter->GetCharacterCenterOfMassPosition());
     // if the camera is too close to us, set invisible
     SPDLOG_INFO("cam dist {}", glm::distance(mCamera->GetPosition(), GetCharacterPositionOffset()));
     if(glm::distance(mCamera->GetPosition(), GetCharacterPositionOffset()) < 1.5f)

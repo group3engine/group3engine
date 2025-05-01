@@ -28,8 +28,8 @@ Camera::Camera(const glm::vec3 position, glm::vec3 direction, glm::vec3 up)
     m_cameraSpeed = defaultSpeed;
 }
 
-void Camera::UpdateCameraMovement(const Transform &character_transform) {
-    glm::vec3 character_position = character_transform.translation;
+void Camera::UpdateCameraMovement(const RVec3 &characterCOM) {
+    glm::vec3 character_position = {characterCOM.GetX(), characterCOM.GetY(), characterCOM.GetZ()};
 
     if(inputMap[std::size_t(EInputState::SWITCHVIEW)] == true)
     {
@@ -52,10 +52,10 @@ void Camera::UpdateCameraMovement(const Transform &character_transform) {
         }
 
         glm::vec3 third_person_camera_offset =
-            ((-2.f * forward) + (1.0f * m_up) + (0.25f * rightVector)) * sZoomLevel;
+            ((-2.f * forward) * sZoomLevel + (sCameraUpOffset * m_up) + (sCameraRightOffset * rightVector));
 
         RRayCast ray;
-        ray.mOrigin = Vec3(character_position.x, character_position.y + 2.f, character_position.z);
+        ray.mOrigin = Vec3(character_position.x, character_position.y, character_position.z);
         ray.mDirection = Vec3(third_person_camera_offset.x, third_person_camera_offset.y,
                               third_person_camera_offset.z);
 

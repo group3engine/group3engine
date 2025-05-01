@@ -861,6 +861,13 @@ void ImGuiRenderer::Update(Scene *scene)
 
     if (ImGui::CollapsingHeader("CharacterSettings")) {
         {
+            float step = 0.01f;
+            float stepFast = 0.1f;
+            ImGui::InputFloat("sCameraUpOffset: ", &Camera::sCameraUpOffset, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sCameraRightOffset: ", &Camera::sCameraRightOffset, step, stepFast, nullptr, 0);
+        }
+
+        {
             float step = 0.1f;
             float stepFine = 0.01f;
             float stepFast = 0.5f;

@@ -16,6 +16,11 @@ enum class EJumpState
         None
 };
 
+enum class ECrouchState {
+    Standing,
+    Crouching
+};
+
 // Simple test that test the CharacterVirtual class. Allows the user to move around with the arrow keys and jump with the J button.
 class SampleJoltCharacter : public CharacterBaseTest, public CharacterContactListener
 {
@@ -40,6 +45,16 @@ public:
 
     // Get position of the character
     virtual RVec3			GetCharacterPosition() const override				{ return mCharacter->GetPosition(); }
+
+    virtual float GetCapsuleHalfHeight(ECrouchState crouchState) const {
+        if (crouchState == ECrouchState::Crouching) {
+            return cCharacterHeightCrouching + cCharacterRadiusStanding;
+        } else {
+            return cCharacterHeightStanding + cCharacterRadiusStanding;
+        }
+    }
+
+    virtual RVec3 GetCharacterCenterOfMassPosition() const { return mCharacter->GetCenterOfMassPosition(); }
 
     // Get velocity of the character (used for animation, don't include ground velocity)
     virtual Vec3			GetCharacterVelocity() const				{ return mCharacter->GetLinearVelocity() - mCharacter->GetGroundVelocity(); }

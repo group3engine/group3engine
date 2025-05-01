@@ -119,6 +119,10 @@ class CharacterEntity : public Entity {
 
     void RegisterControls();
 
+    bool WouldJumpHitCeiling(ECrouchState crouchState) const;
+
+    bool WouldUncrouchHitCeiling() const;
+
   public:
     inline static float sJumpTimeScale = 0.1f;
     inline static float sFallTimeScale = 0.3f;
