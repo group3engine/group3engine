@@ -30,6 +30,7 @@
 #include "CharacterBaseTest.h"
 #include "CharacterEntity.hpp"
 #include "Sinking.hpp"
+#include "ZipLine.hpp"
 
 namespace {
     auto PushBackStyleVar = [](size_t i, std::function<void()> f) {
@@ -857,6 +858,7 @@ void ImGuiRenderer::Update(Scene *scene)
         float step = 0.1f;
         float stepFast = 0.5f;
         ImGui::InputFloat("Camera::sZoomLevel", &Camera::sZoomLevel, step, stepFast, nullptr, 0);
+        ImGui::InputFloat("ZipLine::sZiplineCameraZoomLevel", &ZipLine::sZiplineCameraZoomLevel, step, stepFast, nullptr, 0);
     }
 
     if (ImGui::CollapsingHeader("CharacterSettings")) {

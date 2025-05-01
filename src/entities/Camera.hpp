@@ -95,8 +95,18 @@ class Camera : public Entity {
     [[nodiscard]] bool isInFreeCameraMode() const { return m_inputType == InputType::FreeCamera; }
     [[nodiscard]] bool isInFollowCharacterMode() const { return m_inputType == InputType::FollowCharacter; }
 
+    void SetNewZoomLevel(float zoomLevel) {
+        previousZoomLevel = sZoomLevel;
+        sZoomLevel = zoomLevel;
+    }
+
+    void ResetZoomLevel() {
+        sZoomLevel = previousZoomLevel;
+    }
+
   public:
     inline static float sZoomLevel = 1.8f;
+    float previousZoomLevel = sZoomLevel;
 
     inline static float sCameraUpOffset = 0.75f;
     inline static float sCameraCrouchingUpOffset = 0.3f;

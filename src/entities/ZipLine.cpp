@@ -4,6 +4,8 @@
 
 #include "ZipLine.hpp"
 
+#include "Camera.hpp"
+
 void ZipLine::Awake()
 {
     // get the float values - mMaxZipSpeed, mAcceleration, mProximityPromptRadius
@@ -64,6 +66,7 @@ void ZipLine::OnInteract(Entity *other, ENetworkLocality networkLocality)
         mIsZipping = true;
         mCharacter->SetPosition(mStartPosition);
         mCharacter->SetHanging(true);
+        mCharacter->GetCamera()->SetNewZoomLevel(sZiplineCameraZoomLevel);
         mCurrentPosition = mStartPosition;
     }
 }
@@ -86,6 +89,7 @@ void ZipLine::LateUpdate(double deltaTime)
         if (glm::distance(mCurrentPosition, mStartPosition) > mDistance) {
             mIsZipping = false;
             mCharacter->SetHanging(false);
+            mCharacter->GetCamera()->ResetZoomLevel();
             mCurrentSpeed = 0.f;
             mCharacter->SetPosition(mEndPosition);
         }
