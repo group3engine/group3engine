@@ -340,8 +340,7 @@ void Entity::BaseUpdate(double deltaTime) {
     if(GetPhysicsType() == PhysicsType::KINEMATIC || GetPhysicsType() == PhysicsType::DYNAMIC || mHasCharacter || mHasOffset)
     {
         UpdateWorldTransform();
-        if(mHasCharacter)
-            UpdateChildrenTransform();
+        UpdateChildrenTransform();
     }
 
 }

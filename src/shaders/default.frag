@@ -608,5 +608,5 @@ void main()
 
     float brightness = dot(fragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
     float threshold = step(1.0, brightness); // check if brightness is greater than 1.0
-    brightColours = vec4(fragColor.rgb * threshold, 1.0);
+    brightColours = vec4(0);
 }

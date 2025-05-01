@@ -52,7 +52,7 @@ void Camera::UpdateCameraMovement(const Transform &character_transform) {
         }
 
         glm::vec3 third_person_camera_offset =
-            ((-2.f * forward) + (1.0f * m_up) + (0.25f * rightVector)) * sZoomLevel;
+            ((-2.f * forward) * sZoomLevel + (0.75 * m_up) * 0.75f + (rightVector));
 
         RRayCast ray;
         ray.mOrigin = Vec3(character_position.x, character_position.y + 2.f, character_position.z);

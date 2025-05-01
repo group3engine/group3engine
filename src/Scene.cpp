@@ -353,11 +353,14 @@ void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
         }
         else if(entity->GetPhysicsType() == PhysicsType::KINEMATIC)
         {
-            DEBUG_ASSERT(entity->GetColliderType() == ColliderType::Fallback ||
-                         entity->GetColliderType() == ColliderType::ConvexHullShape);
+            Shape::ShapeResult result;
+            if (entity->GetColliderType() == ColliderType::MeshShape) {
+                result = CreateMeshShapeResult(vertices, indexedTriangles);
+            } else if (entity->GetColliderType() == ColliderType::ConvexHullShape ||
+                       entity->GetColliderType() == ColliderType::Fallback) {
+                result = CreateConvexHullShapeResult(list_of_points.data(), list_of_points.size());
+            }
 
-            Shape::ShapeResult result =
-                CreateConvexHullShapeResult(list_of_points.data(), list_of_points.size());
 
             // get the transform for the entity's physics rigid body
             Transform entity_transform = entity->GetWorldTransformComponents();

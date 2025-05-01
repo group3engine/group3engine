@@ -32,16 +32,16 @@
 			"extras":{
 				"pmc_sceneprops":{},
 				"dropdown_items":"character, default, SpinningOnX, SpinningSlow, rotatingPlatform, networkmanager, networkedlocal",
-				"entity_dropdown":1,
-				"collider_dropdown":0,
-				"physics_dropdown":0,
+				"entity_dropdown":4,
+				"collider_dropdown":1,
+				"physics_dropdown":1,
 				"sensor_checkbox":0,
 				"solid_checkbox":1,
 				"invisible_checkbox":0,
 				"new_tag":"",
 				"tags":[
 					{
-						"tag":"spawnpoint"
+						"tag":"highimpact"
 					}
 				],
 				"new_dropdown_item":"",
@@ -160,7 +160,7 @@
 		{
 			"extras":{
 				"entity_type":"SpinningOnX",
-				"collider_type":"fallback_shape",
+				"collider_type":"mesh_shape",
 				"physics_type":"kinematic",
 				"is_sensor":false,
 				"is_solid":true,
@@ -210,7 +210,7 @@
 		{
 			"extras":{
 				"entity_type":"SpinningOnX",
-				"collider_type":"fallback_shape",
+				"collider_type":"mesh_shape",
 				"physics_type":"kinematic",
 				"is_sensor":false,
 				"is_solid":true,
@@ -239,7 +239,7 @@
 		{
 			"extras":{
 				"entity_type":"SpinningOnX",
-				"collider_type":"fallback_shape",
+				"collider_type":"mesh_shape",
 				"physics_type":"kinematic",
 				"is_sensor":false,
 				"is_solid":true,
@@ -268,7 +268,7 @@
 		{
 			"extras":{
 				"entity_type":"SpinningOnX",
-				"collider_type":"fallback_shape",
+				"collider_type":"mesh_shape",
 				"physics_type":"kinematic",
 				"is_sensor":false,
 				"is_solid":true,
@@ -325,7 +325,7 @@
 		{
 			"extras":{
 				"entity_type":"SpinningOnX",
-				"collider_type":"fallback_shape",
+				"collider_type":"mesh_shape",
 				"physics_type":"kinematic",
 				"is_sensor":false,
 				"is_solid":true,
@@ -394,7 +394,7 @@
 		{
 			"extras":{
 				"entity_type":"SpinningSlow",
-				"collider_type":"fallback_shape",
+				"collider_type":"mesh_shape",
 				"physics_type":"kinematic",
 				"is_sensor":false,
 				"is_solid":true,
@@ -587,7 +587,7 @@
 		{
 			"extras":{
 				"entity_type":"SpinningOnX",
-				"collider_type":"fallback_shape",
+				"collider_type":"mesh_shape",
 				"physics_type":"kinematic",
 				"is_sensor":false,
 				"is_solid":true,
@@ -616,7 +616,7 @@
 		{
 			"extras":{
 				"entity_type":"rotatingPlatform",
-				"collider_type":"fallback_shape",
+				"collider_type":"mesh_shape",
 				"physics_type":"kinematic",
 				"is_sensor":false,
 				"is_solid":true,
@@ -645,7 +645,7 @@
 		{
 			"extras":{
 				"entity_type":"rotatingPlatform",
-				"collider_type":"fallback_shape",
+				"collider_type":"mesh_shape",
 				"physics_type":"kinematic",
 				"is_sensor":false,
 				"is_solid":true,
@@ -668,7 +668,7 @@
 		{
 			"extras":{
 				"entity_type":"rotatingPlatform",
-				"collider_type":"fallback_shape",
+				"collider_type":"mesh_shape",
 				"physics_type":"kinematic",
 				"is_sensor":false,
 				"is_solid":true,
@@ -697,7 +697,7 @@
 		{
 			"extras":{
 				"entity_type":"rotatingPlatform",
-				"collider_type":"fallback_shape",
+				"collider_type":"mesh_shape",
 				"physics_type":"kinematic",
 				"is_sensor":false,
 				"is_solid":true,
@@ -726,7 +726,7 @@
 		{
 			"extras":{
 				"entity_type":"rotatingPlatform",
-				"collider_type":"fallback_shape",
+				"collider_type":"mesh_shape",
 				"physics_type":"kinematic",
 				"is_sensor":false,
 				"is_solid":true,
@@ -749,7 +749,7 @@
 		{
 			"extras":{
 				"entity_type":"rotatingPlatform",
-				"collider_type":"fallback_shape",
+				"collider_type":"mesh_shape",
 				"physics_type":"kinematic",
 				"is_sensor":false,
 				"is_solid":true,
@@ -772,7 +772,7 @@
 		{
 			"extras":{
 				"entity_type":"rotatingPlatform",
-				"collider_type":"fallback_shape",
+				"collider_type":"mesh_shape",
 				"physics_type":"kinematic",
 				"is_sensor":false,
 				"is_solid":true,
@@ -801,7 +801,7 @@
 		{
 			"extras":{
 				"entity_type":"rotatingPlatform",
-				"collider_type":"fallback_shape",
+				"collider_type":"mesh_shape",
 				"physics_type":"kinematic",
 				"is_sensor":false,
 				"is_solid":true,
@@ -824,7 +824,7 @@
 		{
 			"extras":{
 				"entity_type":"rotatingPlatform",
-				"collider_type":"fallback_shape",
+				"collider_type":"mesh_shape",
 				"physics_type":"kinematic",
 				"is_sensor":false,
 				"is_solid":true,
@@ -847,7 +847,7 @@
 		{
 			"extras":{
 				"entity_type":"rotatingPlatform",
-				"collider_type":"fallback_shape",
+				"collider_type":"mesh_shape",
 				"physics_type":"kinematic",
 				"is_sensor":false,
 				"is_solid":true,
@@ -870,7 +870,7 @@
 		{
 			"extras":{
 				"entity_type":"rotatingPlatform",
-				"collider_type":"fallback_shape",
+				"collider_type":"mesh_shape",
 				"physics_type":"kinematic",
 				"is_sensor":false,
 				"is_solid":true,
@@ -42494,14 +42494,14 @@
 			"componentType":5126,
 			"count":531,
 			"max":[
-				5.313216209411621,
-				0.6885860562324524,
-				1.1455339193344116
+				5.313223361968994,
+				0.688582181930542,
+				1.145533800125122
 			],
 			"min":[
-				-1.1455307006835938,
-				-0.6095474362373352,
-				-4.992887020111084
+				-1.145522952079773,
+				-0.609551191329956,
+				-4.992886543273926
 			],
 			"type":"VEC3"
 		},
