@@ -216,11 +216,6 @@ void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, 
         mCharacter->SetShape(mCrouchingShape, FLT_MAX, mPhysicsSystem->GetDefaultBroadPhaseLayerFilter(Layers::MOVING), mPhysicsSystem->GetDefaultLayerFilter(Layers::MOVING), { }, { }, *mTempAllocator);
         mCharacter->SetInnerBodyShape(mCrouchingShape);
     }
-    else if(mJumpState == EJumpState::Falling)
-    {
-        mCharacter->SetShape(mFallingShape, FLT_MAX, mPhysicsSystem->GetDefaultBroadPhaseLayerFilter(Layers::MOVING), mPhysicsSystem->GetDefaultLayerFilter(Layers::MOVING), { }, { }, *mTempAllocator);
-        mCharacter->SetInnerBodyShape(mFallingShape);
-    }
     else
     {
         mCharacter->SetShape(mStandingShape, FLT_MAX, mPhysicsSystem->GetDefaultBroadPhaseLayerFilter(Layers::MOVING), mPhysicsSystem->GetDefaultLayerFilter(Layers::MOVING), { }, { }, *mTempAllocator);
