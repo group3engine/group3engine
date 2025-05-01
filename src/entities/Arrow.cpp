@@ -43,7 +43,6 @@ void Arrow::Update(double deltaTime)
     }
     if(timeElapsed > timeToMove + timeToBeInvisible)
     {
-        SetAsVisible();
         velocity = startVelocity;
         timeElapsed = -randomOffset;
         // set the velocity in the rigid body
