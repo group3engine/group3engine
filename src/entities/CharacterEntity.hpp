@@ -180,7 +180,8 @@ class CharacterEntity : public Entity {
 
     bool mLeftClimb = false;
     bool mEnterClimb = false;
-    double mLastClimbTime{};
+    // Set to a large negative so we don't think we have been recently climbing on spawn
+    double mLastClimbTime = -1000000.0f;
 
     glm::vec3 mClimbDirection = glm::vec3(0.f, 0.f, 0.f);
 
