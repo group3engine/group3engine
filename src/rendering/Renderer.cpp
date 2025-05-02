@@ -112,12 +112,20 @@ void Renderer::Destroy() {
         vkDestroySemaphore(context.device, semaphore, nullptr);
     }
 
+
     for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
-        vkFreeCommandBuffers(context.device, m_commandPool[i], 1, &m_commandBuffers[i]);
+        for(size_t j = 0; j < NUM_DRAW_THREADS; j++) {
+            VkCommandBuffer cmd = m_secondaryCommandBuffers[i][j];
+            vkFreeCommandBuffers(context.device, m_secondaryCommandPools[i][j], 1, &cmd);
+        }
+        vkFreeCommandBuffers(context.device, m_primaryCommandPool[i], 1, &m_primaryCommandBuffers[i]);
     }
 
     for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
-        vkDestroyCommandPool(context.device, m_commandPool[i], nullptr);
+        vkDestroyCommandPool(context.device, m_primaryCommandPool[i], nullptr);
+        for(size_t j = 0; j < NUM_DRAW_THREADS; j++) {
+            vkDestroyCommandPool(context.device, m_secondaryCommandPools[i][j], nullptr);
+        }
     }
 
     for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; ++i) {
@@ -178,44 +186,64 @@ void Renderer::CreateSemaphores() {
 }
 
 void Renderer::CreateCommandPool() {
+    VkCommandPoolCreateInfo cmdPool{};
+    cmdPool.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    cmdPool.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    cmdPool.queueFamilyIndex = context.graphicsFamilyIndex;
+    m_secondaryCommandPools.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
     for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
-        VkCommandPoolCreateInfo cmdPool{};
-        cmdPool.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-        cmdPool.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-        cmdPool.queueFamilyIndex = context.graphicsFamilyIndex;
 
         VkCommandPool commandPool = VK_NULL_HANDLE;
         VK_CHECK(vkCreateCommandPool(context.device, &cmdPool, nullptr, &commandPool), "Failed to create command pool");
-        m_commandPool.push_back(std::move(commandPool));
+        m_primaryCommandPool.push_back(std::move(commandPool));
+        for(size_t j = 0; j < NUM_DRAW_THREADS; j++) {
+            VK_CHECK(vkCreateCommandPool(context.device, &cmdPool, nullptr, &commandPool), "Failed to create command pool");
+            m_secondaryCommandPools[i][j] = commandPool;
+        }
     }
 }
 
 void Renderer::AllocateCommandBuffers() {
+    m_secondaryCommandBuffers.resize(vkutil::MAX_FRAMES_IN_FLIGHT, std::array<VkCommandBuffer, NUM_DRAW_THREADS>{VK_NULL_HANDLE});
+    m_primaryCommandBuffers.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
     for (size_t i = 0; i < vkutil::MAX_FRAMES_IN_FLIGHT; i++) {
+        for (size_t j = 0; j < NUM_DRAW_THREADS; j++) {
+            // Allocate command buffers from command pool
+            VkCommandBufferAllocateInfo cmdAlloc{};
+            cmdAlloc.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+            cmdAlloc.commandPool = m_secondaryCommandPools[i][j];
+            cmdAlloc.level = VK_COMMAND_BUFFER_LEVEL_SECONDARY;
+            cmdAlloc.commandBufferCount = 1;
+
+            VkCommandBuffer cmd = VK_NULL_HANDLE;
+            VK_CHECK(vkAllocateCommandBuffers(context.device, &cmdAlloc, &cmd), "Failed to allocate command buffer");
+            m_secondaryCommandBuffers[i][j] = cmd;
+        }
         // Allocate command buffers from command pool
         VkCommandBufferAllocateInfo cmdAlloc{};
         cmdAlloc.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        cmdAlloc.commandPool = m_commandPool[i];
+        cmdAlloc.commandPool = m_primaryCommandPool[i];
         cmdAlloc.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         cmdAlloc.commandBufferCount = 1;
 
-        VkCommandBuffer cmd = VK_NULL_HANDLE;
+        VkCommandBuffer cmd= VK_NULL_HANDLE;
         VK_CHECK(vkAllocateCommandBuffers(context.device, &cmdAlloc, &cmd), "Failed to allocate command buffer");
-        m_commandBuffers.push_back(cmd);
-
+        m_primaryCommandBuffers[i] = cmd;
         // Calibrated context function pointers
         auto pfnVkGetPhysicalDeviceCalibrateableTimeDomainsEXT = vkGetPhysicalDeviceCalibrateableTimeDomainsEXT;
         auto pfnVkGetCalibratedTimestampsEXT = vkGetCalibratedTimestampsEXT;
 
         auto *tracyContext = TracyVkContextCalibrated(
-            context.pDevice, context.device, context.graphicsQueue, cmd,
-            pfnVkGetPhysicalDeviceCalibrateableTimeDomainsEXT, pfnVkGetCalibratedTimestampsEXT);
+                context.pDevice, context.device, context.graphicsQueue, m_primaryCommandBuffers[i],
+                pfnVkGetPhysicalDeviceCalibrateableTimeDomainsEXT, pfnVkGetCalibratedTimestampsEXT);
 
         context.tracyContexts.push_back(tracyContext);
+
     }
 }
 
-void Renderer::BeginFrame(VkCommandBuffer cmd) {
+void Renderer::BeginFrame(VkCommandBuffer primaryCmd)
+{
     {
         ZoneScopedN("vkWaitForFences");
 
@@ -264,7 +292,7 @@ void Renderer::BeginFrame(VkCommandBuffer cmd) {
     {
         ZoneScopedN("vkResetCommandBuffer");
 
-        vkResetCommandBuffer(m_commandBuffers[vkutil::currentFrame], 0);
+        vkResetCommandBuffer(primaryCmd, 0);
     }
 
     {
@@ -272,31 +300,33 @@ void Renderer::BeginFrame(VkCommandBuffer cmd) {
 
         VkCommandBufferBeginInfo beginInfo = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
-
-        VK_CHECK(vkBeginCommandBuffer(cmd, &beginInfo), "Failed to begin command buffer");
+        VK_CHECK(vkBeginCommandBuffer(primaryCmd, &beginInfo), "Failed to begin command buffer");
 
         {
             ZoneScopedN("vk::Upload");
 
-            m_scene->UploadCameras(cmd);
+            m_scene->UploadCameras(primaryCmd);
 
-            LightManager::getInstance().UploadLights(cmd);
+            LightManager::getInstance().UploadLights(primaryCmd);
 
             // Upload animation data to GPU
             for (auto *entity : m_scene->GetEntities()) {
                 if (entity->HasAnimator()) {
-                    entity->GetAnimator().UploadJointBuffer(cmd);
+                    entity->GetAnimator().UploadJointBuffer(primaryCmd);
                 }
             }
         }
     }
 }
 
-void Renderer::EndFrame(VkCommandBuffer cmd) {
-    // Periodically collect the GPU events
-    TracyVkCollect(context.tracyContexts[vkutil::currentFrame], cmd);
+void Renderer::EndFrame(VkCommandBuffer primaryCmd)
+{
 
-    vkEndCommandBuffer(cmd);
+    // Periodically collect the GPU events
+
+    TracyVkCollect(context.tracyContexts[vkutil::currentFrame], primaryCmd);
+    vkEndCommandBuffer(primaryCmd);
+
 
     Submit();
     Present(mImageIndex);
@@ -340,10 +370,10 @@ void Renderer::RenderUIOnly()
     {
         ZoneScopedN("vkResetCommandBuffer");
 
-        vkResetCommandBuffer(m_commandBuffers[vkutil::currentFrame], 0);
+        vkResetCommandBuffer(m_primaryCommandBuffers[vkutil::currentFrame], 0);
     }
 
-    VkCommandBuffer &cmd = m_commandBuffers[vkutil::currentFrame];
+    VkCommandBuffer &cmd = m_primaryCommandBuffers[vkutil::currentFrame];
 
 
     {
@@ -385,7 +415,7 @@ void Renderer::Submit() {
         .pWaitSemaphores = &m_imageAvailableSemaphores[vkutil::currentFrame],
         .pWaitDstStageMask = &waitStage,
         .commandBufferCount = 1,
-        .pCommandBuffers = &m_commandBuffers[vkutil::currentFrame],
+        .pCommandBuffers = &m_primaryCommandBuffers[vkutil::currentFrame],
         .signalSemaphoreCount = 1,
         .pSignalSemaphores = &m_renderFinishedSemaphores[vkutil::currentFrame]};
 
@@ -450,3 +480,5 @@ void Renderer::AddCameras() {
     // Find camera(s) in scene
     m_cameras = m_scene->GetCameras();
 }
+
+

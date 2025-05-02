@@ -400,35 +400,35 @@ void Engine::DrawPhysics() {
 void Engine::Render() {
     ZoneScopedN("Engine::Render");
 
-    mRenderer->BeginFrame(mRenderer->GetCommandBuffer());
+    mRenderer->BeginFrame(mRenderer->GetPrimaryCommandBuffer());
 
     {
-        mRenderer->GetShadowMap()->Execute(mRenderer->GetCommandBuffer());
-        mRenderer->GetDepthPrepass()->Execute(mRenderer->GetCommandBuffer());
+        mRenderer->GetShadowMap()->Execute(mRenderer->GetPrimaryCommandBuffer());
+        mRenderer->GetDepthPrepass()->Execute(mRenderer->GetSecondaryCommandBuffers(), mRenderer->GetPrimaryCommandBuffer());
 
-        mRenderer->GetForwardPass()->BeginExecute(mRenderer->GetCommandBuffer());
+        mRenderer->GetForwardPass()->BeginExecute(mRenderer->GetPrimaryCommandBuffer());
 
-#ifdef JPH_DEBUG_RENDERER
-        if (GlobalConfig::enablePhysicsDebugRenderer) {
-            static_cast<DebugRendererImp*>(mDebugRenderer.get())->Draw();
-        }
-#endif // JPH_DEBUG_RENDERER
+//#ifdef JPH_DEBUG_RENDERER
+//        if (GlobalConfig::enablePhysicsDebugRenderer) {
+//            static_cast<DebugRendererImp*>(mDebugRenderer.get())->Draw();
+//        }
+//#endif // JPH_DEBUG_RENDERER
 
-        mRenderer->GetForwardPass()->EndExecute(mRenderer->GetCommandBuffer());
+        mRenderer->GetForwardPass()->EndExecute(mRenderer->GetPrimaryCommandBuffer());
 
 
 
-        //mRenderer->GetGBuffer()->Execute(mRenderer->GetCommandBuffer());
-        mRenderer->GetSSAO()->Execute(mRenderer->GetCommandBuffer());
-        mRenderer->GetSSR()->Execute(mRenderer->GetCommandBuffer());
-        mRenderer->GetFogPass()->Execute(mRenderer->GetCommandBuffer());
+        //mRenderer->GetGBuffer()->Execute(mRenderer->GetPrimaryCommandBuffer());
+        mRenderer->GetSSAO()->Execute(mRenderer->GetPrimaryCommandBuffer());
+        mRenderer->GetSSR()->Execute(mRenderer->GetPrimaryCommandBuffer());
+        mRenderer->GetFogPass()->Execute(mRenderer->GetPrimaryCommandBuffer());
 
-        mRenderer->GetBloomPass()->Execute(mRenderer->GetCommandBuffer());
-        mRenderer->GetCompositePass()->Execute(mRenderer->GetCommandBuffer());
-        mRenderer->GetFXAAPass()->Execute(mRenderer->GetCommandBuffer());
-        mRenderer->GetPresentPass()->Execute(mRenderer->GetCommandBuffer(), mRenderer->GetImageIndex());
+        mRenderer->GetBloomPass()->Execute(mRenderer->GetPrimaryCommandBuffer());
+        mRenderer->GetCompositePass()->Execute(mRenderer->GetPrimaryCommandBuffer());
+        mRenderer->GetFXAAPass()->Execute(mRenderer->GetPrimaryCommandBuffer());
+        mRenderer->GetPresentPass()->Execute(mRenderer->GetPrimaryCommandBuffer(), mRenderer->GetImageIndex());
 
-        mRenderer->EndFrame(mRenderer->GetCommandBuffer());
+        mRenderer->EndFrame(mRenderer->GetPrimaryCommandBuffer());
     }
 }
 

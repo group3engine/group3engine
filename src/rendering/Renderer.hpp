@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <vector>
+#include <array>
 
 #include "Volk.hpp"
 
@@ -19,8 +20,10 @@
 #include "SH2.hpp"
 #include "Fog.hpp"
 #include "FXAA.hpp"
+#include "Config.hpp"
 
 class Context;
+
 
 struct FreedBuffer {
     VkBuffer buffer = VK_NULL_HANDLE;
@@ -38,15 +41,15 @@ class Renderer {
 
     void Render();
     void RenderUIOnly();
-    void BeginFrame(VkCommandBuffer cmd);
-    void EndFrame(VkCommandBuffer cmd);
+    void BeginFrame(VkCommandBuffer primaryCmd);
+    void EndFrame(VkCommandBuffer primaryCmd);
     void Update(double deltaTime);
 
     Scene *m_scene;
 
 
-    // TODO: Check if we are calling this from within a frame
-    VkCommandBuffer GetCommandBuffer() const { return m_commandBuffers[vkutil::currentFrame]; }
+    std::array<VkCommandBuffer, NUM_DRAW_THREADS> &GetSecondaryCommandBuffers() { return m_secondaryCommandBuffers[vkutil::currentFrame]; }
+    VkCommandBuffer GetPrimaryCommandBuffer() { return m_primaryCommandBuffers[vkutil::currentFrame]; }
 
     Context &GetContext() const { return context; }
 
@@ -84,8 +87,10 @@ class Renderer {
     std::vector<VkFence> m_Fences;
     std::vector<VkSemaphore> m_imageAvailableSemaphores;
     std::vector<VkSemaphore> m_renderFinishedSemaphores;
-    std::vector<VkCommandBuffer> m_commandBuffers;
-    std::vector<VkCommandPool> m_commandPool;
+    std::vector<std::array<VkCommandBuffer, NUM_DRAW_THREADS>> m_secondaryCommandBuffers;
+    std::vector<VkCommandBuffer> m_primaryCommandBuffers;
+    std::vector<VkCommandPool> m_primaryCommandPool;
+    std::vector<std::array<VkCommandPool, NUM_DRAW_THREADS>> m_secondaryCommandPools;
 
     std::unique_ptr<DepthPrepass> m_DepthPrepass;
     std::unique_ptr<ForwardPass> m_ForwardPass;

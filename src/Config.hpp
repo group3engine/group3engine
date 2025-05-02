@@ -13,6 +13,8 @@ extern bool enablePhysicsDebugRenderer;
 constexpr size_t maxPlayers = 4;
 static_assert(maxPlayers >= 1 && maxPlayers <= 4);
 
+
 } // namespace GlobalConfig
+#define NUM_DRAW_THREADS 1
 
 #endif // GROUP3ENGINE_CONFIG_HPP

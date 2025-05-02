@@ -192,7 +192,7 @@ void DebugRendererImp::DrawLines() {
     // Draw the lines
     if (!mLines.empty()) {
         // Create line primitive with renderer
-        VkCommandBuffer commandBuffer = mRenderer->GetCommandBuffer();
+        VkCommandBuffer commandBuffer = mRenderer->GetPrimaryCommandBuffer();
 
         // Create vertex buffer
         VkDeviceSize size = sizeof(Line) * mLines.size();
@@ -251,7 +251,7 @@ void DebugRendererImp::DrawTriangles() {
     // Draw the lines
     if (!mVertices.empty()) {
         // Create line primitive with renderer
-        VkCommandBuffer commandBuffer = mRenderer->GetCommandBuffer();
+        VkCommandBuffer commandBuffer = mRenderer->GetPrimaryCommandBuffer();
 
         // Create vertex buffer
         VkDeviceSize size = sizeof(TriangleVertex) * mVertices.size();
@@ -303,7 +303,7 @@ void DebugRendererImp::DrawTriangles() {
 void DebugRendererImp::Draw() {
     ZoneScopedN("DebugRendererImp::Draw");
     TracyVkZoneC(mRenderer->GetContext().tracyContexts[vkutil::currentFrame],
-                 mRenderer->GetCommandBuffer(), "DebugRenderer::Draw",
+                 mRenderer->GetPrimaryCommandBuffer(), "DebugRenderer::Draw",
                  tracy::Color::Coral4);
 
     DrawLines();

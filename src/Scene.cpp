@@ -480,6 +480,7 @@ void Scene::StartUp(Context *context, MaterialManager *materialManager,
     mMaterialManager = materialManager;
     mMeshManager = meshManager;
     mTextureManager = textureManager;
+    mDrawThreadPool = std::make_unique<ThreadPool>(NUM_DRAW_THREADS);
 
     for (auto &cameraUBO : mPlayerCameraUbos) {
         cameraUBO.resize(vkutil::MAX_FRAMES_IN_FLIGHT);
@@ -509,24 +510,52 @@ void Scene::ShutDown() {
     LightManager::getInstance().Destroy();
 }
 
+void Scene::DrawOpaque(std::array<VkCommandBuffer, NUM_DRAW_THREADS> &cmds, VkPipelineLayout pipelineLayout)
+{
+    for (auto &entity : m_Entities) {
+        mDrawThreadPool->enqueue([cmds, pipelineLayout, entity = entity](int i) {
+            entity->RecordDrawOpaque(cmds[i], pipelineLayout);
+        });
+    }
+    mDrawThreadPool->wait();
+}
+
 void Scene::DrawOpaque(VkCommandBuffer cmd,
                        VkPipelineLayout pipelineLayout) {
     for (auto &entity : m_Entities) {
         entity->RecordDrawOpaque(cmd, pipelineLayout);
     }
 }
-
 void Scene::DrawAlphaMasked(VkCommandBuffer cmd,
                             VkPipelineLayout pipelineLayout) {
     for (auto &entity : m_Entities) {
         entity->RecordDrawCutout(cmd, pipelineLayout);
     }
 }
+void Scene::DrawAlphaMasked(std::array<VkCommandBuffer, NUM_DRAW_THREADS> &cmds,
+                            VkPipelineLayout pipelineLayout) {
+    for (auto &entity : m_Entities) {
+        mDrawThreadPool->enqueue([cmds, pipelineLayout, entity = entity](int i) {
+            entity->RecordDrawCutout(cmds[i], pipelineLayout);
+        });
+    }
+    mDrawThreadPool->wait();
+}
+
 void Scene::DrawShadowMap(VkCommandBuffer cmd,
                           VkPipelineLayout pipelineLayout, uint32_t cascadeIndex) {
     for (auto& entity : m_Entities) {
         entity->RecordDrawShadow(cmd, pipelineLayout, cascadeIndex);
     }
+}
+void Scene::DrawShadowMap(std::array<VkCommandBuffer, NUM_DRAW_THREADS> &cmds,
+                          VkPipelineLayout pipelineLayout, uint32_t cascadeIndex) {
+    for (auto &entity : m_Entities) {
+        mDrawThreadPool->enqueue([cmds, pipelineLayout, cascadeIndex, entity = entity](int i) {
+            entity->RecordDrawShadow(cmds[i], pipelineLayout, cascadeIndex);
+        });
+    }
+    mDrawThreadPool->wait();
 }
 
 void Scene::DrawSkinned(VkCommandBuffer cmd,
@@ -534,4 +563,14 @@ void Scene::DrawSkinned(VkCommandBuffer cmd,
     for (auto &entity : m_Entities) {
         entity->RecordDrawSkinned(cmd, pipelineLayout, cascadeIndex);
     }
+}
+
+void Scene::DrawSkinned(std::array<VkCommandBuffer, NUM_DRAW_THREADS> &cmds, VkPipelineLayout pipelineLayout, uint32_t cascadeIndex)
+{
+    for (auto &entity : m_Entities) {
+        mDrawThreadPool->enqueue([cmds, pipelineLayout, cascadeIndex, entity = entity](int i) {
+            entity->RecordDrawSkinned(cmds[i], pipelineLayout, cascadeIndex);
+        });
+    }
+    mDrawThreadPool->wait();
 }

@@ -5,6 +5,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <memory>
 #include <vector>
+#include <array>
+#include <thread>
 
 #include "Buffer.hpp"
 #include "Camera.hpp"
@@ -16,6 +18,8 @@
 #include "TextureManager.hpp"
 #include "Utils.hpp"
 #include "LightManager.hpp"
+#include "Renderer.hpp"
+#include "ThreadPool.hpp"
 
 
 #include "ImGuiRenderer.hpp"
@@ -70,10 +74,14 @@ class Scene {
     void LoadGLTF(const std::filesystem::path &aFilepath, size_t playerCount);
 
     void DrawOpaque(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
+    void DrawOpaque(std::array<VkCommandBuffer, NUM_DRAW_THREADS> &cmd, VkPipelineLayout pipelineLayout);
     void DrawAlphaMasked(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
+    void DrawAlphaMasked(std::array<VkCommandBuffer, NUM_DRAW_THREADS> &cmd, VkPipelineLayout pipelineLayout);
 
     void DrawShadowMap(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout, uint32_t cascadeIndex = 0);
+    void DrawShadowMap(std::array<VkCommandBuffer, NUM_DRAW_THREADS> &cmd, VkPipelineLayout pipelineLayout, uint32_t cascadeIndex = 0);
     void DrawSkinned(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout, uint32_t cascadeIndex= 0);
+    void DrawSkinned(std::array<VkCommandBuffer, NUM_DRAW_THREADS> &cmd, VkPipelineLayout pipelineLayout, uint32_t cascadeIndex= 0);
     void AddLightSource(Light& LightSource);
 
     void Update(double aDeltaTime);
@@ -200,6 +208,8 @@ private:
     std::vector<size_t> m_FrontMeshes;
     std::vector<size_t> m_BackMeshes;
     std::vector<Entity *> m_Entities;
+
+    std::unique_ptr<ThreadPool> mDrawThreadPool = nullptr;
 
     std::unordered_map<Entity *, std::vector<Entity *>> mCharacterEntities;
 

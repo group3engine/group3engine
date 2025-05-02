@@ -22,7 +22,7 @@ class DepthPrepass {
     explicit DepthPrepass(Context &context, Scene *scene);
     ~DepthPrepass();
 
-    void Execute(VkCommandBuffer cmd);
+    void Execute(std::array<VkCommandBuffer, NUM_DRAW_THREADS> &cmds, VkCommandBuffer primaryCmd);
     void Resize();
 
     Image &GetRenderTarget() { return m_DepthTarget; };

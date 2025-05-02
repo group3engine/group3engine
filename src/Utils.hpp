@@ -15,6 +15,7 @@ class Context;
         VkResult result = call;                                                             \
         if (result != VK_SUCCESS) {                                                         \
             std::cout << "[VK ERROR]: " << message << " VkResult: " << result << std::endl; \
+            std::exit(0);                                                                   \
         }                                                                                   \
     } while (0)
 

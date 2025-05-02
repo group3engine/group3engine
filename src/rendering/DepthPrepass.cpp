@@ -73,12 +73,14 @@ void DepthPrepass::Resize() {
     CreateFramebuffer();
 }
 
-void DepthPrepass::Execute(VkCommandBuffer cmd) {
+void DepthPrepass::Execute(std::array<VkCommandBuffer, NUM_DRAW_THREADS> &cmds, VkCommandBuffer primaryCmd) {
     ZoneScopedN("DepthPrepass::Execute");
-    TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], cmd, "DepthPrepass", tracy::Color::Crimson);
+    TracyVkZoneC(context.tracyContexts[vkutil::currentFrame], primaryCmd, "DepthPrepass", tracy::Color::Crimson);
+
+
 
 #ifdef _DEBUG
-    vkutil::RenderPassLabel(cmd, "DepthPrepass");
+    vkutil::RenderPassLabel(primaryCmd, "DepthPrepass");
 #endif // !DEBUG
 
     VkRenderPassBeginInfo beginInfo = {};
@@ -91,8 +93,23 @@ void DepthPrepass::Execute(VkCommandBuffer cmd) {
     clearValues[0].depthStencil.depth = {1.0f};
     beginInfo.clearValueCount = 1;
     beginInfo.pClearValues = clearValues;
+    vkCmdBeginRenderPass(primaryCmd, &beginInfo, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
+    VkCommandBufferInheritanceInfo inheritInfo = {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO,
+            .renderPass = m_renderPass,
+            .subpass = 0,
+            .framebuffer = m_framebuffer,
+    };
+    VkCommandBufferBeginInfo cmdBeginInfo = {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+            .flags = VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT,
+            .pInheritanceInfo = &inheritInfo
+    };
 
-    vkCmdBeginRenderPass(cmd, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    for(auto cmd : cmds) {
+        vkResetCommandBuffer(cmd, 0);
+        vkBeginCommandBuffer(cmd, &cmdBeginInfo);
+    }
 
     size_t playerCount = m_Scene->GetActivePlayerCount();
     for (size_t playerId = 0; playerId < playerCount; ++playerId) {
@@ -101,27 +118,48 @@ void DepthPrepass::Execute(VkCommandBuffer cmd) {
         // NOTE: Viewport and scissor needs to be set again after executing skybox pass
         // TODO: Investigate more
         VkViewport viewport = CalcViewport(context.extent, playerCount, playerId);
-        vkCmdSetViewport(cmd, 0, 1, &viewport);
+        for(auto cmd : cmds) {
+            vkCmdSetViewport(cmd, 0, 1, &viewport);
+        }
 
         VkRect2D scissor{};
         scissor.offset = {static_cast<int32_t>(viewport.x), static_cast<int32_t>(viewport.y)};
         scissor.extent = {static_cast<uint32_t>(viewport.width),
                           static_cast<uint32_t>(viewport.height)};
-        vkCmdSetScissor(cmd, 0, 1, &scissor);
+        for(auto cmd : cmds) {
+            vkCmdSetScissor(cmd, 0, 1, &scissor);
+        }
+        for(auto cmd : cmds) {
+            vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &mPlayerDescriptorSets[playerId][vkutil::currentFrame], 0, nullptr);
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_skinnedPipeline.first);
+        }
 
-        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &mPlayerDescriptorSets[playerId][vkutil::currentFrame], 0, nullptr);
 
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_skinnedPipeline.first);
-        m_Scene->DrawSkinned(cmd, m_skinnedPipeline.second);
 
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
-        m_Scene->DrawOpaque(cmd, m_PipelineLayout);
+        m_Scene->DrawSkinned(cmds, m_skinnedPipeline.second);
+
+        for (auto cmd : cmds) {
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
+        }
+        m_Scene->DrawOpaque(cmds, m_PipelineLayout);
     }
-    vkCmdEndRenderPass(cmd);
 
 #ifdef _DEBUG
-    vkutil::EndRenderPassLabel(cmd);
+    for(auto cmd : cmds) {
+        vkutil::EndRenderPassLabel(cmd);
+    }
 #endif // !DEBUG
+    // end recording the secondary command buffers
+    for(auto cmd : cmds) {
+        vkEndCommandBuffer(cmd);
+    }
+    // submit the secondary command buffers to the primary command buffer
+
+    vkCmdExecuteCommands(primaryCmd, static_cast<uint32_t>(cmds.size()), cmds.data());
+
+    // end the render pass
+    vkCmdEndRenderPass(primaryCmd);
+
 }
 
 void DepthPrepass::CreatePipeline() {
