@@ -359,8 +359,6 @@ void Engine::Update(double deltaTime) {
         ImGuiRenderer::Update(mScene);
 #endif
     }
-
-    mRenderer->Update(deltaTime);
 }
 
 #ifdef JPH_DEBUG_RENDERER
@@ -401,6 +399,8 @@ void Engine::Render() {
     ZoneScopedN("Engine::Render");
 
     mRenderer->BeginFrame(mRenderer->GetCommandBuffer());
+
+    mRenderer->Update(GlobalUtil::deltaTime);
 
     {
         mRenderer->GetShadowMap()->Execute(mRenderer->GetCommandBuffer());
