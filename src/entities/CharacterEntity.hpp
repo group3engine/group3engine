@@ -14,6 +14,7 @@
 #include "InputMapping.hpp"
 
 struct WinSignal;
+struct CoinSignal;
 
 enum class InternalEvent {
     eDeath,
@@ -76,6 +77,7 @@ class CharacterEntity : public Entity {
     }
 
     void Die();
+    void AddCoin(CoinSignal *signal);
     // reset the character to the last checkpoint
     void Reset() {
         mSampleJoltCharacter->SetCharacterPosition(RVec3(mLastCheckpoint.x,
@@ -149,6 +151,8 @@ class CharacterEntity : public Entity {
     float mDeathVisibleTimer = 0.0f;
     float mFinishVisibleTimer = 0.0f;
 
+    size_t mCoinCount = 0;
+
     DeathState mDeathState = DeathState::eLiving;
     double mDeathTimer = 0.0;
     const double mDeathTime = 1.0;
@@ -158,6 +162,7 @@ class CharacterEntity : public Entity {
     float mWinVisibleTimer = 0.0f;
 
     gui::DeathCounterData mGuiDeathCounterData{};
+    gui::CoinCounterData mGuiCoinCounterData{};
     gui::DeathPopupData mGuiDeathPopupData{};
     gui::FinishPopupData mGuiFinishPopupData{};
 

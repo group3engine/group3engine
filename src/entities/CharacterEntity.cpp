@@ -543,6 +543,9 @@ void CharacterEntity::UpdateUi(double deltaTime) {
     mGuiDeathCounterData.deathCount = mDeathCount;
     ImGuiRenderer::NewDeathCounter(mGuiDeathCounterData, activePlayerCount, mPlayerId);
 
+    mGuiCoinCounterData.coinCount = mCoinCount;
+    ImGuiRenderer::NewCoinCounter(mGuiCoinCounterData, activePlayerCount, mPlayerId);
+
     mDeathVisibleTimer = std::max(0.0f, mDeathVisibleTimer - static_cast<float>(deltaTime));
     mGuiDeathPopupData.visibleTimer = mDeathVisibleTimer;
     ImGuiRenderer::NewDeathPopup(mGuiDeathPopupData, activePlayerCount, mPlayerId);
@@ -681,6 +684,7 @@ void CharacterEntity::Awake() {
     // receivers doesn't grow too large. I.e., player gets to 90% of level, start receiving the
     // on win signal. Then when the player resets to the start of the level remove the receiver
     GetScene()->mSignalSystem.AddReceiver<CharacterEntity, WinSignal>(this, &CharacterEntity::OnWin);
+    GetScene()->mSignalSystem.AddReceiver<CharacterEntity, CoinSignal>(this, &CharacterEntity::AddCoin);
 }
 
 void CharacterEntity::OnWin(WinSignal *signal) {
@@ -717,6 +721,11 @@ void CharacterEntity::Die()
         mDeathTimer = mDeathTime;
     }
 
+}
+
+void CharacterEntity::AddCoin(CoinSignal *signal)
+{
+    mCoinCount++;
 }
 
 void CharacterEntity::OnCollisionEnd(Entity *aOther)

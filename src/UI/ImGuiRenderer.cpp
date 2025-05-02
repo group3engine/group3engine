@@ -436,6 +436,60 @@ void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data,
     ImGui::End();
 }
 
+void ImGuiRenderer::NewCoinCounter(const gui::CoinCounterData &data,
+                                    size_t activePlayerCount, size_t playerId) {
+    ImGuiViewport viewport = CalcPlayerViewport(Context::get().extent, activePlayerCount, playerId);
+
+    size_t coinCount = data.coinCount;
+
+    // Format to a width of 4
+    // See https://hackingcpp.com/cpp/libs/fmt.html
+    std::string str = fmt::format("Coin Counter {:4}", coinCount);
+
+    size_t sv = 0;
+
+    float windowBorderSize = 0.0f;
+    if (enableTextWindowBorder) {
+        // Display a window border for debug purposes
+        windowBorderSize = ImGui::GetStyle().WindowBorderSize;
+    } else {
+        // No window border
+        sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); });
+    }
+
+    // Bottom right of viewport. NOTE: hardcoded bottom left positioning
+    ImVec2 pos = ImVec2(viewport.WorkPos.x, viewport.WorkPos.y + viewport.WorkSize.y);
+    ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
+
+    // Make the window fit the text exactly
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(0, 0)); });
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0)); });
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); });
+
+    ImGui::SetNextWindowSize(textSize);
+    // NOTE: hardcoded bottom right positioning
+    ImGui::SetNextWindowPos(ImVec2(pos.x - windowBorderSize, pos.y - textSize.y - windowBorderSize));
+    ImGui::SetNextWindowBgAlpha(0.0f);
+
+    // Flags to get a non-interactable blank window to draw on
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+    ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+    ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
+
+    ImGui::Begin(fmt::format("Coin Counter Window##{}", playerId).c_str(), nullptr, flags);
+
+    // Text
+    ImGui::Text(str.c_str());
+
+    // Heart
+    ImVec2 offset = {pos.x - textSize.x, pos.y};
+    NewHeartSprite(offset, playerId);
+
+    ImGui::PopStyleVar(sv);
+
+    ImGui::End();
+}
+
 void ImGuiRenderer::NewDeathPopup(const gui::DeathPopupData &data,
                                   size_t activePlayerCount, size_t playerId) {
     if (!enableDeathPopup) {
