@@ -131,8 +131,12 @@ class Entity {
 
     /// Get a reference to the rigidbody
     [[nodiscard]] RigidBody &GetRigidBody(){
-      assert(mRigidBody != nullptr);
-      return *mRigidBody;
+        if (mRigidBody == nullptr) {
+            SPDLOG_ERROR("Entity {} called GetRigidBody and does not have a rigid body", GetName());
+            exit(EXIT_FAILURE);
+        }
+
+        return *mRigidBody;
     }
 
 

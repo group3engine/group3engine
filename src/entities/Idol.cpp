@@ -46,9 +46,12 @@ void Idol::OnInteract(Entity *other, ENetworkLocality networkLocality) {
         winSignal.transmitter = this;
         winSignal.receiver = other;
         GetScene()->mSignalSystem.EmitSignal(&winSignal);
+
+        SetAsInvisible();
     }
 }
 
 void Idol::OnResetToSpawn([[maybe_unused]] ResetToSpawnSignal *signal) {
     mIsCollected = false;
+    SetAsVisible();
 }

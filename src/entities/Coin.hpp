@@ -6,9 +6,6 @@
 class Coin : public Entity {
 
     public:
-
-        Coin();
-
         void Awake() override;
 
         void OnCollisionStart(Entity *other) override;
