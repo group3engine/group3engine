@@ -40,3 +40,27 @@ Entity *Skin::GetEntity(size_t aIndex) const  {
     assert(aIndex < mJoints.size());
     return mJoints[aIndex].entity;
 }
+
+void Skin::ComputeRoot()
+{
+    // check if the root is already set
+    if (mRoot != nullptr) {
+        return;
+    }
+    // find the first parent of the first joint that is not a joint
+    // this is the root of the skin
+    auto *jointEntity = mJoints[0].entity;
+    while (jointEntity->GetParent() != nullptr)
+    {
+        // check if the parent is a joint
+        auto it = std::find_if(mJoints.begin(), mJoints.end(),
+                               [jointEntity](const auto &aJoint) { return aJoint.entity == jointEntity->GetParent(); });
+        if (it == mJoints.end())
+        {
+            mRoot = jointEntity->GetParent();
+            return;
+        }
+        jointEntity = jointEntity->GetParent();
+    }
+    mRoot = jointEntity;
+}

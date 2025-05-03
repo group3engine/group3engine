@@ -23,6 +23,8 @@ class Skin {
     void AddJoint(Joint aJoint);
     void SetJoints(std::vector<Joint> aJoints) { mJoints = std::move(aJoints); }
     void SetRoot(Entity *aRoot) { mRoot = aRoot; }
+    [[nodiscard]] Entity *GetRoot() const { return mRoot; }
+    void ComputeRoot();
 
     [[nodiscard]] std::vector<Joint> GetJoints() const { return mJoints; }
     [[nodiscard]] Entity* GetEntity(size_t aIndex) const;
