@@ -59,11 +59,14 @@ class ForwardPass {
     Image m_BrightnessTexture;
     Image m_NormalRoughness;
 
+    Image m_LavaFlowMap;
+
     VkRenderPass m_renderPass;
     VkFramebuffer m_framebuffer;
     VkDescriptorSetLayout meshDescriptorSetLayout;
     VkDescriptorSetLayout skinDescriptorSetLayout;
     VkDescriptorSetLayout particleDescriptorSetLayout;
+    VkDescriptorSetLayout lavaFlowMapDescriptorSetLayout;
 
     Context &context;
     const std::vector<Buffer>& m_DebugUniform;
@@ -73,6 +76,7 @@ class ForwardPass {
     const ShadowMap *shadowMapRenderPass;
 
     std::array<std::vector<VkDescriptorSet>, GlobalConfig::maxPlayers> mPlayerDescriptorSets;
+    VkDescriptorSet mLavaFlowMapDescriptorSet;
 
     std::pair<VkPipeline, VkPipelineLayout> m_opaquePipeline;
     std::pair<VkPipeline, VkPipelineLayout> m_alphaMaskPipeline;
@@ -80,6 +84,7 @@ class ForwardPass {
     std::pair<VkPipeline, VkPipelineLayout> m_particlePipeline;
     std::pair<VkPipeline, VkPipelineLayout> m_wireframePipeline;
     std::pair<VkPipeline, VkPipelineLayout> m_skinnedWireframePipeline;
+    std::pair<VkPipeline, VkPipelineLayout> m_lavaPipeline;
 
     std::unique_ptr<Skybox> m_Skybox;
     std::unique_ptr<PrefilterSkybox> PrefilteredSkybox;

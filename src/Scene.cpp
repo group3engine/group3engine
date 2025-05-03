@@ -120,6 +120,8 @@ void Scene::UploadCameras(VkCommandBuffer cmdBuff) {
 void Scene::UpdateUi(double aDeltaTime) {
     ZoneScopedN("Scene::UpdateUi");
 
+    GlobalUtil::totalTime += aDeltaTime;
+
     for (auto &entity : m_Entities) {
         entity->UpdateUi(aDeltaTime);
     }
@@ -533,5 +535,13 @@ void Scene::DrawSkinned(VkCommandBuffer cmd,
                         VkPipelineLayout pipelineLayout, uint32_t cascadeIndex) {
     for (auto &entity : m_Entities) {
         entity->RecordDrawSkinned(cmd, pipelineLayout, cascadeIndex);
+    }
+}
+
+void Scene::DrawLava(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout) {
+    for (auto *entity : m_Entities) {
+        if (entity->CompareTag("lava")) {
+            entity->RecordDrawLava(cmd, pipelineLayout);
+        }
     }
 }

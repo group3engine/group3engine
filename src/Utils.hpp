@@ -41,6 +41,12 @@ namespace vkutil {
         int cascadeIndex;
     };
 
+    struct LavaPushConstants {
+        alignas(16) glm::mat4 ModelMatrix;
+        alignas(4) int cascadeIndex;
+        alignas(4) float t;
+    };
+
     struct LightUBO {
         alignas(4) int type;
         alignas(16) glm::vec4 LightPosition;
@@ -124,6 +130,7 @@ namespace vkutil {
 
 namespace GlobalUtil {
     inline double deltaTime;
+    inline double totalTime;
 inline double unscaledDeltaTime;
 }
 

@@ -65,7 +65,7 @@ ForwardPass::ForwardPass(Context &context, const Image &shadowMap, Image &depthP
         VK_IMAGE_ASPECT_COLOR_BIT,
         1);
 
-
+    m_LavaFlowMap = LoadTextureFromDisk(assetsPath / "FlowMap/flowmap.png", context, VK_FORMAT_R8G8B8A8_SRGB);
 
     CreateRenderPass();
     m_Skybox = std::make_unique<Skybox>(context, scene, m_renderPass);
@@ -97,6 +97,7 @@ ForwardPass::~ForwardPass() {
     PrefilteredSkybox.reset();
     m_IrradianceMap.reset();
     m_RenderTarget.Destroy(context.device);
+    m_LavaFlowMap.Destroy(context.device);
 
     //m_DepthTarget.Destroy(context.device);
     m_NormalRoughness.Destroy(context.device);
@@ -118,6 +119,10 @@ ForwardPass::~ForwardPass() {
     vkDestroyPipeline(context.device, m_skinnedWireframePipeline.first, nullptr);
     vkDestroyPipelineLayout(context.device, m_skinnedWireframePipeline.second, nullptr);
 
+    // Destroy lava pipeline and pipeline layout
+    vkDestroyPipeline(context.device, m_lavaPipeline.first, nullptr);
+    vkDestroyPipelineLayout(context.device, m_lavaPipeline.second, nullptr);
+
     vkDestroyFramebuffer(context.device, m_framebuffer, nullptr);
     vkDestroyRenderPass(context.device, m_renderPass, nullptr);
     if (meshDescriptorSetLayout != VK_NULL_HANDLE) {
@@ -131,6 +136,10 @@ ForwardPass::~ForwardPass() {
     if(particleDescriptorSetLayout != VK_NULL_HANDLE)
     {
         vkDestroyDescriptorSetLayout(context.device, particleDescriptorSetLayout, nullptr);
+    }
+
+    if (lavaFlowMapDescriptorSetLayout) {
+        vkDestroyDescriptorSetLayout(context.device, lavaFlowMapDescriptorSetLayout, nullptr);
     }
 }
 
@@ -263,6 +272,10 @@ void ForwardPass::BeginExecute(VkCommandBuffer cmd) {
 
             vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_alphaMaskPipeline.first);
             scene->DrawAlphaMasked(cmd, m_alphaMaskPipeline.second);
+
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_lavaPipeline.first);
+            vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_lavaPipeline.second, 2, 1, &mLavaFlowMapDescriptorSet, 0, nullptr);
+            scene->DrawLava(cmd, m_lavaPipeline.second);
         }
     }
 
@@ -308,6 +321,8 @@ void ForwardPass::CreatePipeline() {
 
      m_opaquePipeline = defaultPipelineResult;
 
+    context.SetObjectName(context.device, (uint64_t)m_opaquePipeline.first, VK_OBJECT_TYPE_PIPELINE, "defaultPipeline");
+
     auto wireframePipelineResult = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
         .AddShader(OPAQUE_VERTEX_SHADER, ShaderType::VERTEX)
         .AddShader(OPAQUE_FRAGMENT_SHADER, ShaderType::FRAGMENT)
@@ -324,6 +339,8 @@ void ForwardPass::CreatePipeline() {
         .Build();
 
     m_wireframePipeline = wireframePipelineResult;
+
+    context.SetObjectName(context.device, (uint64_t)m_wireframePipeline.first, VK_OBJECT_TYPE_PIPELINE, "m_wireframePipeline");
 
     auto alphaMaskPipeline = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
         .AddShader(ALPHA_MASK_VERTEX_SHADER, ShaderType::VERTEX)
@@ -342,6 +359,8 @@ void ForwardPass::CreatePipeline() {
 
     m_alphaMaskPipeline = alphaMaskPipeline;
 
+    context.SetObjectName(context.device, (uint64_t)m_alphaMaskPipeline.first, VK_OBJECT_TYPE_PIPELINE, "m_alphaMaskPipeline");
+
     auto skinnedPipeline = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
         .AddShader(SKINNED_VERTEX_SHADER, ShaderType::VERTEX)
         .AddShader(SKINNED_FRAGMENT_SHADER, ShaderType::FRAGMENT)
@@ -358,6 +377,8 @@ void ForwardPass::CreatePipeline() {
         .Build();
 
     m_skinnedPipeline = skinnedPipeline;
+
+    context.SetObjectName(context.device, (uint64_t)m_skinnedPipeline.first, VK_OBJECT_TYPE_PIPELINE, "m_skinnedPipeline");
 
     auto skinnedWireframePipeline = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
         .AddShader(SKINNED_VERTEX_SHADER, ShaderType::VERTEX)
@@ -376,11 +397,13 @@ void ForwardPass::CreatePipeline() {
 
     m_skinnedWireframePipeline = skinnedWireframePipeline;
 
+    context.SetObjectName(context.device, (uint64_t)m_skinnedWireframePipeline.first, VK_OBJECT_TYPE_PIPELINE, "m_skinnedWireframePipeline");
+
     m_particlePipeline = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
         .AddShader(PARTICLE_MESH_VERTEX_SHADER, ShaderType::VERTEX)
         .AddShader(PARTICLE_SHADER_UNLIT_FRAGMENT, ShaderType::FRAGMENT)
         .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-        .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}})
+        .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_CULL_MODE}})
         .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE)
         .SetPipelineLayout({meshDescriptorSetLayout, vkutil::materialDescriptorSetLayout, particleDescriptorSetLayout})
         .SetSampling(VK_SAMPLE_COUNT_1_BIT)
@@ -391,6 +414,34 @@ void ForwardPass::CreatePipeline() {
         .SetRenderPass(m_renderPass)
         .Build();
 
+    context.SetObjectName(context.device, (uint64_t)m_particlePipeline.first, VK_OBJECT_TYPE_PIPELINE, "m_particlePipeline");
+
+    {
+        std::vector<VkPushConstantRange> lavaPushConstants = {
+            {
+             .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+             .offset = 0,
+             .size = sizeof(vkutil::LavaPushConstants)
+            },
+        };
+
+        m_lavaPipeline = PipelineBuilder(context.device, PipelineType::GRAPHICS, VertexBinding::BIND, 0)
+            .AddShader(OPAQUE_VERTEX_SHADER, ShaderType::VERTEX)
+            .AddShader(SHADER_DIR / "flowmap.frag.spv", ShaderType::FRAGMENT)
+            .SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+            .SetDynamicState({{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_CULL_MODE}})
+            .SetRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE)
+            .SetPipelineLayout({{meshDescriptorSetLayout, vkutil::materialDescriptorSetLayout, lavaFlowMapDescriptorSetLayout}}, lavaPushConstants)
+            .SetSampling(VK_SAMPLE_COUNT_1_BIT)
+            .AddBlendAttachmentState()
+            .AddBlendAttachmentState()
+            .AddBlendAttachmentState()
+            .SetDepthState(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL)
+            .SetRenderPass(m_renderPass)
+            .Build();
+
+        context.SetObjectName(context.device, (uint64_t)m_lavaPipeline.first, VK_OBJECT_TYPE_PIPELINE, "m_lavaPipeline");
+    }
 }
 
 void ForwardPass::CreateRenderPass() {
@@ -473,6 +524,11 @@ void ForwardPass::BuildDescriptorSetLayouts() {
 
     skinDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}});
     particleDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, {{0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}});
+
+    std::vector<VkDescriptorSetLayoutBinding> lavaFlowMapBindings = {
+        vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+    };
+    lavaFlowMapDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, lavaFlowMapBindings);
 }
 
 void ForwardPass::BuildDescriptors() {
@@ -570,6 +626,20 @@ void ForwardPass::BuildDescriptors() {
             bufferInfo.range = sizeof(vkutil::RendererDebug);
             vkutil::UpdateDescriptorSet(context, 8, bufferInfo, descriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
         }
+    }
+
+    {
+        vkutil::AllocateDescriptorSet(context, context.descriptorPool,
+                                      lavaFlowMapDescriptorSetLayout, 1, mLavaFlowMapDescriptorSet);
+
+        // Create lava flow map descriptor set (just one flow map texture)
+        VkDescriptorImageInfo imageInfo = {
+            .sampler = vkutil::clampToEdgeSamplerAniso,
+            .imageView = m_LavaFlowMap.imageView,
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        };
+        vkutil::UpdateDescriptorSet(context, 0, imageInfo, mLavaFlowMapDescriptorSet,
+                                    VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
     }
 }
 
