@@ -386,7 +386,18 @@ void main()
     // Keeping this here for reference
     // vec3 ambient = vec3(0.02) * color;
 
+    vec3 camPos = ubo.cameraPosition.xyz;
+    camPos.y = 0;
+    vec3 worldPos = WorldPos.xyz;
+    worldPos.y = 0;
+    float dist = length(camPos - worldPos);
+
+    // vec3 texCoords = (inverse(pc.ModelMatrix) * WorldPos).xyz;
+
+    // fragColor = mix(vec4(outLight, 1.0), vec4(textureLod(prefilteredSkybox, viewDir, 0).rgb, 1.0), dist / ubo.farPlane / 0.75);
     fragColor = vec4(outLight, 1.0);
+    float scaledDist = dist / ubo.farPlane / 0.5;
+    fragColor.a = mix(1.0, 0.0, scaledDist);
     // fragColor = vec4(texture(textureFlowMap, uv).rgb, 1.0);
     NormalMetallic = vec4(pixelNormal.xyz * 0.5 + 0.5, roughness);
 
@@ -446,5 +457,5 @@ void main()
 
     float brightness = dot(fragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
     float threshold = step(1.0, brightness); // check if brightness is greater than 1.0
-    brightColours = vec4(fragColor.rgb * threshold, 1.0);
+    brightColours = vec4(vec3(0), fragColor.a);
 }
