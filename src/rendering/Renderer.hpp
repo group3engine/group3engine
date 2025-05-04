@@ -21,6 +21,7 @@
 #include "FXAA.hpp"
 
 class Context;
+class UIManager;
 
 struct FreedBuffer {
     VkBuffer buffer = VK_NULL_HANDLE;
@@ -30,7 +31,7 @@ struct FreedBuffer {
 
 class Renderer {
   public:
-    Renderer(Context &context, Scene *scene);
+    Renderer(Context &context, Scene *scene, const UIManager& uiManager);
 
     void CreateRenderPasses();
 
@@ -81,6 +82,7 @@ class Renderer {
 
   private:
     Context &context;
+    const UIManager& m_UIManager;
     std::vector<VkFence> m_Fences;
     std::vector<VkSemaphore> m_imageAvailableSemaphores;
     std::vector<VkSemaphore> m_renderFinishedSemaphores;

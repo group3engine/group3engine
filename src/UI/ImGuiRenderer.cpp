@@ -134,6 +134,7 @@ void ImGuiRenderer::RemoveTextures() {
 }
 
 void ImGuiRenderer::BeginMainMenu(const Context &context) {
+
     // Style var counter for main menu window
     size_t mainMenuWindowSv = 0;
     // No window border
@@ -142,6 +143,7 @@ void ImGuiRenderer::BeginMainMenu(const Context &context) {
     mainMenuWindowSv = PushBackStyleVar(mainMenuWindowSv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(0, 0)); });
     mainMenuWindowSv = PushBackStyleVar(mainMenuWindowSv, []() { ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0)); });
     mainMenuWindowSv = PushBackStyleVar(mainMenuWindowSv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); });
+
 
     ImVec2 windowSize = WindowSize(context);
     ImGui::SetNextWindowSize(windowSize);
@@ -156,7 +158,7 @@ void ImGuiRenderer::BeginMainMenu(const Context &context) {
     ImGui::Begin(std::string("Main Menu").c_str(), nullptr, flags);
 
     ImGui::PopStyleVar(mainMenuWindowSv);
-    ImGui::PushFont(Fonts::HeadingFont);
+    ImGui::PushFont(Fonts::GameFont);
 
     std::string mainMenuStr = "Main Menu";
     ImVec2 mainMenuStrSize = ImGui::CalcTextSize(mainMenuStr.c_str());
@@ -166,8 +168,7 @@ void ImGuiRenderer::BeginMainMenu(const Context &context) {
     ImGui::PopFont();
 }
 
-const char *
-ImGuiRenderer::AddMainMenuPlayerCountSelection(const Context &context,
+const char* ImGuiRenderer::AddMainMenuPlayerCountSelection(const Context &context,
                                                const std::vector<const char *> &playerCounts,
                                                const char *playerCountSelection) {
     ImVec2 windowSize = WindowSize(context);
@@ -592,36 +593,48 @@ void ImGuiRenderer::NewTimer(const gui::TimerData &data,
     ImGui::End();
 }
 
-void ImGuiRenderer::LoadingBar(float progress, ImVec2 position)
-{
-    // set the font to be the subtle font
-    ImGui::PushFont(Fonts::LoadingFont);
-    // Get the main viewport to determine screen dimensions
-    const ImGuiViewport* viewport = ImGui::GetMainViewport();
+void ImGuiRenderer::LoadingBar(float progress, ImVec2 position) {
 
-    // Calculate position at the bottom of the screen (ignoring the passed position parameter)
-    ImVec2 windowPos = ImVec2(viewport->WorkPos.x, viewport->WorkPos.y + viewport->WorkSize.y - 100.0f);
+    ImGui::PushFont(Fonts::GameFont);
+
+    const ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImVec2 windowSize = ImVec2(viewport->WorkSize.x, 100.0f);
+    ImVec2 windowPos =
+        ImVec2(viewport->WorkPos.x,
+               viewport->WorkPos.y + viewport->WorkSize.y - windowSize.y);
 
-    // Size for the progress bar to fit full width with some padding
-    ImVec2 progressBarSize = ImVec2(windowSize.x - 20.0f, 20.0f);
+    ImGuiWindowFlags flags =
+        ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+        ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs |
+        ImGuiWindowFlags_NoBackground;
 
-    // Flags to get a non-interactable blank window to draw on
-    ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
-                             ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
-                             ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
     ImGui::SetNextWindowPos(windowPos);
     ImGui::SetNextWindowSize(windowSize);
     ImGui::Begin("Loading", nullptr, flags);
-    // Display a progress bar; progress value should be in the range [0.0f, 1.0f]
-    ImGui::PushFont(Fonts::LoadingFontSmall);
-    ImGui::ProgressBar(progress / 100.f, progressBarSize);
-    ImGui::PopFont();
-    ImGui::Text("Loading... %.0f%\%", progress);
+
+    float barWidth = 400.0f;
+    float barHeight = 35.0f;
+    ImVec2 barSize = ImVec2(barWidth, barHeight);
+
+    ImVec2 barPos = ImVec2((viewport->WorkSize.x - barWidth) * 0.5f, windowSize.y * 0.5f - barHeight * 0.5f);
+    ImGui::SetCursorPos(barPos);
+
+    // Style
+    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, IM_COL32(216, 169, 93, 255));
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, IM_COL32(30, 30, 30, 200));
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 12.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
+
+    ImGui::ProgressBar(progress / 100.f, barSize);
+
+    ImGui::PopStyleVar(2);
+    ImGui::PopStyleColor(2);
     ImGui::End();
-    // Pop the font
+
     ImGui::PopFont();
 }
+
 
 void ImGuiRenderer::Image(std::string const &imageName, ImVec2 position, ImVec2 size)
 {
@@ -815,8 +828,6 @@ void ImGuiRenderer::Update(Scene *scene)
         initialized = true;
     }
 
-
-
     if (ImGui::CollapsingHeader("Directional Light"))
     {
         ImGui::Text("Sun Angles");
@@ -866,7 +877,7 @@ void ImGuiRenderer::Update(Scene *scene)
         if (ImGui::CollapsingHeader("Fog"))
         {
             ImGui::SliderFloat("Distance: ", &vkutil::fogSettings.MaxDistance, 1.0f, 100.0f);
-            ImGui::SliderFloat("Density: ", &vkutil::fogSettings.Density, 0.1f, 0.3f);
+            ImGui::SliderFloat("Density: ", &vkutil::fogSettings.Density, 0.0f, 0.3f);
             ImGui::SliderFloat("SteppingSize: ", &vkutil::fogSettings.StepSize, 0.1f, 1.5f);
             ImGui::SliderInt("Steps: ", &vkutil::fogSettings.MaxSteps, 1, 10);
         }

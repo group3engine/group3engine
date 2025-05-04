@@ -13,6 +13,7 @@ namespace Fonts
         std::filesystem::path fontPath1 = FONT_PATH / "ubuntu-title/Ubuntu-Title.ttf";
         std::filesystem::path fontPath2 = FONT_PATH / "junegull/junegull.ttf";
         std::filesystem::path fontPath3 = FONT_PATH / "segment16c/Segment16C Bold.ttf";
+        std::filesystem::path gameFont =  FONT_PATH / "GameFont/GFont.ttf";
         // Load heading font
         HeadingFont = io.Fonts->AddFontFromFileTTF(fontPath2.string().c_str(), 32.0f);
         if (!HeadingFont) {
@@ -58,6 +59,15 @@ namespace Fonts
             std::cerr << "Failed to load loading font" << std::endl;
             return false;
         }
+
+        GameFont = io.Fonts->AddFontFromFileTTF(gameFont.string().c_str(), 32.0f);
+
+        if (!GameFont)
+        {
+            std::cerr << "Failed to load loading font" + gameFont.string() << std::endl;
+            return false;
+        }
+
         return true;
     }
 }

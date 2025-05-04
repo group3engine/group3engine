@@ -7,6 +7,7 @@
 #include <tracy/TracyVulkan.hpp>
 
 #include "Context.hpp"
+#include "UIManager.hpp"
 #include "Light.hpp"
 #include "Utils.hpp"
 #include "SampleGLTFFilePaths.hpp"
@@ -14,6 +15,7 @@
 #include <imgui.h>
 
 #include "Debugging.hpp"
+
 
 namespace {
 // This should be placed elsewhere. Put here for simplicity while testing
@@ -24,8 +26,8 @@ constexpr glm::vec3 cameraDir = glm::vec3(1.0f, 1.0f, -1.0f);
 constexpr glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0);
 } // namespace
 
-Renderer::Renderer(Context &context, Scene *scene)
-    : m_scene(scene), context{context} {
+Renderer::Renderer(Context &context, Scene *scene, const UIManager& uiManager)
+    : m_scene(scene), context{context}, m_UIManager{uiManager} {
     std::printf("Launching Renderer\n");
     vkutil::renderType = vkutil::RenderType::FORWARD;
 
@@ -65,12 +67,12 @@ void Renderer::CreateRenderPasses() {
     std::filesystem::path path = assetsPath/ "heart.png";
     ImGuiRenderer::AddTextures(m_scene->GetTextureManager(), path, "heart");
 
-    const auto &cascades = m_ShadowMap->GetCascades();
-
-    for (auto& cascade : cascades)
+     const auto &cascades = m_ShadowMap->GetCascades();
+     for (auto& cascade : cascades)
     {
-        ImGuiRenderer::AddTexture(vkutil::clampToEdgeSamplerAniso,cascade.imgView, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL);
-    }
+         ImGuiRenderer::AddTexture(vkutil::clampToEdgeSamplerAniso,cascade.imgView,
+         VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL);
+     }
 }
 
 void Renderer::Destroy() {
@@ -250,6 +252,7 @@ void Renderer::BeginFrame(VkCommandBuffer cmd) {
         m_CompositePass->Resize();
         m_FXAA->Resize();
         m_PresentPass->Resize();
+        m_UIManager.Resize();
 
     } else if (getImageIndex != VK_SUCCESS && getImageIndex != VK_SUBOPTIMAL_KHR) {
         throw std::runtime_error("Failed to aquire swapchain image");
@@ -426,6 +429,7 @@ void Renderer::Present(uint32_t imageIndex) {
         m_CompositePass->Resize();
         m_FXAA->Resize();
         m_PresentPass->Resize();
+        m_UIManager.Resize();
     }
 }
 
