@@ -255,6 +255,7 @@ namespace SDL_INPUT
         // Reset last gamepad button/axis registered state
         int numJoysticks;
         SDL_JoystickID *joysticks = SDL_GetGamepads(&numJoysticks);
+        SDL_free(joysticks);
         for (int i = 0; (i < numJoysticks) && (i < MAX_GAMEPADS); i++) {
             // Check if gamepad is available
             if (INPUT.Gamepad.ready[i]) {
