@@ -65,7 +65,8 @@ ForwardPass::ForwardPass(Context &context, const Image &shadowMap, Image &depthP
         VK_IMAGE_ASPECT_COLOR_BIT,
         1);
 
-    m_LavaFlowMap = LoadTextureFromDisk(assetsPath / "FlowMap/flowmap.png", context, VK_FORMAT_R8G8B8A8_SRGB);
+    m_LavaFlowMap = LoadTextureFromDisk(assetsPath / "FlowMap/flowmap.png", context, VK_FORMAT_R8G8B8A8_UNORM);
+    m_FlowMapNoise = LoadTextureFromDisk(assetsPath / "FlowMap/723-bump.jpg", context, VK_FORMAT_R8G8B8A8_UNORM);
 
     CreateRenderPass();
     m_Skybox = std::make_unique<Skybox>(context, scene, m_renderPass);
@@ -98,6 +99,7 @@ ForwardPass::~ForwardPass() {
     m_IrradianceMap.reset();
     m_RenderTarget.Destroy(context.device);
     m_LavaFlowMap.Destroy(context.device);
+    m_FlowMapNoise.Destroy(context.device);
 
     //m_DepthTarget.Destroy(context.device);
     m_NormalRoughness.Destroy(context.device);
@@ -526,7 +528,8 @@ void ForwardPass::BuildDescriptorSetLayouts() {
     particleDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, {{0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}});
 
     std::vector<VkDescriptorSetLayoutBinding> lavaFlowMapBindings = {
-        vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+        vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
+        vkutil::CreateDescriptorBinding(1, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
     };
     lavaFlowMapDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, lavaFlowMapBindings);
 }
@@ -633,13 +636,25 @@ void ForwardPass::BuildDescriptors() {
                                       lavaFlowMapDescriptorSetLayout, 1, mLavaFlowMapDescriptorSet);
 
         // Create lava flow map descriptor set (just one flow map texture)
-        VkDescriptorImageInfo imageInfo = {
-            .sampler = vkutil::clampToEdgeSamplerAniso,
-            .imageView = m_LavaFlowMap.imageView,
-            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-        };
-        vkutil::UpdateDescriptorSet(context, 0, imageInfo, mLavaFlowMapDescriptorSet,
-                                    VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+        {
+            VkDescriptorImageInfo imageInfo = {
+                .sampler = vkutil::repeatSamplerAniso,
+                .imageView = m_LavaFlowMap.imageView,
+                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+            };
+            vkutil::UpdateDescriptorSet(context, 0, imageInfo, mLavaFlowMapDescriptorSet,
+                                        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+        }
+
+        {
+            VkDescriptorImageInfo imageInfo = {
+                .sampler = vkutil::repeatSamplerAniso,
+                .imageView = m_FlowMapNoise.imageView,
+                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+            };
+            vkutil::UpdateDescriptorSet(context, 1, imageInfo, mLavaFlowMapDescriptorSet,
+                                        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+        }
     }
 }
 

@@ -83,6 +83,7 @@ layout (set = 0, binding = 8) uniform RendererDebug
 }debugRenderer;
 
 layout(set = 2, binding = 0) uniform sampler2D textureFlowMap;
+layout(set = 2, binding = 1) uniform sampler2D textureFlowMapNoise;
 
 #define PI 3.14159265359
 
@@ -315,7 +316,7 @@ void main()
     vec2 channel_flow_direction = vec2(1.0, -1.0);
     float blend_cycle = 1.0;
     float cycle_speed = 0.1;
-    float flow_speed =  0.5;
+    float flow_speed =  1.25;
 
     // UV flow  calculation
     /****************************************************************************************************/
@@ -324,10 +325,10 @@ void main()
     // Use noise texture for offset to reduce pulsing effect
     float flow_noise_size = 1.0;
     float flow_noise_influence = 1.0;
-    // float offset = dot(texture(textureFlowMap, uv * flow_noise_size), noise_texture_channel) * flow_noise_influence;
-    float offset = 0.0;
+    float offset = texture(textureFlowMapNoise, uv * flow_noise_size).r * flow_noise_influence;
+    // float offset = 0.0;
 
-    float phase1 = mod(offset + pc.t * cycle_speed, blend_cycle);
+    float phase1 = blend_cycle - abs(mod((offset + pc.t * cycle_speed), (2 * blend_cycle)) - blend_cycle);
     float phase2 = mod(offset + pc.t * cycle_speed + half_cycle, blend_cycle);
 
     vec4 flow_tex = texture(textureFlowMap, uv);
@@ -355,15 +356,15 @@ void main()
     vec2 layer2 = flow * phase2 + uv;
 
     // Mix animated uv layers for color
-    vec3 color = mix(texture(uTextureColour, layer1), texture(uTextureColour, layer2), blend_factor).rgb * uNumbers.baseColour.rgb;
+    vec3 color = mix(texture(uTextureColour, layer1), texture(uTextureColour, layer1), blend_factor).rgb * uNumbers.baseColour.rgb;
 
     // Mix emissive uv layers
-    vec3 emissive = uNumbers.emissiveFactor.rgb * mix(texture(uTextureEmissive, layer1), texture(uTextureEmissive, layer2), blend_factor).rgb;
+    vec3 emissive = uNumbers.emissiveFactor.rgb * mix(texture(uTextureEmissive, layer1), texture(uTextureEmissive, layer1), blend_factor).rgb;
 
     // == Metal and Roughness ==
-    float roughness = mix(texture(uTextureMetallicRoughness, layer1).g, texture(uTextureMetallicRoughness, layer2).g, blend_factor)  * uNumbers.roughness;
-    float metallic = mix(texture(uTextureMetallicRoughness, layer1).b, texture(uTextureMetallicRoughness, layer2).b, blend_factor) * uNumbers.metallness;
-    vec3 texNormal = mix(texture(uTextureNormal, layer1).xyz, texture(uTextureNormal, layer2).xyz, blend_factor);
+    float roughness = mix(texture(uTextureMetallicRoughness, layer1).g, texture(uTextureMetallicRoughness, layer1).g, blend_factor)  * uNumbers.roughness;
+    float metallic = mix(texture(uTextureMetallicRoughness, layer1).b, texture(uTextureMetallicRoughness, layer1).b, blend_factor) * uNumbers.metallness;
+    vec3 texNormal = mix(texture(uTextureNormal, layer1).xyz, texture(uTextureNormal, layer1).xyz, blend_factor);
     vec3 pixelNormal = normalize(TBNFrame * (texNormal * 2.f - 1.f));
 
     vec3 outLight = vec3(0.0);
@@ -377,13 +378,16 @@ void main()
     outLight += brdf;
 
     // add the emissive light
-    outLight += emissive * ((sin(pc.t) + 1.0) / 2.0);
+    float pulseFactor = ((sin(0.7 * pc.t) + 1.0) / 2.0) / 2.0 + 0.5;
+    // float pulseFactor = 1.0;
+    outLight += emissive * pulseFactor;
 
     // This is no longer needed since we now have IBL which is the "indirect"
     // Keeping this here for reference
     // vec3 ambient = vec3(0.02) * color;
 
     fragColor = vec4(outLight, 1.0);
+    // fragColor = vec4(texture(textureFlowMap, uv).rgb, 1.0);
     NormalMetallic = vec4(pixelNormal.xyz * 0.5 + 0.5, roughness);
 
     switch(debugRenderer.debugMode) {

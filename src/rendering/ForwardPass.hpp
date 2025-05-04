@@ -60,6 +60,7 @@ class ForwardPass {
     Image m_NormalRoughness;
 
     Image m_LavaFlowMap;
+    Image m_FlowMapNoise;
 
     VkRenderPass m_renderPass;
     VkFramebuffer m_framebuffer;
