@@ -316,7 +316,7 @@ void main()
     vec2 channel_flow_direction = vec2(1.0, -1.0);
     float blend_cycle = 1.0;
     float cycle_speed = 0.1;
-    float flow_speed =  1.25;
+    float flow_speed =  0.5;
 
     // UV flow  calculation
     /****************************************************************************************************/
@@ -387,9 +387,7 @@ void main()
     // vec3 ambient = vec3(0.02) * color;
 
     vec3 camPos = ubo.cameraPosition.xyz;
-    camPos.y = 0;
     vec3 worldPos = WorldPos.xyz;
-    worldPos.y = 0;
     float dist = length(camPos - worldPos);
 
     // vec3 texCoords = (inverse(pc.ModelMatrix) * WorldPos).xyz;
@@ -397,7 +395,7 @@ void main()
     // fragColor = mix(vec4(outLight, 1.0), vec4(textureLod(prefilteredSkybox, viewDir, 0).rgb, 1.0), dist / ubo.farPlane / 0.75);
     fragColor = vec4(outLight, 1.0);
     float scaledDist = dist / ubo.farPlane / 0.5;
-    fragColor.a = mix(1.0, 0.0, scaledDist);
+    fragColor = mix(fragColor, vec4(0.6, 0.75, 1.0, 1.0), scaledDist);
     // fragColor = vec4(texture(textureFlowMap, uv).rgb, 1.0);
     NormalMetallic = vec4(pixelNormal.xyz * 0.5 + 0.5, roughness);
 
