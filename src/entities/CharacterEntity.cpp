@@ -38,6 +38,7 @@ namespace {
 }
 
 CharacterEntity::~CharacterEntity() {
+    delete mCamera;
 }
 
 bool CharacterEntity::WouldUncrouchHitCeiling() const {

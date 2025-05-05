@@ -264,6 +264,7 @@ namespace SDL_INPUT
                 }
             }
         }
+        SDL_free(joysticks);
         // Register previous keys states
         // NOTE: Android supports up to 260 keys
         for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) {
@@ -671,6 +672,9 @@ namespace SDL_INPUT
         // NOTE: This is wanted because there are SDL_FINGER* events available which provide unique data
         //       Due to the way PollInputEvents() and rgestures.h are currently implemented, setting this won't break SUPPORT_MOUSE_GESTURES
         SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
+
+        // free the joysticks array
+        SDL_free(joysticks);
 
         return 0;
     }
