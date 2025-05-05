@@ -673,6 +673,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             joint.inverseBindMatrix = inverseBindMatrices[j];
             skin.AddJoint(joint);
         }
+        skin.ComputeRoot();
         aSkins.push_back(skin);
     }
 

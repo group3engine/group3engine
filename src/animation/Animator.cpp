@@ -161,8 +161,11 @@ void Animator::UpdateJointsTransform() {
         for (auto &data : animationData) {
             auto entity = data.target;
             auto transform = data.transform;
-            entity->SetTransform(transform);
+            transform.UpdateMatrix();
+            entity->SetTransformWithoutUpdate(transform);
         }
+        // update the world transforms from the root
+        mSkin->GetRoot()->SetTransform(mSkin->GetRoot()->GetLocalTransform());
     }
 }
 void Animator::SetActiveAnimation(const std::string &aName) {

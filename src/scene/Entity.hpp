@@ -108,6 +108,8 @@ class Entity {
     void SetTransform(Transform aTransform);
     /// Set the local transform of the entity as a mat4. This will also update the physics transform
     void SetTransform(glm::mat4 aTransform);
+    /// Set the local transform without updating the children's world transform, physics, or any matrix calculations
+    void SetTransformWithoutUpdate(Transform aTransform) { mLocalTransform = aTransform; }
 
     /// Get the local transform as a #Transform
     [[nodiscard]] Transform GetLocalTransform() const;
