@@ -108,7 +108,9 @@ class CharacterEntity : public Entity {
 
     size_t GetPlayerId() const { return mPlayerId; }
 
+
     void SetHanging(bool isHanging) { mHangingAbout = isHanging; }
+
 
     void SetPosition(glm::vec3 position) {
         mSampleJoltCharacter->SetCharacterPosition(RVec3(position.x, position.y, position.z));

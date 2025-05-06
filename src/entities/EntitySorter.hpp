@@ -60,9 +60,11 @@ enum class EntityType {
     IDOL,
     SPAWNPORTAL,
     ZIPLINE,
+
     DISAPPEARINGPLATFORM,
     COIN,
     ANIMATIONTEST,
+
     // Add more entity types here
 };
 // a map of strings to entity types
@@ -95,6 +97,7 @@ static const std::unordered_map<std::string, EntityType> entityTypeMap = {
     {"disappearing platform", EntityType::DISAPPEARINGPLATFORM},
     {"coin", EntityType::COIN},
     {"animate", EntityType::ANIMATIONTEST},
+
 };
 // a function to convert a string to an entity type
 inline EntityType GetEntityTypeFromString(const std::string& aTypeName) {
