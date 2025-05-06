@@ -25,9 +25,14 @@ Camera::Camera(const glm::vec3 position, glm::vec3 direction, glm::vec3 up)
     :
     m_position{position}, m_direction{direction}, m_up{up} {
     m_mouseSensitivity = 0.1f;
-    m_controllerSensitivity = 100.f;
+    m_controllerSensitivity = 200.f;
     m_increaseSpeed = 0.0f;
     m_cameraSpeed = defaultSpeed;
+    //register the bindings for camera control - controller and mouse to rotate the camera
+    controlMapping.AddBinding("mouseX", MOUSE_AXIS::eX);
+    controlMapping.AddBinding("mouseY", MOUSE_AXIS::eY);
+    controlMapping.AddBinding("controlX", SDL_INPUT::GamepadAxis::GAMEPAD_AXIS_RIGHT_X, 0);
+    controlMapping.AddBinding("controlY", SDL_INPUT::GamepadAxis::GAMEPAD_AXIS_RIGHT_Y, 0);
 }
 
 void Camera::UpdateCameraMovement(const RVec3 &characterCOM, ECrouchState crouchState) {
@@ -116,12 +121,12 @@ void Camera::UpdateCameraRotation(double deltaTime) {
         // skip next frame so we have the correct lastx and lasty position for cursor
         glm::vec2 delta {};
         if (wasMousing) {
-            delta = m_mouseSensitivity * GetMouseDelta();
+            delta = m_mouseSensitivity * glm::vec2{controlMapping.GetActionDown("mouseX"), controlMapping.GetActionDown("mouseY")};
             delta.y = -delta.y; // Prevent inverted y
         }
         // Get the right joystick input
-        delta.x += GetGamepadAxis(SDL_INPUT::GamepadAxis::GAMEPAD_AXIS_RIGHT_X, 0) * m_controllerSensitivity * deltaTime;
-        delta.y -= GetGamepadAxis(SDL_INPUT::GamepadAxis::GAMEPAD_AXIS_RIGHT_Y, 0) * m_controllerSensitivity * deltaTime;
+        delta.x += controlMapping.GetActionDown("controlX") * m_controllerSensitivity * deltaTime;
+        delta.y -= controlMapping.GetActionDown("controlY")  * m_controllerSensitivity * deltaTime;
 
         // Update the camera angles based on the mouse and controller movement
         UpdateCameraAngles(delta);

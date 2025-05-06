@@ -9,6 +9,7 @@
 #include "PhysicsManager.hpp"
 #include "Utils.hpp"
 #include "Buffer.hpp"
+#include "InputMapping.hpp"
 
 class Scene;
 
@@ -111,6 +112,7 @@ class Camera : public Entity {
     inline static float sCameraUpOffset = 0.75f;
     inline static float sCameraCrouchingUpOffset = 0.3f;
     inline static float sCameraRightOffset = 0.0f;
+    InputMapping controlMapping{};
 
   private:
     glm::vec3 m_position;
