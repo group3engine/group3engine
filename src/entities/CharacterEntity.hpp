@@ -183,6 +183,8 @@ class CharacterEntity : public Entity {
   private:
     bool m_has_save = false;
 
+    bool mMidJump = false;
+
     bool mLeftClimb = false;
     bool mEnterClimb = false;
     // Set to a large negative so we don't think we have been recently climbing on spawn

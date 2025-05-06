@@ -587,7 +587,6 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
 
     if(aOther->CompareTag("deathzone")) {
         SPDLOG_INFO("I am {} and I collided with a death zone", GetName());
-        mInternalEvents.push(InternalEvent::eDeath);
         Die();
     }
 
@@ -810,13 +809,19 @@ void CharacterEntity::LateUpdate(double deltaTime)
         mInClimb = false;
         // we should vibrate the controller
         SDL_INPUT::SetGamepadVibration(0, 0.5f, 0.5f, 0.1f);
-        // play the jump sound
-        glm::vec3 pos = GetWorldTransformComponents().translation;
-        AudioManager::get().Play3D("jump", pos.x, pos.y, pos.z);
+        if(mMidJump == false)
+        {
+            // play the jump sound
+            glm::vec3 pos = GetWorldTransformComponents().translation;
+            AudioManager::get().Play3D("jump", pos.x, pos.y, pos.z);
+            mMidJump = true;
+        }
+        
     }
     // if we have just landed
     if(mSampleJoltCharacter->GetJumpState() == EJumpState::End)
     {
+        mMidJump = false;
         // we should vibrate the controller
         SDL_INPUT::SetGamepadVibration(0, 0.1f, 0.1f, 0.1f);
         // play the land sound
