@@ -587,7 +587,6 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
 
     if(aOther->CompareTag("deathzone")) {
         SPDLOG_INFO("I am {} and I collided with a death zone", GetName());
-        mInternalEvents.push(InternalEvent::eDeath);
         Die();
     }
 
