@@ -48,5 +48,10 @@ class Lever : public Entity {
     float mCurrentAnimationTime = 0.0f;
 
     bool mIsPulled = false;
+
+    float fpsMinSpec = 30.0f;
+    float mNetworkRepeatTime = 0.25f * 1.0f / fpsMinSpec;
+    float mCurrentNetworkRepeatTime = 0.25f * 1.0f / fpsMinSpec;
+    ENetworkLocality mPulledNetworkLocality = ENetworkLocality::None;
 };
 #endif // GROUP3ENGINE_LEVER_HPP

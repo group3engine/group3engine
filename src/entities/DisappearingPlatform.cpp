@@ -28,7 +28,7 @@ void DisappearingPlatform::Awake()
         exit(EXIT_FAILURE);
     }
     // get the start scale
-    startScale = GetWorldTransformComponents().scale;
+    startScale = GetLocalTransform().scale;
 
 
 }

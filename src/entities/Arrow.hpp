@@ -17,6 +17,8 @@ public:
     void Update(double deltaTime) override;
 
 private:
+    float mSpeed = 0.0f;
+
     glm::vec3 start_position {};
     glm::vec3 startVelocity = glm::vec3(0.f, 0, 10.f);
     glm::vec3 velocity = startVelocity;

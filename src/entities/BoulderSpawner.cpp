@@ -58,7 +58,7 @@ Boulder BoulderSpawner::CreateBoulder(Entity *aEntity)
     // choose the invisible time
     float invisibleTime = RandRange(minInvisibleTime, maxInvisibleTime);
     // choose the start invisible time - randomly between invisible time and 0
-    float startTimer = RandRange(0.f, invisibleTime);
+    float startTimer = RandRange(0.f, maxInvisibleTime);
     // create the boulder
     Boulder boulder;
     boulder.boulder = aEntity;

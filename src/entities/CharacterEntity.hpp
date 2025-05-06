@@ -14,6 +14,7 @@
 #include "InputMapping.hpp"
 
 struct WinSignal;
+struct CoinSignal;
 
 enum class InternalEvent {
     eDeath,
@@ -70,9 +71,13 @@ class CharacterEntity : public Entity {
     void OnWin(WinSignal *signal);
 
     // set the checkpoint
-    void SetCheckpoint(glm::vec3 checkpoint) { mLastCheckpoint = checkpoint; Save();}
+    void SetCheckpoint(glm::vec3 checkpoint) {
+        mLastCheckpoint = checkpoint;
+        Save();
+    }
 
     void Die();
+    void AddCoin(CoinSignal *signal);
     // reset the character to the last checkpoint
     void Reset() {
         mSampleJoltCharacter->SetCharacterPosition(RVec3(mLastCheckpoint.x,
@@ -103,6 +108,10 @@ class CharacterEntity : public Entity {
 
     size_t GetPlayerId() const { return mPlayerId; }
 
+
+    void SetHanging(bool isHanging) { mHangingAbout = isHanging; }
+
+
     void SetPosition(glm::vec3 position) {
         mSampleJoltCharacter->SetCharacterPosition(RVec3(position.x, position.y, position.z));
         // set the velocity to zero
@@ -116,6 +125,19 @@ class CharacterEntity : public Entity {
     glm::vec3 CalcClimbDirection(Entity *climbEntity);
 
     void RegisterControls();
+
+    bool WouldJumpHitCeiling(ECrouchState crouchState) const;
+
+    bool WouldUncrouchHitCeiling() const;
+
+  public:
+    inline static float sJumpTimeScale = 0.1f;
+    inline static float sFallTimeScale = 0.3f;
+
+    inline static float sFallBlend = 1.0f;
+    inline static float sHangingBlend = 0.25f;
+    inline static float sClimbTimeScale = 0.45f;
+    inline static float sRunningCrouchTimeScale = 1.0f;
 
   protected:
     Camera *mCamera = nullptr;
@@ -131,6 +153,8 @@ class CharacterEntity : public Entity {
     float mDeathVisibleTimer = 0.0f;
     float mFinishVisibleTimer = 0.0f;
 
+    size_t mCoinCount = 0;
+
     DeathState mDeathState = DeathState::eLiving;
     double mDeathTimer = 0.0;
     const double mDeathTime = 1.0;
@@ -140,26 +164,33 @@ class CharacterEntity : public Entity {
     float mWinVisibleTimer = 0.0f;
 
     gui::DeathCounterData mGuiDeathCounterData{};
+    gui::CoinCounterData mGuiCoinCounterData{};
     gui::DeathPopupData mGuiDeathPopupData{};
     gui::FinishPopupData mGuiFinishPopupData{};
 
     Transform mInitialTransform = {};
 
     glm::vec3 mLastCheckpoint = glm::vec3(0, 10.0f, 0);
+    int mLastCheckpointID = -1;
 
     std::stack<InternalEvent> mInternalEvents;
     std::stack<InternalUiEvent> mInternalUiEvents;
     bool mInClimb = false;
     bool mIsCrouching = false;
     bool mIsEmoting = false;
+    bool mHangingAbout = false;
 
     InputMapping mInputMapping{};
 
   private:
     bool m_has_save = false;
 
+    bool mMidJump = false;
+
     bool mLeftClimb = false;
     bool mEnterClimb = false;
+    // Set to a large negative so we don't think we have been recently climbing on spawn
+    double mLastClimbTime = -1000000.0f;
 
     glm::vec3 mClimbDirection = glm::vec3(0.f, 0.f, 0.f);
 

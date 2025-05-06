@@ -21,7 +21,7 @@ void Idol::Awake() {
     // Init proximity prompt sensor
     // TODO: Factor this out into a class so we can programatically create proximity sensors given a
     // proximity_prompt float property
-    glm::vec3 translation = GetWorldTransformComponents().translation;
+    glm::vec3 translation = GetParent()->GetWorldTransformComponents().translation;
     BodyCreationSettings sensorSettings(new SphereShape(mProximityPromptRadius),
                                         Vec3(translation.x, translation.y, translation.z),
                                         Quat::sIdentity(), EMotionType::Static, Layers::MOVING);
@@ -34,6 +34,8 @@ void Idol::Awake() {
     PhysicsManager::get().RegisterEntity(this, mSensor->mBodyId);
 
     GetScene()->mSignalSystem.AddReceiver<Idol, ResetToSpawnSignal>(this, &Idol::OnResetToSpawn);
+    // get the animator and play idol hover
+    GetAnimator().SetActiveAnimation("idolhover", 0, false, true);
 }
 
 void Idol::OnInteract(Entity *other, ENetworkLocality networkLocality) {
@@ -44,9 +46,12 @@ void Idol::OnInteract(Entity *other, ENetworkLocality networkLocality) {
         winSignal.transmitter = this;
         winSignal.receiver = other;
         GetScene()->mSignalSystem.EmitSignal(&winSignal);
+
+        SetAsInvisible();
     }
 }
 
 void Idol::OnResetToSpawn([[maybe_unused]] ResetToSpawnSignal *signal) {
     mIsCollected = false;
+    SetAsVisible();
 }

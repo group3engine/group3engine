@@ -14,6 +14,7 @@
 #include "Entity.hpp"
 #include "EntitySorter.hpp"
 #include "Animation.hpp"
+#include "Scene.hpp"
 #include "Skin.hpp"
 #include "LightManager.hpp"
 #include "cgltf_write.h"
@@ -57,7 +58,8 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
              MaterialManager &aMaterialManager, TextureManager &aTextureManager,
              std::vector<Entity *> &aEntities, bool aIsDebug,
              std::vector<Animation> &aAnimations, std::vector<Skin> &aSkins,
-             std::unordered_map<Entity *, std::vector<Entity *>> &aCharacterEntities) {
+             std::unordered_map<Entity *, std::vector<Entity *>> &aCharacterEntities,
+             Scene *aScene) {
     // Convert directory separators to preferred directory separator
     // Slight try at cross-platform for Windows
     aFilepath.make_preferred();
@@ -476,6 +478,8 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
         aEntities.emplace_back(entityPtr);
         Entity &entity = *entityPtr;
 
+        entity.InitID(aScene->PostIncrementEntityCount());
+
         if(extras.physicsType == "static")
         {
             entity.SetPhysicsType(PhysicsType::STATIC);
@@ -669,6 +673,7 @@ int LoadGLTF(std::filesystem::path aFilepath, MeshManager &aMeshManager,
             joint.inverseBindMatrix = inverseBindMatrices[j];
             skin.AddJoint(joint);
         }
+        skin.ComputeRoot();
         aSkins.push_back(skin);
     }
 

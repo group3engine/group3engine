@@ -24,6 +24,14 @@
 #include "Config.hpp"
 #include "Engine.hpp"
 #include "Fonts.hpp"
+
+#include "SampleJoltCharacter.h"
+#include "Camera.hpp"
+#include "CharacterBaseTest.h"
+#include "CharacterEntity.hpp"
+#include "Sinking.hpp"
+#include "ZipLine.hpp"
+
 namespace {
     auto PushBackStyleVar = [](size_t i, std::function<void()> f) {
         f();
@@ -417,7 +425,61 @@ void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data,
     ImGui::Begin(fmt::format("Death Counter Window##{}", playerId).c_str(), nullptr, flags);
 
     // Text
-    ImGui::Text("%s", str.c_str());
+    ImGui::Text(str.c_str());
+
+    // Heart
+    ImVec2 offset = {pos.x - textSize.x, pos.y};
+    NewHeartSprite(offset, playerId);
+
+    ImGui::PopStyleVar(sv);
+
+    ImGui::End();
+}
+
+void ImGuiRenderer::NewCoinCounter(const gui::CoinCounterData &data,
+                                    size_t activePlayerCount, size_t playerId) {
+    ImGuiViewport viewport = CalcPlayerViewport(Context::get().extent, activePlayerCount, playerId);
+
+    size_t coinCount = data.coinCount;
+
+    // Format to a width of 4
+    // See https://hackingcpp.com/cpp/libs/fmt.html
+    std::string str = fmt::format("Coin Counter {:4}", coinCount);
+
+    size_t sv = 0;
+
+    float windowBorderSize = 0.0f;
+    if (enableTextWindowBorder) {
+        // Display a window border for debug purposes
+        windowBorderSize = ImGui::GetStyle().WindowBorderSize;
+    } else {
+        // No window border
+        sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); });
+    }
+
+    // Bottom right of viewport. NOTE: hardcoded bottom left positioning
+    ImVec2 pos = ImVec2(viewport.WorkPos.x, viewport.WorkPos.y + viewport.WorkSize.y);
+    ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
+
+    // Make the window fit the text exactly
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(0, 0)); });
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0)); });
+    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); });
+
+    ImGui::SetNextWindowSize(textSize);
+    // NOTE: hardcoded bottom right positioning
+    ImGui::SetNextWindowPos(ImVec2(pos.x - windowBorderSize, pos.y - textSize.y - windowBorderSize));
+    ImGui::SetNextWindowBgAlpha(0.0f);
+
+    // Flags to get a non-interactable blank window to draw on
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+    ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+    ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
+
+    ImGui::Begin(fmt::format("Coin Counter Window##{}", playerId).c_str(), nullptr, flags);
+
+    // Text
+    ImGui::Text(str.c_str());
 
     // Heart
     ImVec2 offset = {pos.x - textSize.x, pos.y};
@@ -478,7 +540,7 @@ void ImGuiRenderer::NewDeathPopup(const gui::DeathPopupData &data,
     ImGui::Begin(fmt::format("Death Popup Window##{}", playerId).c_str(), nullptr, flags);
 
     // Text
-    ImGui::Text("%s", str.c_str());
+    ImGui::Text(str.c_str());
 
     ImGui::PopStyleVar(sv);
 
@@ -535,7 +597,7 @@ void ImGuiRenderer::NewFinishPopup(const gui::FinishPopupData &data,
     ImGui::Begin(fmt::format("Finish Popup Window##{}", playerId).c_str(), nullptr, flags);
 
     // Text
-    ImGui::Text("%s", str.c_str());
+    ImGui::Text(str.c_str());
 
     ImGui::PopStyleVar(sv);
 
@@ -585,7 +647,7 @@ void ImGuiRenderer::NewTimer(const gui::TimerData &data,
     ImGui::Begin(fmt::format("Timer Window##{}", playerId).c_str(), nullptr, flags);
 
     // Text
-    ImGui::Text("%s", str.c_str());
+    ImGui::Text(str.c_str());
 
     ImGui::PopStyleVar(sv);
 
@@ -761,7 +823,7 @@ void ImGuiRenderer::Text(std::string const &text, ImVec2 position, ImFont *font,
     ImGui::Begin(fmt::format("text rendering##PlayerId{}TextId{}", playerId, textId).c_str(), nullptr, flags);
     textId++;
 
-    ImGui::Text("%s", text.c_str());
+    ImGui::Text(text.c_str());
 
     ImGui::PopStyleVar(sv);
 
@@ -839,6 +901,51 @@ void ImGuiRenderer::Update(Scene *scene)
                 std::string label = "Light " + std::to_string(i) + " Position";
                 ImGui::SliderFloat3(label.c_str(), &lights[i]->position.x, -10.0f, 10.0f, "%.2f");
             }
+        }
+    }
+
+    float sinkingStep = 0.1f;
+    float sinkingStepFast = 0.5f;
+    ImGui::InputFloat("mSinkingSpeed", &Sinking::mSinkingSpeed, sinkingStep, sinkingStepFast, nullptr, 0);
+
+    {
+        float step = 0.1f;
+        float stepFast = 0.5f;
+        ImGui::InputFloat("Camera::sZoomLevel", &Camera::sZoomLevel, step, stepFast, nullptr, 0);
+        ImGui::InputFloat("ZipLine::sZiplineCameraZoomLevel", &ZipLine::sZiplineCameraZoomLevel, step, stepFast, nullptr, 0);
+    }
+
+    if (ImGui::CollapsingHeader("CharacterSettings")) {
+        {
+            float step = 0.01f;
+            float stepFast = 0.1f;
+            ImGui::InputFloat("sCameraUpOffset: ", &Camera::sCameraUpOffset, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sCameraCrouchingUpOffset: ", &Camera::sCameraCrouchingUpOffset, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sCameraRightOffset: ", &Camera::sCameraRightOffset, step, stepFast, nullptr, 0);
+        }
+
+        {
+            float step = 0.1f;
+            float stepFine = 0.01f;
+            float stepFast = 0.5f;
+            ImGui::InputFloat("sCharacterSpeed: ", &CharacterBaseTest::sCharacterSpeed, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sJumpTime", &CharacterBaseTest::sJumpTime, stepFine, step, nullptr, 0);
+            ImGui::InputFloat("sFallTime", &CharacterBaseTest::sFallTime, stepFine, step, nullptr, 0);
+        }
+
+        {
+            float step = 0.01f;
+            float stepFast = 0.1f;
+            ImGui::InputFloat("sJumpHeight", &CharacterBaseTest::sJumpHeight, step, stepFast, nullptr, 0);
+            CharacterBaseTest::sJumpSpeed = 2.0f * CharacterBaseTest::sJumpHeight / CharacterBaseTest::sJumpTime;
+            CharacterBaseTest::sJumpGravity = -2.0f * CharacterBaseTest::sJumpHeight / Square(CharacterBaseTest::sJumpTime);
+            CharacterBaseTest::sFallGravity = -2.0f * CharacterBaseTest::sJumpHeight / Square(CharacterBaseTest::sFallTime);
+            ImGui::InputFloat("sJumpTimeScale", &CharacterEntity::sJumpTimeScale, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sFallTimeScale", &CharacterEntity::sFallTimeScale, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sFallBlend", &CharacterEntity::sFallBlend, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sHangingBlend", &CharacterEntity::sHangingBlend, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sClimbTimeScale", &CharacterEntity::sClimbTimeScale, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sRunningCrouchTimeScale", &CharacterEntity::sRunningCrouchTimeScale, step, stepFast, nullptr, 0);
         }
     }
 
@@ -975,17 +1082,17 @@ void ImGuiRenderer::ChatWindow(const std::vector<Message> &messages, std::functi
         ImGui::BeginChild("ChatMessages", ImVec2(availableWidth, chatHeight), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
         for (const auto &msg : messages)
         {
-            ImGui::Text("%s", msg.playerName.c_str());
+            ImGui::Text(msg.playerName.c_str());
             ImGui::PushFont(Fonts::TextFontSubtle);
             float textSpace = ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(msg.timestamp.c_str()).x - 20.0f;
             ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + textSpace);
-            ImGui::Text("%s", msg.text.c_str());
+            ImGui::Text(msg.text.c_str());
             ImGui::PopTextWrapPos();
             ImGui::PopFont();
             ImGui::PushFont(Fonts::TextFontSmall);
             float tsWidth = ImGui::CalcTextSize(msg.timestamp.c_str()).x;
             ImGui::SameLine(ImGui::GetWindowWidth() - tsWidth - 10.0f);
-            ImGui::Text("%s", msg.timestamp.c_str());
+            ImGui::Text(msg.timestamp.c_str());
             ImGui::PopFont();
         }
         ImGui::PopStyleVar();

@@ -102,8 +102,14 @@ void Lever::OnInteract(Entity *other, ENetworkLocality networkLocality) {
     auto trapdoorsActivated =
         std::any_of(mTrapdoors.begin(), mTrapdoors.end(), [](auto *e) { return e->IsActivated(); });
 
+    if (networkLocality == ENetworkLocality::Remote && GetScene()->GetNetworkEntitiesManager()) {
+        mCurrentAnimationTime = 0.0f;
+        mPulledNetworkLocality = networkLocality;
+    }
+
     if (!mIsPulled && !trapdoorsActivated) {
         mIsPulled = true;
+        mPulledNetworkLocality = networkLocality;
 
         for (auto *trapdoor : mTrapdoors) {
             trapdoor->Activate();
@@ -137,6 +143,8 @@ void Lever::Update(double deltaTime) {
         mCurrentAnimationTime = 0.0f;
         // Swap between initial and final rotation so the lever can be switched back and forth
         std::swap(mInitialRotation, mFinalRotation);
+
+        mPulledNetworkLocality = ENetworkLocality::None;
     }
 
     if (mIsPulled) {
@@ -145,5 +153,23 @@ void Lever::Update(double deltaTime) {
         mLeverHandle->GetRigidBody().SetRotationJolt(rotation.Normalized());
 
         mCurrentAnimationTime += deltaTime;
+
+        // If we pulled the lever locally then resend the lever pulled packet in case it is dropped
+        if (mPulledNetworkLocality == ENetworkLocality::Local &&
+            GetScene()->GetNetworkEntitiesManager() &&
+            mCurrentNetworkRepeatTime > 0.0f)
+        {
+            // Restart animation timer / cooldown
+            mCurrentAnimationTime = 0.0f;
+
+            // Resend lever pulled packet
+            nlohmann::json &localJson = GetScene()->GetNetworkEntitiesManager()->GetLocalJson();
+            nlohmann::json json = {{"entityID", mEntityID}, {"wasPulled", true}};
+            localJson["levers"].emplace_back(json);
+
+            mCurrentNetworkRepeatTime -= deltaTime;
+        } else {
+            mCurrentNetworkRepeatTime = 0.0f;
+        }
     }
 }

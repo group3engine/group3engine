@@ -18,6 +18,8 @@ constexpr float maxSpeed = 100.0;
 constexpr float minSpeed = 1.0f;
 constexpr float defaultSpeed = 3.0f;
 
+enum class ECrouchState;
+
 enum class EInputState {
     FORWARD,
     BACKWARD,
@@ -51,7 +53,7 @@ class Camera : public Entity {
     void SetPhysics(PhysicsManager* input_physics_reference) {m_physics_reference = input_physics_reference; }
     void SetScene(Scene* input_scene_pointer) {m_scene_pointer = input_scene_pointer; }
 
-    void UpdateCameraMovement(const Transform &character_transform);
+    void UpdateCameraMovement(const RVec3 &characterCOM, ECrouchState crouchState);
     void UpdateCameraRotation(double deltaTime);
     void UpdateCameraAngles(const glm::vec2 &offset);
 
@@ -93,7 +95,22 @@ class Camera : public Entity {
     [[nodiscard]] bool isInFreeCameraMode() const { return m_inputType == InputType::FreeCamera; }
     [[nodiscard]] bool isInFollowCharacterMode() const { return m_inputType == InputType::FollowCharacter; }
 
+    void SetNewZoomLevel(float zoomLevel) {
+        previousZoomLevel = sZoomLevel;
+        sZoomLevel = zoomLevel;
+    }
 
+    void ResetZoomLevel() {
+        sZoomLevel = previousZoomLevel;
+    }
+
+  public:
+    inline static float sZoomLevel = 1.8f;
+    float previousZoomLevel = sZoomLevel;
+
+    inline static float sCameraUpOffset = 0.75f;
+    inline static float sCameraCrouchingUpOffset = 0.3f;
+    inline static float sCameraRightOffset = 0.0f;
 
   private:
     glm::vec3 m_position;
@@ -106,7 +123,6 @@ class Camera : public Entity {
     float m_controllerSensitivity;
     double yaw = 90.0f;
     double pitch = 0.0f;
-    float zoom_level = 1.f;
     function<void(glm::vec3)> m_teleportCallback = nullptr;
 
     const PhysicsManager* m_physics_reference;

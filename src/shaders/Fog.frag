@@ -35,12 +35,17 @@ uint cascadeIndex = 0;
 
 vec4 DepthToPosition(vec2 uv)
 {
-	float depth = min(0.99,texture(depthBuffer, uv).x);
+    float depth = texture(depthBuffer, uv).x;
 	vec4 clipSpace = vec4(uv * 2.0 - 1.0, depth, 1.0);
 	vec4 viewSpace = ubo.inverseProjection * clipSpace;
 	viewSpace.xyz /= viewSpace.w;
 
 	return vec4(viewSpace.xyz, 1.0);
+}
+
+bool isOutsideScreenSpace(vec3 pos)
+{
+    return pos.x < 0.0 || pos.x > 1.0 || pos.y < 0.0 || pos.y > 1.0 || pos.z < 0.0 || pos.z > 1.0;
 }
 
 float isShadow(vec3 WorldPos)
@@ -49,11 +54,15 @@ float isShadow(vec3 WorldPos)
 	fragPositionInLightSpace.xyz /= fragPositionInLightSpace.w;
 	fragPositionInLightSpace.xy = fragPositionInLightSpace.xy * 0.5 + 0.5;
 
+    if(isOutsideScreenSpace(fragPositionInLightSpace.xyz))
+        return 1.0;
+
+
     float currentDepth = fragPositionInLightSpace.z;
     vec4 sampleCoord = vec4(fragPositionInLightSpace.xy, float(cascadeIndex), fragPositionInLightSpace.z);
     float shadow = texture(shadowMap, sampleCoord);
 
-    return currentDepth > shadow + 0.001 ? 1.0 : 0.0;
+    return currentDepth > shadow ? 1.0 : 0.0;
 }
 
 vec3 random_pcg3d(uvec3 v) {

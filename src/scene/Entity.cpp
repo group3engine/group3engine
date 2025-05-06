@@ -11,9 +11,6 @@
 #include "Utils.hpp"
 #include "Scene.hpp"
 
-std::atomic<uint32_t> Entity::kEntityCount{0};
-
-
 Entity::Entity(std::string aName, Entity *aParent, Mesh *aMesh, glm::mat4 aLocalTransform)
     : mName(std::move(aName)), mParent(aParent), mMesh(aMesh), mHasMesh(true) {
     // convert the transformation matrix to a translation, rotation
@@ -343,12 +340,13 @@ void Entity::BaseUpdate(double deltaTime) {
     if(GetPhysicsType() == PhysicsType::KINEMATIC || GetPhysicsType() == PhysicsType::DYNAMIC || mHasCharacter || mHasOffset)
     {
         UpdateWorldTransform();
-        UpdateChildrenTransform();
+        if(mHasCharacter)
+            UpdateChildrenTransform();
     }
 
 }
 void Entity::UpdateChildrenTransform() {
-    for (auto &child : mChildren) {
+    for (auto *child : mChildren) {
         child->SetParentTransform(GetWorldTransform());
     }
 }
@@ -383,4 +381,8 @@ void Entity::InitPhysics() {
         // TODO: Only do this if the entity is supposed to DO something when collided with (i.e. sensors)
         PhysicsManager::get().RegisterEntity(this, mRigidBody->mBodyId);
     }
+}
+
+void Entity::InitID(uint32_t id) {
+    mEntityID = id;
 }

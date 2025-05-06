@@ -8,6 +8,12 @@
 #include <fstream>
 #include <cstdlib>
 
+#include <Jolt/Math/Vec3.h>
+#include <Jolt/Physics/Collision/CastResult.h>
+#include <Jolt/Physics/Collision/NarrowPhaseQuery.h>
+#include <Jolt/Physics/Collision/RayCast.h>
+#include <Jolt/Physics/Collision/ObjectLayer.h>
+
 #include "AudioManager.hpp"
 #include "Camera.hpp"
 #include "Engine.hpp"
@@ -34,7 +40,103 @@ namespace {
 CharacterEntity::~CharacterEntity() {
 }
 
+bool CharacterEntity::WouldUncrouchHitCeiling() const {
+    // Get feet position by offseting COM with half cylinder height
+    // Offset to head by adding cylinder height + capsule height + some offset
+    Ref<CharacterVirtual> characterVirtual = mSampleJoltCharacter->GetCharacter();
+    RVec3 characterCOM = mSampleJoltCharacter->GetCharacterCenterOfMassPosition();
+
+    float crouchingHalfCapsuleHeight =
+        mSampleJoltCharacter->GetCapsuleHalfHeight(ECrouchState::Crouching);
+
+    RVec3 capsuleBottomPosition = characterCOM - Vec3(0, crouchingHalfCapsuleHeight, 0);
+
+    float standingHalfCapsuleHeight =
+        mSampleJoltCharacter->GetCapsuleHalfHeight(ECrouchState::Standing);
+    RVec3 standingCapsuleTopPosition =
+        capsuleBottomPosition + 2.0f * RVec3(0, standingHalfCapsuleHeight, 0);
+
+    float characterPadding = characterVirtual->GetCharacterPadding();
+
+    // Add some padding for some breathing room
+    RVec3 ceilingPosition = standingCapsuleTopPosition + 2.0f * RVec3(0, characterPadding, 0);
+
+#ifdef JPH_DEBUG_RENDERER
+    GetScene()->GetDebugRenderer()->DrawSphere(ceilingPosition, 0.1f, Color::sPurple);
+#endif // JPH_DEBUG_RENDERER
+
+    RRayCast ray;
+    ray.mOrigin = characterCOM;
+    ray.mDirection = ceilingPosition - characterCOM;
+
+    JPH::RayCastResult result;
+    JPH::SpecifiedObjectLayerFilter objectLayerFilter{Layers::NON_MOVING};
+    bool hit = PhysicsManager::get().mPhysicsSystem.GetNarrowPhaseQuery().CastRay(
+        ray, result, {}, objectLayerFilter, {});
+
+    bool hitCeiling = hit && result.mFraction >= 0 && result.mFraction < 1.0f;
+
+    return hitCeiling;
+}
+
+bool CharacterEntity::WouldJumpHitCeiling(ECrouchState crouchState) const {
+    // Get feet position by offseting COM with half cylinder height
+    // Offset to head by adding cylinder height + capsule height + some offset
+    Ref<CharacterVirtual> characterVirtual = mSampleJoltCharacter->GetCharacter();
+    RVec3 characterCOM = mSampleJoltCharacter->GetCharacterCenterOfMassPosition();
+
+    RVec3 jumpPeakPosition;
+    if (crouchState == ECrouchState::Crouching) {
+        float crouchingHalfCapsuleHeight =
+            mSampleJoltCharacter->GetCapsuleHalfHeight(ECrouchState::Crouching);
+
+        RVec3 capsuleTopPosition = characterCOM + Vec3(0, crouchingHalfCapsuleHeight, 0);
+
+        float characterPadding = characterVirtual->GetCharacterPadding();
+
+        // Add some padding for some breathing room
+        RVec3 jumpHeight = RVec3(0, mSampleJoltCharacter->GetJumpHeight(), 0);
+        jumpPeakPosition = capsuleTopPosition + jumpHeight + 2.0f * RVec3(0, characterPadding, 0);
+    } else {
+        float standingHalfCapsuleHeight =
+            mSampleJoltCharacter->GetCapsuleHalfHeight(ECrouchState::Standing);
+
+        RVec3 capsuleTopPosition = characterCOM + Vec3(0, standingHalfCapsuleHeight, 0);
+
+        float characterPadding = characterVirtual->GetCharacterPadding();
+
+        // Add some padding for some breathing room
+        RVec3 jumpHeight = RVec3(0, mSampleJoltCharacter->GetJumpHeight(), 0);
+        jumpPeakPosition = capsuleTopPosition + jumpHeight + 2.0f * RVec3(0, characterPadding, 0);
+    }
+
+#ifdef JPH_DEBUG_RENDERER
+    GetScene()->GetDebugRenderer()->DrawSphere(jumpPeakPosition, 0.1f, Color::sOrange);
+#endif // JPH_DEBUG_RENDERER
+
+    RRayCast ray;
+    ray.mOrigin = characterCOM;
+    ray.mDirection = jumpPeakPosition - characterCOM;
+
+    JPH::RayCastResult result;
+    JPH::SpecifiedObjectLayerFilter objectLayerFilter{Layers::NON_MOVING};
+    bool hit = PhysicsManager::get().mPhysicsSystem.GetNarrowPhaseQuery().CastRay(
+        ray, result, {}, objectLayerFilter, {});
+
+    bool hitCeiling = hit && result.mFraction >= 0 && result.mFraction < 1.0f;
+
+    return hitCeiling;
+}
+
 void CharacterEntity::ProcessInput(){
+#ifdef JPH_DEBUG_RENDERER
+    // Extra unneeded call to debug render the test position for the raycasts in these functions
+    if (mIsCrouching) {
+        WouldUncrouchHitCeiling();
+    }
+    WouldJumpHitCeiling(mIsCrouching ? ECrouchState::Crouching : ECrouchState::Standing);
+#endif // JPH_DEBUG_RENDERER
+
     if (IsKeyDown(KEY::eLEFT_SHIFT) && IsMouseButtonPressed(MOUSE_BUTTON::eLEFT)) {
         auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
         flag = !flag;
@@ -122,15 +224,30 @@ void CharacterEntity::ProcessInput(){
             controlInput = rotation * controlInput;
 
             // Check actions
-            if (mInputMapping.GetActionPressed("JUMP") > 0) {
-                jump = true;
+            if(mInClimb)
+            {
+                if (mInputMapping.GetActionPressed("JUMP") > 0) {
+                    jump = true;
+                }
+            }
+            else if (mInputMapping.GetActionDown("JUMP") > 0) {
+                jump = !WouldJumpHitCeiling(mIsCrouching ? ECrouchState::Crouching
+                                                         : ECrouchState::Standing);
             }
 
             if ((mInputMapping.GetActionPressed("EMOTE") > 0) && !mInClimb) {
                 mIsEmoting = true;
             }
             if ((mInputMapping.GetActionPressed("CROUCH") > 0) && !mInClimb) {
-                mIsCrouching = !mIsCrouching;
+                // If we are crouching but we are somewhere we cannot uncrouch (a tunnel)
+                // then do not uncrouch
+                if (mIsCrouching) {
+                    if (!WouldUncrouchHitCeiling()) {
+                        mIsCrouching = !mIsCrouching;
+                    }
+                } else {
+                    mIsCrouching = !mIsCrouching;
+                }
             }
 
             if (mInputMapping.GetActionPressed("INTERACT") > 0) {
@@ -182,6 +299,11 @@ void CharacterEntity::Update(double deltaTime) {
         mInClimb = true;
         mEnterClimb = false;
     }
+    if(mInClimb)
+    {
+        mLastClimbTime = GetTotalTime();
+    }
+    bool recentlyClimbing = GetTotalTime() - mLastClimbTime < 0.1;
     // update the character position offset
     auto characterPhysicsPos = mSampleJoltCharacter->GetCharacterPosition();
     SetCharacterPositionOffset(characterPhysicsPos.GetX(), characterPhysicsPos.GetY(), characterPhysicsPos.GetZ());
@@ -224,7 +346,6 @@ void CharacterEntity::Update(double deltaTime) {
         }
     }
 
-    Entity::Update(deltaTime);
 
 
     // get the character state
@@ -235,17 +356,27 @@ void CharacterEntity::Update(double deltaTime) {
     float characterYSpeed = characterVelocity.y;
     characterVelocity.y = 0;
 
+    Vec3 intendedVelocity = mSampleJoltCharacter->GetIntendedVelocity();
+    glm::vec3 intendedVelocityGlm = {intendedVelocity.GetX(), 0, intendedVelocity.GetZ()};
+
     // if we are in climb, we want to fce
-    if(mInClimb)
+    if(recentlyClimbing)
     {
         characterVelocity = mClimbDirection;
+        intendedVelocityGlm = mClimbDirection;
     }
-    if (glm::length(characterVelocity) > 0.1f) {
+
+    if (glm::length(intendedVelocityGlm) > 0.1f) {
         // set the transform rotation to the direction of the velocity, on top of the initial transform rotation
         Transform newTransform = GetLocalTransform();
-        newTransform.rotation = glm::quatLookAt(glm::normalize(characterVelocity * -1.f), glm::vec3(0, 1, 0)) * mInitialTransform.rotation;
+        newTransform.rotation = glm::quatLookAt(glm::normalize(intendedVelocityGlm * -1.f), glm::vec3(0, 1, 0)) * mInitialTransform.rotation;
         SetTransform(newTransform);
     }
+
+    bool isLooping = true;
+    bool resetAnimation = false;
+    std::string resetAnimationName{};
+
     // work out the active animation, and the time scale
     float timeScale = 1.0f;
     std::string activeAnimation = "idle";
@@ -259,16 +390,21 @@ void CharacterEntity::Update(double deltaTime) {
     switch (mSampleJoltCharacter->GetJumpState()) {
     case EJumpState::Start:
         activeAnimation = "jump up";
+        timeScale = sJumpTimeScale;
         playWholeAnimation = false;
-        timeScale = 1.0f;
+        isLooping = false;
+        resetAnimation = true;
+        resetAnimationName = "jump up";
         break;
     case EJumpState::Falling:
+        SPDLOG_INFO("EJumpState::Falling");
         activeAnimation = "falling";
-        timeScale = 1.0f;
-        blend = 0.5f;
+        timeScale = sFallTimeScale;
+        blend = sFallBlend;
         playWholeAnimation = false;
         break;
     case EJumpState::End:
+        SPDLOG_INFO("EJumpState::End");
         break;
     case EJumpState::None:
         break;
@@ -279,12 +415,13 @@ void CharacterEntity::Update(double deltaTime) {
         timeScale = 1.0f;
         blend = 0.5f;
         playWholeAnimation = false;
+        isLooping = false;
     }
     // if the character is climbing, set the animation to climb
-    if(mInClimb)
+    if(recentlyClimbing)
     {
         activeAnimation = "climb";
-        timeScale = characterYSpeed;
+        timeScale = characterYSpeed * sClimbTimeScale;
         blend = 0.1f;
         playWholeAnimation = false;
         // we can't crouch if we are climbing
@@ -310,20 +447,47 @@ void CharacterEntity::Update(double deltaTime) {
             activeAnimation = activeAnimation + "_crouch";
         if(activeAnimation == "running_crouch")
         {
-            timeScale = 10.0f * timeScale;
+            timeScale = sRunningCrouchTimeScale;
         }
+    }
+    // if we are hanging, set the animation to hanging
+    if(mHangingAbout)
+    {
+        activeAnimation = "hanging";
+        timeScale = 1.f;
+        blend = sHangingBlend;
+        playWholeAnimation = false;
+        isLooping = true;
     }
 
     // for each child, if there is an animator, call set animation
-    for (auto &child : GetChildren()) {
+    for (auto *child : GetChildren()) {
             if (child->HasAnimator()) {
-                child->GetAnimator().SetActiveAnimation(activeAnimation, blend, playWholeAnimation);
+                child->GetAnimator().SetActiveAnimation(activeAnimation, blend, playWholeAnimation, isLooping);
                 child->GetAnimator().SetTimeScale(timeScale);
+                if(resetAnimation)
+                {   
+                    child->GetAnimator().ResetActiveAnimation(resetAnimationName);
+                }
             }
     }
 
     mCamera->UpdateCameraRotation(deltaTime);
-    mCamera->UpdateCameraMovement(GetWorldTransformComponents());
+    ECrouchState crouchState = mIsCrouching ? ECrouchState::Crouching : ECrouchState::Standing;
+    mCamera->UpdateCameraMovement(mSampleJoltCharacter->GetCharacterCenterOfMassPosition(), crouchState);
+    // if the camera is too close to us, set invisible
+    SPDLOG_INFO("cam dist {}", glm::distance(mCamera->GetPosition(), GetCharacterPositionOffset()));
+    if(glm::distance(mCamera->GetPosition(), GetCharacterPositionOffset()) < 1.5f)
+    {
+        for (auto *child : GetChildren()) {
+            child->SetAsInvisible();
+        }
+    }
+    else {
+        for (auto *child : GetChildren()) {
+            child->SetAsVisible();
+        }
+    }
 }
 
 void CharacterEntity::UnscaledUpdate(double deltaTime)
@@ -379,6 +543,9 @@ void CharacterEntity::UpdateUi(double deltaTime) {
     mGuiDeathCounterData.deathCount = mDeathCount;
     ImGuiRenderer::NewDeathCounter(mGuiDeathCounterData, activePlayerCount, mPlayerId);
 
+    mGuiCoinCounterData.coinCount = mCoinCount;
+    ImGuiRenderer::NewCoinCounter(mGuiCoinCounterData, activePlayerCount, mPlayerId);
+
     mDeathVisibleTimer = std::max(0.0f, mDeathVisibleTimer - static_cast<float>(deltaTime));
     mGuiDeathPopupData.visibleTimer = mDeathVisibleTimer;
     ImGuiRenderer::NewDeathPopup(mGuiDeathPopupData, activePlayerCount, mPlayerId);
@@ -420,17 +587,24 @@ void CharacterEntity::OnCollisionStart(Entity *aOther) {
 
     if(aOther->CompareTag("deathzone")) {
         SPDLOG_INFO("I am {} and I collided with a death zone", GetName());
-        mInternalEvents.push(InternalEvent::eDeath);
         Die();
     }
 
     // if its a checkpoint, set the checkpoint
     if(aOther->CompareTag("checkpoint")) {
-        // set the checkpoint to the position of the checkpoint, plus a bit in the y direction
-        glm::vec3 checkpointPosition =
-            aOther->GetWorldTransformComponents().translation + glm::vec3(0, 2.5f, 0);
-        SetCheckpoint(checkpointPosition);
+        std::string entityName = aOther->GetName();
+        assert(entityName.find("Checkpoint") != std::string::npos);
 
+        int checkpointID = std::stoi(entityName.substr(10));
+
+        if (checkpointID > mLastCheckpointID) {
+            // set the checkpoint to the position of the checkpoint, plus a bit in the y direction
+            glm::vec3 checkpointPosition =
+                aOther->GetWorldTransformComponents().translation + glm::vec3(0, 2.5f, 0);
+            SetCheckpoint(checkpointPosition);
+
+            mLastCheckpointID = checkpointID;
+        }
     }
 
     if(aOther->CompareTag("finishzone"))
@@ -509,6 +683,7 @@ void CharacterEntity::Awake() {
     // receivers doesn't grow too large. I.e., player gets to 90% of level, start receiving the
     // on win signal. Then when the player resets to the start of the level remove the receiver
     GetScene()->mSignalSystem.AddReceiver<CharacterEntity, WinSignal>(this, &CharacterEntity::OnWin);
+    GetScene()->mSignalSystem.AddReceiver<CharacterEntity, CoinSignal>(this, &CharacterEntity::AddCoin);
 }
 
 void CharacterEntity::OnWin(WinSignal *signal) {
@@ -547,10 +722,16 @@ void CharacterEntity::Die()
 
 }
 
+void CharacterEntity::AddCoin(CoinSignal *signal)
+{
+    mCoinCount++;
+}
+
 void CharacterEntity::OnCollisionEnd(Entity *aOther)
 {
     if (aOther->CompareTag("climbablezone"))
     {
+        SPDLOG_INFO("Left climb");
         mLeftClimb = true;
     }
 
@@ -620,6 +801,7 @@ void CharacterEntity::RegisterControls()
 void CharacterEntity::LateUpdate(double deltaTime)
 {
 
+
     // if we are beginning a jump
     if(mSampleJoltCharacter->GetJumpState() == EJumpState::Start)
     {
@@ -627,13 +809,19 @@ void CharacterEntity::LateUpdate(double deltaTime)
         mInClimb = false;
         // we should vibrate the controller
         SDL_INPUT::SetGamepadVibration(0, 0.5f, 0.5f, 0.1f);
-        // play the jump sound
-        glm::vec3 pos = GetWorldTransformComponents().translation;
-        AudioManager::get().Play3D("jump", pos.x, pos.y, pos.z);
+        if(mMidJump == false)
+        {
+            // play the jump sound
+            glm::vec3 pos = GetWorldTransformComponents().translation;
+            AudioManager::get().Play3D("jump", pos.x, pos.y, pos.z);
+            mMidJump = true;
+        }
+        
     }
     // if we have just landed
     if(mSampleJoltCharacter->GetJumpState() == EJumpState::End)
     {
+        mMidJump = false;
         // we should vibrate the controller
         SDL_INPUT::SetGamepadVibration(0, 0.1f, 0.1f, 0.1f);
         // play the land sound
