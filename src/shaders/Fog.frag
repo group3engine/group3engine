@@ -91,7 +91,7 @@ vec4 VolFog()
     {
         vec3 currentPos = ubo.cameraPosition.xyz + RayDir * distTravelled;
         float visbility = isShadow(currentPos);
-        finalColour += LightColour * 1.0 * density * fog.StepSize * visbility;
+        finalColour += LightColour * 1.0 * density * fog.StepSize;
         transmittance *= exp(-density * fog.StepSize);
         distTravelled += fog.StepSize;
     }
