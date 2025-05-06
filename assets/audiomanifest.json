@@ -14,5 +14,9 @@
   {
     "name": "arrow",
     "path": "audio/arrow/Arrow.wav"
+  },
+  {
+    "name": "coin",
+    "path": "audio/coin/coincollected.wav"
   }
 ]

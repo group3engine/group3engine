@@ -41,7 +41,7 @@ void Coin::Update(double deltaTime)
 {
     if(mCollectedOnStart)
     {
-        Collect();
+        Collect(true);
         mCollectedOnStart = false;
     }
     if(mCollected == CoinState::DISAPPEARING)
@@ -65,7 +65,7 @@ void Coin::Update(double deltaTime)
     }
 }
 
-void Coin::Collect()
+void Coin::Collect(bool initial_load)
 {
     // send the signal over to the character to add a coin to them
     CoinSignal coinSignal = {};
@@ -73,8 +73,12 @@ void Coin::Collect()
     GetScene()->mSignalSystem.EmitSignal(&coinSignal); // send the signal over
     SPDLOG_INFO("sent signal");
     // play coin collection sound
-    glm::vec3 pos = GetLocalTransform().translation; // get the current postition 
-    AudioManager::get().Play3D("arrow", pos.x, pos.y, pos.z); //arrow is placeholder
+    if(initial_load == false)
+    {
+        glm::vec3 pos = GetLocalTransform().translation; // get the current postition 
+        AudioManager::get().Play3D("coin", pos.x, pos.y, pos.z); //arrow is placeholder
+    }
+    
 
 
     //file saving

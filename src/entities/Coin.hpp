@@ -20,7 +20,7 @@ class Coin : public Entity {
 
         void SetCoinCounter(int* aCoinCount);
 
-        void Collect();
+        void Collect(bool initial_load = false);
     
     private:
         CoinState mCollected = CoinState::UNCOLLECTED;
