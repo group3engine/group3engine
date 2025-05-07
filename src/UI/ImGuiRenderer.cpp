@@ -373,8 +373,7 @@ ImVec2 ImGuiRenderer::NewImage(const std::string &name, const ImVec2 &offset, co
                              ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
                              ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
 
-    static uint64_t id = 0;
-    ImGui::Begin(fmt::format("GUI Texture##{}", id++).c_str(), nullptr, flags);
+    ImGui::Begin(fmt::format("GUI Texture##{}", name).c_str(), nullptr, flags);
     ImGui::Image((ImTextureID)myTexData.DS, imageSize);
 
     ImGui::PopStyleVar(sv);
