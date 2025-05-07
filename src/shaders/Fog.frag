@@ -73,6 +73,17 @@ vec3 random_pcg3d(uvec3 v) {
   return vec3(v) * (1.0/float(0xffffffffu));
 }
 
+// Should be updating the casecade per-step along the ray
+// previously was selecting the cascade for the original fragment position
+// which causes flickering since the position becomes outdated once the ray begins traversal
+void UpdateCascade(vec3 viewPos)
+{
+    for(uint i = 0; i < NUM_SHADOW_CASCADES - 1; ++i)
+    {
+        cascadeIndex = viewPos.z < csmMatrices.cascadeSplits[i] ? cascadeIndex = i + 1: cascadeIndex;
+    }
+}
+
 vec4 VolFog()
 {
     vec4 WorldPos = ubo.inverseView * vec4(DepthToPosition(uv).xyz, 1.0);
@@ -90,6 +101,9 @@ vec4 VolFog()
     while(distTravelled < maxDistance)
     {
         vec3 currentPos = ubo.cameraPosition.xyz + RayDir * distTravelled;
+        vec4 viewPos = ubo.view * vec4(currentPos, 1.0);
+        // Use the new traversed position to update the cascade index
+        UpdateCascade(viewPos.xyz);
         float visbility = isShadow(currentPos);
         finalColour += LightColour * 1.0 * density * fog.StepSize * visbility;
         transmittance *= exp(-density * fog.StepSize);
