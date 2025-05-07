@@ -2,7 +2,7 @@ file(GLOB CPP_SOURCE_FILES "*.cpp" "*.hpp")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_executable(src ${CPP_SOURCE_FILES} "rendering/IrradianceMap.cpp" "UI/BaseMenu.cpp" "UI/MainMenu.cpp" "UI/UIManager.cpp" "UI/NewGameMenu.cpp" "UI/ConfigGameMenu.cpp")
+add_executable(src ${CPP_SOURCE_FILES})
 
 add_subdirectory(audio)
 add_subdirectory(core)
