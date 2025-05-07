@@ -163,6 +163,9 @@ bool Engine::Initialize() {
     mIsMainMenu = true;
 
     mRenderer->CreateRenderPasses();
+
+    InitGuiTextures();
+
     // call the scene awake function
     mScene->Awake();
 
@@ -492,11 +495,23 @@ void Engine::LoadRestOfStuff(const filesystem::path &scenePath, size_t playerCou
     m_progress = 85.f;
 
     // Add back UI textures
-    std::filesystem::path path = assetsPath/ "heart.png";
-    ImGuiRenderer::AddTextures(mTextureManager.get(), path, "heart");
+    InitGuiTextures();
 
     mScene->Awake();
     m_progress = 100.f;
     // end the loading screen
     m_isLoading = false;
+}
+
+void Engine::InitGuiTextures() {
+    // TODO: Move this definition to some game specific code location
+    mGuiTextures = {
+        {assetsPath / "skull-and-bones-white.png", "skull-white"},
+        {assetsPath / "coins-white.png", "coins-white"},
+        {assetsPath / "hourglass-white.png", "hourglass-white"},
+    };
+
+    for (const auto &uiTexture : mGuiTextures) {
+        ImGuiRenderer::AddTextures(mTextureManager.get(), uiTexture.path, uiTexture.name);
+    }
 }

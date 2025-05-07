@@ -546,15 +546,6 @@ void CharacterEntity::UpdateUi(double deltaTime) {
     mGuiCoinCounterData.coinCount = mCoinCount;
     ImGuiRenderer::NewCoinCounter(mGuiCoinCounterData, activePlayerCount, mPlayerId);
 
-    mDeathVisibleTimer = std::max(0.0f, mDeathVisibleTimer - static_cast<float>(deltaTime));
-    mGuiDeathPopupData.visibleTimer = mDeathVisibleTimer;
-    ImGuiRenderer::NewDeathPopup(mGuiDeathPopupData, activePlayerCount, mPlayerId);
-
-    mFinishVisibleTimer = std::max(0.0f, mFinishVisibleTimer - static_cast<float>(deltaTime));
-    mGuiFinishPopupData.visibleTimer = mFinishVisibleTimer;
-
-    ImGuiRenderer::NewFinishPopup(mGuiFinishPopupData, activePlayerCount, mPlayerId);
-
     mWinVisibleTimer = std::max(0.0f, mWinVisibleTimer - static_cast<float>(deltaTime));
     if (mWinVisibleTimer) {
         ImGuiRenderer::Text("You Win!", ImVec2(0.5f, 0.75f), Fonts::TextFont, activePlayerCount, mPlayerId);
