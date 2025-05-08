@@ -4,14 +4,11 @@
 
 #include "BoulderSpawner.hpp"
 
-void BoulderSpawner::Awake()
-{
+void BoulderSpawner::Awake() {
     // find the boulder entities, and construct the boulders
-    for (auto &entity : GetChildren())
-    {
-        if (entity->CompareTag("boulder"))
-        {
-            mBoulders.push_back(CreateBoulder(entity));
+    for (auto *entity : GetChildren()) {
+        if (entity->CompareTag("boulder")) {
+            mBoulders.push_back(entity);
         }
     }
     // set the forwards vector to our forward
@@ -19,67 +16,48 @@ void BoulderSpawner::Awake()
     spawnPoint = GetWorldTransformComponents().translation;
 }
 
-void BoulderSpawner::Update(double deltaTime)
-{
-    // for each boulder, update the state
-    for (auto &boulder : mBoulders)
+void BoulderSpawner::Update(double deltaTime) {
+    mTimer += deltaTime;
+
+    // NOTE: Make sure this happens before the launching boulder code to ensure boulders aren't
+    // set to invisible before their world position is updated in the PrePhysicsUpdate next frame
+    for (auto *entity : mActiveBoulders) // for all the active boulders
     {
-        // if the boulder is invisible, update the timer
-        if (boulder.state == BoulderState::eInvisible)
-        {
-            boulder.timer -= deltaTime;
-            if (boulder.timer <= 0.f)
-            {
-                boulder.state = BoulderState::eLiving;
-                boulder.boulder->SetAsVisible();
-                LaunchBoulder(boulder);
-                boulder.timer = boulder.lifeTime;
-            }
+        // Set the boulder to invisible if it is below a certain level
+        if (entity->GetRigidBody().GetPositionJolt().GetY() < 10.0f) {
+            entity->SetAsInvisible();
         }
-        // if the boulder is living, update the timer
-        else if (boulder.state == BoulderState::eLiving)
-        {
-            boulder.timer -= deltaTime;
-            if (boulder.timer <= 0.f)
-            {
-                boulder.state = BoulderState::eInvisible;
-                boulder.timer = boulder.invisibleTime;
-                boulder.boulder->SetAsInvisible();
-                boulder.boulder->GetRigidBody().SetPosition({10000000, 0, 0});
-            }
+    }
+
+    if (mTimer > mBoulderCooldown) {
+        // Despawn the last active boulder
+        if (!mActiveBoulders.empty()) {
+            mBoulders.insert(mBoulders.begin(), mActiveBoulders.back());
+            mActiveBoulders.pop_back();
         }
+
+        assert(!mBoulders.empty());
+
+        // Launch the last boulder in the pending boulders
+        Entity *lastBoulder = mBoulders.back();
+        LaunchBoulder(lastBoulder);
+        // Move the last pending boulder to the active boulders
+        mActiveBoulders.push_back(lastBoulder);
+        mBoulders.pop_back();
+        // Reset timer
+        mTimer = 0.0f;
+    }
+
+    // Remove any active boulders that have been despawned
+    for (auto *entity : mBoulders) {
+        std::erase_if(mActiveBoulders, [entity](Entity *other) { return entity == other; });
     }
 }
 
-Boulder BoulderSpawner::CreateBoulder(Entity *aEntity)
-{
-    // choose the lifetime
-    float lifeTime = RandRange(minLifeTime, maxLifeTime);
-    // choose the invisible time
-    float invisibleTime = RandRange(minInvisibleTime, maxInvisibleTime);
-    // choose the start invisible time - randomly between invisible time and 0
-    float startTimer = RandRange(0.f, maxInvisibleTime);
-    // create the boulder
-    Boulder boulder;
-    boulder.boulder = aEntity;
-    boulder.lifeTime = lifeTime;
-    boulder.invisibleTime = invisibleTime;
-    boulder.timer = startTimer;
-    boulder.state = BoulderState::eInvisible;
-    // set the boulder to invisible
-    boulder.boulder->SetAsInvisible();
-    return boulder;
-}
-
-void BoulderSpawner::LaunchBoulder(Boulder &aBoulder)
-{
+void BoulderSpawner::LaunchBoulder(Entity *boulder) {
+    boulder->SetAsVisible();
     // Set the boulders location to us
-    aBoulder.boulder->GetRigidBody().SetPosition(spawnPoint);
-    // add an impulse
-    aBoulder.boulder->GetRigidBody().SetLinearVelocity(impulseAmount * forwards);
-}
-
-float RandRange(float min, float max)
-{
-    return min + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (max - min)));
+    boulder->GetRigidBody().SetPosition(spawnPoint);
+    // Add an impulse
+    boulder->GetRigidBody().SetLinearVelocity(impulseAmount * forwards);
 }
