@@ -104,6 +104,10 @@ RMat44 RigidBody::GetWorldTransformJolt() const {
     return PhysicsManager::get().mPhysicsSystem.GetBodyInterface().GetWorldTransform(mBodyId);
 }
 
+RVec3 RigidBody::GetPositionJolt() const {
+    return PhysicsManager::get().mPhysicsSystem.GetBodyInterface().GetPosition(mBodyId);
+}
+
 void RigidBody::PrePhysicsUpdate(double deltaTime)
 {
     // if the body is not active, we don't need to do anything
