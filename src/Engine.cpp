@@ -84,6 +84,9 @@ namespace {
     };
 
     const char *playerCountSelection = playerCounts[0];
+
+    static bool sEnableFog = true;
+    vkutil::FogSettings prevFogSettings = {};
 }
 
 Engine::Engine() {
@@ -354,6 +357,67 @@ void Engine::Update(double deltaTime) {
 
     if (!mIsMainMenu) {
         mScene->UpdateUi(deltaTime);
+
+        // Temporarily use keyboard to change graphics debug view for video
+        if (IsKeyPressed(KEY::e1)) {
+            vkutil::rendererDebug.debugMode = 0;
+        }
+        else if (IsKeyPressed(KEY::e2)) {
+            vkutil::rendererDebug.debugMode = 1;
+        }
+        else if (IsKeyPressed(KEY::e3)) {
+            vkutil::rendererDebug.debugMode = 2;
+        }
+        else if (IsKeyPressed(KEY::e4)) {
+            vkutil::rendererDebug.debugMode = 3;
+        }
+        else if (IsKeyPressed(KEY::e5)) {
+            vkutil::rendererDebug.debugMode = 4;
+        }
+        else if (IsKeyPressed(KEY::e6)) {
+            vkutil::rendererDebug.debugMode = 5;
+        }
+        else if (IsKeyPressed(KEY::e7)) {
+            vkutil::rendererDebug.debugMode = 6;
+        }
+        else if (IsKeyPressed(KEY::e8)) {
+            vkutil::rendererDebug.debugMode = 7;
+        }
+        else if (IsKeyPressed(KEY::e9)) {
+            vkutil::rendererDebug.debugMode = 8;
+        }
+        else if (IsKeyPressed(KEY::e0)) {
+            vkutil::rendererDebug.debugMode = 9;
+        }
+        else if (IsKeyPressed(KEY::eMINUS)) {
+            vkutil::rendererDebug.debugMode = 10;
+        }
+        else if (IsKeyPressed(KEY::eEQUAL)) {
+            vkutil::rendererDebug.debugMode = 11;
+        }
+
+        if (IsKeyPressed(KEY::eG)) {
+            sEnableFog = !sEnableFog;
+
+            if (sEnableFog) {
+                vkutil::fogSettings.MaxDistance = prevFogSettings.MaxDistance;
+                vkutil::fogSettings.Density = prevFogSettings.Density;
+                vkutil::fogSettings.StepSize = prevFogSettings.StepSize;
+                vkutil::fogSettings.MaxSteps = prevFogSettings.MaxSteps;
+            }
+
+            prevFogSettings.MaxDistance = vkutil::fogSettings.MaxDistance;
+            prevFogSettings.Density = vkutil::fogSettings.Density;
+            prevFogSettings.StepSize = vkutil::fogSettings.StepSize;
+            prevFogSettings.MaxSteps = vkutil::fogSettings.MaxSteps;
+
+            if (!sEnableFog) {
+                vkutil::fogSettings.MaxDistance = 0;
+                vkutil::fogSettings.Density = 0;
+                vkutil::fogSettings.StepSize = 0.1f;
+                vkutil::fogSettings.MaxSteps = 1.0f;
+            }
+        }
 
 #ifndef PLATINUM
         playerCountSelection = ImGuiRenderer::NewPlayerCountSelection(playerCounts, playerCountSelection);

@@ -58,6 +58,9 @@ namespace {
 
         return viewport;
     }
+
+    bool enableChatWindow = true;
+    bool enablePlayerUI = true;
 }
 
 void ImGuiRenderer::Initialize(const Context &context) {
@@ -387,6 +390,15 @@ ImVec2 ImGuiRenderer::NewImage(const std::string &name, const ImVec2 &offset, co
 
 void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data,
                                     size_t activePlayerCount, size_t playerId) {
+    // Only check this key bind here (affects all player UI)
+    if (IsKeyPressed(KEY::eH)) {
+        enablePlayerUI = !enablePlayerUI;
+    }
+
+    if (!enablePlayerUI) {
+        return;
+    }
+
     ImGui::PushFont(Fonts::InGameFont);
     ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255,255,255,255));
 
@@ -452,6 +464,10 @@ void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data,
 
 void ImGuiRenderer::NewCoinCounter(const gui::CoinCounterData &data,
                                     size_t activePlayerCount, size_t playerId) {
+    if (!enablePlayerUI) {
+        return;
+    }
+
     ImGui::PushFont(Fonts::InGameFont);
     ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255,255,255,255));
 
@@ -517,6 +533,10 @@ void ImGuiRenderer::NewCoinCounter(const gui::CoinCounterData &data,
 
 void ImGuiRenderer::NewTimer(const gui::TimerData &data,
                              size_t activePlayerCount, size_t playerId) {
+    if (!enablePlayerUI) {
+        return;
+    }
+
     ImGui::PushFont(Fonts::InGameFont);
     ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255,255,255,255));
 
@@ -922,8 +942,9 @@ void ImGuiRenderer::Update(Scene *scene)
         // Just make sure you use the right index in the shader
         if (ImGui::CollapsingHeader("Renderer Debug"))
         {
-            const char *types[12] = {"Final", "Normal", "World Position", "Albedo", "Roughness", "Metallic", "Shadows", "Mip visual", "Cascades", "SSAO", "SSR", "Wireframe"};
-            ImGui::ListBox("Renderer Debug", &vkutil::rendererDebug.debugMode, types, 12);
+            // Comment out for now so we can use keyboard to change instead of imgui
+            // const char *types[12] = {"Final", "Normal", "World Position", "Albedo", "Roughness", "Metallic", "Shadows", "Mip visual", "Cascades", "SSAO", "SSR", "Wireframe"};
+            // ImGui::ListBox("Renderer Debug", &vkutil::rendererDebug.debugMode, types, 12);
         }
 
         ImGui::End();
@@ -982,6 +1003,14 @@ void ImGuiRenderer::AddTexture(VkSampler sampler, VkImageView imageView, VkImage
 
 void ImGuiRenderer::ChatWindow(const std::vector<Message> &messages, std::function<void(std::string, std::string)> callback)
 {
+    if (IsKeyPressed(KEY::eJ)) {
+        enableChatWindow = !enableChatWindow;
+    }
+
+    if (!enableChatWindow) {
+        return;
+    }
+
     // Fixed upper left position with a drop\-down style window
     ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Once);
     ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_Once);
