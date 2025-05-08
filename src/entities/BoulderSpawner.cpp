@@ -21,36 +21,24 @@ void BoulderSpawner::Update(double deltaTime) {
 
     // NOTE: Make sure this happens before the launching boulder code to ensure boulders aren't
     // set to invisible before their world position is updated in the PrePhysicsUpdate next frame
-    for (auto *entity : mActiveBoulders) // for all the active boulders
+    for (auto *entity : mBoulders)
     {
         // Set the boulder to invisible if it is below a certain level
-        if (entity->GetRigidBody().GetPositionJolt().GetY() < 10.0f) {
+        if (entity->GetRigidBody().GetPositionJolt().GetY() < 0.0f) {
             entity->SetAsInvisible();
         }
     }
 
     if (mTimer > mBoulderCooldown) {
-        // Despawn the last active boulder
-        if (!mActiveBoulders.empty()) {
-            mBoulders.insert(mBoulders.begin(), mActiveBoulders.back());
-            mActiveBoulders.pop_back();
-        }
-
         assert(!mBoulders.empty());
-
-        // Launch the last boulder in the pending boulders
+        // Launch the last boulder
         Entity *lastBoulder = mBoulders.back();
         LaunchBoulder(lastBoulder);
-        // Move the last pending boulder to the active boulders
-        mActiveBoulders.push_back(lastBoulder);
+        // Move the last boulder to the front so other boulders are launched next
+        mBoulders.insert(mBoulders.begin(), lastBoulder);
         mBoulders.pop_back();
         // Reset timer
         mTimer = 0.0f;
-    }
-
-    // Remove any active boulders that have been despawned
-    for (auto *entity : mBoulders) {
-        std::erase_if(mActiveBoulders, [entity](Entity *other) { return entity == other; });
     }
 }
 

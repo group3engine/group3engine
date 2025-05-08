@@ -17,7 +17,6 @@ public:
 
 private:
     std::vector<Entity *> mBoulders;
-    std::vector<Entity *> mActiveBoulders;
 
     float mBoulderCooldown = 2.0f;
     float mTimer = 0.0f;
