@@ -60,6 +60,13 @@ namespace Fonts
             std::cerr << "Failed to load loading font" << std::endl;
             return false;
         }
+
+        InGameFont = io.Fonts->AddFontFromFileTTF(alteHaasBoldPath.string().c_str(), 32.0f);
+        if (!InGameFont) {
+            std::cerr << "Failed to load loading font" << std::endl;
+            return false;
+        }
+
         return true;
     }
 }
