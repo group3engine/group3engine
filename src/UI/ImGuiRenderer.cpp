@@ -387,7 +387,8 @@ ImVec2 ImGuiRenderer::NewImage(const std::string &name, const ImVec2 &offset, co
 
 void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data,
                                     size_t activePlayerCount, size_t playerId) {
-    ImGui::PushFont(Fonts::TextFont);
+    ImGui::PushFont(Fonts::InGameFont);
+    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255,255,255,255));
 
     MyTextureData &textureData = textureDatas["skull-white"];
     ImVec2 imageSize = ImVec2(textureData.Width, textureData.Height) * 0.1f;
@@ -412,7 +413,7 @@ void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data,
     }
 
     // Bottom right of viewport. NOTE: hardcoded bottom right positioning
-    ImVec2 pos = ImVec2(viewport.WorkPos.x + viewport.WorkSize.x, viewport.WorkPos.y + viewport.WorkSize.y);
+    ImVec2 pos = ImVec2(viewport.WorkPos.x + viewport.WorkSize.x - 10, viewport.WorkPos.y + viewport.WorkSize.y - 10);
     ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
 
     // Make the window fit the text exactly
@@ -445,11 +446,13 @@ void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data,
     ImGui::End();
 
     ImGui::PopFont();
+    ImGui::PopStyleColor();
 }
 
 void ImGuiRenderer::NewCoinCounter(const gui::CoinCounterData &data,
                                     size_t activePlayerCount, size_t playerId) {
-    ImGui::PushFont(Fonts::TextFont);
+    ImGui::PushFont(Fonts::InGameFont);
+    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255,255,255,255));
 
     ImGuiViewport viewport = CalcPlayerViewport(Context::get().extent, activePlayerCount, playerId);
 
@@ -471,7 +474,7 @@ void ImGuiRenderer::NewCoinCounter(const gui::CoinCounterData &data,
     }
 
     // Bottom left of viewport
-    ImVec2 pos = ImVec2(viewport.WorkPos.x, viewport.WorkPos.y + viewport.WorkSize.y);
+    ImVec2 pos = ImVec2(viewport.WorkPos.x + 10, viewport.WorkPos.y + viewport.WorkSize.y - 10);
 
     // Coin texture
     MyTextureData &textureData = textureDatas["coins-white"];
@@ -503,6 +506,7 @@ void ImGuiRenderer::NewCoinCounter(const gui::CoinCounterData &data,
     ImGui::Text(str.c_str());
 
     ImGui::PopStyleVar(sv);
+    ImGui::PopStyleColor();
 
     ImGui::End();
 
@@ -511,7 +515,8 @@ void ImGuiRenderer::NewCoinCounter(const gui::CoinCounterData &data,
 
 void ImGuiRenderer::NewTimer(const gui::TimerData &data,
                              size_t activePlayerCount, size_t playerId) {
-    ImGui::PushFont(Fonts::TextFont);
+    ImGui::PushFont(Fonts::InGameFont);
+    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255,255,255,255));
 
     MyTextureData &textureData = textureDatas["hourglass-white"];
     ImVec2 imageSize = ImVec2(textureData.Width, textureData.Height) * 0.1f;
@@ -536,7 +541,7 @@ void ImGuiRenderer::NewTimer(const gui::TimerData &data,
     }
 
     // Top right of viewport. NOTE: hardcoded top right positioning
-    ImVec2 pos = ImVec2(viewport.WorkPos.x + viewport.WorkSize.x, viewport.WorkPos.y);
+    ImVec2 pos = ImVec2(viewport.WorkPos.x + viewport.WorkSize.x - 10, viewport.WorkPos.y + 10);
     ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
 
     // Make the window fit the text exactly
@@ -565,6 +570,7 @@ void ImGuiRenderer::NewTimer(const gui::TimerData &data,
     ImGui::End();
 
     ImGui::PopFont();
+    ImGui::PopStyleColor();
 
     ImVec2 imageOffset = {pos.x - textSize.x - imageSize.x, pos.y};
     NewImage("hourglass-white", imageOffset, imageSize);
