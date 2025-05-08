@@ -413,7 +413,8 @@ void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data,
     }
 
     // Bottom right of viewport. NOTE: hardcoded bottom right positioning
-    ImVec2 pos = ImVec2(viewport.WorkPos.x + viewport.WorkSize.x - 10, viewport.WorkPos.y + viewport.WorkSize.y - 10);
+    float padding = 10.0f;
+    ImVec2 pos = ImVec2(viewport.WorkPos.x + viewport.WorkSize.x - padding, viewport.WorkPos.y + viewport.WorkSize.y - padding);
     ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
 
     // Make the window fit the text exactly
@@ -474,7 +475,8 @@ void ImGuiRenderer::NewCoinCounter(const gui::CoinCounterData &data,
     }
 
     // Bottom left of viewport
-    ImVec2 pos = ImVec2(viewport.WorkPos.x + 10, viewport.WorkPos.y + viewport.WorkSize.y - 10);
+    float padding = 10.0f;
+    ImVec2 pos = ImVec2(viewport.WorkPos.x + padding, viewport.WorkPos.y + viewport.WorkSize.y - padding);
 
     // Coin texture
     MyTextureData &textureData = textureDatas["coins-white"];
@@ -541,7 +543,8 @@ void ImGuiRenderer::NewTimer(const gui::TimerData &data,
     }
 
     // Top right of viewport. NOTE: hardcoded top right positioning
-    ImVec2 pos = ImVec2(viewport.WorkPos.x + viewport.WorkSize.x - 10, viewport.WorkPos.y + 10);
+    float padding = 10.0f;
+    ImVec2 pos = ImVec2(viewport.WorkPos.x + viewport.WorkSize.x - padding, viewport.WorkPos.y + padding);
     ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
 
     // Make the window fit the text exactly

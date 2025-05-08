@@ -61,7 +61,6 @@ namespace Fonts
             return false;
         }
 
-        // load the loading font small
         InGameFont = io.Fonts->AddFontFromFileTTF(alteHaasBoldPath.string().c_str(), 32.0f);
         if (!InGameFont) {
             std::cerr << "Failed to load loading font" << std::endl;
