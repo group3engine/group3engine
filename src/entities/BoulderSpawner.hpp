@@ -34,9 +34,9 @@ private:
     // the boulders
     std::vector<Boulder> mBoulders;
     // the range of lifeTimes
-    float minLifeTime = 10.f; float maxLifeTime = 10.f;
+    float minLifeTime = 10.f; float maxLifeTime = 25.f;
     // the range of invisible times
-    float minInvisibleTime = 20.0f; float maxInvisibleTime = 30.0f;
+    float minInvisibleTime = 0.5f; float maxInvisibleTime = 30.0f;
 
     glm::vec3 forwards {};
     glm::vec3 spawnPoint {};
