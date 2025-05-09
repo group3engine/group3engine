@@ -14,6 +14,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
 
+#include <spdlog/fmt/chrono.h>
 #include <spdlog/fmt/fmt.h>
 
 #include "TextureManager.hpp"
@@ -58,6 +59,9 @@ namespace {
 
         return viewport;
     }
+
+    float playerUiPadding = 50.0f;
+    float imageTextPadding = 25.0f;
 }
 
 void ImGuiRenderer::Initialize(const Context &context) {
@@ -413,8 +417,7 @@ void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data,
     }
 
     // Bottom right of viewport. NOTE: hardcoded bottom right positioning
-    float padding = 10.0f;
-    ImVec2 pos = ImVec2(viewport.WorkPos.x + viewport.WorkSize.x - padding, viewport.WorkPos.y + viewport.WorkSize.y - padding);
+    ImVec2 pos = ImVec2(viewport.WorkPos.x + viewport.WorkSize.x - playerUiPadding, viewport.WorkPos.y + viewport.WorkSize.y - playerUiPadding);
     ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
 
     // Make the window fit the text exactly
@@ -439,7 +442,7 @@ void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data,
     ImGui::Text(str.c_str());
 
     // Skull
-    ImVec2 offset = {pos.x - textSize.x - imageSize.x, pos.y - imageSize.y};
+    ImVec2 offset = {pos.x - textSize.x - imageSize.x - imageTextPadding, pos.y - imageSize.y};
     NewImage("skull-white", offset, imageSize);
 
     ImGui::PopStyleVar(sv);
@@ -475,8 +478,7 @@ void ImGuiRenderer::NewCoinCounter(const gui::CoinCounterData &data,
     }
 
     // Bottom left of viewport
-    float padding = 10.0f;
-    ImVec2 pos = ImVec2(viewport.WorkPos.x + padding, viewport.WorkPos.y + viewport.WorkSize.y - padding);
+    ImVec2 pos = ImVec2(viewport.WorkPos.x + playerUiPadding, viewport.WorkPos.y + viewport.WorkSize.y - playerUiPadding);
 
     // Coin texture
     MyTextureData &textureData = textureDatas["coins-white"];
@@ -493,7 +495,7 @@ void ImGuiRenderer::NewCoinCounter(const gui::CoinCounterData &data,
 
     ImGui::SetNextWindowSize(textSize);
     // Right horizontal aligned to image and center vertical aligned to image
-    ImGui::SetNextWindowPos(ImVec2(bottomRightImageOffset.x - windowBorderSize,
+    ImGui::SetNextWindowPos(ImVec2(bottomRightImageOffset.x - windowBorderSize + imageTextPadding,
                                    bottomRightImageOffset.y - imageSize.y / 2.0f - textSize.y / 2.0f - windowBorderSize));
     ImGui::SetNextWindowBgAlpha(0.0f);
 
@@ -529,8 +531,7 @@ void ImGuiRenderer::NewTimer(const gui::TimerData &data,
 
     // Format to a width of 8 and to a precision of 3
     // See https://hackingcpp.com/cpp/libs/fmt.html
-    std::string str = fmt::format("{:6.1f}", time);
-
+    std::string str = fmt::format("{:%M:%S}", fmt::localtime(time));
     size_t sv = 0;
 
     float windowBorderSize = 0.0f;
@@ -543,8 +544,7 @@ void ImGuiRenderer::NewTimer(const gui::TimerData &data,
     }
 
     // Top right of viewport. NOTE: hardcoded top right positioning
-    float padding = 10.0f;
-    ImVec2 pos = ImVec2(viewport.WorkPos.x + viewport.WorkSize.x - padding, viewport.WorkPos.y + padding);
+    ImVec2 pos = ImVec2(viewport.WorkPos.x + viewport.WorkSize.x - playerUiPadding, viewport.WorkPos.y + playerUiPadding);
     ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
 
     // Make the window fit the text exactly
@@ -575,7 +575,7 @@ void ImGuiRenderer::NewTimer(const gui::TimerData &data,
     ImGui::PopFont();
     ImGui::PopStyleColor();
 
-    ImVec2 imageOffset = {pos.x - textSize.x - imageSize.x, pos.y};
+    ImVec2 imageOffset = {pos.x - textSize.x - imageSize.x - imageTextPadding, pos.y};
     NewImage("hourglass-white", imageOffset, imageSize);
 }
 
@@ -838,6 +838,11 @@ void ImGuiRenderer::Update(Scene *scene)
         float stepFast = 0.5f;
         ImGui::InputFloat("Camera::sZoomLevel", &Camera::sZoomLevel, step, stepFast, nullptr, 0);
         ImGui::InputFloat("ZipLine::sZiplineCameraZoomLevel", &ZipLine::sZiplineCameraZoomLevel, step, stepFast, nullptr, 0);
+    }
+
+    if (ImGui::CollapsingHeader("UI Adjustment")) {
+        ImGui::InputFloat("playerUiPadding", &playerUiPadding, 1.0f, 10.0f, nullptr, 0);
+        ImGui::InputFloat("imageTextPadding", &imageTextPadding, 1.0f, 10.0f, nullptr, 0);
     }
 
     if (ImGui::CollapsingHeader("CharacterSettings")) {
