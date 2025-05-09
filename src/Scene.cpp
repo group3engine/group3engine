@@ -57,6 +57,9 @@ JPH::Shape::ShapeResult CreateConvexHullShapeResult(const Vec3 *inPoints, int in
 void Scene::Update(double aDeltaTime) {
     ZoneScopedN("Scene::Update");
     float timeScale = Engine::get().GetTimeScale();
+
+    GlobalUtil::totalTime += aDeltaTime;
+
     // unscaled update the entities
     for(auto &entity : m_Entities) {
         entity->UnscaledUpdate(GlobalUtil::unscaledDeltaTime);
@@ -533,5 +536,13 @@ void Scene::DrawSkinned(VkCommandBuffer cmd,
                         VkPipelineLayout pipelineLayout, uint32_t cascadeIndex) {
     for (auto &entity : m_Entities) {
         entity->RecordDrawSkinned(cmd, pipelineLayout, cascadeIndex);
+    }
+}
+
+void Scene::DrawLava(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout) {
+    for (auto *entity : m_Entities) {
+        if (entity->CompareTag("lava")) {
+            entity->RecordDrawLava(cmd, pipelineLayout);
+        }
     }
 }

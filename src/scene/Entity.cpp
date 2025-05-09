@@ -97,6 +97,52 @@ void Entity::SetTransform(glm::mat4 aTransform) {
     SetPhysicsTransform();
     UpdateChildrenTransform();
 }
+
+// Hack in lava drawing by allowing it to be drawn even though it is invisible
+// This is so the lava can be set to invisible to not be drawn in the normal record draws
+void Entity::RecordDrawLava(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout) const {
+    if (mHasMesh && mAnimator == nullptr) {
+        // push the model matrix
+        vkutil::LavaPushConstants pc = {};
+        pc.ModelMatrix = GetWorldTransform();
+        pc.t = GlobalUtil::totalTime;
+        vkCmdPushConstants(aCmdBuff, aPipelineLayout,
+                           VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
+                           sizeof(vkutil::LavaPushConstants), &pc);
+
+        // for each mesh primitive
+        for (const auto &meshPrimitive : mMesh->meshPrimitives) {
+            // skip alpha cutout materials
+            if (meshPrimitive.material->alphaCutout) {
+                continue;
+            }
+
+            // bind the mesh primitives material
+            vkCmdBindDescriptorSets(aCmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, aPipelineLayout, 1,
+                                    1, &meshPrimitive.material->descriptorSet, 0, nullptr);
+
+            // bind the vertex buffers
+            VkBuffer buffers[] = {meshPrimitive.meshGPU->mVertices.buffer};
+            VkDeviceSize offsets[] = {0};
+            vkCmdBindVertexBuffers(aCmdBuff, 0, sizeof(buffers) / sizeof(buffers[0]), buffers,
+                                   offsets);
+
+            // bind the index buffer
+            vkCmdBindIndexBuffer(aCmdBuff, meshPrimitive.meshGPU->mIndices.buffer, 0,
+                                 VK_INDEX_TYPE_UINT32);
+
+            if (meshPrimitive.material->doubleSided) {
+                vkCmdSetCullMode(aCmdBuff, VK_CULL_MODE_NONE);
+            } else {
+                vkCmdSetCullMode(aCmdBuff, VK_CULL_MODE_BACK_BIT);
+            }
+
+            // draw the mesh
+            vkCmdDrawIndexed(aCmdBuff, meshPrimitive.meshGPU->mIndexCount, 1, 0, 0, 0);
+        }
+    }
+}
+
 void Entity::RecordDrawOpaque(VkCommandBuffer aCmdBuff,
                               VkPipelineLayout aPipelineLayout) const {
     if (mHasMesh && mAnimator == nullptr && mIsVisible) {

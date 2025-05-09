@@ -224,6 +224,8 @@ class Entity {
     // functions used by the engine, the user should not call these
     void BaseUpdate(double deltaTime);
 
+    void RecordDrawLava(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout) const;
+
     void RecordDrawOpaque(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout) const;
 
     void RecordDrawShadow(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout, uint32_t caseCadeIndex) const;
