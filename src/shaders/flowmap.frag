@@ -356,15 +356,15 @@ void main()
     vec2 layer2 = flow * phase2 + uv;
 
     // Mix animated uv layers for color
-    vec3 color = mix(texture(uTextureColour, layer1), texture(uTextureColour, layer1), blend_factor).rgb * uNumbers.baseColour.rgb;
+    vec3 color = mix(texture(uTextureColour, layer1), texture(uTextureColour, layer2), blend_factor).rgb * uNumbers.baseColour.rgb;
 
     // Mix emissive uv layers
-    vec3 emissive = uNumbers.emissiveFactor.rgb * mix(texture(uTextureEmissive, layer1), texture(uTextureEmissive, layer1), blend_factor).rgb;
+    vec3 emissive = uNumbers.emissiveFactor.rgb * mix(texture(uTextureEmissive, layer1), texture(uTextureEmissive, layer2), blend_factor).rgb;
 
     // == Metal and Roughness ==
-    float roughness = mix(texture(uTextureMetallicRoughness, layer1).g, texture(uTextureMetallicRoughness, layer1).g, blend_factor)  * uNumbers.roughness;
-    float metallic = mix(texture(uTextureMetallicRoughness, layer1).b, texture(uTextureMetallicRoughness, layer1).b, blend_factor) * uNumbers.metallness;
-    vec3 texNormal = mix(texture(uTextureNormal, layer1).xyz, texture(uTextureNormal, layer1).xyz, blend_factor);
+    float roughness = mix(texture(uTextureMetallicRoughness, layer1).g, texture(uTextureMetallicRoughness, layer2).g, blend_factor)  * uNumbers.roughness;
+    float metallic = mix(texture(uTextureMetallicRoughness, layer1).b, texture(uTextureMetallicRoughness, layer2).b, blend_factor) * uNumbers.metallness;
+    vec3 texNormal = mix(texture(uTextureNormal, layer1).xyz, texture(uTextureNormal, layer2).xyz, blend_factor);
     vec3 pixelNormal = normalize(TBNFrame * (texNormal * 2.f - 1.f));
 
     vec3 outLight = vec3(0.0);
@@ -395,7 +395,7 @@ void main()
     // fragColor = mix(vec4(outLight, 1.0), vec4(textureLod(prefilteredSkybox, viewDir, 0).rgb, 1.0), dist / ubo.farPlane / 0.75);
     fragColor = vec4(outLight, 1.0);
     float scaledDist = dist / ubo.farPlane / 0.5;
-    fragColor = mix(fragColor, vec4(0.6, 0.75, 1.0, 1.0), scaledDist);
+    fragColor = mix(fragColor, vec4(texture(prefilteredSkybox, -viewDir).rgb, 1.0), clamp(scaledDist, 0.0, 1.0));
     // fragColor = vec4(texture(textureFlowMap, uv).rgb, 1.0);
     NormalMetallic = vec4(pixelNormal.xyz * 0.5 + 0.5, roughness);
 

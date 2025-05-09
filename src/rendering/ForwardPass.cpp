@@ -529,7 +529,7 @@ void ForwardPass::BuildDescriptorSetLayouts() {
 
     std::vector<VkDescriptorSetLayoutBinding> lavaFlowMapBindings = {
         vkutil::CreateDescriptorBinding(0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
-        vkutil::CreateDescriptorBinding(1, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+        vkutil::CreateDescriptorBinding(1, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
     };
     lavaFlowMapDescriptorSetLayout = vkutil::CreateDescriptorSetLayout(context, lavaFlowMapBindings);
 }
