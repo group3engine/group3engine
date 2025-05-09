@@ -527,8 +527,6 @@ void Context::CreateSwapchain() {
         presentMode = VK_PRESENT_MODE_FIFO_RELAXED_KHR;
     }
 
-    presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
-
     VkSurfaceCapabilitiesKHR caps = {};
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(pDevice, surface, &caps);
 
