@@ -35,12 +35,17 @@ uint cascadeIndex = 0;
 
 vec4 DepthToPosition(vec2 uv)
 {
-	float depth = min(0.99,texture(depthBuffer, uv).x);
+    float depth = texture(depthBuffer, uv).x;
 	vec4 clipSpace = vec4(uv * 2.0 - 1.0, depth, 1.0);
 	vec4 viewSpace = ubo.inverseProjection * clipSpace;
 	viewSpace.xyz /= viewSpace.w;
 
 	return vec4(viewSpace.xyz, 1.0);
+}
+
+bool isOutsideScreenSpace(vec3 pos)
+{
+    return pos.x < 0.0 || pos.x > 1.0 || pos.y < 0.0 || pos.y > 1.0 || pos.z < 0.0 || pos.z > 1.0;
 }
 
 float isShadow(vec3 WorldPos)
@@ -49,11 +54,15 @@ float isShadow(vec3 WorldPos)
 	fragPositionInLightSpace.xyz /= fragPositionInLightSpace.w;
 	fragPositionInLightSpace.xy = fragPositionInLightSpace.xy * 0.5 + 0.5;
 
+    if(isOutsideScreenSpace(fragPositionInLightSpace.xyz))
+        return 1.0;
+
+
     float currentDepth = fragPositionInLightSpace.z;
     vec4 sampleCoord = vec4(fragPositionInLightSpace.xy, float(cascadeIndex), fragPositionInLightSpace.z);
     float shadow = texture(shadowMap, sampleCoord);
 
-    return currentDepth > shadow + 0.001 ? 1.0 : 0.0;
+    return currentDepth > shadow ? 1.0 : 0.0;
 }
 
 vec3 random_pcg3d(uvec3 v) {
@@ -62,6 +71,17 @@ vec3 random_pcg3d(uvec3 v) {
   v ^= v >> 16u;
   v.x += v.y*v.z; v.y += v.z*v.x; v.z += v.x*v.y;
   return vec3(v) * (1.0/float(0xffffffffu));
+}
+
+// Should be updating the casecade per-step along the ray
+// previously was selecting the cascade for the original fragment position
+// which causes flickering since the position becomes outdated once the ray begins traversal
+void UpdateCascade(vec3 viewPos)
+{
+    for(uint i = 0; i < NUM_SHADOW_CASCADES - 1; ++i)
+    {
+        cascadeIndex = viewPos.z < csmMatrices.cascadeSplits[i] ? cascadeIndex = i + 1: cascadeIndex;
+    }
 }
 
 vec4 VolFog()
@@ -81,6 +101,9 @@ vec4 VolFog()
     while(distTravelled < maxDistance)
     {
         vec3 currentPos = ubo.cameraPosition.xyz + RayDir * distTravelled;
+        vec4 viewPos = ubo.view * vec4(currentPos, 1.0);
+        // Use the new traversed position to update the cascade index
+        UpdateCascade(viewPos.xyz);
         float visbility = isShadow(currentPos);
         finalColour += LightColour * 1.0 * density * fog.StepSize * visbility;
         transmittance *= exp(-density * fog.StepSize);

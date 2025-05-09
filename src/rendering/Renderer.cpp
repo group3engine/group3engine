@@ -62,8 +62,6 @@ void Renderer::CreateRenderPasses() {
 
     // ImGui
     ImGuiRenderer::Initialize(context);
-    std::filesystem::path path = assetsPath/ "heart.png";
-    ImGuiRenderer::AddTextures(m_scene->GetTextureManager(), path, "heart");
 
     const auto &cascades = m_ShadowMap->GetCascades();
 

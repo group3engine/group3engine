@@ -6,6 +6,7 @@
 
 #include "Camera.hpp"
 
+
 void ZipLine::Awake()
 {
     // get the float values - mMaxZipSpeed, mAcceleration, mProximityPromptRadius
@@ -33,6 +34,7 @@ void ZipLine::Awake()
     // get the start and end positions
     // find the child with the tag "zipline_start"
     for (auto *child : GetChildren()) {
+
         if (child->CompareTag("zipline_start")) {
             mStartPosition = child->GetWorldTransformComponents().translation;
         } else if (child->CompareTag("zipline_end")) {
@@ -67,6 +69,7 @@ void ZipLine::OnInteract(Entity *other, ENetworkLocality networkLocality)
         mCharacter->SetPosition(mStartPosition);
         mCharacter->SetHanging(true);
         mCharacter->GetCamera()->SetNewZoomLevel(sZiplineCameraZoomLevel);
+
         mCurrentPosition = mStartPosition;
     }
 }
@@ -90,6 +93,7 @@ void ZipLine::LateUpdate(double deltaTime)
             mIsZipping = false;
             mCharacter->SetHanging(false);
             mCharacter->GetCamera()->ResetZoomLevel();
+
             mCurrentSpeed = 0.f;
             mCharacter->SetPosition(mEndPosition);
         }

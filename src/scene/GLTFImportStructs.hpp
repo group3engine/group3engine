@@ -181,10 +181,12 @@ struct Transform {
 
     /// Update the matrix. If this function is not called since the last change, the matrix will be out of date
     void UpdateMatrix() {
-        glm::mat4 translationMatrix = glm::translate(translation);
-        glm::mat4 rotationMatrix = glm::toMat4(glm::normalize(rotation));
-        glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), scale);
-        matrix = translationMatrix * rotationMatrix * scaleMatrix;
+        glm::mat4 M = glm::mat4_cast(glm::normalize(rotation));
+        M[0] *= scale.x;
+        M[1] *= scale.y;
+        M[2] *= scale.z;
+        M[3] = glm::vec4(translation, 1.0f);
+        matrix = M;
     }
 
     /// Get the transform as a glm::mat4
