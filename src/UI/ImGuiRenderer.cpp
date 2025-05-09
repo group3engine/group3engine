@@ -902,9 +902,11 @@ void ImGuiRenderer::Update(Scene *scene)
 
         if (ImGui::CollapsingHeader("Fog"))
         {
-            ImGui::SliderFloat("Distance: ", &vkutil::fogSettings.MaxDistance, 1.0f, 100.0f);
-            ImGui::SliderFloat("Density: ", &vkutil::fogSettings.Density, 0.1f, 0.3f);
-            ImGui::SliderFloat("SteppingSize: ", &vkutil::fogSettings.StepSize, 0.1f, 1.5f);
+            float step = 0.001f;
+            float stepFast = 0.01f;
+            ImGui::InputFloat("Distance: ", &vkutil::fogSettings.MaxDistance, 0.1f, 1.0f, nullptr, 0);
+            ImGui::InputFloat("Density: ", &vkutil::fogSettings.Density, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("SteppingSize: ", &vkutil::fogSettings.StepSize, 0.01f, 0.1f, nullptr, 0);
             ImGui::SliderInt("Steps: ", &vkutil::fogSettings.MaxSteps, 1, 10);
         }
 
