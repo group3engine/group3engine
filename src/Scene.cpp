@@ -57,6 +57,9 @@ JPH::Shape::ShapeResult CreateConvexHullShapeResult(const Vec3 *inPoints, int in
 void Scene::Update(double aDeltaTime) {
     ZoneScopedN("Scene::Update");
     float timeScale = Engine::get().GetTimeScale();
+
+    GlobalUtil::totalTime += aDeltaTime;
+
     // unscaled update the entities
     for(auto &entity : m_Entities) {
         entity->UnscaledUpdate(GlobalUtil::unscaledDeltaTime);
@@ -119,8 +122,6 @@ void Scene::UploadCameras(VkCommandBuffer cmdBuff) {
 
 void Scene::UpdateUi(double aDeltaTime) {
     ZoneScopedN("Scene::UpdateUi");
-
-    GlobalUtil::totalTime += aDeltaTime;
 
     for (auto &entity : m_Entities) {
         entity->UpdateUi(aDeltaTime);
