@@ -105,7 +105,7 @@ vec4 VolFog()
         // Use the new traversed position to update the cascade index
         UpdateCascade(viewPos.xyz);
         float visbility = isShadow(currentPos);
-        finalColour += LightColour * 1.0 * density * fog.StepSize * visbility;
+        finalColour += LightColour * 1.0 * density * fog.StepSize;
         transmittance *= exp(-density * fog.StepSize);
         distTravelled += fog.StepSize;
     }

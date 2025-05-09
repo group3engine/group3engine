@@ -74,6 +74,7 @@ class Scene {
 
     void DrawShadowMap(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout, uint32_t cascadeIndex = 0);
     void DrawSkinned(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout, uint32_t cascadeIndex= 0);
+    void DrawLava(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
     void AddLightSource(Light& LightSource);
 
     void Update(double aDeltaTime);
