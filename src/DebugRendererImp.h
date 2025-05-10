@@ -76,11 +76,11 @@ class DebugRendererImp final : public JPH::DebugRendererSimple{
     };
 
     /// The list of line segments
-    JPH::Array<Line>                   mLines;
+    std::vector<Line>                  mLines;
     JPH::Mutex                         mLinesLock;
 
     // Vertices for triangles
-    JPH::Array<TriangleVertex>         mVertices;
+    std::vector<TriangleVertex>        mVertices;
     JPH::Mutex                         mVerticesLock;
 };
 #endif // JPH_DEBUG_RENDERER
