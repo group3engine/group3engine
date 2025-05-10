@@ -48,7 +48,7 @@ void Coin::Update(double deltaTime)
     {
         float scaleMultiplier = 1.f;
         timer += deltaTime;
-        scaleMultiplier = std::max(1.f - (timer / timeToShrink), 0.f);
+        scaleMultiplier = std::max(1.f - (timer / timeToShrink), 0.1f);
         
         // set the scale of the entity
         glm::vec3 scale = startScale * scaleMultiplier;
@@ -56,7 +56,7 @@ void Coin::Update(double deltaTime)
         transform.scale = scale;
         SetTransform(transform);
         // if the scale isn't 1, turn off the rigid body
-        if (scaleMultiplier < 0.f) 
+        if (scaleMultiplier <= 0.1f) 
         {
             GetRigidBody().SetActive(false);
             SetAsInvisible();
