@@ -11,6 +11,7 @@
 #include <iostream>
 
 namespace Fonts {
+    inline ImFont* TitleFont = nullptr;
     inline ImFont* HeadingFont = nullptr;
     inline ImFont* SubHeadingFont = nullptr;
     inline ImFont* TextFont = nullptr;
@@ -18,6 +19,9 @@ namespace Fonts {
     inline ImFont* TextFontSmall = nullptr;
     inline ImFont* LoadingFont = nullptr;
     inline ImFont* LoadingFontSmall = nullptr;
+
+    inline ImFont *GameFont = nullptr;
+
     inline ImFont* InGameFont = nullptr;
     inline ImFont* InteractableFont = nullptr;
 

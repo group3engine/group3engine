@@ -279,7 +279,8 @@ void CharacterEntity::PrePhysicsUpdate() {
 
 void CharacterEntity::PreUpdate(double deltaTime) {
     // process the input
-    ProcessInput();
+    if(!mEngine.IsPaused())
+        ProcessInput();
 }
 
 void CharacterEntity::Update(double deltaTime) {
@@ -313,22 +314,34 @@ void CharacterEntity::Update(double deltaTime) {
     auto characterPhysicsPos = mSampleJoltCharacter->GetCharacterPosition();
     SetCharacterPositionOffset(characterPhysicsPos.GetX(), characterPhysicsPos.GetY(), characterPhysicsPos.GetZ());
 
-
-    if(mInputMapping.GetActionPressed("PAUSE") > 0)
+    if (mEngine.IsPaused())
     {
-        // Engine::get().Quit();
-        Engine::get().SetTimeScale(0.f);
-        // free the mouse
-        auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
-        flag = false;
-        glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-
+        if(mInputMapping.GetActionPressed("PAUSE") > 0)
+        {
+            Engine::get().SetTimeScale(1.f);
+            mEngine.Unpause();
+        }
     }
+    else {
+        if (mInputMapping.GetActionPressed("PAUSE") > 0) {
+            // only set the time scale to 0 if we are in single player
+            if (!Scene::get().IsMultiplayer()) {
+                mEngine.SetTimeScale(0.f);
+            }
+
+            // free the mouse
+            auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
+            flag = false;
+            glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            mEngine.Pause();
+        }
+    }
+
 #ifndef PLATINUM
     if(IsKeyPressed(KEY::eESCAPE))
     {
     // quit the game
-    Engine::get().Quit();
+    mEngine.Quit();
     }
 #endif
 
@@ -494,16 +507,6 @@ void CharacterEntity::Update(double deltaTime) {
     }
 }
 
-void CharacterEntity::UnscaledUpdate(double deltaTime)
-{
-    if (Engine::get().GetTimeScale() == 0.f)
-    {
-        if(mInputMapping.GetActionPressed("PAUSE") > 0)
-        {
-            Engine::get().SetTimeScale(1.f);
-        }
-    }
-}
 void CharacterEntity::UpdateUi(double deltaTime) {
     ImGuiRenderer::NewCharacterInfo(GetName(),
                                     GetCamera()->GetPosition().x,
@@ -534,6 +537,11 @@ void CharacterEntity::UpdateUi(double deltaTime) {
     }
 
     size_t activePlayerCount = GetScene()->GetActivePlayerCount();
+
+    // If in pause menu don't show this UI
+    if (Engine::get().IsPaused()) {
+        return;
+    }
 
     // New timer window
     if (mIsTiming) {
@@ -693,6 +701,7 @@ void CharacterEntity::Awake() {
     // on win signal. Then when the player resets to the start of the level remove the receiver
     GetScene()->mSignalSystem.AddReceiver<CharacterEntity, WinSignal>(this, &CharacterEntity::OnWin);
     GetScene()->mSignalSystem.AddReceiver<CharacterEntity, CoinSignal>(this, &CharacterEntity::AddCoin);
+    GetScene()->mSignalSystem.AddReceiver<CharacterEntity, UnpauseSignal>(this, &CharacterEntity::Unpause);
 }
 
 void CharacterEntity::OnWin(WinSignal *signal) {
@@ -866,4 +875,17 @@ void CharacterEntity::LateUpdate(double deltaTime)
         }
     }
 
+}
+
+void CharacterEntity::Unpause([[maybe_unused]] UnpauseSignal *signal) {
+#ifndef NDEBUG
+    if (!GetScene()->IsMultiplayer()) {
+        assert(Engine::get().GetTimeScale() == 0.0f);
+    } else {
+        assert(Engine::get().IsPaused());
+    }
+#endif // NDEBUG
+
+    Engine::get().SetTimeScale(1.f);
+    Engine::get().Unpause();
 }

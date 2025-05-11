@@ -9,11 +9,18 @@
 #include "PhysicsManager.hpp"
 #include "Renderer.hpp"
 #include "RigidBody.hpp"
+#include "UIManager.hpp"
 
 #ifdef JPH_DEBUG_RENDERER
 #include <Jolt/Renderer/DebugRendererSimple.h>
 #include "DebugRendererImp.h"
 #endif // JPH_DEBUG_RENDERER
+
+// Menus
+class MainMenuScreen;
+class NewGameMenu;
+class ConfigGameMenu;
+class PauseMenu;
 
 class MaterialManager;
 class MeshManager;
@@ -40,6 +47,9 @@ class Engine {
 
     void SetTimeScale(float timeScale) { m_timeScale = timeScale; }
     float GetTimeScale() const { return m_timeScale; }
+    void Pause() { m_isPaused = true; }
+    void Unpause() { m_isPaused = false; }
+    bool IsPaused() const { return m_isPaused; }
     void Quit() {m_shouldQuit = true; }
 
   public:
@@ -48,6 +58,8 @@ class Engine {
     void Shutdown();
     void ChangeScene(const std::filesystem::path &pendingScenePath, size_t pendingPlayerCount);
 
+    static std::vector<std::filesystem::path *> &GetScenePaths();
+
   private:
     Context m_context;
     bool m_isRunning;
@@ -55,6 +67,7 @@ class Engine {
     bool m_isLoading = false;
     float m_progress = 0.0f;
     float m_timeScale = 1.0f;
+    bool m_isPaused = false;
     bool m_shouldQuit = false;
 
     bool m_sceneNeedsChanging = false;
@@ -96,6 +109,10 @@ class Engine {
 
     // scene loading thread
     std::thread mSceneLoadingThread;
-
+    MainMenuScreen* m_MainMenuScreen;
+    NewGameMenu *m_NewGameMenu;
+    ConfigGameMenu *m_ConfigGameMenu;
+    PauseMenu *mPauseMenu = nullptr;
+    UIManager m_UIManager;
     std::vector<UITexture> mGuiTextures;
 };

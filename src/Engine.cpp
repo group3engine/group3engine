@@ -1,4 +1,3 @@
-#include "Engine.hpp"
 
 #include <glm/ext.hpp>
 #include <glm/glm.hpp>
@@ -8,6 +7,13 @@
 
 #include <tracy/Tracy.hpp>
 
+// Menu includes
+#include "MainMenu.hpp"
+#include "NewGameMenu.hpp"
+#include "ConfigGameMenu.hpp"
+#include "PauseMenu.hpp"
+
+#include "Engine.hpp"
 #include "Camera.hpp"
 #include "Entity.hpp"
 #include "GLFW.hpp"
@@ -55,26 +61,10 @@
 namespace {
     // TODO: Improve this temporary scene switching mechanism
     std::filesystem::path mainMenuPath{"MainMenu/main_menu.gltf"};
+    std::filesystem::path mainMenuLogo{"MainMenu/LOGO.png"};
+    std::filesystem::path mainMenuBG{"MainMenu/bg.jpg"};
 
-    const std::vector<std::filesystem::path *> scenePaths = {
-        &Sample::Game,
-        &Sample::JumpTest,
-        &Sample::SampleObbyTestScene,
-        &Sample::ArrowSample,
-        &Sample::AxeSample,
-        &Sample::TileSample,
-        &Sample::SpikePitSample,
-        &Sample::LadderSample,
-        &Sample::SinkingSample,
-        &Sample::LeverSample,
-        &Sample::BoulderSample,
-        &Sample::SpikeTrapSample,
-        &Sample::DisappearingPlatformSample,
-
-
-    };
-
-    const std::filesystem::path *scenePathSelection = scenePaths[0];
+    const std::filesystem::path *scenePathSelection = Engine::GetScenePaths()[0];
 
     const std::vector<const char *> playerCounts = {
         "1",
@@ -89,6 +79,25 @@ namespace {
 Engine::Engine() {
     m_isRunning = false;
     m_lastFrameTime = 0.0;
+}
+
+std::vector<std::filesystem::path *> &Engine::GetScenePaths() {
+    static std::vector<std::filesystem::path *> sScenePaths = {
+        &Sample::Game,
+        &Sample::JumpTest,
+        &Sample::SampleObbyTestScene,
+        &Sample::ArrowSample,
+        &Sample::AxeSample,
+        &Sample::TileSample,
+        &Sample::SpikePitSample,
+        &Sample::LadderSample,
+        &Sample::SinkingSample,
+        &Sample::LeverSample,
+        &Sample::BoulderSample,
+        &Sample::SpikeTrapSample,
+        &Sample::DisappearingPlatformSample,
+    };
+    return sScenePaths;
 }
 
 bool Engine::Initialize() {
@@ -152,10 +161,14 @@ bool Engine::Initialize() {
 
     mScene = Scene::get().GetActiveScene();
 
-    mRenderer = std::make_unique<Renderer>(m_context, mScene);
+    // Renderer takes in the UI manager so we can resize images within mennus when the Renderer
+    // Needs to resize passes
+    mRenderer = std::make_unique<Renderer>(m_context, mScene, m_UIManager);
 
     PhysicsManager::get().StartUp();
 
+    // Should we make this optional? Where you can choose between a 3D scene for menu or not
+    // Right now if I remove it it'll just crash so keeping it for now
     constexpr size_t mainMenuPlayerCount = 1;
     mScene->Load(mainMenuPath, mainMenuPlayerCount);
     m_scenePath = mScene->GetSceneFilename();
@@ -164,6 +177,19 @@ bool Engine::Initialize() {
 
     mRenderer->CreateRenderPasses();
 
+    // Create menu resources
+    // Creating here since ImGuiRenderer creates a context during CreateRenderPasses()
+    m_MainMenuScreen = new MainMenuScreen(m_context, m_UIManager);
+    m_NewGameMenu = new NewGameMenu(m_context, m_UIManager);
+    m_ConfigGameMenu = new ConfigGameMenu(m_context, m_UIManager);
+    mPauseMenu = new PauseMenu(m_context, m_UIManager, mScene);
+
+    /* Register menus here with the Manager. Give it a name for ID */
+    m_UIManager.RegisterMenu("ConfigGameMenu", m_ConfigGameMenu);
+    m_UIManager.RegisterMenu("PauseMenu", mPauseMenu);
+    /* Switch to menu scene using its name */
+    m_UIManager.SwitchToMenu("ConfigGameMenu");
+  
     InitGuiTextures();
 
     // call the scene awake function
@@ -194,6 +220,9 @@ void Engine::Shutdown() {
     static_cast<DebugRendererImp*>(mDebugRenderer.get())->Destroy();
 #endif // JPH_DEBUG_RENDERER
 
+    delete m_MainMenuScreen;
+    delete m_ConfigGameMenu;
+    delete m_NewGameMenu;
     mRenderer->Destroy();
     mRenderer.reset();
     mScene->Unload();
@@ -241,13 +270,21 @@ void Engine::Run() {
 
         Update(GlobalUtil::deltaTime);
 
-        if (mIsMainMenu || m_timeScale == 0.f) {
-            ImGuiRenderer::BeginMainMenu(m_context);
-            playerCountSelection = ImGuiRenderer::AddMainMenuPlayerCountSelection(m_context, playerCounts, playerCountSelection);
-            scenePathSelection = ImGuiRenderer::AddMainMenuSceneSelection(m_context, scenePaths, scenePathSelection);
-            ImGuiRenderer::AddLoadSceneButton(*scenePathSelection, std::stoi(playerCountSelection));
-            ImGuiRenderer::AddQuitButton();
-            ImGuiRenderer::EndMainMenu();
+        if (mIsMainMenu || m_isPaused) {
+            //ImGuiRenderer::BeginMainMenu(m_context);
+            //playerCountSelection = ImGuiRenderer::AddMainMenuPlayerCountSelection(m_context, playerCounts, playerCountSelection);
+            //scenePathSelection = ImGuiRenderer::AddMainMenuSceneSelection(m_context, Engine::GetScenePaths(), scenePathSelection);
+            //ImGuiRenderer::AddLoadSceneButton(*scenePathSelection, std::stoi(playerCountSelection));
+            //ImGuiRenderer::AddQuitButton();
+            //ImGuiRenderer::EndMainMenu();
+            //ImGuiRenderer::Update(nullptr);
+            if (!mIsMainMenu) {
+                m_UIManager.SwitchToMenu("PauseMenu");
+            } else {
+                m_UIManager.SwitchToMenu("ConfigGameMenu");
+            }
+
+            m_UIManager.RenderCurrentMenu(ImGui::GetIO().DisplaySize);
         }
 
 
@@ -262,6 +299,7 @@ void Engine::Run() {
             // reset the last frame time to avoid a large delta time
             m_lastFrameTime = glfwGetTime();
             m_timeScale = 1.f;
+            Unpause();
         }
 
         FrameMark;
@@ -275,6 +313,7 @@ void Engine::UpdateLogic() {
         glfwSetWindowShouldClose(Platform::get().window, GLFW_TRUE);
     }
 
+    // Going to keep this because it can provide an example of how to do full frame post-processing.
     if (IsKeyPressed(KEY::e5)) {
         vkutil::postProcessSettings.Enable = vkutil::postProcessSettings.Enable == true ? false : true;
 
@@ -306,7 +345,7 @@ void Engine::ChangeSceneFR(const std::filesystem::path &scenePath, size_t player
     mTextureManager->Initialise();
 
     // load in heart
-    std::filesystem::path loadingPath = assetsPath/ "loadingImage.png";
+    std::filesystem::path loadingPath = assetsPath/ "loading_shot_cropped.png";
     ImGuiRenderer::AddTextures(mTextureManager.get(), loadingPath, "load");
 
 
@@ -351,13 +390,12 @@ void Engine::Update(double deltaTime) {
 #endif // JPH_DEBUG_RENDERER
 
     PhysicsManager::get().UpdatePhysics(deltaTime);
-
     if (!mIsMainMenu) {
         mScene->UpdateUi(deltaTime);
 
 #ifndef PLATINUM
         playerCountSelection = ImGuiRenderer::NewPlayerCountSelection(playerCounts, playerCountSelection);
-        scenePathSelection = ImGuiRenderer::NewSceneSelection(scenePaths, scenePathSelection);
+        scenePathSelection = ImGuiRenderer::NewSceneSelection(GetScenePaths(), scenePathSelection);
         ImGuiRenderer::AddLoadSceneButton(*scenePathSelection, std::stoi(playerCountSelection));
         ImGuiRenderer::Update(mScene);
 #endif
@@ -444,7 +482,7 @@ void Engine::RenderLoadingScreen()
         while (m_isLoading)
         {
 
-            
+
             float mTotalTime = glfwGetTime() - m_lastFrameTime;
             float mProgress = m_progress;
             mProgress += mTotalTime * 10.f;

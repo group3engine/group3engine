@@ -13,9 +13,11 @@
 #include "ImGuiRenderer.hpp"
 #include "InputMapping.hpp"
 #include "Saving.hpp"
+#include "Engine.hpp"
 
 struct WinSignal;
 struct CoinSignal;
+struct UnpauseSignal;
 
 enum class InternalEvent {
     eDeath,
@@ -61,7 +63,7 @@ class CharacterEntity : public Entity {
     void UpdateUi(double deltaTime) override;
 
     void Awake() override;
-    void UnscaledUpdate(double deltaTime) override;
+
 
     void OnCollisionStart(Entity *aOther) override;
 
@@ -132,6 +134,8 @@ class CharacterEntity : public Entity {
 
     bool WouldUncrouchHitCeiling() const;
 
+    void Unpause([[maybe_unused]] UnpauseSignal *signal);
+
   public:
     inline static float sJumpTimeScale = 0.1f;
     inline static float sFallTimeScale = 0.3f;
@@ -197,6 +201,8 @@ class CharacterEntity : public Entity {
     glm::vec3 mClimbDirection = glm::vec3(0.f, 0.f, 0.f);
 
     std::vector<Entity *> mInteractables;
+    Engine& mEngine = Engine::get();
+
 };
 
 
