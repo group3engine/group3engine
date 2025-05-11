@@ -275,7 +275,7 @@ void CharacterEntity::PrePhysicsUpdate() {
 
 void CharacterEntity::PreUpdate(double deltaTime) {
     // process the input
-    if(!mPaused)
+    if(!mEngine.IsPaused())
         ProcessInput();
 }
 
@@ -310,24 +310,32 @@ void CharacterEntity::Update(double deltaTime) {
     auto characterPhysicsPos = mSampleJoltCharacter->GetCharacterPosition();
     SetCharacterPositionOffset(characterPhysicsPos.GetX(), characterPhysicsPos.GetY(), characterPhysicsPos.GetZ());
 
-
-    if(mInputMapping.GetActionPressed("PAUSE") > 0)
+    if (mEngine.IsPaused())
     {
-        // Engine::get().Quit();
-        // only set the time scale to 0 if we are in single player
-        if(!Scene::get().IsMultiplayer())
-            Engine::get().SetTimeScale(0.f);
-        // free the mouse
-        auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
-        flag = false;
-        glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-        mPaused = true;
+        if(mInputMapping.GetActionPressed("PAUSE") > 0)
+        {
+            Engine::get().SetTimeScale(1.f);
+            mEngine.Unpause();
+        }
     }
+    else {
+        if (mInputMapping.GetActionPressed("PAUSE") > 0) {
+            // only set the time scale to 0 if we are in single player
+            if (!Scene::get().IsMultiplayer())
+                mEngine.SetTimeScale(0.f);
+            // free the mouse
+            auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
+            flag = false;
+            glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            mEngine.Pause();
+        }
+    }
+
 #ifndef PLATINUM
     if(IsKeyPressed(KEY::eESCAPE))
     {
     // quit the game
-    Engine::get().Quit();
+    mEngine.Quit();
     }
 #endif
 
@@ -494,17 +502,6 @@ void CharacterEntity::Update(double deltaTime) {
     }
 }
 
-void CharacterEntity::UnscaledUpdate(double deltaTime)
-{
-    if (mPaused)
-    {
-        if(mInputMapping.GetActionPressed("PAUSE") > 0)
-        {
-            Engine::get().SetTimeScale(1.f);
-            mPaused = false;
-        }
-    }
-}
 void CharacterEntity::UpdateUi(double deltaTime) {
     ImGuiRenderer::NewCharacterInfo(GetName(),
                                     GetCamera()->GetPosition().x,

@@ -12,6 +12,7 @@
 
 #include "ImGuiRenderer.hpp"
 #include "InputMapping.hpp"
+#include "Engine.hpp"
 
 struct WinSignal;
 struct CoinSignal;
@@ -60,7 +61,7 @@ class CharacterEntity : public Entity {
     void UpdateUi(double deltaTime) override;
 
     void Awake() override;
-    void UnscaledUpdate(double deltaTime) override;
+
 
     void OnCollisionStart(Entity *aOther) override;
 
@@ -195,8 +196,8 @@ class CharacterEntity : public Entity {
     glm::vec3 mClimbDirection = glm::vec3(0.f, 0.f, 0.f);
 
     std::vector<Entity *> mInteractables;
+    Engine& mEngine = Engine::get();
 
-    bool mPaused = false;
 };
 
 
