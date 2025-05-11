@@ -270,7 +270,7 @@ void Engine::Run() {
 
         Update(GlobalUtil::deltaTime);
 
-        if (mIsMainMenu || m_timeScale == 0.f) {
+        if (mIsMainMenu || m_isPaused) {
             //ImGuiRenderer::BeginMainMenu(m_context);
             //playerCountSelection = ImGuiRenderer::AddMainMenuPlayerCountSelection(m_context, playerCounts, playerCountSelection);
             //scenePathSelection = ImGuiRenderer::AddMainMenuSceneSelection(m_context, Engine::GetScenePaths(), scenePathSelection);
@@ -299,6 +299,7 @@ void Engine::Run() {
             // reset the last frame time to avoid a large delta time
             m_lastFrameTime = glfwGetTime();
             m_timeScale = 1.f;
+            Unpause();
         }
 
         FrameMark;

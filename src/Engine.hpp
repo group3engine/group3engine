@@ -47,7 +47,9 @@ class Engine {
 
     void SetTimeScale(float timeScale) { m_timeScale = timeScale; }
     float GetTimeScale() const { return m_timeScale; }
-    bool IsPaused() const { return m_timeScale == 0.0f; }
+    void Pause() { m_isPaused = true; }
+    void Unpause() { m_isPaused = false; }
+    bool IsPaused() const { return m_isPaused; }
     void Quit() {m_shouldQuit = true; }
 
   public:
@@ -65,6 +67,7 @@ class Engine {
     bool m_isLoading = false;
     float m_progress = 0.0f;
     float m_timeScale = 1.0f;
+    bool m_isPaused = false;
     bool m_shouldQuit = false;
 
     bool m_sceneNeedsChanging = false;

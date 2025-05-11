@@ -64,19 +64,16 @@ void Scene::Update(double aDeltaTime) {
     for(auto &entity : m_Entities) {
         entity->UnscaledUpdate(GlobalUtil::unscaledDeltaTime);
     }
-    // update the entities, if timescale is more than 0
-    if (timeScale > 0.f)
-    {
-        for(auto &entity : m_Entities) {
-            entity->BaseUpdate(aDeltaTime);
-            entity->PreUpdate(aDeltaTime);
-            entity->Update(aDeltaTime);
-        }
-        // late update the entities
-        for(auto &entity : m_Entities) {
-            entity->LateUpdate(aDeltaTime);
-        }
+    for(auto &entity : m_Entities) {
+        entity->BaseUpdate(aDeltaTime);
+        entity->PreUpdate(aDeltaTime);
+        entity->Update(aDeltaTime);
     }
+    // late update the entities
+    for(auto &entity : m_Entities) {
+        entity->LateUpdate(aDeltaTime);
+    }
+
 
     LightManager::getInstance().Update();
     UpdateCameraTransforms();
@@ -430,10 +427,12 @@ void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
 void Scene::Awake()
 {
     // Find the network entities manager
+    mIsMultiplayer = false;
     for (auto &entity : m_Entities) {
         if (entity->CompareType("NetworkEntitiesManager")) {
             assert(!mNetworkEntitiesManager);
             mNetworkEntitiesManager = static_cast<NetworkEntitiesManager *>(entity);
+            mIsMultiplayer = true;
         }
     }
     if (mNetworkEntitiesManager) {
