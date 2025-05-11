@@ -18,4 +18,8 @@ struct CoinSignal : public SignalBase<CoinSignal> {
 struct ResetToSpawnSignal : public SignalBase<ResetToSpawnSignal> {
     Entity* transmitter = nullptr;
 };
+
+struct UnpauseSignal : public SignalBase<UnpauseSignal> {
+
+};
 #endif // SIGNALS_HPP

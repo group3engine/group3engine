@@ -3,6 +3,9 @@
 //
 
 #include "Fonts.hpp"
+
+#include <spdlog/spdlog.h>
+
 #include "Utils.hpp"
 #define FONT_PATH assetsPath / "fonts/"
 namespace Fonts
@@ -13,8 +16,17 @@ namespace Fonts
         std::filesystem::path fontPath1 = FONT_PATH / "ubuntu-title/Ubuntu-Title.ttf";
         std::filesystem::path fontPath2 = FONT_PATH / "junegull/junegull.ttf";
         std::filesystem::path fontPath3 = FONT_PATH / "segment16c/Segment16C Bold.ttf";
+        std::filesystem::path gameFont =  FONT_PATH / "GameFont/GFont.ttf";
         std::filesystem::path alteHaasBoldPath = FONT_PATH / "alte_haas_grotesk/AlteHaasGroteskBold.ttf";
         std::filesystem::path alteHaasRegularPath = FONT_PATH / "alte_haas_grotesk/AlteHaasGroteskRegular.ttf";
+        std::filesystem::path roaringJunglePath = FONT_PATH / "roaring_jungle/Roaring Jungle.otf";
+
+        TitleFont = io.Fonts->AddFontFromFileTTF(roaringJunglePath.string().c_str(), 128.0f);
+        if (!TitleFont) {
+            SPDLOG_ERROR("Failed to load title font");
+            return false;
+        }
+
         // Load heading font
         HeadingFont = io.Fonts->AddFontFromFileTTF(alteHaasBoldPath.string().c_str(), 32.0f);
         if (!HeadingFont) {
@@ -61,10 +73,20 @@ namespace Fonts
             return false;
         }
 
-        InGameFont = io.Fonts->AddFontFromFileTTF(alteHaasBoldPath.string().c_str(), 32.0f);
-        if (!InGameFont) {
-            std::cerr << "Failed to load loading font" << std::endl;
+        GameFont = io.Fonts->AddFontFromFileTTF(alteHaasBoldPath.string().c_str(), 32.0f);
+
+        if (!GameFont)
+        {
+            std::cerr << "Failed to load loading font" + alteHaasBoldPath.string() << std::endl;
             return false;
+        }
+
+        {
+            std::string filename = alteHaasBoldPath.string();
+            InGameFont = io.Fonts->AddFontFromFileTTF(filename.c_str(), 32.0f);
+            if (!InGameFont) {
+                SPDLOG_ERROR("Failed to load {}", filename.c_str());
+            }
         }
 
         return true;

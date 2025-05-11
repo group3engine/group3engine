@@ -7,6 +7,7 @@
 
 #include <json.hpp>
 
+#include "Engine.hpp"
 #include "Entity.hpp"
 #include "Networking.hpp"
 #include "NetworkedCharacterRemote.hpp"
@@ -31,6 +32,12 @@ public:
 
     void UpdateUi(double deltaTime) override {
         std::lock_guard<std::mutex> lock(messages_mutex);
+
+        // Don't render chat window if paused
+        if (Engine::get().IsPaused()) {
+            return;
+        }
+
         ImGuiRenderer::ChatWindow(mChatMessages, [this](const std::string &playerName, const std::string &message) {
             SendChatMessage(playerName, message);
         });
