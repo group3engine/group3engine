@@ -120,8 +120,8 @@ namespace vkutil {
     inline uint32_t setAlphaMakingPipeline = 2;
 
 
-    inline float ShadowBias = 0.0f;
-    inline float ShadowSlope = 3.4f;
+    inline float ShadowBias = 10.0f;
+    inline float ShadowSlope = 10.0f;
 
     inline VkDescriptorSetLayout materialDescriptorSetLayout;
     inline SHCoefficients SHCoefficientsStored;
