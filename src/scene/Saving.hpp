@@ -91,6 +91,12 @@ public:
 
 
     void UpdateSceneName(const std::filesystem::path &sceneName);
+
+    void ClearSaveData() {
+        std::lock_guard<std::mutex> lock(mMutex);
+        mSaveData.clear();
+        mSaveDataUpToDate = false;
+    }
 private:
     std::filesystem::path mSaveFileName{};
     nlohmann::json mSaveData{};
