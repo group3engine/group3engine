@@ -430,10 +430,12 @@ void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
 void Scene::Awake()
 {
     // Find the network entities manager
+    mIsMultiplayer = false;
     for (auto &entity : m_Entities) {
         if (entity->CompareType("NetworkEntitiesManager")) {
             assert(!mNetworkEntitiesManager);
             mNetworkEntitiesManager = static_cast<NetworkEntitiesManager *>(entity);
+            mIsMultiplayer = true;
         }
     }
     if (mNetworkEntitiesManager) {

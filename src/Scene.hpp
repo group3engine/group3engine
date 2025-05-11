@@ -179,6 +179,8 @@ class Scene {
         return mNetworkEntitiesManager;
     }
 
+    bool IsMultiplayer() const { return mIsMultiplayer; }
+
 #ifdef JPH_DEBUG_RENDERER
     DebugRendererSimple *GetDebugRenderer() const { return mDebugRenderer; }
 
@@ -224,6 +226,7 @@ private:
     std::filesystem::path mSceneFilename;
 
     NetworkEntitiesManager *mNetworkEntitiesManager;
+    bool mIsMultiplayer = false;
 
 #ifdef JPH_DEBUG_RENDERER
     DebugRendererSimple *mDebugRenderer = nullptr;

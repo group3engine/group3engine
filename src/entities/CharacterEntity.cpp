@@ -275,7 +275,8 @@ void CharacterEntity::PrePhysicsUpdate() {
 
 void CharacterEntity::PreUpdate(double deltaTime) {
     // process the input
-    ProcessInput();
+    if(!mPaused)
+        ProcessInput();
 }
 
 void CharacterEntity::Update(double deltaTime) {
@@ -313,12 +314,14 @@ void CharacterEntity::Update(double deltaTime) {
     if(mInputMapping.GetActionPressed("PAUSE") > 0)
     {
         // Engine::get().Quit();
-        Engine::get().SetTimeScale(0.f);
+        // only set the time scale to 0 if we are in single player
+        if(!Scene::get().IsMultiplayer())
+            Engine::get().SetTimeScale(0.f);
         // free the mouse
         auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
         flag = false;
         glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-
+        mPaused = true;
     }
 #ifndef PLATINUM
     if(IsKeyPressed(KEY::eESCAPE))
@@ -493,11 +496,12 @@ void CharacterEntity::Update(double deltaTime) {
 
 void CharacterEntity::UnscaledUpdate(double deltaTime)
 {
-    if (Engine::get().GetTimeScale() == 0.f)
+    if (mPaused)
     {
         if(mInputMapping.GetActionPressed("PAUSE") > 0)
         {
             Engine::get().SetTimeScale(1.f);
+            mPaused = false;
         }
     }
 }

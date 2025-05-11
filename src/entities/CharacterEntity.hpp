@@ -195,6 +195,8 @@ class CharacterEntity : public Entity {
     glm::vec3 mClimbDirection = glm::vec3(0.f, 0.f, 0.f);
 
     std::vector<Entity *> mInteractables;
+
+    bool mPaused = false;
 };
 
 
