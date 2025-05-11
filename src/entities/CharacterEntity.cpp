@@ -836,4 +836,13 @@ void CharacterEntity::LateUpdate(double deltaTime)
     // longer being interactable
     mInteractables.clear();
 
+    // temporary for demo purposes
+    {
+        // if the player presses control and shift and c then clear the save data, and reload the scene
+        if (IsKeyDown(KEY::eC) && IsKeyDown(KEY::eLEFT_SHIFT) && IsKeyDown(KEY::eLEFT_CONTROL)) {
+            Saving::get().ClearSaveData();
+            Engine::get().ChangeScene(Scene::get().GetActiveScene()->GetSceneFilePath(), Scene::get().GetPlayerCount());
+        }
+    }
+
 }
