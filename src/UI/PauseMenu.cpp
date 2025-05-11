@@ -1,9 +1,12 @@
-#include "ConfigGameMenu.hpp"
+#include "PauseMenu.hpp"
 #include "UIManager.hpp"
 #include "Context.hpp"
 #include <algorithm>
 
-ConfigGameMenu::ConfigGameMenu(Context &context, UIManager &uiManager) : BaseMenu(context, uiManager) {
+#include "SignalSystem.hpp"
+#include "Signals.hpp"
+
+PauseMenu::PauseMenu(Context &context, UIManager &uiManager, Scene *scene) : BaseMenu(context, uiManager), mScene(scene) {
 
     NumPlayers = 1;
 
@@ -24,7 +27,16 @@ ConfigGameMenu::ConfigGameMenu(Context &context, UIManager &uiManager) : BaseMen
     // });
 
     buttons.push_back({
-        "PLAY", [this]() {
+        "CONTINUE", [this]() {
+            SPDLOG_INFO("Continuing");
+            // Unpause
+            UnpauseSignal unpauseSignal;
+            mScene->mSignalSystem.EmitSignal(&unpauseSignal);
+        }
+    });
+
+    buttons.push_back({
+        "LOAD LEVEL", [this]() {
             SPDLOG_INFO("Loading scene");
             size_t playerCount = this->NumPlayers;
             Engine::get().ChangeScene(m_SelectedLevelPath, playerCount);
@@ -45,7 +57,7 @@ ConfigGameMenu::ConfigGameMenu(Context &context, UIManager &uiManager) : BaseMen
 
 }
 
-void ConfigGameMenu::Render(ImVec2 screenSize)
+void PauseMenu::Render(ImVec2 screenSize)
 {
     DrawBackground(screenSize);
     ImGui::SetNextWindowSize(screenSize);
@@ -83,7 +95,7 @@ void ConfigGameMenu::Render(ImVec2 screenSize)
     float xPos = ImGui::GetIO().DisplaySize.x - 300 - 10.0f;
     float yPos = 20.0f;
     ImGui::SetCursorPos(ImVec2(xPos, yPos));
-    for (const auto *path : Engine::GetScenePaths())
+    for (const auto* path : Engine::GetScenePaths())
     {
         bool isSelected = (*path == m_SelectedLevelPath);
 
@@ -109,7 +121,7 @@ void ConfigGameMenu::Render(ImVec2 screenSize)
     ImGui::End();
 }
 
-void ConfigGameMenu::Resize()
+void PauseMenu::Resize()
 {
     ImGui::GetIO().DisplaySize = ImVec2(context.extent.width, context.extent.height);
     m_LogoPosition = {context.extent.width / 2.0f - m_LogoSize.x / 2.0f, 50.0f};

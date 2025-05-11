@@ -11,6 +11,7 @@
 #include <iostream>
 
 namespace Fonts {
+    inline ImFont* TitleFont = nullptr;
     inline ImFont* HeadingFont = nullptr;
     inline ImFont* SubHeadingFont = nullptr;
     inline ImFont* TextFont = nullptr;

@@ -1,5 +1,5 @@
-#ifndef CONFIG_MENU_HPP
-#define CONFIG_MENU_HPP
+#ifndef PAUSE_MENU_HPP
+#define PAUSE_MENU_HPP
 
 #include "BaseMenu.hpp"
 #include "Engine.hpp"
@@ -7,11 +7,12 @@
 
 class UIManager;
 class Context;
+class Scene;
 
-class ConfigGameMenu : public BaseMenu
+class PauseMenu : public BaseMenu
 {
   public:
-    explicit ConfigGameMenu(Context &context, UIManager &uiManager);
+    explicit PauseMenu(Context &context, UIManager &uiManager, Scene *scene);
     void Render(ImVec2 screenSize) override;
     void Resize() override;
     size_t NumPlayers;
@@ -19,6 +20,9 @@ class ConfigGameMenu : public BaseMenu
     std::filesystem::path m_SelectedLevelPath = *Engine::GetScenePaths()[0]; // Default path is test scene
 
     inline static bool enableSceneSelection = true;
+
+  private:
+    Scene *mScene;
 };
 
-#endif // CONFIG_MENU_HPP
+#endif // PAUSE_MENU_HPP

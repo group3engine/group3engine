@@ -46,13 +46,13 @@ void BaseMenu::DrawBackground(ImVec2 screenSize) {
         );
     }
 
-    if (m_LogoTextureID) {
-        ImGui::GetBackgroundDrawList()->AddImage(
-            m_LogoTextureID,
-            m_LogoPosition,
-            ImVec2(m_LogoPosition.x + m_LogoSize.x, m_LogoPosition.y + m_LogoSize.y)
-        );
-    }
+    // if (m_LogoTextureID) {
+    //     ImGui::GetBackgroundDrawList()->AddImage(
+    //         m_LogoTextureID,
+    //         m_LogoPosition,
+    //         ImVec2(m_LogoPosition.x + m_LogoSize.x, m_LogoPosition.y + m_LogoSize.y)
+    //     );
+    // }
 }
 
 void BaseMenu::DrawButtons(ImVec2 screenSize) {
@@ -60,12 +60,13 @@ void BaseMenu::DrawButtons(ImVec2 screenSize) {
     ImVec2 buttonSize(300, 50);
     float spacing = 20.0f;
     float totalHeight = (buttonSize.y + spacing) * buttons.size() - spacing;
+    float startX = screenSize.x / 2.0f - buttonSize.x / 2.0f;
     float startY = screenSize.y / 2 - totalHeight / 2;
 
     ImGui::SetCursorPosY(startY);
 
     for (auto& btn : buttons) {
-        ImGui::SetCursorPosX(100.0f); // left aligned with offset
+        ImGui::SetCursorPosX(startX);
         if (DrawStyledButton(btn.label.c_str(), buttonSize)) {
             if (btn.onClick) btn.onClick();
         }
@@ -74,18 +75,18 @@ void BaseMenu::DrawButtons(ImVec2 screenSize) {
 }
 
 bool BaseMenu::DrawStyledButton(const char* label, ImVec2 size) {
-    ImGui::PushFont(Fonts::GameFont);
+    ImGui::PushFont(Fonts::InGameFont);
 
     ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.1f, 0.1f, 0.1f, 0.1f));
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.35f, 0.38f, 0.45f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_Text,          ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 12.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10, 10));
+    // ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10, 10));
 
     bool clicked = ImGui::Button(label, size);
 
-    ImGui::PopStyleVar(2);
+    ImGui::PopStyleVar(1);
     ImGui::PopStyleColor(4);
     ImGui::PopFont();
 

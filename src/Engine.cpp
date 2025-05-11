@@ -11,6 +11,7 @@
 #include "MainMenu.hpp"
 #include "NewGameMenu.hpp"
 #include "ConfigGameMenu.hpp"
+#include "PauseMenu.hpp"
 
 #include "Engine.hpp"
 #include "Camera.hpp"
@@ -63,25 +64,7 @@ namespace {
     std::filesystem::path mainMenuLogo{"MainMenu/LOGO.png"};
     std::filesystem::path mainMenuBG{"MainMenu/bg.jpg"};
 
-    const std::vector<std::filesystem::path *> scenePaths = {
-        &Sample::Game,
-        &Sample::JumpTest,
-        &Sample::SampleObbyTestScene,
-        &Sample::ArrowSample,
-        &Sample::AxeSample,
-        &Sample::TileSample,
-        &Sample::SpikePitSample,
-        &Sample::LadderSample,
-        &Sample::SinkingSample,
-        &Sample::LeverSample,
-        &Sample::BoulderSample,
-        &Sample::SpikeTrapSample,
-        &Sample::DisappearingPlatformSample,
-
-
-    };
-
-    const std::filesystem::path *scenePathSelection = scenePaths[0];
+    const std::filesystem::path *scenePathSelection = Engine::GetScenePaths()[0];
 
     const std::vector<const char *> playerCounts = {
         "1",
@@ -96,6 +79,25 @@ namespace {
 Engine::Engine() {
     m_isRunning = false;
     m_lastFrameTime = 0.0;
+}
+
+std::vector<std::filesystem::path *> &Engine::GetScenePaths() {
+    static std::vector<std::filesystem::path *> sScenePaths = {
+        &Sample::Game,
+        &Sample::JumpTest,
+        &Sample::SampleObbyTestScene,
+        &Sample::ArrowSample,
+        &Sample::AxeSample,
+        &Sample::TileSample,
+        &Sample::SpikePitSample,
+        &Sample::LadderSample,
+        &Sample::SinkingSample,
+        &Sample::LeverSample,
+        &Sample::BoulderSample,
+        &Sample::SpikeTrapSample,
+        &Sample::DisappearingPlatformSample,
+    };
+    return sScenePaths;
 }
 
 bool Engine::Initialize() {
@@ -180,13 +182,13 @@ bool Engine::Initialize() {
     m_MainMenuScreen = new MainMenuScreen(m_context, m_UIManager);
     m_NewGameMenu = new NewGameMenu(m_context, m_UIManager);
     m_ConfigGameMenu = new ConfigGameMenu(m_context, m_UIManager);
+    mPauseMenu = new PauseMenu(m_context, m_UIManager, mScene);
 
     /* Register menus here with the Manager. Give it a name for ID */
-    m_UIManager.RegisterMenu("MainMenu", m_MainMenuScreen);
-    m_UIManager.RegisterMenu("NewGameMenu", m_NewGameMenu);
     m_UIManager.RegisterMenu("ConfigGameMenu", m_ConfigGameMenu);
+    m_UIManager.RegisterMenu("PauseMenu", mPauseMenu);
     /* Switch to menu scene using its name */
-    m_UIManager.SwitchToMenu("MainMenu");
+    m_UIManager.SwitchToMenu("ConfigGameMenu");
   
     InitGuiTextures();
 
@@ -271,11 +273,16 @@ void Engine::Run() {
         if (mIsMainMenu || m_timeScale == 0.f) {
             //ImGuiRenderer::BeginMainMenu(m_context);
             //playerCountSelection = ImGuiRenderer::AddMainMenuPlayerCountSelection(m_context, playerCounts, playerCountSelection);
-            //scenePathSelection = ImGuiRenderer::AddMainMenuSceneSelection(m_context, scenePaths, scenePathSelection);
+            //scenePathSelection = ImGuiRenderer::AddMainMenuSceneSelection(m_context, Engine::GetScenePaths(), scenePathSelection);
             //ImGuiRenderer::AddLoadSceneButton(*scenePathSelection, std::stoi(playerCountSelection));
             //ImGuiRenderer::AddQuitButton();
             //ImGuiRenderer::EndMainMenu();
             //ImGuiRenderer::Update(nullptr);
+            if (!mIsMainMenu) {
+                m_UIManager.SwitchToMenu("PauseMenu");
+            } else {
+                m_UIManager.SwitchToMenu("ConfigGameMenu");
+            }
 
             m_UIManager.RenderCurrentMenu(ImGui::GetIO().DisplaySize);
         }
@@ -337,7 +344,7 @@ void Engine::ChangeSceneFR(const std::filesystem::path &scenePath, size_t player
     mTextureManager->Initialise();
 
     // load in heart
-    std::filesystem::path loadingPath = assetsPath/ "loadingImage.jpg";
+    std::filesystem::path loadingPath = assetsPath/ "loading_shot_cropped.png";
     ImGuiRenderer::AddTextures(mTextureManager.get(), loadingPath, "load");
 
 
@@ -387,7 +394,7 @@ void Engine::Update(double deltaTime) {
 
 #ifndef PLATINUM
         playerCountSelection = ImGuiRenderer::NewPlayerCountSelection(playerCounts, playerCountSelection);
-        scenePathSelection = ImGuiRenderer::NewSceneSelection(scenePaths, scenePathSelection);
+        scenePathSelection = ImGuiRenderer::NewSceneSelection(GetScenePaths(), scenePathSelection);
         ImGuiRenderer::AddLoadSceneButton(*scenePathSelection, std::stoi(playerCountSelection));
         ImGuiRenderer::Update(mScene);
 #endif

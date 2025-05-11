@@ -532,6 +532,11 @@ void CharacterEntity::UpdateUi(double deltaTime) {
 
     size_t activePlayerCount = GetScene()->GetActivePlayerCount();
 
+    // If in pause menu don't show this UI
+    if (Engine::get().IsPaused()) {
+        return;
+    }
+
     // New timer window
     if (mIsTiming) {
         mGuiTimerData.time += deltaTime;
@@ -676,6 +681,7 @@ void CharacterEntity::Awake() {
     // on win signal. Then when the player resets to the start of the level remove the receiver
     GetScene()->mSignalSystem.AddReceiver<CharacterEntity, WinSignal>(this, &CharacterEntity::OnWin);
     GetScene()->mSignalSystem.AddReceiver<CharacterEntity, CoinSignal>(this, &CharacterEntity::AddCoin);
+    GetScene()->mSignalSystem.AddReceiver<CharacterEntity, UnpauseSignal>(this, &CharacterEntity::Unpause);
 }
 
 void CharacterEntity::OnWin(WinSignal *signal) {
@@ -827,4 +833,9 @@ void CharacterEntity::LateUpdate(double deltaTime)
     // longer being interactable
     mInteractables.clear();
 
+}
+
+void CharacterEntity::Unpause([[maybe_unused]] UnpauseSignal *signal) {
+    assert(Engine::get().GetTimeScale() == 0.0f);
+    Engine::get().SetTimeScale(1.0f);
 }

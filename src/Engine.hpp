@@ -20,6 +20,7 @@
 class MainMenuScreen;
 class NewGameMenu;
 class ConfigGameMenu;
+class PauseMenu;
 
 class MaterialManager;
 class MeshManager;
@@ -46,6 +47,7 @@ class Engine {
 
     void SetTimeScale(float timeScale) { m_timeScale = timeScale; }
     float GetTimeScale() const { return m_timeScale; }
+    bool IsPaused() const { return m_timeScale == 0.0f; }
     void Quit() {m_shouldQuit = true; }
 
   public:
@@ -53,6 +55,8 @@ class Engine {
     void Run();
     void Shutdown();
     void ChangeScene(const std::filesystem::path &pendingScenePath, size_t pendingPlayerCount);
+
+    static std::vector<std::filesystem::path *> &GetScenePaths();
 
   private:
     Context m_context;
@@ -105,6 +109,7 @@ class Engine {
     MainMenuScreen* m_MainMenuScreen;
     NewGameMenu *m_NewGameMenu;
     ConfigGameMenu *m_ConfigGameMenu;
+    PauseMenu *mPauseMenu = nullptr;
     UIManager m_UIManager;
     std::vector<UITexture> mGuiTextures;
 };
