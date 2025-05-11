@@ -521,7 +521,7 @@ void CharacterEntity::UpdateUi(double deltaTime) {
             mFinishVisibleTimer = 1.0f;
             break;
         case InternalUiEvent::eWinPopup:
-            mWinVisibleTimer = 1.0f;
+            mWinVisibleTimer = 10.0f;
             break;
         default:
             SPDLOG_ERROR("Unaccounted for switch case.");
@@ -549,7 +549,16 @@ void CharacterEntity::UpdateUi(double deltaTime) {
 
     mWinVisibleTimer = std::max(0.0f, mWinVisibleTimer - static_cast<float>(deltaTime));
     if (mWinVisibleTimer) {
-        ImGuiRenderer::Text("You Win!", ImVec2(0.5f, 0.75f), Fonts::TextFont, activePlayerCount, mPlayerId);
+        std::string winText;
+        if(mGuiTimerData.time < 60.f)
+        {
+            winText = "Idol collected in " + std::to_string(mGuiTimerData.time) + " seconds";
+        }
+        else
+        {
+            winText = "Idol collected in " + std::to_string(mGuiTimerData.time / 60.f) + " minutes and " + std::to_string((int)mGuiTimerData.time % 60) + " seconds";
+        }
+        ImGuiRenderer::Text(winText, ImVec2(0.5f, 0.75f), Fonts::TextFont, activePlayerCount, mPlayerId);
     }
 
     if (!mInteractables.empty()) {
