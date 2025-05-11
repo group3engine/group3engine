@@ -847,5 +847,6 @@ void CharacterEntity::Unpause([[maybe_unused]] UnpauseSignal *signal) {
     }
 #endif // NDEBUG
 
+    Engine::get().SetTimeScale(1.f);
     Engine::get().Unpause();
 }

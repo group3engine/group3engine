@@ -299,6 +299,7 @@ void Engine::Run() {
             // reset the last frame time to avoid a large delta time
             m_lastFrameTime = glfwGetTime();
             m_timeScale = 1.f;
+            Unpause();
         }
 
         FrameMark;
