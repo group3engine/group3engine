@@ -206,6 +206,7 @@ void Scene::LoadGLTF(const std::filesystem::path &aFilepath, size_t playerCount)
 
 void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
 {
+    mScenePath = filePath;
     mSceneFilename = filePath.stem();
     std::filesystem::path saveFilename = "save_";
     saveFilename += Scene::get().GetActiveScene()->GetSceneFilename();

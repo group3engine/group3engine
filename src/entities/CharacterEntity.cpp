@@ -4,6 +4,8 @@
 
 #include "CharacterEntity.hpp"
 #include <spdlog/spdlog.h>
+#include <spdlog/fmt/chrono.h>
+#include <spdlog/fmt/fmt.h>
 #include <filesystem>
 #include <fstream>
 #include <cstdlib>
@@ -38,6 +40,8 @@ namespace {
 }
 
 CharacterEntity::~CharacterEntity() {
+    mDeathCount = Saving::get().Get<int>("playerDeaths");
+    mGuiTimerData.time = Saving::get().Get<double>("time");
     delete mCamera;
 }
 
@@ -350,7 +354,6 @@ void CharacterEntity::Update(double deltaTime) {
 
         switch (event) {
         case InternalEvent::eDeath:
-            ++mDeathCount;
             mInternalUiEvents.push(InternalUiEvent::eDeathPopup);
             break;
         default:
@@ -524,7 +527,7 @@ void CharacterEntity::UpdateUi(double deltaTime) {
             mFinishVisibleTimer = 1.0f;
             break;
         case InternalUiEvent::eWinPopup:
-            mWinVisibleTimer = 1.0f;
+            mWinVisibleTimer = 10.0f;
             break;
         default:
             SPDLOG_ERROR("Unaccounted for switch case.");
@@ -557,11 +560,23 @@ void CharacterEntity::UpdateUi(double deltaTime) {
 
     mWinVisibleTimer = std::max(0.0f, mWinVisibleTimer - static_cast<float>(deltaTime));
     if (mWinVisibleTimer) {
-        ImGuiRenderer::Text("You Win!", ImVec2(0.5f, 0.75f), Fonts::TextFont, activePlayerCount, mPlayerId);
+        std::string winText;
+
+        int totalMilliseconds = static_cast<int>(std::round(mGuiTimerData.time * 1000));
+        int minutes = totalMilliseconds / (60 * 1000);
+        int seconds = (totalMilliseconds % (60 * 1000)) / 1000;
+        int milliseconds = totalMilliseconds % 1000;
+
+        if (mGuiTimerData.time < 60.f) {
+            winText = fmt::format("Idol collected in {:2}.{:2} seconds", seconds, milliseconds);
+        } else {
+            winText = fmt::format("Idol collected in {:2} minutes and {:2}.{:2} seconds", minutes, seconds, milliseconds);
+        }
+        ImGuiRenderer::Text(winText, ImVec2(0.5f, 0.75f), Fonts::InteractableFont, activePlayerCount, mPlayerId);
     }
 
     if (!mInteractables.empty()) {
-        ImGuiRenderer::Text("Press E to Interact", ImVec2(0.5f, 0.5f), Fonts::TextFont, activePlayerCount, mPlayerId);
+        ImGuiRenderer::Text("Press E to Interact", ImVec2(0.5f, 0.5f), Fonts::InteractableFont, activePlayerCount, mPlayerId);
     }
 }
 
@@ -638,6 +653,8 @@ void CharacterEntity::Load() {
     if(Saving::get().HasKey("LastCheckpoint"))
     {
         mLastCheckpoint = Saving::get().Get<glm::vec3>("LastCheckpoint");
+        mDeathCount = Saving::get().Get<int>("playerDeaths");
+        mGuiTimerData.time = Saving::get().Get<double>("time");
         m_has_save = true;
         return;
     }
@@ -695,6 +712,14 @@ void CharacterEntity::OnWin(WinSignal *signal) {
 
 void CharacterEntity::MoveToSpawn()
 {
+    // Reset save and stats on move to spawn
+    Saving::get().ClearSaveData();
+    mDeathCount = 0;
+    mCoinCount = 0;
+    mGuiTimerData.time = 0.0f;
+
+    mWinVisibleTimer = 0.0f;
+
     for(auto &entity: Scene::get().GetActiveScene()->GetEntities())
     {
         if(entity->CompareTag("spawnpoint"))
@@ -719,6 +744,11 @@ void CharacterEntity::Die()
         mDeathState = DeathState::eDying;
         // set the death timer to death time
         mDeathTimer = mDeathTime;
+
+        ++mDeathCount;
+
+        Saving::get().Save("playerDeaths", static_cast<int>(mDeathCount));
+        Saving::get().Save("time", mGuiTimerData.time);
     }
 
 }
@@ -835,6 +865,15 @@ void CharacterEntity::LateUpdate(double deltaTime)
     // and OnCollision given additional conditions, such as an interactable having been used and no
     // longer being interactable
     mInteractables.clear();
+
+    // temporary for demo purposes
+    {
+        // if the player presses control and shift and c then clear the save data, and reload the scene
+        if (IsKeyDown(KEY::eC) && IsKeyDown(KEY::eLEFT_SHIFT) && IsKeyDown(KEY::eLEFT_CONTROL)) {
+            Saving::get().ClearSaveData();
+            Engine::get().ChangeScene(Scene::get().GetActiveScene()->GetSceneFilePath(), Scene::get().GetPlayerCount());
+        }
+    }
 
 }
 

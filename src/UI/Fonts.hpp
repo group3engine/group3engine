@@ -23,6 +23,7 @@ namespace Fonts {
     inline ImFont *GameFont = nullptr;
 
     inline ImFont* InGameFont = nullptr;
+    inline ImFont* InteractableFont = nullptr;
 
     bool LoadFonts() ;
 }

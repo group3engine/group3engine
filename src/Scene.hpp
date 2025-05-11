@@ -95,6 +95,7 @@ class Scene {
     std::vector<Entity *>& GetEntities() { return m_Entities; }
 
     const std::filesystem::path &GetSceneFilename() { return mSceneFilename; }
+    const std::filesystem::path &GetSceneFilePath() { return mScenePath; }
 
     const std::vector<Camera *> &GetCameras() const { return mCameras; }
 
@@ -224,6 +225,7 @@ private:
     gui::Settings::ActivePlayerCountOverride mGuiActivePlayerCountOverride = {};
 
     std::filesystem::path mSceneFilename;
+    std::filesystem::path mScenePath;
 
     NetworkEntitiesManager *mNetworkEntitiesManager;
     bool mIsMultiplayer = false;

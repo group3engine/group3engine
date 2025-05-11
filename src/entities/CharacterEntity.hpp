@@ -12,6 +12,7 @@
 
 #include "ImGuiRenderer.hpp"
 #include "InputMapping.hpp"
+#include "Saving.hpp"
 #include "Engine.hpp"
 
 struct WinSignal;
@@ -75,6 +76,7 @@ class CharacterEntity : public Entity {
     // set the checkpoint
     void SetCheckpoint(glm::vec3 checkpoint) {
         mLastCheckpoint = checkpoint;
+        Saving::get().Save("time", mGuiTimerData.time);
         Save();
     }
 
