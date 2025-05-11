@@ -16,26 +16,6 @@ layout(set = 0, binding = 1) uniform sampler2D renderedScene;
 
 void main()
 {
-	if(ppSettings.Enable) {
-		vec2 texelSize = 1.0 / textureSize(renderedScene, 0); // get size of a single texel
-		vec2 blockSize = vec2(5,3); // block size in pixels
-		vec2 blockSizeInUV = blockSize * texelSize; // size of the block in textured-uv space
-
-		// uv to "block space"
-		vec2 blockSpaceUV = uv / blockSizeInUV;
-		vec2 snappedBlockSpaceUV = ceil(blockSpaceUV);
-		vec2 blockInUVSpace = snappedBlockSpaceUV * blockSizeInUV;
-
-		// flip signs if snapping to nearest block instead of next block
-		blockInUVSpace -= 0.5 * blockSizeInUV; // get the center
-
-		vec3 sampledColor = texture(renderedScene, blockInUVSpace).rgb;
-
-		fragColor = vec4(sampledColor, 1.0);
-	} else {
-
-		vec3 color = texture(renderedScene, uv).rgb;
-		fragColor = vec4(color, 1.0);
-	}
-
+    vec3 color = texture(renderedScene, uv).rgb;
+    fragColor = vec4(color, 1.0);
 }

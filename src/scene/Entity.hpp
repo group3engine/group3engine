@@ -36,7 +36,8 @@ enum class EInteractable {
 
 enum class ENetworkLocality {
     Local,
-    Remote
+    Remote,
+    None
 };
 
 #define MIN_ANIMATOR_UPDATE_DISTANCE 50.f
@@ -45,9 +46,6 @@ enum class ENetworkLocality {
 
 /// The base class for all entities in the scene. Custom entities all have this as their base class
 class Entity {
-  private:
-    static std::atomic<uint32_t> kEntityCount;
-
   public:
     // functions the user can call
 
@@ -110,6 +108,8 @@ class Entity {
     void SetTransform(Transform aTransform);
     /// Set the local transform of the entity as a mat4. This will also update the physics transform
     void SetTransform(glm::mat4 aTransform);
+    /// Set the local transform without updating the children's world transform, physics, or any matrix calculations
+    void SetTransformWithoutUpdate(Transform aTransform) { mLocalTransform = aTransform; }
 
     /// Get the local transform as a #Transform
     [[nodiscard]] Transform GetLocalTransform() const;
@@ -133,8 +133,12 @@ class Entity {
 
     /// Get a reference to the rigidbody
     [[nodiscard]] RigidBody &GetRigidBody(){
-      assert(mRigidBody != nullptr);
-      return *mRigidBody;
+        if (mRigidBody == nullptr) {
+            SPDLOG_ERROR("Entity {} called GetRigidBody and does not have a rigid body", GetName());
+            exit(EXIT_FAILURE);
+        }
+
+        return *mRigidBody;
     }
 
 
@@ -220,6 +224,8 @@ class Entity {
     // functions used by the engine, the user should not call these
     void BaseUpdate(double deltaTime);
 
+    void RecordDrawLava(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout) const;
+
     void RecordDrawOpaque(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout) const;
 
     void RecordDrawShadow(VkCommandBuffer aCmdBuff, VkPipelineLayout aPipelineLayout, uint32_t caseCadeIndex) const;
@@ -257,6 +263,8 @@ class Entity {
     // TODO: Make friend class with Scene
     void SetScene(Scene *scene) { mScene = scene; }
 
+    void InitID(uint32_t id);
+
     const std::unordered_map<std::string, float> &GetFloatProperties() { return mFloatProperties; }
 
     void SetFloatProperties(std::unordered_map<std::string, float> &floatProperties) {
@@ -281,7 +289,7 @@ class Entity {
 
     std::unordered_map<std::string, float> mFloatProperties;
 
-    uint32_t mEntityID = kEntityCount++;
+    uint32_t mEntityID = 0;
 
     private:
 

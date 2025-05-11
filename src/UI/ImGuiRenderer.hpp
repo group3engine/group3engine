@@ -32,6 +32,10 @@ struct DeathCounterData {
     size_t deathCount;
 };
 
+struct CoinCounterData {
+    size_t coinCount;
+};
+
 struct DeathPopupData {
     float visibleTimer;
 };
@@ -120,15 +124,17 @@ namespace ImGuiRenderer
     void EndMainMenu();
 
     // Player UI
-    void NewHeartSprite(const ImVec2 &offset, size_t playerId);
+    void NewSkullSprite(const ImVec2 &offset, size_t playerId);
     void NewDeathCounter(const gui::DeathCounterData &data, size_t activePlayerCount, size_t playerId);
-    void NewDeathPopup(const gui::DeathPopupData &data, size_t activePlayerCount, size_t playerId);
-    void NewFinishPopup(const gui::FinishPopupData &data, size_t activePlayerCount, size_t playerId);
+    void NewCoinCounter(const gui::CoinCounterData &data, size_t activePlayerCount, size_t playerId);
     void NewTimer(const gui::TimerData &data, size_t activePlayerCount, size_t playerId);
 
     void LoadingBar(float progress, ImVec2 position);
 
     void Image(std::string const &imageName, ImVec2 position, ImVec2 size);
+
+    // Add image using absolute coordinates and return the position of the top right corner of the image
+    ImVec2 NewImage(const std::string &name, const ImVec2 &offset, const ImVec2 &imageSize);
 
     void Text(std::string const &text, ImVec2 position, ImFont *font, size_t activePlayerCount, size_t playerId);
 

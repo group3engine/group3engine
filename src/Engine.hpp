@@ -25,6 +25,10 @@ class MaterialManager;
 class MeshManager;
 class TextureManager;
 
+struct UITexture {
+    std::filesystem::path path;
+    std::string name;
+};
 
 class Engine {
   private:
@@ -82,6 +86,8 @@ class Engine {
     void DrawPhysics();
 #endif // JPH_DEBUG_RENDERER
 
+    void InitGuiTextures();
+
     Scene *mScene;
     std::unique_ptr<Renderer> mRenderer;
 
@@ -100,4 +106,5 @@ class Engine {
     NewGameMenu *m_NewGameMenu;
     ConfigGameMenu *m_ConfigGameMenu;
     UIManager m_UIManager;
+    std::vector<UITexture> mGuiTextures;
 };

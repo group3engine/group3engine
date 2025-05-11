@@ -18,7 +18,11 @@ namespace Fonts {
     inline ImFont* TextFontSmall = nullptr;
     inline ImFont* LoadingFont = nullptr;
     inline ImFont* LoadingFontSmall = nullptr;
+
     inline ImFont *GameFont = nullptr;
+
+    inline ImFont* InGameFont = nullptr;
+
     bool LoadFonts() ;
 }
 

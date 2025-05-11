@@ -50,6 +50,8 @@ class RigidBody {
     // Get world transform of the rigid body using RMat44 instead of glm
     RMat44 GetWorldTransformJolt() const;
 
+    RVec3 GetPositionJolt() const;
+
     /// Set the linear velocity of the rigid body
     void SetLinearVelocity(glm::vec3 glm_velocity) {
         mNewVelocity = Vec3(glm_velocity.x, glm_velocity.y, glm_velocity.z);

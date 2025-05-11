@@ -10,6 +10,11 @@ struct WinSignal : public SignalBase<WinSignal> {
     Entity *receiver = nullptr;
 };
 
+struct CoinSignal : public SignalBase<CoinSignal> {
+    Entity *transmitter = nullptr;
+    Entity *receiver = nullptr;
+};
+
 struct ResetToSpawnSignal : public SignalBase<ResetToSpawnSignal> {
     Entity* transmitter = nullptr;
 };

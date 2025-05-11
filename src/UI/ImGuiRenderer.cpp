@@ -14,6 +14,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
 
+#include <spdlog/fmt/chrono.h>
 #include <spdlog/fmt/fmt.h>
 
 #include "TextureManager.hpp"
@@ -24,6 +25,14 @@
 #include "Config.hpp"
 #include "Engine.hpp"
 #include "Fonts.hpp"
+
+#include "SampleJoltCharacter.h"
+#include "Camera.hpp"
+#include "CharacterBaseTest.h"
+#include "CharacterEntity.hpp"
+#include "Sinking.hpp"
+#include "ZipLine.hpp"
+
 namespace {
     auto PushBackStyleVar = [](size_t i, std::function<void()> f) {
         f();
@@ -50,6 +59,9 @@ namespace {
 
         return viewport;
     }
+
+    float playerUiPadding = 50.0f;
+    float imageTextPadding = 25.0f;
 }
 
 void ImGuiRenderer::Initialize(const Context &context) {
@@ -337,10 +349,9 @@ void ImGuiRenderer::EndMainMenu() {
     ImGui::End();
 }
 
-void ImGuiRenderer::NewHeartSprite(const ImVec2 &offset, size_t playerId) {
-    // TODO: Remove hardcoded image size
-    MyTextureData &myTexData = textureDatas["heart"];
-    ImVec2 imageSize = ImVec2(myTexData.Width * 0.02f, myTexData.Height * 0.02f);
+// TODO: Broken for splitscreen
+ImVec2 ImGuiRenderer::NewImage(const std::string &name, const ImVec2 &offset, const ImVec2 &imageSize) {
+    MyTextureData &myTexData = textureDatas[name];
 
     size_t sv = 0;
 
@@ -353,13 +364,13 @@ void ImGuiRenderer::NewHeartSprite(const ImVec2 &offset, size_t playerId) {
         sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); });
     }
 
-    // Make the window fit the heart exactly
+    // Make the window fit the image exactly
     sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(0, 0)); });
     sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0)); });
     sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); });
 
     ImGui::SetNextWindowSize(imageSize);
-    ImGui::SetNextWindowPos(ImVec2(offset.x - windowBorderSize - imageSize.x, offset.y - windowBorderSize - imageSize.y));
+    ImGui::SetNextWindowPos(ImVec2(offset.x - windowBorderSize, offset.y - windowBorderSize));
     ImGui::SetNextWindowBgAlpha(0.0f);
 
     // Flags to get a non-interactable blank window to draw on
@@ -367,23 +378,33 @@ void ImGuiRenderer::NewHeartSprite(const ImVec2 &offset, size_t playerId) {
                              ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
                              ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
 
-    ImGui::Begin(fmt::format("Heart##{}", playerId).c_str(), nullptr, flags);
+    ImGui::Begin(fmt::format("GUI Texture {}", name).c_str(), nullptr, flags);
     ImGui::Image((ImTextureID)myTexData.DS, imageSize);
 
     ImGui::PopStyleVar(sv);
 
     ImGui::End();
+
+    // Return the position of the top right corner of the image
+    return ImVec2(offset.x - windowBorderSize + imageSize.x,
+                  offset.y - windowBorderSize + imageSize.y);
 }
 
 void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data,
                                     size_t activePlayerCount, size_t playerId) {
+    ImGui::PushFont(Fonts::InGameFont);
+    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255,255,255,255));
+
+    MyTextureData &textureData = textureDatas["skull-white"];
+    ImVec2 imageSize = ImVec2(textureData.Width, textureData.Height) * 0.1f;
+
     ImGuiViewport viewport = CalcPlayerViewport(Context::get().extent, activePlayerCount, playerId);
 
     size_t deathCount = data.deathCount;
 
     // Format to a width of 4
     // See https://hackingcpp.com/cpp/libs/fmt.html
-    std::string str = fmt::format("Death Counter {:4}", deathCount);
+    std::string str = fmt::format("{:4}", deathCount);
 
     size_t sv = 0;
 
@@ -397,7 +418,7 @@ void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data,
     }
 
     // Bottom right of viewport. NOTE: hardcoded bottom right positioning
-    ImVec2 pos = ImVec2(viewport.WorkPos.x + viewport.WorkSize.x, viewport.WorkPos.y + viewport.WorkSize.y);
+    ImVec2 pos = ImVec2(viewport.WorkPos.x + viewport.WorkSize.x - playerUiPadding, viewport.WorkPos.y + viewport.WorkSize.y - playerUiPadding);
     ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
 
     // Make the window fit the text exactly
@@ -406,8 +427,9 @@ void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data,
     sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); });
 
     ImGui::SetNextWindowSize(textSize);
-    // NOTE: hardcoded bottom right positioning
-    ImGui::SetNextWindowPos(ImVec2(pos.x - textSize.x - windowBorderSize, pos.y - textSize.y - windowBorderSize));
+    // Right horizontal aligned to image and center vertical aligned to image
+    ImGui::SetNextWindowPos(ImVec2(pos.x - textSize.x - windowBorderSize,
+                                   pos.y - imageSize.y / 2.0f - textSize.y / 2.0f - windowBorderSize));
     ImGui::SetNextWindowBgAlpha(0.0f);
 
     // Flags to get a non-interactable blank window to draw on
@@ -418,33 +440,32 @@ void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data,
     ImGui::Begin(fmt::format("Death Counter Window##{}", playerId).c_str(), nullptr, flags);
 
     // Text
-    ImGui::Text("%s", str.c_str());
+    ImGui::Text(str.c_str());
 
-    // Heart
-    ImVec2 offset = {pos.x - textSize.x, pos.y};
-    NewHeartSprite(offset, playerId);
+    // Skull
+    ImVec2 offset = {pos.x - textSize.x - imageSize.x - imageTextPadding, pos.y - imageSize.y};
+    NewImage("skull-white", offset, imageSize);
 
     ImGui::PopStyleVar(sv);
 
     ImGui::End();
+
+    ImGui::PopFont();
+    ImGui::PopStyleColor();
 }
 
-void ImGuiRenderer::NewDeathPopup(const gui::DeathPopupData &data,
-                                  size_t activePlayerCount, size_t playerId) {
-    if (!enableDeathPopup) {
-        // Early return
-        return;
-    }
-
-    // If the visible timer has run out
-    if (data.visibleTimer <= 0.0f) {
-        // Early return
-        return;
-    }
+void ImGuiRenderer::NewCoinCounter(const gui::CoinCounterData &data,
+                                    size_t activePlayerCount, size_t playerId) {
+    ImGui::PushFont(Fonts::InGameFont);
+    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255,255,255,255));
 
     ImGuiViewport viewport = CalcPlayerViewport(Context::get().extent, activePlayerCount, playerId);
 
-    std::string str = fmt::format("YOU DIED");
+    size_t coinCount = data.coinCount;
+
+    // Format to a width of 4
+    // See https://hackingcpp.com/cpp/libs/fmt.html
+    std::string str = fmt::format("{:4}", coinCount);
 
     size_t sv = 0;
 
@@ -457,8 +478,15 @@ void ImGuiRenderer::NewDeathPopup(const gui::DeathPopupData &data,
         sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); });
     }
 
-    // Middle of viewport. NOTE: hardcoded middle of viewport positioning
-    ImVec2 pos = ImVec2(viewport.WorkPos.x + viewport.WorkSize.x / 2.0f, viewport.WorkPos.y + viewport.WorkSize.y / 2.0f);
+    // Bottom left of viewport
+    ImVec2 pos = ImVec2(viewport.WorkPos.x + playerUiPadding, viewport.WorkPos.y + viewport.WorkSize.y - playerUiPadding);
+
+    // Coin texture
+    MyTextureData &textureData = textureDatas["coins-white"];
+    ImVec2 imageSize = ImVec2(textureData.Width, textureData.Height) * 0.1f;
+    ImVec2 offset = {pos.x, pos.y - imageSize.y};
+    ImVec2 bottomRightImageOffset = NewImage("coins-white", offset, imageSize);
+
     ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
 
     // Make the window fit the text exactly
@@ -467,92 +495,44 @@ void ImGuiRenderer::NewDeathPopup(const gui::DeathPopupData &data,
     sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); });
 
     ImGui::SetNextWindowSize(textSize);
-    // NOTE: hardcoded middle of viewport positioning
-    ImGui::SetNextWindowPos(ImVec2(pos.x - textSize.x - windowBorderSize, pos.y - textSize.y - windowBorderSize));
+    // Right horizontal aligned to image and center vertical aligned to image
+    ImGui::SetNextWindowPos(ImVec2(bottomRightImageOffset.x - windowBorderSize + imageTextPadding,
+                                   bottomRightImageOffset.y - imageSize.y / 2.0f - textSize.y / 2.0f - windowBorderSize));
     ImGui::SetNextWindowBgAlpha(0.0f);
 
     // Flags to get a non-interactable blank window to draw on
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
-                             ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
-                             ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
+    ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+    ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
 
-    ImGui::Begin(fmt::format("Death Popup Window##{}", playerId).c_str(), nullptr, flags);
-
-    // Text
-    ImGui::Text("%s", str.c_str());
-
-    ImGui::PopStyleVar(sv);
-
-    ImGui::End();
-}
-
-void ImGuiRenderer::NewFinishPopup(const gui::FinishPopupData &data,
-                                   size_t activePlayerCount, size_t playerId) {
-    if (!enableFinishPopup) {
-        // Early return
-        return;
-    }
-
-    // If the visible timer has run out
-    if (data.visibleTimer <= 0.0f) {
-        // Early return
-        return;
-    }
-
-    ImGuiViewport viewport = CalcPlayerViewport(Context::get().extent, activePlayerCount, playerId);
-
-    std::string str = fmt::format("FINISH POPUP");
-
-    size_t sv = 0;
-
-    float windowBorderSize = 0.0f;
-    if (enableTextWindowBorder) {
-        // Display a window border for debug purposes
-        windowBorderSize = ImGui::GetStyle().WindowBorderSize;
-    } else {
-        // No window border
-        sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); });
-    }
-
-    // Middle of viewport. NOTE: hardcoded middle of viewport positioning
-    ImVec2 pos = ImVec2(viewport.WorkPos.x + viewport.WorkSize.x / 2.0f, viewport.WorkPos.y + viewport.WorkSize.y / 2.0f);
-    ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
-
-    // Make the window fit the text exactly
-    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(0, 0)); });
-    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0)); });
-    sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); });
-
-    ImGui::SetNextWindowSize(textSize);
-    // NOTE: hardcoded middle of viewport positioning
-    ImGui::SetNextWindowPos(ImVec2(pos.x - textSize.x - windowBorderSize, pos.y - textSize.y - windowBorderSize));
-    ImGui::SetNextWindowBgAlpha(0.0f);
-
-    // Flags to get a non-interactable blank window to draw on
-    ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
-                             ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
-                             ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
-
-    ImGui::Begin(fmt::format("Finish Popup Window##{}", playerId).c_str(), nullptr, flags);
+    ImGui::Begin(fmt::format("Coin Counter Window##{}", playerId).c_str(), nullptr, flags);
 
     // Text
-    ImGui::Text("%s", str.c_str());
+    ImGui::Text(str.c_str());
 
     ImGui::PopStyleVar(sv);
+    ImGui::PopStyleColor();
 
     ImGui::End();
+
+    ImGui::PopFont();
 }
 
 void ImGuiRenderer::NewTimer(const gui::TimerData &data,
                              size_t activePlayerCount, size_t playerId) {
+    ImGui::PushFont(Fonts::InGameFont);
+    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255,255,255,255));
+
+    MyTextureData &textureData = textureDatas["hourglass-white"];
+    ImVec2 imageSize = ImVec2(textureData.Width, textureData.Height) * 0.1f;
+
     ImGuiViewport viewport = CalcPlayerViewport(Context::get().extent, activePlayerCount, playerId);
 
     float time = data.time;
 
     // Format to a width of 8 and to a precision of 3
     // See https://hackingcpp.com/cpp/libs/fmt.html
-    std::string str = fmt::format("Timer {:8.3f}", time);
-
+    std::string str = fmt::format("{:%M:%S}", fmt::localtime(time));
     size_t sv = 0;
 
     float windowBorderSize = 0.0f;
@@ -565,7 +545,7 @@ void ImGuiRenderer::NewTimer(const gui::TimerData &data,
     }
 
     // Top right of viewport. NOTE: hardcoded top right positioning
-    ImVec2 pos = ImVec2(viewport.WorkPos.x + viewport.WorkSize.x, viewport.WorkPos.y);
+    ImVec2 pos = ImVec2(viewport.WorkPos.x + viewport.WorkSize.x - playerUiPadding, viewport.WorkPos.y + playerUiPadding);
     ImVec2 textSize = ImGui::CalcTextSize(str.c_str());
 
     // Make the window fit the text exactly
@@ -574,8 +554,9 @@ void ImGuiRenderer::NewTimer(const gui::TimerData &data,
     sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); });
 
     ImGui::SetNextWindowSize(textSize);
-    // NOTE: hardcoded top right positioning
-    ImGui::SetNextWindowPos(ImVec2(pos.x - textSize.x - windowBorderSize, pos.y + windowBorderSize));
+    // Right horizontal aligned to image and center vertical aligned to image
+    ImGui::SetNextWindowPos(ImVec2(pos.x - textSize.x - windowBorderSize,
+                                   pos.y + imageSize.y / 2.0f - textSize.y / 2.0f + windowBorderSize));
     ImGui::SetNextWindowBgAlpha(0.0f);
 
     // Flags to get a non-interactable blank window to draw on
@@ -586,11 +567,17 @@ void ImGuiRenderer::NewTimer(const gui::TimerData &data,
     ImGui::Begin(fmt::format("Timer Window##{}", playerId).c_str(), nullptr, flags);
 
     // Text
-    ImGui::Text("%s", str.c_str());
+    ImGui::Text(str.c_str());
 
     ImGui::PopStyleVar(sv);
 
     ImGui::End();
+
+    ImGui::PopFont();
+    ImGui::PopStyleColor();
+
+    ImVec2 imageOffset = {pos.x - textSize.x - imageSize.x - imageTextPadding, pos.y};
+    NewImage("hourglass-white", imageOffset, imageSize);
 }
 
 void ImGuiRenderer::LoadingBar(float progress, ImVec2 position) {
@@ -662,7 +649,7 @@ void ImGuiRenderer::Image(std::string const &imageName, ImVec2 position, ImVec2 
         sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); });
     }
 
-    // Make the window fit the heart exactly
+    // Make the window fit exactly
     sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(0, 0)); });
     sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0)); });
     sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); });
@@ -756,7 +743,7 @@ void ImGuiRenderer::Text(std::string const &text, ImVec2 position, ImFont *font,
         sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); });
     }
 
-    // Make the window fit the heart exactly
+    // Make the window fit exactly
     sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(0, 0)); });
     sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0)); });
     sv = PushBackStyleVar(sv, []() { ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0)); });
@@ -774,7 +761,7 @@ void ImGuiRenderer::Text(std::string const &text, ImVec2 position, ImFont *font,
     ImGui::Begin(fmt::format("text rendering##PlayerId{}TextId{}", playerId, textId).c_str(), nullptr, flags);
     textId++;
 
-    ImGui::Text("%s", text.c_str());
+    ImGui::Text(text.c_str());
 
     ImGui::PopStyleVar(sv);
 
@@ -853,6 +840,56 @@ void ImGuiRenderer::Update(Scene *scene)
         }
     }
 
+    float sinkingStep = 0.1f;
+    float sinkingStepFast = 0.5f;
+    ImGui::InputFloat("mSinkingSpeed", &Sinking::mSinkingSpeed, sinkingStep, sinkingStepFast, nullptr, 0);
+
+    {
+        float step = 0.1f;
+        float stepFast = 0.5f;
+        ImGui::InputFloat("Camera::sZoomLevel", &Camera::sZoomLevel, step, stepFast, nullptr, 0);
+        ImGui::InputFloat("ZipLine::sZiplineCameraZoomLevel", &ZipLine::sZiplineCameraZoomLevel, step, stepFast, nullptr, 0);
+    }
+
+    if (ImGui::CollapsingHeader("UI Adjustment")) {
+        ImGui::InputFloat("playerUiPadding", &playerUiPadding, 1.0f, 10.0f, nullptr, 0);
+        ImGui::InputFloat("imageTextPadding", &imageTextPadding, 1.0f, 10.0f, nullptr, 0);
+    }
+
+    if (ImGui::CollapsingHeader("CharacterSettings")) {
+        {
+            float step = 0.01f;
+            float stepFast = 0.1f;
+            ImGui::InputFloat("sCameraUpOffset: ", &Camera::sCameraUpOffset, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sCameraCrouchingUpOffset: ", &Camera::sCameraCrouchingUpOffset, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sCameraRightOffset: ", &Camera::sCameraRightOffset, step, stepFast, nullptr, 0);
+        }
+
+        {
+            float step = 0.1f;
+            float stepFine = 0.01f;
+            float stepFast = 0.5f;
+            ImGui::InputFloat("sCharacterSpeed: ", &CharacterBaseTest::sCharacterSpeed, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sJumpTime", &CharacterBaseTest::sJumpTime, stepFine, step, nullptr, 0);
+            ImGui::InputFloat("sFallTime", &CharacterBaseTest::sFallTime, stepFine, step, nullptr, 0);
+        }
+
+        {
+            float step = 0.01f;
+            float stepFast = 0.1f;
+            ImGui::InputFloat("sJumpHeight", &CharacterBaseTest::sJumpHeight, step, stepFast, nullptr, 0);
+            CharacterBaseTest::sJumpSpeed = 2.0f * CharacterBaseTest::sJumpHeight / CharacterBaseTest::sJumpTime;
+            CharacterBaseTest::sJumpGravity = -2.0f * CharacterBaseTest::sJumpHeight / Square(CharacterBaseTest::sJumpTime);
+            CharacterBaseTest::sFallGravity = -2.0f * CharacterBaseTest::sJumpHeight / Square(CharacterBaseTest::sFallTime);
+            ImGui::InputFloat("sJumpTimeScale", &CharacterEntity::sJumpTimeScale, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sFallTimeScale", &CharacterEntity::sFallTimeScale, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sFallBlend", &CharacterEntity::sFallBlend, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sHangingBlend", &CharacterEntity::sHangingBlend, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sClimbTimeScale", &CharacterEntity::sClimbTimeScale, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("sRunningCrouchTimeScale", &CharacterEntity::sRunningCrouchTimeScale, step, stepFast, nullptr, 0);
+        }
+    }
+
     static bool showGraphics = false;
     ImGui::Checkbox("Graphics Settings", &showGraphics);
     if (showGraphics) {
@@ -876,9 +913,11 @@ void ImGuiRenderer::Update(Scene *scene)
 
         if (ImGui::CollapsingHeader("Fog"))
         {
-            ImGui::SliderFloat("Distance: ", &vkutil::fogSettings.MaxDistance, 1.0f, 100.0f);
-            ImGui::SliderFloat("Density: ", &vkutil::fogSettings.Density, 0.0f, 0.3f);
-            ImGui::SliderFloat("SteppingSize: ", &vkutil::fogSettings.StepSize, 0.1f, 1.5f);
+            float step = 0.001f;
+            float stepFast = 0.01f;
+            ImGui::InputFloat("Distance: ", &vkutil::fogSettings.MaxDistance, 0.1f, 1.0f, nullptr, 0);
+            ImGui::InputFloat("Density: ", &vkutil::fogSettings.Density, step, stepFast, nullptr, 0);
+            ImGui::InputFloat("SteppingSize: ", &vkutil::fogSettings.StepSize, 0.01f, 0.1f, nullptr, 0);
             ImGui::SliderInt("Steps: ", &vkutil::fogSettings.MaxSteps, 1, 10);
         }
 
@@ -986,17 +1025,17 @@ void ImGuiRenderer::ChatWindow(const std::vector<Message> &messages, std::functi
         ImGui::BeginChild("ChatMessages", ImVec2(availableWidth, chatHeight), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
         for (const auto &msg : messages)
         {
-            ImGui::Text("%s", msg.playerName.c_str());
+            ImGui::Text(msg.playerName.c_str());
             ImGui::PushFont(Fonts::TextFontSubtle);
             float textSpace = ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(msg.timestamp.c_str()).x - 20.0f;
             ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + textSpace);
-            ImGui::Text("%s", msg.text.c_str());
+            ImGui::Text(msg.text.c_str());
             ImGui::PopTextWrapPos();
             ImGui::PopFont();
             ImGui::PushFont(Fonts::TextFontSmall);
             float tsWidth = ImGui::CalcTextSize(msg.timestamp.c_str()).x;
             ImGui::SameLine(ImGui::GetWindowWidth() - tsWidth - 10.0f);
-            ImGui::Text("%s", msg.timestamp.c_str());
+            ImGui::Text(msg.timestamp.c_str());
             ImGui::PopFont();
         }
         ImGui::PopStyleVar();

@@ -40,6 +40,9 @@ class Animator {
     void SetActiveAnimation(const std::string&);
     void SetActiveAnimation(const std::string& aName, float blendTime, bool lockForFirstLoop, bool isLooping = true);
 
+    void ResetActiveAnimation(const std::string &aName);
+
+
     void SetTimeScale(float aTimeScale);
 
     void UploadJointBuffer(VkCommandBuffer cmdBuff);

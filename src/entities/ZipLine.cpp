@@ -4,6 +4,9 @@
 
 #include "ZipLine.hpp"
 
+#include "Camera.hpp"
+
+
 void ZipLine::Awake()
 {
     // get the float values - mMaxZipSpeed, mAcceleration, mProximityPromptRadius
@@ -30,7 +33,8 @@ void ZipLine::Awake()
 
     // get the start and end positions
     // find the child with the tag "zipline_start"
-    for (auto &child : GetChildren()) {
+    for (auto *child : GetChildren()) {
+
         if (child->CompareTag("zipline_start")) {
             mStartPosition = child->GetWorldTransformComponents().translation;
         } else if (child->CompareTag("zipline_end")) {
@@ -59,10 +63,13 @@ void ZipLine::Awake()
 void ZipLine::OnInteract(Entity *other, ENetworkLocality networkLocality)
 {
     // if the other entity is a character, start zipping
-    if (other->CompareType("character")) {
+    if (other->CompareType("character") || other->CompareType("NetworkedLocalCharacter")) {
         mCharacter = static_cast<CharacterEntity *>(other);
         mIsZipping = true;
         mCharacter->SetPosition(mStartPosition);
+        mCharacter->SetHanging(true);
+        mCharacter->GetCamera()->SetNewZoomLevel(sZiplineCameraZoomLevel);
+
         mCurrentPosition = mStartPosition;
     }
 }
@@ -84,6 +91,9 @@ void ZipLine::LateUpdate(double deltaTime)
         // if we are at the end of the zipline, stop zipping
         if (glm::distance(mCurrentPosition, mStartPosition) > mDistance) {
             mIsZipping = false;
+            mCharacter->SetHanging(false);
+            mCharacter->GetCamera()->ResetZoomLevel();
+
             mCurrentSpeed = 0.f;
             mCharacter->SetPosition(mEndPosition);
         }

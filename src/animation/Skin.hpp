@@ -23,11 +23,13 @@ class Skin {
     void AddJoint(Joint aJoint);
     void SetJoints(std::vector<Joint> aJoints) { mJoints = std::move(aJoints); }
     void SetRoot(Entity *aRoot) { mRoot = aRoot; }
+    [[nodiscard]] Entity *GetRoot() const { return mRoot; }
+    void ComputeRoot();
 
     [[nodiscard]] std::vector<Joint> GetJoints() const { return mJoints; }
     [[nodiscard]] Entity* GetEntity(size_t aIndex) const;
     // function to get the joint matrices
-    [[nodiscard]] std::vector<glm::mat4> GetJointMatrices(Entity* aMesh) const;
+    [[nodiscard]] void GetJointMatrices(Entity *aMesh, std::vector<glm::mat4> &aJointMatrices) const;
 
     void SetName(char *aName) { mName = aName; }
     [[nodiscard]] std::string GetName() const { return mName; }

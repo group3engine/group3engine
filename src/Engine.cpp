@@ -64,6 +64,8 @@ namespace {
     std::filesystem::path mainMenuBG{"MainMenu/bg.jpg"};
 
     const std::vector<std::filesystem::path *> scenePaths = {
+        &Sample::Game,
+        &Sample::JumpTest,
         &Sample::SampleObbyTestScene,
         &Sample::ArrowSample,
         &Sample::AxeSample,
@@ -185,6 +187,8 @@ bool Engine::Initialize() {
     m_UIManager.RegisterMenu("ConfigGameMenu", m_ConfigGameMenu);
     /* Switch to menu scene using its name */
     m_UIManager.SwitchToMenu("MainMenu");
+  
+    InitGuiTextures();
 
     // call the scene awake function
     mScene->Awake();
@@ -388,8 +392,6 @@ void Engine::Update(double deltaTime) {
         ImGuiRenderer::Update(mScene);
 #endif
     }
-
-    mRenderer->Update(deltaTime);
 }
 
 #ifdef JPH_DEBUG_RENDERER
@@ -430,6 +432,8 @@ void Engine::Render() {
     ZoneScopedN("Engine::Render");
 
     mRenderer->BeginFrame(mRenderer->GetCommandBuffer());
+
+    mRenderer->Update(GlobalUtil::deltaTime);
 
     {
         mRenderer->GetShadowMap()->Execute(mRenderer->GetCommandBuffer());
@@ -521,11 +525,23 @@ void Engine::LoadRestOfStuff(const filesystem::path &scenePath, size_t playerCou
     m_progress = 85.f;
 
     // Add back UI textures
-    std::filesystem::path path = assetsPath/ "heart.png";
-    ImGuiRenderer::AddTextures(mTextureManager.get(), path, "heart");
+    InitGuiTextures();
 
     mScene->Awake();
     m_progress = 100.f;
     // end the loading screen
     m_isLoading = false;
+}
+
+void Engine::InitGuiTextures() {
+    // TODO: Move this definition to some game specific code location
+    mGuiTextures = {
+        {assetsPath / "skull-and-bones-white.png", "skull-white"},
+        {assetsPath / "coins-white.png", "coins-white"},
+        {assetsPath / "hourglass-white.png", "hourglass-white"},
+    };
+
+    for (const auto &uiTexture : mGuiTextures) {
+        ImGuiRenderer::AddTextures(mTextureManager.get(), uiTexture.path, uiTexture.name);
+    }
 }

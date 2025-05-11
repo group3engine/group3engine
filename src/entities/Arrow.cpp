@@ -7,7 +7,15 @@
 
 void Arrow::Awake()
 {
+    if (auto it = mFloatProperties.find("speed"); it != mFloatProperties.end()) {
+        mSpeed = it->second;
+    } else {
+        SPDLOG_ERROR("Arrow does not have a speed property.");
+        exit(EXIT_FAILURE);
+    }
+
     start_position = GetLocalTransform().translation;
+    startVelocity = GetWorldTransformComponents().rotation * glm::vec3(0.f, 0.f, -mSpeed);
 }
 
 void Arrow::Update(double deltaTime)
@@ -35,7 +43,6 @@ void Arrow::Update(double deltaTime)
     }
     if(timeElapsed > timeToMove + timeToBeInvisible)
     {
-        SetAsVisible();
         velocity = startVelocity;
         timeElapsed = -randomOffset;
         // set the velocity in the rigid body

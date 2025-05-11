@@ -74,6 +74,7 @@ class Scene {
 
     void DrawShadowMap(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout, uint32_t cascadeIndex = 0);
     void DrawSkinned(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout, uint32_t cascadeIndex= 0);
+    void DrawLava(VkCommandBuffer cmd, VkPipelineLayout pipelineLayout);
     void AddLightSource(Light& LightSource);
 
     void Update(double aDeltaTime);
@@ -184,6 +185,8 @@ class Scene {
     void SetDebugRenderer(DebugRendererSimple *debugRenderer) { mDebugRenderer = debugRenderer; }
 #endif // JPH_DEBUG_RENDERER
 
+    uint32_t PostIncrementEntityCount() { return kEntityCount++; }
+
   public:
     SignalSystem mSignalSystem;
 
@@ -225,5 +228,7 @@ private:
 #ifdef JPH_DEBUG_RENDERER
     DebugRendererSimple *mDebugRenderer = nullptr;
 #endif // JPH_DEBUG_RENDERER
+
+    std::atomic<uint32_t> kEntityCount = 0;
 };
 

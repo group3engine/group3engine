@@ -6,13 +6,11 @@
 #include <glm/gtx/io.hpp>
 #include <iostream>
 
-std::vector<glm::mat4> Skin::GetJointMatrices(Entity *aMesh) const {
-    std::vector<glm::mat4> jointMatrices;
-    jointMatrices.reserve(mJoints.size());
+void Skin::GetJointMatrices(Entity *aMesh, std::vector<glm::mat4> &aJointMatrices) const {
+    aJointMatrices.clear();
     for (const auto &joint : mJoints) {
-        jointMatrices.push_back(joint.entity->GetWorldTransform() * joint.inverseBindMatrix);
+        aJointMatrices.push_back(joint.entity->GetWorldTransform() * joint.inverseBindMatrix);
     }
-    return jointMatrices;
 }
 void Skin::AddJoint(Joint aJoint) {
     mJoints.push_back(aJoint);
@@ -41,4 +39,28 @@ bool Skin::DetargetAnimation(Animation *aAnimation, const std::vector<Entity *> 
 Entity *Skin::GetEntity(size_t aIndex) const  {
     assert(aIndex < mJoints.size());
     return mJoints[aIndex].entity;
+}
+
+void Skin::ComputeRoot()
+{
+    // check if the root is already set
+    if (mRoot != nullptr) {
+        return;
+    }
+    // find the first parent of the first joint that is not a joint
+    // this is the root of the skin
+    auto *jointEntity = mJoints[0].entity;
+    while (jointEntity->GetParent() != nullptr)
+    {
+        // check if the parent is a joint
+        auto it = std::find_if(mJoints.begin(), mJoints.end(),
+                               [jointEntity](const auto &aJoint) { return aJoint.entity == jointEntity->GetParent(); });
+        if (it == mJoints.end())
+        {
+            mRoot = jointEntity->GetParent();
+            return;
+        }
+        jointEntity = jointEntity->GetParent();
+    }
+    mRoot = jointEntity;
 }

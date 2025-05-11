@@ -27,8 +27,8 @@
 
 #include <cmath>
 
-InputData gInputData;
-SDL_INPUT::InputData SDL_INPUT::INPUT;
+InputData gInputData{};
+SDL_INPUT::InputData SDL_INPUT::INPUT{};
 
 // Using system from https://github.com/raysan5/raylib/blob/master/src/rcore.c
 

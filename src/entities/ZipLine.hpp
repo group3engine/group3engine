@@ -16,6 +16,10 @@ public:
 
     void OnInteract(Entity *other, ENetworkLocality networkLocality) override;
     EInteractable IsInteractable() const override { return EInteractable::Interactable; }
+  
+public:
+    inline static float sZiplineCameraZoomLevel = 5.0f;
+
 
 private:
     glm::vec3 mStartPosition{};

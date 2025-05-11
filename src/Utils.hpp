@@ -41,6 +41,12 @@ namespace vkutil {
         int cascadeIndex;
     };
 
+    struct LavaPushConstants {
+        alignas(16) glm::mat4 ModelMatrix;
+        alignas(4) int cascadeIndex;
+        alignas(4) float t;
+    };
+
     struct LightUBO {
         alignas(4) int type;
         alignas(16) glm::vec4 LightPosition;
@@ -106,7 +112,7 @@ namespace vkutil {
     inline PostProcessing postProcessSettings = {};
     inline SSAOSettings ssaoSettings = {6, 6, 1.4f, 0.003f, 1.5f};
     inline SSRSettings ssrSettings = {3.0f, 0.001f};
-    inline FogSettings fogSettings = { 1.0f, 0.1f, 0.1f, 1 };
+    inline FogSettings fogSettings = { 200.0f, 0.0025f, 0.1f, 1 };
     inline FXAASettings fxaaSettings = {true};
     inline PostProcessingSettings postProcessingSettings = {0.0f, 1.0f, 1.0f, 3};
     inline RendererDebug rendererDebug = {0};
@@ -124,6 +130,7 @@ namespace vkutil {
 
 namespace GlobalUtil {
     inline double deltaTime;
+    inline double totalTime;
 inline double unscaledDeltaTime;
 }
 
