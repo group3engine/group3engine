@@ -21,7 +21,6 @@ class MainMenuScreen;
 class NewGameMenu;
 class ConfigGameMenu;
 
-
 class MaterialManager;
 class MeshManager;
 class TextureManager;

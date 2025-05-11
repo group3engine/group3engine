@@ -26,9 +26,9 @@ ConfigGameMenu::ConfigGameMenu(Context &context, UIManager &uiManager) : BaseMen
 
     buttons.push_back({
         "Play", [this]() {
-            SPDLOG_INFO("Load Scene");
+            SPDLOG_INFO("Loading scene");
             size_t playerCount = this->NumPlayers;
-            Engine::get().ChangeScene(Sample::SampleObbyTestScene, playerCount);
+            Engine::get().ChangeScene(m_SelectedLevelPath, playerCount);
         }
     });
 
@@ -71,9 +71,31 @@ void ConfigGameMenu::Render(ImVec2 screenSize)
     ImGui::SetCursorPosX(textPosX);
     ImGui::Text("%s", text.c_str());
 
+    float xPos = ImGui::GetIO().DisplaySize.x - 300 - 10.0f;
+    float yPos = 20.0f;
+    ImGui::SetCursorPos(ImVec2(xPos, yPos));
+    for (const auto& path : scenePaths)
+    {
+        bool isSelected = (path == m_SelectedLevelPath);
+
+        if (isSelected)
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(.1f, 0.3f, 0.7f, 1.0f));
+
+        ImGui::SetCursorPosX(xPos);
+        if (ImGui::Button(path.filename().string().c_str(), ImVec2(300, 50)))
+        {
+            m_SelectedLevelPath = path;
+        }
+
+        if (isSelected)
+            ImGui::PopStyleColor();
+    }
+
     ImGui::PopStyleVar(2);
     ImGui::PopStyleColor(4);
     ImGui::PopFont();
+
+
 
     ImGui::End();
 }

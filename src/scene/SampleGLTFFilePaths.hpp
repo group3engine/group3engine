@@ -121,7 +121,7 @@ static std::filesystem::path Dust2Laugh{"Dust2Laugh/Dust2Laugh.gltf"};
 static std::filesystem::path SampleObbyTestScene{"Sample obby/testing/test_scene.gltf"};
 static std::filesystem::path FallGuys{"Fall guys/fall guys map.gltf"};
 static std::filesystem::path ArrowSample{"GameSamples/ArrowSample/arrow.gltf"};
-static std::filesystem::path AxeSample{"GameSamples/AxeSample/arrow.gltf"};
+static std::filesystem::path AxeSample{"GameSamples/AxeSample/arrow.gltf"}; // Axe and arrow have the same scene name?
 static std::filesystem::path TileSample{"GameSamples/TileSample/tile.gltf"};
 static std::filesystem::path SpikePitSample{"GameSamples/SpikePit/spikepit.gltf"};
 static std::filesystem::path LadderSample{"GameSamples/LadderSample/ladder.gltf"};

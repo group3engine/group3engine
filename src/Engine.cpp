@@ -157,8 +157,6 @@ bool Engine::Initialize() {
 
     mScene = Scene::get().GetActiveScene();
 
-
-    // m_UIManager = new UIManager();
     // Renderer takes in the UI manager so we can resize images within mennus when the Renderer
     // Needs to resize passes
     mRenderer = std::make_unique<Renderer>(m_context, mScene, m_UIManager);
