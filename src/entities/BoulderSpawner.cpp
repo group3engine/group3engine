@@ -21,13 +21,13 @@ void BoulderSpawner::Update(double deltaTime) {
 
     // NOTE: Make sure this happens before the launching boulder code to ensure boulders aren't
     // set to invisible before their world position is updated in the PrePhysicsUpdate next frame
-    for (auto *entity : mBoulders)
-    {
-        // Set the boulder to invisible if it is below a certain level
-        if (entity->GetRigidBody().GetPositionJolt().GetY() < 0.0f) {
-            entity->SetAsInvisible();
-        }
-    }
+    // for (auto *entity : mBoulders)
+    // {
+    //     // Set the boulder to invisible if it is below a certain level
+    //     if (entity->GetRigidBody().GetPositionJolt().GetY() < 0.0f) {
+    //         entity->SetAsInvisible();
+    //     }
+    // }
 
     if (mTimer > mBoulderCooldown) {
         assert(!mBoulders.empty());

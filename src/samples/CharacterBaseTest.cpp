@@ -82,8 +82,8 @@ void CharacterBaseTest::PrePhysicsUpdate(const PreUpdateParams &inParams)
 		character->ExtendedUpdate(inParams.mDeltaTime,
 			mPhysicsSystem->GetGravity(),
 			update_settings,
-			mPhysicsSystem->GetDefaultBroadPhaseLayerFilter(Layers::MOVING),
-			mPhysicsSystem->GetDefaultLayerFilter(Layers::MOVING),
+			mPhysicsSystem->GetDefaultBroadPhaseLayerFilter(Layers::PLAYER),
+			mPhysicsSystem->GetDefaultLayerFilter(Layers::PLAYER),
 			{ },
 			{ },
 			*mTempAllocator);

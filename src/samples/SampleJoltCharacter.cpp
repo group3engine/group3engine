@@ -30,7 +30,7 @@ void SampleJoltCharacter::Initialize()
     settings->mSupportingVolume = Plane(Vec3::sAxisY(), -cCharacterRadiusStanding); // Accept contacts that touch the lower sphere of the capsule
     settings->mEnhancedInternalEdgeRemoval = sEnhancedInternalEdgeRemoval;
     settings->mInnerBodyShape = mStandingShape;
-    settings->mInnerBodyLayer = Layers::MOVING;
+    settings->mInnerBodyLayer = Layers::PLAYER;
     Vec3 initialPosition = Vec3::sZero();
     mCharacter = new CharacterVirtual(settings, initialPosition, Quat::sIdentity(), 0, mPhysicsSystem);
 
@@ -58,8 +58,8 @@ void SampleJoltCharacter::PrePhysicsUpdate(const PreUpdateParams &inParams)
     mCharacter->ExtendedUpdate(inParams.mDeltaTime,
         -mCharacter->GetUp() * mPhysicsSystem->GetGravity().Length(),
         update_settings,
-        mPhysicsSystem->GetDefaultBroadPhaseLayerFilter(Layers::MOVING),
-        mPhysicsSystem->GetDefaultLayerFilter(Layers::MOVING),
+        mPhysicsSystem->GetDefaultBroadPhaseLayerFilter(Layers::PLAYER),
+        mPhysicsSystem->GetDefaultLayerFilter(Layers::PLAYER),
         { },
         { },
         *mTempAllocator);
@@ -223,12 +223,12 @@ void SampleJoltCharacter::HandleInput(Vec3Arg inMovementDirection, bool inJump, 
     // set the shape based on the crouching and falling state
     if (mIsCrouching)
     {
-        mCharacter->SetShape(mCrouchingShape, FLT_MAX, mPhysicsSystem->GetDefaultBroadPhaseLayerFilter(Layers::MOVING), mPhysicsSystem->GetDefaultLayerFilter(Layers::MOVING), { }, { }, *mTempAllocator);
+        mCharacter->SetShape(mCrouchingShape, FLT_MAX, mPhysicsSystem->GetDefaultBroadPhaseLayerFilter(Layers::PLAYER), mPhysicsSystem->GetDefaultLayerFilter(Layers::PLAYER), { }, { }, *mTempAllocator);
         mCharacter->SetInnerBodyShape(mCrouchingShape);
     }
     else
     {
-        mCharacter->SetShape(mStandingShape, FLT_MAX, mPhysicsSystem->GetDefaultBroadPhaseLayerFilter(Layers::MOVING), mPhysicsSystem->GetDefaultLayerFilter(Layers::MOVING), { }, { }, *mTempAllocator);
+        mCharacter->SetShape(mStandingShape, FLT_MAX, mPhysicsSystem->GetDefaultBroadPhaseLayerFilter(Layers::PLAYER), mPhysicsSystem->GetDefaultLayerFilter(Layers::PLAYER), { }, { }, *mTempAllocator);
         mCharacter->SetInnerBodyShape(mStandingShape);
     }
 

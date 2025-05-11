@@ -72,15 +72,22 @@
 	"scenes":[
 		{
 			"extras":{
-				"dropdown_items":"lever, spikeTrap, boulderSpawner, spawn_portal, zipline, coin, networkedremote, disappearing platform, networkmanager, moving_platform, networkedlocal, trapdoor, sinking, swing_axe, character, arrow, idol, sinkingChild, default",
-				"entity_dropdown":7,
+				"dropdown_items":"lever, spikeTrap, boulderSpawner, spawn_portal, zipline, coin, networkedremote, disappearing platform, networkmanager, moving_platform, networkedlocal, trapdoor, sinking, swing_axe, character, arrow, idol, sinkingChild, default, lava",
+				"entity_dropdown":19,
 				"collider_dropdown":0,
 				"physics_dropdown":0,
 				"sensor_checkbox":0,
 				"solid_checkbox":1,
-				"invisible_checkbox":0,
+				"invisible_checkbox":1,
 				"new_tag":"",
-				"tags":[],
+				"tags":[
+					{
+						"tag":"lava"
+					},
+					{
+						"tag":"deathzone"
+					}
+				],
 				"export_file_path":"/local/data/ttwq5782/group3engine/assets/Game/game.gltf",
 				"new_dropdown_item":"",
 				"new_float_property_name":"",
@@ -7700,7 +7707,7 @@
 		},
 		{
 			"extras":{
-				"entity_type":"default",
+				"entity_type":"lava",
 				"collider_type":"fallback_shape",
 				"physics_type":"static",
 				"is_sensor":false,
@@ -11553,7 +11560,7 @@
 				"tags":"checkpoint"
 			},
 			"mesh":243,
-			"name":"Checkpoint7",
+			"name":"Checkpoint9",
 			"scale":[
 				1,
 				1.0958294868469238,
@@ -29101,7 +29108,7 @@
 				"is_invisible":false
 			},
 			"mesh":427,
-			"name":"thin stairs.001",
+			"name":"Checkpoint7",
 			"rotation":[
 				0,
 				-1,

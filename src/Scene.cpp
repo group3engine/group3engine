@@ -341,6 +341,11 @@ void Scene::Load(const std::filesystem::path &filePath, size_t playerCount)
             // if its a sensor set the layer to SENSOR, otherwise set it to NON_MOVING
             ObjectLayer layer = entity->IsSensor() ? Layers::SENSORS : Layers::NON_MOVING;
 
+            // TODO: Remove this hack
+            if (entity->CompareTag("lava")) {
+                layer = Layers::LAVA;
+            }
+
             // Set the body creation settings as static and not moving
             BodyCreationSettings bodyCreationSettings = {
             result.Get(), RVec3(entity_transform.translation.x, entity_transform.translation.y, entity_transform.translation.z), Quat(entity_transform.rotation.x, entity_transform.rotation.y, entity_transform.rotation.z, entity_transform.rotation.w),

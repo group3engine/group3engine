@@ -71,8 +71,10 @@ using namespace std;
 namespace Layers {
 static constexpr ObjectLayer NON_MOVING = 0;
 static constexpr ObjectLayer MOVING = 1;
-static constexpr ObjectLayer SENSORS = 2; // Sensors are used to detect collisions but don't generate any collision response
-static constexpr ObjectLayer NUM_LAYERS = 3;
+static constexpr ObjectLayer PLAYER = 2;
+static constexpr ObjectLayer SENSORS = 3; // Sensors are used to detect collisions but don't generate any collision response
+static constexpr ObjectLayer LAVA = 4;
+static constexpr ObjectLayer NUM_LAYERS = 5;
 }; // namespace Layers
 
 // Class that determines if two object layers can collide
@@ -83,7 +85,11 @@ class ObjectLayerPairFilterImpl : public ObjectLayerPairFilter {
         case Layers::NON_MOVING:
             return inObject2 == Layers::MOVING; // Non moving only collides with moving
         case Layers::MOVING:
-            return true; // Moving collides with everything
+            return inObject2 != Layers::LAVA; // Moving collides with everything except lava
+        case Layers::PLAYER:
+            return true; // Player collides with everything
+        case Layers::LAVA:
+            return inObject2 == Layers::PLAYER;
         default:
             JPH_ASSERT(false);
             return false;
@@ -109,7 +115,9 @@ class BPLayerInterfaceImpl final : public BroadPhaseLayerInterface {
     BPLayerInterfaceImpl() {
         // Create a mapping table from object to broad phase layer
         mObjectToBroadPhase[Layers::NON_MOVING] = BroadPhaseLayers::NON_MOVING;
+        mObjectToBroadPhase[Layers::LAVA] = BroadPhaseLayers::NON_MOVING;
         mObjectToBroadPhase[Layers::MOVING] = BroadPhaseLayers::MOVING;
+        mObjectToBroadPhase[Layers::PLAYER] = BroadPhaseLayers::MOVING;
     }
 
     virtual uint GetNumBroadPhaseLayers() const override {
@@ -144,9 +152,13 @@ class ObjectVsBroadPhaseLayerFilterImpl : public ObjectVsBroadPhaseLayerFilter {
   public:
     virtual bool ShouldCollide(ObjectLayer inLayer1, BroadPhaseLayer inLayer2) const override {
         switch (inLayer1) {
+        case Layers::LAVA:
+            [[fallthrough]];
         case Layers::NON_MOVING:
             return inLayer2 == BroadPhaseLayers::MOVING;
         case Layers::MOVING:
+            return true;
+        case Layers::PLAYER:
             return true;
         default:
             JPH_ASSERT(false);
