@@ -493,7 +493,6 @@ void CharacterEntity::Update(double deltaTime) {
     ECrouchState crouchState = mIsCrouching ? ECrouchState::Crouching : ECrouchState::Standing;
     mCamera->UpdateCameraMovement(mSampleJoltCharacter->GetCharacterCenterOfMassPosition(), crouchState);
     // if the camera is too close to us, set invisible
-    SPDLOG_INFO("cam dist {}", glm::distance(mCamera->GetPosition(), GetCharacterPositionOffset()));
     if(glm::distance(mCamera->GetPosition(), GetCharacterPositionOffset()) < 1.5f)
     {
         for (auto *child : GetChildren()) {
