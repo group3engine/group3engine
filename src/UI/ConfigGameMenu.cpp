@@ -8,7 +8,7 @@ ConfigGameMenu::ConfigGameMenu(Context &context, UIManager &uiManager) : BaseMen
 
     NumPlayers = 1;
 
-    /* Max player count is 4 ? */
+    // Max number of players is 4.
     buttons.push_back({
         "+", [this]() {
             if (NumPlayers < 4)
@@ -16,6 +16,7 @@ ConfigGameMenu::ConfigGameMenu(Context &context, UIManager &uiManager) : BaseMen
         }
     });
 
+    // Min number of players is 1.
     buttons.push_back({
         "-", [this]() {
             if (NumPlayers > 1)

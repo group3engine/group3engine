@@ -1,3 +1,6 @@
+#ifndef MAIN_MENU_HPP
+#define MAIN_MENU_HPP
+
 #include <iostream>
 
 #include "BaseMenu.hpp"
@@ -15,3 +18,5 @@ class MainMenuScreen : public BaseMenu
     void Render(ImVec2 screenSize) override;
     void Resize() override;
 };
+
+#endif // MAIN_MENU_HPP

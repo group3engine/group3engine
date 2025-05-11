@@ -9,6 +9,7 @@
 #include "PhysicsManager.hpp"
 #include "Renderer.hpp"
 #include "RigidBody.hpp"
+#include "UIManager.hpp"
 
 #ifdef JPH_DEBUG_RENDERER
 #include <Jolt/Renderer/DebugRendererSimple.h>
@@ -16,7 +17,6 @@
 #endif // JPH_DEBUG_RENDERER
 
 // Menus
-class UIManager;
 class MainMenuScreen;
 class NewGameMenu;
 class ConfigGameMenu;
@@ -100,5 +100,5 @@ class Engine {
     MainMenuScreen* m_MainMenuScreen;
     NewGameMenu *m_NewGameMenu;
     ConfigGameMenu *m_ConfigGameMenu;
-    UIManager* m_UIManager;
+    UIManager m_UIManager;
 };

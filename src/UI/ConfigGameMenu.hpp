@@ -1,3 +1,6 @@
+#ifndef CONFIG_MENU_HPP
+#define CONFIG_MENU_HPP
+
 #include "BaseMenu.hpp"
 
 class UIManager;
@@ -9,8 +12,7 @@ class ConfigGameMenu : public BaseMenu
     explicit ConfigGameMenu(Context &context, UIManager &uiManager);
     void Render(ImVec2 screenSize) override;
     void Resize() override;
-
     size_t NumPlayers;
-
-
 };
+
+#endif // CONFIG_MENU_HPP

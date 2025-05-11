@@ -15,10 +15,10 @@ BaseMenu::BaseMenu(Context& context, UIManager& uiManager)
 BaseMenu::~BaseMenu() {
 
     if (m_LogoTextureID) {
-        m_LogoImage->Destroy(context.device);
+        m_LogoImage.Destroy(context.device);
     }
     if (m_BackgroudTextureID) {
-        m_BackgroundImage->Destroy(context.device);
+        m_BackgroundImage.Destroy(context.device);
     }
 
     m_LogoTextureID = nullptr;
@@ -26,14 +26,14 @@ BaseMenu::~BaseMenu() {
 }
 
 void BaseMenu::SetLogo(const std::filesystem::path& logoPath) {
-    m_LogoImage = std::make_unique<Image>(LoadTextureFromDisk(logoPath, context, VK_FORMAT_R8G8B8A8_SRGB));
-    m_LogoTextureID = ImGui_ImplVulkan_AddTexture(vkutil::clampToEdgeSamplerAniso, m_LogoImage->imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+  m_LogoImage = LoadTextureFromDisk(logoPath, context, VK_FORMAT_R8G8B8A8_SRGB);
+    m_LogoTextureID = ImGui_ImplVulkan_AddTexture(vkutil::clampToEdgeSamplerAniso, m_LogoImage.imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 void BaseMenu::SetBackground(const std::filesystem::path& backgroundPath, ImVec2 backgroundSize) {
-    m_BackgroundImage = std::make_unique<Image>(LoadTextureFromDisk(backgroundPath, context, VK_FORMAT_R8G8B8A8_UNORM));
+    m_BackgroundImage = LoadTextureFromDisk(backgroundPath, context, VK_FORMAT_R8G8B8A8_UNORM);
     m_BackgroundSize = backgroundSize;
-    m_BackgroudTextureID = ImGui_ImplVulkan_AddTexture(vkutil::clampToEdgeSamplerAniso, m_BackgroundImage->imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    m_BackgroudTextureID = ImGui_ImplVulkan_AddTexture(vkutil::clampToEdgeSamplerAniso, m_BackgroundImage.imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 void BaseMenu::DrawBackground(ImVec2 screenSize) {

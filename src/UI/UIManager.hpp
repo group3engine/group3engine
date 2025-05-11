@@ -1,3 +1,6 @@
+#ifndef UI_MANAGER_HPP
+#define UI_MANAGER_HPP
+
 #include <imgui.h>
 #include <unordered_map>
 #include <string>
@@ -15,3 +18,5 @@ class UIManager {
     std::unordered_map<std::string, BaseMenu*> menus;
     BaseMenu *currentMenu = nullptr;
 };
+
+#endif // UI_MANAGER_HPP

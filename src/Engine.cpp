@@ -1,5 +1,4 @@
 
-
 #include <glm/ext.hpp>
 #include <glm/glm.hpp>
 
@@ -9,7 +8,6 @@
 #include <tracy/Tracy.hpp>
 
 // Menu includes
-#include "UIManager.hpp"
 #include "MainMenu.hpp"
 #include "NewGameMenu.hpp"
 #include "ConfigGameMenu.hpp"
@@ -160,10 +158,10 @@ bool Engine::Initialize() {
     mScene = Scene::get().GetActiveScene();
 
 
-    m_UIManager = new UIManager();
+    // m_UIManager = new UIManager();
     // Renderer takes in the UI manager so we can resize images within mennus when the Renderer
     // Needs to resize passes
-    mRenderer = std::make_unique<Renderer>(m_context, mScene, *m_UIManager);
+    mRenderer = std::make_unique<Renderer>(m_context, mScene, m_UIManager);
 
     PhysicsManager::get().StartUp();
 
@@ -179,16 +177,16 @@ bool Engine::Initialize() {
 
     // Create menu resources
     // Creating here since ImGuiRenderer creates a context during CreateRenderPasses()
-    m_MainMenuScreen = new MainMenuScreen(m_context, *m_UIManager);
-    m_NewGameMenu = new NewGameMenu(m_context, *m_UIManager);
-    m_ConfigGameMenu = new ConfigGameMenu(m_context, *m_UIManager);
+    m_MainMenuScreen = new MainMenuScreen(m_context, m_UIManager);
+    m_NewGameMenu = new NewGameMenu(m_context, m_UIManager);
+    m_ConfigGameMenu = new ConfigGameMenu(m_context, m_UIManager);
 
     /* Register menus here with the Manager. Give it a name for ID */
-    m_UIManager->RegisterMenu("MainMenu", m_MainMenuScreen);
-    m_UIManager->RegisterMenu("NewGameMenu", m_NewGameMenu);
-    m_UIManager->RegisterMenu("ConfigGameMenu", m_ConfigGameMenu);
+    m_UIManager.RegisterMenu("MainMenu", m_MainMenuScreen);
+    m_UIManager.RegisterMenu("NewGameMenu", m_NewGameMenu);
+    m_UIManager.RegisterMenu("ConfigGameMenu", m_ConfigGameMenu);
     /* Switch to menu scene using its name */
-    m_UIManager->SwitchToMenu("MainMenu");
+    m_UIManager.SwitchToMenu("MainMenu");
 
     // call the scene awake function
     mScene->Awake();
@@ -221,7 +219,6 @@ void Engine::Shutdown() {
     delete m_MainMenuScreen;
     delete m_ConfigGameMenu;
     delete m_NewGameMenu;
-    delete m_UIManager;
     mRenderer->Destroy();
     mRenderer.reset();
     mScene->Unload();
@@ -278,7 +275,7 @@ void Engine::Run() {
             //ImGuiRenderer::EndMainMenu();
             //ImGuiRenderer::Update(nullptr);
 
-            m_UIManager->RenderCurrentMenu(ImGui::GetIO().DisplaySize);
+            m_UIManager.RenderCurrentMenu(ImGui::GetIO().DisplaySize);
         }
 
 
@@ -306,7 +303,7 @@ void Engine::UpdateLogic() {
         glfwSetWindowShouldClose(Platform::get().window, GLFW_TRUE);
     }
 
-    // Should we remove this?
+    // Going to keep this because it can provide an example of how to do full frame post-processing.
     if (IsKeyPressed(KEY::e5)) {
         vkutil::postProcessSettings.Enable = vkutil::postProcessSettings.Enable == true ? false : true;
 
