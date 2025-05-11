@@ -321,8 +321,10 @@ void CharacterEntity::Update(double deltaTime) {
     else {
         if (mInputMapping.GetActionPressed("PAUSE") > 0) {
             // only set the time scale to 0 if we are in single player
-            if (!Scene::get().IsMultiplayer())
+            if (!Scene::get().IsMultiplayer()) {
                 mEngine.SetTimeScale(0.f);
+            }
+
             // free the mouse
             auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
             flag = false;
@@ -837,6 +839,13 @@ void CharacterEntity::LateUpdate(double deltaTime)
 }
 
 void CharacterEntity::Unpause([[maybe_unused]] UnpauseSignal *signal) {
-    assert(Engine::get().GetTimeScale() == 0.0f);
-    Engine::get().SetTimeScale(1.0f);
+#ifndef NDEBUG
+    if (!GetScene()->IsMultiplayer()) {
+        assert(Engine::get().GetTimeScale() == 0.0f);
+    } else {
+        assert(Engine::get().IsPaused());
+    }
+#endif // NDEBUG
+
+    Engine::get().Unpause();
 }
