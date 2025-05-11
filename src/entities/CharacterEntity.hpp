@@ -16,6 +16,7 @@
 
 struct WinSignal;
 struct CoinSignal;
+struct UnpauseSignal;
 
 enum class InternalEvent {
     eDeath,
@@ -130,6 +131,8 @@ class CharacterEntity : public Entity {
     bool WouldJumpHitCeiling(ECrouchState crouchState) const;
 
     bool WouldUncrouchHitCeiling() const;
+
+    void Unpause([[maybe_unused]] UnpauseSignal *signal);
 
   public:
     inline static float sJumpTimeScale = 0.1f;

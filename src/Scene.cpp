@@ -191,8 +191,8 @@ void Scene::LoadGLTF(const std::filesystem::path &aFilepath, size_t playerCount)
         }
     }
 
-    mCharacterEntities.erase(mCharacterEntities.begin(),
-                             std::next(mCharacterEntities.begin(), playerCount));
+    if(!mCharacterEntities.empty())
+        mCharacterEntities.erase(mCharacterEntities.begin(), std::next(mCharacterEntities.begin(), playerCount));
 
     if (playersAddedCount < playerCount) {
         SPDLOG_ERROR("Failed to add the selected number of players ({}). Only {} players were "

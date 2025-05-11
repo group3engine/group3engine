@@ -9,11 +9,18 @@
 #include "PhysicsManager.hpp"
 #include "Renderer.hpp"
 #include "RigidBody.hpp"
+#include "UIManager.hpp"
 
 #ifdef JPH_DEBUG_RENDERER
 #include <Jolt/Renderer/DebugRendererSimple.h>
 #include "DebugRendererImp.h"
 #endif // JPH_DEBUG_RENDERER
+
+// Menus
+class MainMenuScreen;
+class NewGameMenu;
+class ConfigGameMenu;
+class PauseMenu;
 
 class MaterialManager;
 class MeshManager;
@@ -50,6 +57,8 @@ class Engine {
     void Run();
     void Shutdown();
     void ChangeScene(const std::filesystem::path &pendingScenePath, size_t pendingPlayerCount);
+
+    static std::vector<std::filesystem::path *> &GetScenePaths();
 
   private:
     Context m_context;
@@ -100,6 +109,10 @@ class Engine {
 
     // scene loading thread
     std::thread mSceneLoadingThread;
-
+    MainMenuScreen* m_MainMenuScreen;
+    NewGameMenu *m_NewGameMenu;
+    ConfigGameMenu *m_ConfigGameMenu;
+    PauseMenu *mPauseMenu = nullptr;
+    UIManager m_UIManager;
     std::vector<UITexture> mGuiTextures;
 };
