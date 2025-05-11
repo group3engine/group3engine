@@ -215,7 +215,7 @@ class Entity {
     /// called every frame, after physics has been updated
     virtual void Update(double deltaTime) {}
 
-    /// called every frame even if timescale is set to 0, deltaTime is not multiplied by timescale
+    /// called every frame, deltaTime is not multiplied by timescale
     virtual void UnscaledUpdate(double deltaTime){}
 
     virtual void UpdateUi(double deltaTime) {}
