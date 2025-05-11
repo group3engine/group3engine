@@ -51,6 +51,9 @@ void Saving::SaveThread()
         std::this_thread::sleep_for(std::chrono::seconds(1));
         if(mSaveDataUpToDate)
             continue;
+
+        mSaveData[VERSIONSTRING] = VERSIONNUMBER;
+
         std::lock_guard<std::mutex> lock(mMutex);
         // save the file
         std::ofstream file(mSaveFileName);

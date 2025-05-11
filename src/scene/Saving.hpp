@@ -10,6 +10,7 @@
 #include <json.hpp>
 #include <string>
 #include <glm/glm.hpp>
+#include <spdlog/spdlog.h>
 #include <thread>
 
 // update this if you change the file format to invalidate old files
@@ -97,6 +98,11 @@ public:
         mSaveData.clear();
         mSaveDataUpToDate = false;
     }
+
+    void PrintSaveData() {
+        SPDLOG_INFO("Save data {}", nlohmann::to_string(mSaveData));
+    }
+
 private:
     std::filesystem::path mSaveFileName{};
     nlohmann::json mSaveData{};

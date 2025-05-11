@@ -67,6 +67,12 @@ namespace Fonts
             return false;
         }
 
+        InteractableFont = io.Fonts->AddFontFromFileTTF(alteHaasBoldPath.string().c_str(), 18.0f);
+        if (!InteractableFont) {
+            std::cerr << "Failed to load InteractableFont" << std::endl;
+            return false;
+        }
+
         return true;
     }
 }

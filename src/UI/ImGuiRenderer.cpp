@@ -710,7 +710,7 @@ void ImGuiRenderer::Text(std::string const &text, ImVec2 position, ImFont *font,
     size_t sv = 0;
 
     // Make sure to push font before text size calculation
-    ImGui::PushFont(Fonts::TextFont);
+    ImGui::PushFont(font);
 
     // convert the position and size from relative (0-1) coordinates, to pixel coordinates
     // Calculate position at the bottom of the screen (ignoring the passed position parameter)
