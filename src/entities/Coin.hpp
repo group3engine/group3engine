@@ -3,6 +3,8 @@
 
 #include "Entity.hpp"
 
+struct CoinUncollectSignal;
+
 enum class CoinState {
     COLLECTED,
     DISAPPEARING,
@@ -21,6 +23,8 @@ class Coin : public Entity {
         void SetCoinCounter(int* aCoinCount);
 
         void Collect(bool initial_load = false);
+
+        void Uncollect([[maybe_unused]] CoinUncollectSignal *signal);
     
     private:
         CoinState mCollected = CoinState::UNCOLLECTED;

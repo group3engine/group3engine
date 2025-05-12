@@ -345,7 +345,7 @@ void Engine::ChangeSceneFR(const std::filesystem::path &scenePath, size_t player
     mTextureManager->Initialise();
 
     // load in heart
-    std::filesystem::path loadingPath = assetsPath/ "loading_shot_cropped.png";
+    std::filesystem::path loadingPath = assetsPath/ "loading_shot_cropped_normal.png";
     ImGuiRenderer::AddTextures(mTextureManager.get(), loadingPath, "load");
 
 

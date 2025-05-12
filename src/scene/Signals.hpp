@@ -22,4 +22,8 @@ struct ResetToSpawnSignal : public SignalBase<ResetToSpawnSignal> {
 struct UnpauseSignal : public SignalBase<UnpauseSignal> {
 
 };
+
+struct CoinUncollectSignal : public SignalBase<CoinUncollectSignal> {
+
+};
 #endif // SIGNALS_HPP

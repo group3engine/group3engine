@@ -504,6 +504,10 @@ void CharacterEntity::Update(double deltaTime) {
             child->SetAsVisible();
         }
     }
+
+    if (IsKeyPressed(KEY::eR)) {
+        MoveToSpawn();
+    }
 }
 
 void CharacterEntity::UpdateUi(double deltaTime) {
@@ -716,6 +720,10 @@ void CharacterEntity::MoveToSpawn()
     mDeathCount = 0;
     mCoinCount = 0;
     mGuiTimerData.time = 0.0f;
+
+    // Make all coins visible again
+    CoinUncollectSignal coinUncollectSignal = {};
+    GetScene()->mSignalSystem.EmitSignal(&coinUncollectSignal);
 
     mWinVisibleTimer = 0.0f;
 

@@ -31,19 +31,21 @@ void TextureManager::addTexture(const std::filesystem::path &aTexturePath,
 
     VkFormat format = VK_FORMAT_R8G8B8A8_SRGB;
 
-    bool isColor =
-        FindCaseInsensitive(aTextureName, "color") || FindCaseInsensitive(aTextureName, "diffuse");
+    std::string texturePathString = aTexturePath.string();
 
-    bool isMetallic = FindCaseInsensitive(aTextureName, "metallic");
-    bool isMetalness = FindCaseInsensitive(aTextureName, "metalness");
-    bool isRoughness = FindCaseInsensitive(aTextureName, "roughness");
+    bool isColor =
+        FindCaseInsensitive(texturePathString, "color") || FindCaseInsensitive(texturePathString, "diffuse");
+
+    bool isMetallic = FindCaseInsensitive(texturePathString, "metallic");
+    bool isMetalness = FindCaseInsensitive(texturePathString, "metalness");
+    bool isRoughness = FindCaseInsensitive(texturePathString, "roughness");
     bool isMetallicRoughness = isMetallic || isMetalness || isRoughness;
 
-    bool isSpecular = FindCaseInsensitive(aTextureName, "specular");
-    bool isGlossiness = FindCaseInsensitive(aTextureName, "glossiness");
+    bool isSpecular = FindCaseInsensitive(texturePathString, "specular");
+    bool isGlossiness = FindCaseInsensitive(texturePathString, "glossiness");
     bool isSpecularGlossiness = isSpecular || isGlossiness;
 
-    bool isNormal = FindCaseInsensitive(aTextureName, "normal");
+    bool isNormal = FindCaseInsensitive(texturePathString, "normal");
 
     if (isColor) {
         format = VK_FORMAT_R8G8B8A8_SRGB;

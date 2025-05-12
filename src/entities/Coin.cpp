@@ -20,6 +20,8 @@ void Coin::Awake() {
 
     // get the start scale
     startScale = GetLocalTransform().scale;
+
+    GetScene()->mSignalSystem.AddReceiver<Coin, CoinUncollectSignal>(this, &Coin::Uncollect);
 }
 
 void Coin::OnCollisionStart(Entity *other)
@@ -61,6 +63,7 @@ void Coin::Update(double deltaTime)
             GetRigidBody().SetActive(false);
             SetAsInvisible();
             mCollected = CoinState::COLLECTED;
+            timer = 0.0f;
         }
     }
 }
@@ -83,4 +86,16 @@ void Coin::Collect(bool initial_load)
 
     //file saving
     Saving::get().Save(GetName()+"collected", true);
+}
+
+void Coin::Uncollect([[maybe_unused]] CoinUncollectSignal *signal) {
+    mCollectedOnStart = false;
+
+    Transform transform = GetLocalTransform();
+    transform.scale = startScale;
+    SetTransform(transform);
+
+    GetRigidBody().SetActive(true);
+    SetAsVisible();
+    mCollected = CoinState::UNCOLLECTED;
 }
