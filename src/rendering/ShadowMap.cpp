@@ -12,7 +12,7 @@
 
 #include "RenderPassCommon.hpp"
 
-#define RESOLUTION 2048
+#define RESOLUTION 4096
 
 ShadowMap::ShadowMap(Context &context, Scene *scene)
     : context{context}, scene{scene} {
