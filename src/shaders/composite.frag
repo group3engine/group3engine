@@ -159,21 +159,18 @@ vec3 Uncharted2ToneMapping(vec3 color)
 void main()
 {
 	vec4 lighting = texture(renderedScene, uv);
-	vec4 bloom = texture(bloomPass, uv);
 	vec3 ssao = SD(SSAO);
-    vec3 ssr = texture(SSR, uv).rgb;
-    vec4 FoggedScene = texture(Fog, uv);
 
     // The fog is now composed with the final lighting
-    vec3 compositeFog = mix(lighting.rgb, FoggedScene.rgb, FoggedScene.a).rgb;
+    vec3 compositeFog = lighting.rgb;
 
     // FoggedScene is now just "lighting".
     // With fog = 0, its just the scene.
-	vec3 hdrColor = (compositeFog.rgb + ssr) * ssao;
+	vec3 hdrColor = (compositeFog.rgb) * ssao;
     hdrColor = Saturation(hdrColor, ppSettings.saturation);
     hdrColor = ContrastBrightness(hdrColor, ppSettings.contrast, ppSettings.brightness);
 
-    hdrColor = hdrColor + bloom.rgb; 
+    hdrColor = hdrColor;
     vec3 ldrColor = ppSettings.toneMap == 0 ? hdrColor : ppSettings.toneMap == 1 ? Reinhard(hdrColor) : ppSettings.toneMap == 2 ? Uncharted2ToneMapping(hdrColor) : ACESFilm(hdrColor);
 	vec3 result = ldrColor;
 
@@ -186,9 +183,6 @@ void main()
     {
         case 9:
             fragColor = vec4(ssao, 1.0);
-            break;
-        case 10:
-            fragColor = vec4(ssr, 1.0);
             break;
         default:
             fragColor = vec4(gammaCorrectedColor, 1.0);

@@ -162,7 +162,7 @@ void Fog::Execute(VkCommandBuffer cmd) {
     renderPassInfo.renderArea.extent = {m_width, m_height};
 
     std::array<VkClearValue, 1> clearValues{};
-    clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
+    clearValues[0].color = {0.0f, 0.0f, 0.0f, 0.0f};
 
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
     renderPassInfo.pClearValues = clearValues.data();
@@ -190,17 +190,17 @@ void Fog::Execute(VkCommandBuffer cmd) {
 
     }
 
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
-
-    vkCmdBindDescriptorSets(
-        cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1,
-        &mPlayerDescriptorSets[0][vkutil::currentFrame], 0, nullptr);
-
-    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            m_PipelineLayout, 1, 1,
-                            &mDescriptorSets[vkutil::currentFrame], 0, nullptr);
-
-    vkCmdDraw(cmd, 3, 1, 0, 0);
+//    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
+//
+//    vkCmdBindDescriptorSets(
+//        cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1,
+//        &mPlayerDescriptorSets[0][vkutil::currentFrame], 0, nullptr);
+//
+//    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+//                            m_PipelineLayout, 1, 1,
+//                            &mDescriptorSets[vkutil::currentFrame], 0, nullptr);
+//
+//    vkCmdDraw(cmd, 3, 1, 0, 0);
 
     vkCmdEndRenderPass(cmd);
 #ifdef _DEBUG

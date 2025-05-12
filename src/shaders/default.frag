@@ -314,6 +314,26 @@ float Shadow(vec3 WorldPos)
 	float shadow = texture(shadowMap, fragPositionInLightSpace);
 	return shadow;
 }
+vec3 SimplePhongShading(vec3 norm, vec3 viewDir, vec3 lightDir, vec3 lightColor, float roughness)
+{
+    // Ambient
+    float ambientStrength = 0.1;
+    vec3 ambient = ambientStrength * lightColor;
+
+    // Diffuse
+    float diff = max(dot(norm, lightDir), 0.0);
+    vec3 diffuse = diff * lightColor;
+
+    // Specular
+    float specularStrength = roughness;
+    vec3 reflectDir = reflect(-lightDir, norm);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+    vec3 specular = specularStrength * spec * lightColor;
+    float shadowTerm = 1.0 - PCF(WorldPos.xyz);
+
+
+    return ambient + (diffuse + specular) * shadowTerm;
+}
 //
 void main()
 {
@@ -335,25 +355,10 @@ void main()
     vec3 viewDir = normalize(ubo.cameraPosition.xyz - WorldPos.xyz);
     vec3 halfVector = normalize(viewDir + lightDir);
 
+//    vec3 brdf = CookTorranceBRDF(pixelNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour, WorldPos.xyz);
     vec3 LightColour = lightData.lights[0].LightColour.rgb;
-    vec3 brdf = CookTorranceBRDF(pixelNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour, WorldPos.xyz);
+    vec3 brdf = SimplePhongShading(pixelNormal, viewDir, lightDir, LightColour, roughness) * color;
     outLight += brdf;
-
-
-    for (int i = 1; i < NUM_LIGHTS; i++)
-    {
-        vec3 lightDir = normalize(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
-        vec3 viewDir = normalize(ubo.cameraPosition.xyz - WorldPos.xyz);
-        vec3 halfVector = normalize(viewDir + lightDir);
-
-        float dist = length(lightData.lights[i].LightPosition.xyz - WorldPos.xyz);
-        float att = 1.0 / (dist * dist);
-        vec3 LightColour = lightData.lights[i].LightColour.xyz * att;
-
-        float shadowTerm = 1.0;
-        vec3 brdf = CookTorranceBRDF(pixelNormal, halfVector, viewDir, lightDir, metallic, roughness, color, LightColour, WorldPos.xyz);
-        outLight += brdf * LightColour.xyz * shadowTerm;
-    }
     // add the emissive light
     outLight += emissive;
 

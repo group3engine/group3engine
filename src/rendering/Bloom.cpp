@@ -128,8 +128,8 @@ void Bloom::CreateRenderPass() {
 void Bloom::Execute(VkCommandBuffer cmd) const {
     ZoneScopedN("Bloom::Execute");
 
-    RenderHorizontalBlur(cmd);
-    RenderVerticalBlur(cmd);
+//    RenderHorizontalBlur(cmd);
+//    RenderVerticalBlur(cmd);
 }
 
 void Bloom::RenderHorizontalBlur(VkCommandBuffer cmd) const {
