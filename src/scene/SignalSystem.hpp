@@ -1,3 +1,6 @@
+// Inspired by Elias Daler's Bikeshed Renderer event system
+// https://github.com/eliasdaler/edbr/blob/master/edbr/include/edbr/Event/EventManager.h
+
 #ifndef SIGNALSYSTEM_HPP
 #define SIGNALSYSTEM_HPP
 
