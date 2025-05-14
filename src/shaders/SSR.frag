@@ -145,5 +145,9 @@ vec3 ScreenSpaceReflections()
 void main()
 {
     float roughness = texture(normalRoughness, uv).a;
-	fragColour = vec4(mix(ScreenSpaceReflections().rgb, vec3(0), roughness), 1.0);
+    if (roughness != 1.0) {
+        fragColour = vec4(mix(ScreenSpaceReflections().rgb, vec3(0), roughness), 1.0);
+    } else {
+        fragColour = vec4(0, 0, 0, 1.0);
+    }
 }
