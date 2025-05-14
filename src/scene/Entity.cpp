@@ -364,6 +364,8 @@ void Entity::BaseUpdate(double deltaTime) {
     }
 
     if (mAnimator) {
+        ZoneScopedN("Animation");
+
         // work out how often to update the animator based on distance
         float t = (minDistance - MIN_ANIMATOR_UPDATE_DISTANCE) / (MAX_ANIMATOR_UPDATE_DISTANCE - MIN_ANIMATOR_UPDATE_DISTANCE);
         // clamp t to 0 and 1

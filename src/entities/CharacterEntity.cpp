@@ -272,6 +272,8 @@ void CharacterEntity::ProcessInput(){
 }
 
 void CharacterEntity::PrePhysicsUpdate() {
+    ZoneScopedN("CharacterEntity::PrePhysicsUpdate");
+
     PreUpdateParams preUpdateParams{};
     preUpdateParams.mDeltaTime = GlobalUtil::deltaTime;
     mSampleJoltCharacter->PrePhysicsUpdate(preUpdateParams);

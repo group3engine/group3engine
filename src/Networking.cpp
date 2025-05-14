@@ -6,6 +6,8 @@
 
 #include <string>
 
+#include <tracy/Tracy.hpp>
+
 namespace {
 
 void CloseSocket(int socket) {
@@ -66,6 +68,8 @@ Networking::Networking()
 
 void Networking::Listen()
 {
+    ZoneScopedN("Networking::Listen");
+
     while(running)
     {
         struct sockaddr_in this_client;
@@ -164,6 +168,8 @@ std::string http_get(const std::string& url) {
 }
 void http_post(const std::string& url, const std::string& data)
 {
+    ZoneScopedN("http_post");
+
     // Extract host and path from the URL
     std::string host = url;
     std::string path = "/";

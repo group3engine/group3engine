@@ -351,6 +351,8 @@ void ImGuiRenderer::EndMainMenu() {
 
 // TODO: Broken for splitscreen
 ImVec2 ImGuiRenderer::NewImage(const std::string &name, const ImVec2 &offset, const ImVec2 &imageSize) {
+    ZoneScopedN("ImGuiRenderer::NewImage");
+
     MyTextureData &myTexData = textureDatas[name];
 
     size_t sv = 0;
@@ -392,6 +394,8 @@ ImVec2 ImGuiRenderer::NewImage(const std::string &name, const ImVec2 &offset, co
 
 void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data,
                                     size_t activePlayerCount, size_t playerId) {
+    ZoneScopedN("ImGuiRenderer::NewDeathCounter");
+
     ImGui::PushFont(Fonts::InGameFont);
     ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255,255,255,255));
 
@@ -456,6 +460,8 @@ void ImGuiRenderer::NewDeathCounter(const gui::DeathCounterData &data,
 
 void ImGuiRenderer::NewCoinCounter(const gui::CoinCounterData &data,
                                     size_t activePlayerCount, size_t playerId) {
+    ZoneScopedN("ImGuiRenderer::NewDeathCounter");
+
     ImGui::PushFont(Fonts::InGameFont);
     ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255,255,255,255));
 
@@ -520,6 +526,8 @@ void ImGuiRenderer::NewCoinCounter(const gui::CoinCounterData &data,
 
 void ImGuiRenderer::NewTimer(const gui::TimerData &data,
                              size_t activePlayerCount, size_t playerId) {
+    ZoneScopedN("ImGuiRenderer::NewTimer");
+
     ImGui::PushFont(Fonts::InGameFont);
     ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255,255,255,255));
 
@@ -716,6 +724,8 @@ void ImGuiRenderer::NewCharacterInfo(std::string const &characterName,
 
 void ImGuiRenderer::Text(std::string const &text, ImVec2 position, ImFont *font,
                          size_t activePlayerCount, size_t playerId) {
+    ZoneScopedN("ImGuiRenderer::Text");
+
     ImGuiViewport viewport = CalcPlayerViewport(Context::get().extent, activePlayerCount, playerId);
 
     // flip position 0-1 to 1-0
@@ -973,6 +983,8 @@ void ImGuiRenderer::Update(Scene *scene)
 
 void ImGuiRenderer::Render(VkCommandBuffer cmd, const Context &context, uint32_t imageIndex)
 {
+    ZoneScopedN("ImGuiRenderer::Render");
+
     ImGui::Render();
     ImDrawData *main_draw_data = ImGui::GetDrawData();
     ImGui_ImplVulkan_RenderDrawData(main_draw_data, cmd);
@@ -1000,6 +1012,8 @@ void ImGuiRenderer::AddTexture(VkSampler sampler, VkImageView imageView, VkImage
 
 void ImGuiRenderer::ChatWindow(const std::vector<Message> &messages, std::function<void(std::string, std::string)> callback)
 {
+    ZoneScopedN("ImGuiRenderer::ChatWindow");
+
     // Fixed upper left position with a drop\-down style window
     ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Once);
     ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_Once);

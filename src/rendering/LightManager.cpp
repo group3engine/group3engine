@@ -55,6 +55,8 @@ void LightManager::ReturnPointLight(int index)
 
 void LightManager::Update()
 {
+    ZoneScopedN("LightManager::Update");
+
     // for each directional light, update the lightspace matrix
     for (size_t i = 0; i < NUM_DIRECTIONAL_LIGHTS; i++) {
         if (mDirectionalLightMask[i]) {

@@ -58,7 +58,7 @@ void PhysicsManager::StartUp() {
 }
 
 void PhysicsManager::UpdatePhysics(double delta_time) {
-    ZoneScoped;
+    ZoneScopedN("PhysicsManager::UpdatePhysics");
 
     // Next step
     cDeltaTime = delta_time;

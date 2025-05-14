@@ -143,6 +143,8 @@ void NetworkEntitiesManager::LateUpdate(double deltaTime) {
 
 void NetworkEntitiesManager::SendChatMessage(std::string playerName, std::string message)
 {
+    ZoneScopedN("NetworkEntitiesManager::SendChatMessage");
+
     // generate the json of the message
     // we need to include the player name, message, timestamp, and map name
     std::string mapName = Scene::get().GetActiveScene()->GetSceneFilename().string();
@@ -174,6 +176,8 @@ NetworkEntitiesManager::~NetworkEntitiesManager()
 
 void NetworkEntitiesManager::ReceiveMessages()
 {
+    ZoneScopedN("NetworkEntitiesManager::ReceiveMessages");
+
     while(chatting)
     {
         // construct the url

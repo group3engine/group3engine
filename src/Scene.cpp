@@ -80,6 +80,8 @@ void Scene::Update(double aDeltaTime) {
 }
 
 void Scene::UpdateCameraTransforms() {
+    ZoneScopedN("Scene::UpdateCameraTransforms");
+
     size_t activePlayerCount = GetActivePlayerCount();
     for (size_t i = 0; i < activePlayerCount; ++i) {
         ViewportSize viewportSize = CalcViewportSize(mContext->extent, activePlayerCount, i);
@@ -124,8 +126,10 @@ void Scene::UpdateUi(double aDeltaTime) {
         entity->UpdateUi(aDeltaTime);
     }
 
+#ifndef PLATINUM
     ImGuiRenderer::NewActivePlayerCountOverride(GetActiveScene(),
                                                 mGuiActivePlayerCountOverride);
+#endif // PLATINUM
 }
 
 void Scene::Unload()
