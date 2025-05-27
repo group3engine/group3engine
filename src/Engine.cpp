@@ -361,8 +361,6 @@ void Engine::ChangeSceneFR(const std::filesystem::path &scenePath, size_t player
     mSceneLoadingThread.join();
     vkQueueWaitIdle(m_context.presentQueue);
 
-    mIsMainMenu = mScene->GetSceneFilename() == "main_menu";
-
     if (mIsMainMenu) {
         AudioManager::get().SetBackgroundMusic("main_menu_music");
     } else {
@@ -529,6 +527,8 @@ void Engine::LoadRestOfStuff(const filesystem::path &scenePath, size_t playerCou
 
     mScene->Load(scenePath, playerCount);
     m_scenePath = mScene->GetSceneFilename();
+
+    mIsMainMenu = mScene->GetSceneFilename() == "main_menu";
 
     m_progress = 85.f;
 

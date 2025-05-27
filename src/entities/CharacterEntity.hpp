@@ -44,6 +44,8 @@ class CharacterEntity : public Entity {
 
     void PrePhysicsUpdate();
 
+    virtual void ToggleMousing();
+
     virtual void ProcessInput();
 
 

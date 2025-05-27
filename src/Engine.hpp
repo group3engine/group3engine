@@ -50,6 +50,7 @@ class Engine {
     void Pause() { m_isPaused = true; }
     void Unpause() { m_isPaused = false; }
     bool IsPaused() const { return m_isPaused; }
+    bool IsMainMenu() const { return mIsMainMenu; }
     void Quit() {m_shouldQuit = true; }
 
   public:

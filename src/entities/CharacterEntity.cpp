@@ -133,6 +133,17 @@ bool CharacterEntity::WouldJumpHitCeiling(ECrouchState crouchState) const {
     return hitCeiling;
 }
 
+void CharacterEntity::ToggleMousing() {
+    auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
+    flag = !flag;
+
+    if (flag) {
+        glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    } else {
+        glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
+}
+
 void CharacterEntity::ProcessInput(){
 #ifdef JPH_DEBUG_RENDERER
     // Extra unneeded call to debug render the test position for the raycasts in these functions
@@ -143,19 +154,12 @@ void CharacterEntity::ProcessInput(){
 #endif // JPH_DEBUG_RENDERER
 
     if (IsKeyDown(KEY::eLEFT_SHIFT) && IsMouseButtonPressed(MOUSE_BUTTON::eLEFT)) {
-        auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
-        flag = !flag;
-
-        if (flag) {
-            glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        } else {
-            glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-        }
+        ToggleMousing();
     }
-    if (IsMouseButtonPressed(MOUSE_BUTTON::eRIGHT)) {
-        auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
-        flag = false;
-    }
+    // if (IsMouseButtonPressed(MOUSE_BUTTON::eRIGHT)) {
+    //     auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
+    //     flag = false;
+    // }
 #ifdef PLATINUM
     // don't process input if we aren't mousing
     if (!mCamera->inputMap[std::size_t(EInputState::MOUSING)]) {
@@ -322,6 +326,11 @@ void CharacterEntity::Update(double deltaTime) {
         {
             Engine::get().SetTimeScale(1.f);
             mEngine.Unpause();
+
+            // unfree the mouse
+            auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
+            flag = true;
+            glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         }
     }
     else {
@@ -507,9 +516,9 @@ void CharacterEntity::Update(double deltaTime) {
         }
     }
 
-    if (IsKeyPressed(KEY::eR)) {
-        MoveToSpawn();
-    }
+    // if (IsKeyPressed(KEY::eR)) {
+    //     MoveToSpawn();
+    // }
 }
 
 void CharacterEntity::UpdateUi(double deltaTime) {
@@ -700,6 +709,15 @@ void CharacterEntity::Awake() {
     }
 
     mIsTiming = true;
+
+    // If not in the main menu toggle mousing so the mouse is disabled by default
+    // Stop people who don't know to shift + left click having the mouse stuck
+    if (!Engine::get().IsMainMenu()) {
+        // unfree the mouse
+        auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
+        flag = true;
+        glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    }
 
     // TODO: What you could do is maybe add and remove these receivers dynamically so the number of
     // receivers doesn't grow too large. I.e., player gets to 90% of level, start receiving the
@@ -897,4 +915,9 @@ void CharacterEntity::Unpause([[maybe_unused]] UnpauseSignal *signal) {
 
     Engine::get().SetTimeScale(1.f);
     Engine::get().Unpause();
+
+    // unfree the mouse
+    auto &flag = mCamera->inputMap[std::size_t(EInputState::MOUSING)];
+    flag = true;
+    glfwSetInputMode(Platform::get().window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 }
